@@ -70,10 +70,9 @@ webapp/cypress/screenshots
 webapp/cypress/videos
 server/swagger/clients
 server/vendor
-mattermost-plugin/vendor
-mattermost-plugin/dist
 .idea
 docker/certs
 docker/data
 server/**/*.coverage
-mattermost-plugin/**/*.coverage
+./dist
+./vendor
