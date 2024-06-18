@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mattermost/focalboard/server/model"
-	"github.com/mattermost/focalboard/server/services/config"
-	"github.com/mattermost/focalboard/server/services/notify/notifymentions"
-	"github.com/mattermost/focalboard/server/services/notify/notifysubscriptions"
-	"github.com/mattermost/focalboard/server/services/notify/plugindelivery"
-	"github.com/mattermost/focalboard/server/services/permissions"
-	"github.com/mattermost/focalboard/server/services/store"
+	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/focalboard-plugin/server/services/config"
+	"github.com/mattermost/focalboard-plugin/server/services/notify/notifymentions"
+	"github.com/mattermost/focalboard-plugin/server/services/notify/notifysubscriptions"
+	"github.com/mattermost/focalboard-plugin/server/services/notify/plugindelivery"
+	"github.com/mattermost/focalboard-plugin/server/services/permissions"
+	"github.com/mattermost/focalboard-plugin/server/services/store"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )

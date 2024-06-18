@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mattermost/focalboard/server/model"
+	"github.com/mattermost/focalboard-plugin/server/model"
 	"github.com/mgdelacroix/foundation"
 )
 

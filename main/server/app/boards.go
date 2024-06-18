@@ -7,9 +7,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/mattermost/focalboard/server/model"
-	"github.com/mattermost/focalboard/server/services/notify"
-	"github.com/mattermost/focalboard/server/utils"
+	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/focalboard-plugin/server/services/notify"
+	"github.com/mattermost/focalboard-plugin/server/utils"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )

@@ -3,8 +3,8 @@ package api
 import (
 	"net/http"
 
-	"github.com/mattermost/focalboard/server/model"
-	"github.com/mattermost/focalboard/server/services/audit"
+	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/focalboard-plugin/server/services/audit"
 )
 
 // makeAuditRecord creates an audit record pre-populated with data from the request.

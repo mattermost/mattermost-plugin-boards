@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/mattermost/focalboard/server/model"
+	"github.com/mattermost/focalboard-plugin/server/model"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )

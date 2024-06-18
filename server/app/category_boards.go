@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/mattermost/focalboard/server/model"
+	"github.com/mattermost/focalboard-plugin/server/model"
 )
 
 const defaultCategoryBoards = "Boards"

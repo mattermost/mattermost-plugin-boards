@@ -20,8 +20,8 @@ import (
 	mmSqlStore "github.com/mattermost/mattermost/server/public/utils/sql"
 	"github.com/mattermost/mattermost/server/v8/channels/db"
 
-	"github.com/mattermost/focalboard/server/model"
-	"github.com/mattermost/focalboard/server/services/store/sqlstore"
+	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/focalboard-plugin/server/services/store/sqlstore"
 )
 
 var tablePrefix = "focalboard_"

@@ -6,8 +6,8 @@ package plugindelivery
 import (
 	"fmt"
 
-	"github.com/mattermost/focalboard/server/services/notify"
-	"github.com/mattermost/focalboard/server/utils"
+	"github.com/mattermost/focalboard-plugin/server/services/notify"
+	"github.com/mattermost/focalboard-plugin/server/utils"
 
 	mm_model "github.com/mattermost/mattermost/server/public/model"
 )

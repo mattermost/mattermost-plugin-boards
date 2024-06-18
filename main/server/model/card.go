@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/mattermost/focalboard/server/utils"
+	"github.com/mattermost/focalboard-plugin/server/utils"
 	"github.com/rivo/uniseg"
 )
 

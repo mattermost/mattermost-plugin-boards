@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/mattermost/focalboard/server/utils"
+	"github.com/mattermost/focalboard-plugin/server/utils"
 	mm_model "github.com/mattermost/mattermost/server/public/model"
 )
 

@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/mattermost/focalboard/server/server"
-	"github.com/mattermost/focalboard/server/services/config"
-	"github.com/mattermost/focalboard/server/services/permissions/localpermissions"
-	"github.com/mattermost/focalboard/server/services/store/mockstore"
+	"github.com/mattermost/focalboard-plugin/server/server"
+	"github.com/mattermost/focalboard-plugin/server/services/config"
+	"github.com/mattermost/focalboard-plugin/server/services/permissions/localpermissions"
+	"github.com/mattermost/focalboard-plugin/server/services/store/mockstore"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/mattermost/mattermost/server/public/model"

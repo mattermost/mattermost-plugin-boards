@@ -11,9 +11,9 @@ import (
 	"runtime"
 
 	"github.com/google/uuid"
-	"github.com/mattermost/focalboard/server/server"
-	"github.com/mattermost/focalboard/server/services/config"
-	"github.com/mattermost/focalboard/server/services/permissions/localpermissions"
+	"github.com/mattermost/focalboard-plugin/server/server"
+	"github.com/mattermost/focalboard-plugin/server/services/config"
+	"github.com/mattermost/focalboard-plugin/server/services/permissions/localpermissions"
 	"github.com/webview/webview"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"

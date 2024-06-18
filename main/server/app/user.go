@@ -1,7 +1,7 @@
 package app
 
 import (
-	"github.com/mattermost/focalboard/server/model"
+	"github.com/mattermost/focalboard-plugin/server/model"
 	mmModel "github.com/mattermost/mattermost/server/public/model"
 )
 

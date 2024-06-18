@@ -7,12 +7,12 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/mattermost/focalboard/server/integrationtests"
-	"github.com/mattermost/focalboard/server/model"
-	"github.com/mattermost/focalboard/server/server"
-	"github.com/mattermost/focalboard/server/ws"
+	"github.com/mattermost/focalboard-plugin/server/integrationtests"
+	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/focalboard-plugin/server/server"
+	"github.com/mattermost/focalboard-plugin/server/ws"
 
-	mockservicesapi "github.com/mattermost/focalboard/server/model/mocks"
+	mockservicesapi "github.com/mattermost/focalboard-plugin/server/model/mocks"
 
 	serverModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/shared/mlog"

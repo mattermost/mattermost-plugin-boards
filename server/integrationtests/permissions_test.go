@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mattermost/focalboard/server/client"
-	"github.com/mattermost/focalboard/server/model"
+	"github.com/mattermost/focalboard-plugin/server/client"
+	"github.com/mattermost/focalboard-plugin/server/model"
 	"github.com/stretchr/testify/require"
 )
 

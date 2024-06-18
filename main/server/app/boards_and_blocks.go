@@ -1,8 +1,8 @@
 package app
 
 import (
-	"github.com/mattermost/focalboard/server/model"
-	"github.com/mattermost/focalboard/server/services/notify"
+	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/focalboard-plugin/server/services/notify"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )

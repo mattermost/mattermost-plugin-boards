@@ -9,7 +9,7 @@ import (
 
 	mmModel "github.com/mattermost/mattermost/server/public/model"
 
-	"github.com/mattermost/focalboard/server/model"
+	"github.com/mattermost/focalboard-plugin/server/model"
 )
 
 type blockError struct {

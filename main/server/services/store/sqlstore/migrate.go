@@ -26,7 +26,7 @@ import (
 
 	_ "github.com/lib/pq" // postgres driver
 
-	"github.com/mattermost/focalboard/server/model"
+	"github.com/mattermost/focalboard-plugin/server/model"
 )
 
 //go:embed migrations/*.sql
