@@ -3,22 +3,22 @@
 import React  from 'react'
 import {FormattedMessage, useIntl} from 'react-intl'
 
-import mutator from '../../../../webapp/src/mutator'
-import {Utils} from '../../../../webapp/src/utils'
-import {getCurrentTeam} from '../../../../webapp/src/store/teams'
-import {createBoard, Board} from '../../../../webapp/src/blocks/board'
-import {useAppSelector} from '../../../../webapp/src/store/hooks'
-import IconButton from '../../../../webapp/src/widgets/buttons/iconButton'
-import OptionsIcon from '../../../../webapp/src/widgets/icons/options'
-import Menu from '../../../../webapp/src/widgets/menu'
-import MenuWrapper from '../../../../webapp/src/widgets/menuWrapper'
-import {SuiteWindow} from '../../../../webapp/src/types/index'
-import CompassIcon from '../../../../webapp/src/widgets/icons/compassIcon'
+import mutator from '../mutator'
+import {Utils} from '../utils'
+import {getCurrentTeam} from '../store/teams'
+import {createBoard, Board} from '../blocks/board'
+import {useAppSelector} from '../store/hooks'
+import IconButton from '../widgets/buttons/iconButton'
+import OptionsIcon from '../widgets/icons/options'
+import Menu from '../widgets/menu'
+import MenuWrapper from '../widgets/menuWrapper'
+import {SuiteWindow} from '../types/index'
+import CompassIcon from '../widgets/icons/compassIcon'
 
-import {Permission} from '../../../../webapp/src/constants'
+import {Permission} from '../constants'
 
-import BoardPermissionGate from '../../../../webapp/src/components/permissions/boardPermissionGate'
-import TelemetryClient, {TelemetryActions, TelemetryCategory} from '../../../../webapp/src/telemetry/telemetryClient'
+import BoardPermissionGate from '../components/permissions/boardPermissionGate'
+import TelemetryClient, {TelemetryActions, TelemetryCategory} from '../telemetry/telemetryClient'
 
 import './rhsChannelBoardItem.scss'
 
@@ -110,7 +110,7 @@ const RHSChannelBoardItem = (props: Props) => {
                 <FormattedMessage
                     id='rhs-boards.last-update-at'
                     defaultMessage='Last update at: {datetime}'
-                    values={{datetime: Utils.displayDateTime(new Date(board.updateAt), intl as any)}}
+                    values={{datetime: Utils.displayDateTime(new Date(board.updateAt), intl)}}
                 />
             </div>
         </div>

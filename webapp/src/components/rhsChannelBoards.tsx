@@ -3,34 +3,36 @@
 import React, {useEffect}  from 'react'
 import {FormattedMessage, IntlProvider, useIntl} from 'react-intl'
 
-import {getMessages} from '../../../../webapp/src/i18n'
-import {getLanguage} from '../../../../webapp/src/store/language'
+import {getLanguage} from '../store/language'
 
-import {useWebsockets} from '../../../../webapp/src/hooks/websockets'
+import {useWebsockets} from '../hooks/websockets'
 
-import {Board, BoardMember} from '../../../../webapp/src/blocks/board'
-import {getCurrentTeamId} from '../../../../webapp/src/store/teams'
-import {IUser} from '../../../../webapp/src/user'
-import {getMe, fetchMe} from '../../../../webapp/src/store/users'
-import {loadBoards, loadMyBoardsMemberships} from '../../../../webapp/src/store/initialLoad'
-import {getCurrentChannel} from '../../../../webapp/src/store/channels'
+import {Board, BoardMember} from '../blocks/board'
+import {getCurrentTeamId} from '../store/teams'
+import {IUser} from '../user'
+import {getMe, fetchMe} from '../store/users'
+import {loadBoards, loadMyBoardsMemberships} from '../store/initialLoad'
+import {getCurrentChannel} from '../store/channels'
 import {
     getMySortedBoards,
     setLinkToChannel,
     updateBoards,
     updateMembersEnsuringBoardsAndUsers,
     addMyBoardMemberships,
-} from '../../../../webapp/src/store/boards'
-import {useAppSelector, useAppDispatch} from '../../../../webapp/src/store/hooks'
-import AddIcon from '../../../../webapp/src/widgets/icons/add'
-import Button from '../../../../webapp/src/widgets/buttons/button'
+} from '../store/boards'
+import {useAppSelector, useAppDispatch} from '../store/hooks'
+import AddIcon from '../widgets/icons/add'
+import Button from '../widgets/buttons/button'
 
-import {Utils} from '../../../../webapp/src/utils'
-import {WSClient} from '../../../../webapp/src/wsclient'
+import {Utils} from '../utils'
+import {WSClient} from '../wsclient'
 
-import boardsScreenshots from '../../../../webapp/static/boards-screenshots.png'
+import boardsScreenshots from '../../static/boards-screenshots.png'
+
+import {getMessages} from '../i18n'
 
 import RHSChannelBoardItem from './rhsChannelBoardItem'
+
 
 import './rhsChannelBoards.scss'
 
@@ -117,7 +119,7 @@ const RHSChannelBoards = () => {
                         />
                     </div>
                     <div className='boards-screenshots'><img src={Utils.buildURL(boardsScreenshots, true)}/></div>
-                    {me?.permissions?.find((s) => s === 'create_post') &&
+                    {me?.permissions?.find((s: string) => s === 'create_post') &&
                         <Button
                             onClick={() => dispatch(setLinkToChannel(currentChannel.id))}
                             emphasis='primary'
@@ -145,7 +147,7 @@ const RHSChannelBoards = () => {
                             defaultMessage='Linked boards'
                         />
                     </span>
-                    {me?.permissions?.find((s) => s === 'create_post') &&
+                    {me?.permissions?.find((s: string) => s === 'create_post') &&
                         <Button
                             onClick={() => dispatch(setLinkToChannel(currentChannel.id))}
                             icon={<AddIcon/>}

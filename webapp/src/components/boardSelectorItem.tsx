@@ -4,9 +4,9 @@
 import React from 'react'
 import {useIntl, FormattedMessage} from 'react-intl'
 
-import {Board} from '../../../../webapp/src/blocks/board'
-import Button from '../../../../webapp/src/widgets/buttons/button'
-import CompassIcon from '../../../../webapp/src/widgets/icons/compassIcon'
+import {Board} from '../blocks/board'
+import Button from '../widgets/buttons/button'
+import CompassIcon from '../widgets/icons/compassIcon'
 
 import './boardSelectorItem.scss'
 

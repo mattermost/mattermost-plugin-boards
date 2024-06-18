@@ -5,7 +5,7 @@ import React from 'react'
 import {Provider as ReduxProvider} from 'react-redux'
 import {render} from '@testing-library/react'
 
-import {mockStateStore, wrapIntl} from '../../../../webapp/src/testUtils'
+import {mockStateStore, wrapIntl} from '../testUtils'
 
 import RHSChannelBoardsHeader from './rhsChannelBoardsHeader'
 

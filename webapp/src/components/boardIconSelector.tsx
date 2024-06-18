@@ -46,4 +46,6 @@ const BoardIconSelector = React.memo((props: Props) => {
     )
 })
 
+BoardIconSelector.displayName = 'BoardIconSelector'
+
 export default BoardIconSelector

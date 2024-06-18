@@ -7,15 +7,15 @@ import {act, render, screen} from '@testing-library/react'
 import {mocked} from 'jest-mock'
 import thunk from 'redux-thunk'
 
-import octoClient from '../../../../webapp/src/octoClient'
-import {BoardMember, createBoard} from '../../../../webapp/src/blocks/board'
-import {mockStateStore, wrapIntl} from '../../../../webapp/src/testUtils'
+import octoClient from '../octoClient'
+import {BoardMember, createBoard} from '../blocks/board'
+import {mockStateStore, wrapIntl} from '../testUtils'
 
-import {Utils} from '../../../../webapp/src/utils'
+import {Utils} from '../utils'
 
 import RHSChannelBoards from './rhsChannelBoards'
 
-jest.mock('../../../../webapp/src/octoClient')
+jest.mock('../octoClient')
 const mockedOctoClient = mocked(octoClient, true)
 
 let mockDisplayDateTime: jest.SpyInstance

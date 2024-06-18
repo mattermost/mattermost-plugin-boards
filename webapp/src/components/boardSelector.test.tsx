@@ -8,10 +8,10 @@ import {mocked} from 'jest-mock'
 
 import userEvent from '@testing-library/user-event'
 
-import octoClient from '../../../../webapp/src/octoClient'
-import {mockStateStore} from '../../../../webapp/src/testUtils'
-import {createBoard} from '../../../../webapp/src/blocks/board'
-import {wrapIntl} from '../../../../webapp/src/testUtils'
+import octoClient from '../octoClient'
+import {mockStateStore} from '../testUtils'
+import {createBoard} from '../blocks/board'
+import {wrapIntl} from '../testUtils'
 
 import BoardSelector from './boardSelector'
 

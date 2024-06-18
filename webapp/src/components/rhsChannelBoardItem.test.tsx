@@ -7,12 +7,12 @@ import {render, screen} from '@testing-library/react'
 
 import userEvent from '@testing-library/user-event'
 
-import {createBoard} from '../../../../webapp/src/blocks/board'
-import {mockStateStore, wrapIntl} from '../../../../webapp/src/testUtils'
+import {createBoard} from '../blocks/board'
+import {mockStateStore, wrapIntl} from '../testUtils'
 
-import {TestBlockFactory} from '../../../../webapp/src/test/testBlockFactory'
+import {TestBlockFactory} from '../test/testBlockFactory'
 
-import {Utils} from '../../../../webapp/src/utils'
+import {Utils} from '../utils'
 
 import RHSChannelBoardItem from './rhsChannelBoardItem'
 

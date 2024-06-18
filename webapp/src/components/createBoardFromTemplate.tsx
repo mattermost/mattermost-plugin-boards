@@ -10,15 +10,15 @@ import {SingleValue} from 'react-select'
 
 import {CSSObject} from '@emotion/serialize'
 
-import {getCurrentLanguage, getMessages} from '../../../../webapp/src/i18n'
-import {getLanguage} from '../../../../webapp/src/store/language'
-import CompassIcon from '../../../../webapp/src/widgets/icons/compassIcon'
-import {useAppSelector} from '../../../../webapp/src/store/hooks'
-import {mutator} from '../../../../webapp/src/mutator'
-import {useGetAllTemplates} from '../../../../webapp/src/hooks/useGetAllTemplates'
+import {getCurrentLanguage, getMessages} from '../i18n'
+import {getLanguage} from '../store/language'
+import CompassIcon from '../widgets/icons/compassIcon'
+import {useAppSelector} from '../store/hooks'
+import {mutator} from '../mutator'
+import {useGetAllTemplates} from '../hooks/useGetAllTemplates'
 
 import './createBoardFromTemplate.scss'
-import {Board} from '../../../../webapp/src/blocks/board'
+import {Board} from '../blocks/board'
 
 type Props = {
     setCanCreate: (canCreate: boolean) => void;

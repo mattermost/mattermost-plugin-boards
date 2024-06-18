@@ -13,10 +13,10 @@ import './iconSelector.scss'
 
 type Props = {
     readonly?: boolean
-    iconElement: any
-    onAddRandomIcon: any
-    onSelectEmoji: any
-    onRemoveIcon: any
+    iconElement: JSX.Element 
+    onAddRandomIcon: () => Promise<void>
+    onSelectEmoji: (emoji: string) => void
+    onRemoveIcon: () => Promise<void>
 }
 
 const IconSelector = React.memo((props: Props) => {
@@ -54,5 +54,7 @@ const IconSelector = React.memo((props: Props) => {
         </div>
     )
 })
+
+IconSelector.displayName = 'IconSelector'
 
 export default IconSelector

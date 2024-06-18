@@ -73,3 +73,5 @@ export const FlashMessages = React.memo((props: Props) => {
         </div>
     )
 })
+
+FlashMessages.displayName = 'FlashMessages'
