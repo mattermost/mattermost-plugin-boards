@@ -1,28 +1,30 @@
 {
-    "compilerOptions": {
-        "jsx": "react",
-        "target": "es2019",
-        "module": "commonjs",
-        "esModuleInterop": true,
-        "noImplicitAny": true,
-        "strict": true,
-        "strictNullChecks": true,
-        "forceConsistentCasingInFileNames": true,
-        "sourceMap": true,
-        "allowJs": true,
-        "resolveJsonModule": true,
-        "incremental": false,
-        "baseUrl": "src",
-        "outDir": "./dist",
-        "moduleResolution": "node"
-    },
-    "include": [
-        "."
-    ],
-    "exclude": [
+	"compilerOptions": {
+		"jsx": "react",
+		"target": "es2019",
+		"module": "commonjs",
+		"esModuleInterop": true,
+		"noImplicitAny": true,
+		"strict": true,
+		"strictNullChecks": true,
+		"forceConsistentCasingInFileNames": true,
+		"sourceMap": true,
+		"allowJs": true,
+		"resolveJsonModule": true,
+		"incremental": false,
+		"outDir": "../dist",
+		"moduleResolution": "node",
+        "typeRoots": [ "./src/types", "./node_modules/@types"]
+	},
+	"include": [
+        "src",
+	],
+	"exclude": [
         ".git",
-        "**/node_modules/*",
+		"**/node_modules/*",
+		"pack",
         "dist",
-        "pack"
+        "node_modules",
+        "!node_modules/@types"
     ]
 }

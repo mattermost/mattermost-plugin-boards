@@ -5,25 +5,23 @@ root = true
 [*]
 end_of_line = lf
 insert_final_newline = true
-trim_trailing_whitespace = true
 charset = utf-8
+trim_trailing_whitespace = true
 
 [*.go]
 indent_style = tab
 
-[*.{js,jsx,json,html}]
+[*.{js, jsx, ts, tsx, json, html}]
 indent_style = space
 indent_size = 4
 
-[{package.json,.eslintrc.json}]
+[webapp/package.json]
 indent_size = 2
 
-[i18n/**.json]
-indent_size = 2
-
-[Makefile]
+[{Makefile, *.mk}]
 indent_style = tab
 
-[*.scss]
+[*.md]
 indent_style = space
 indent_size = 4
+trim_trailing_whitespace = false

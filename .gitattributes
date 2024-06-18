@@ -1,2 +1,1 @@
-website/** linguist-documentation
-server/swagger/** linguist-generated
+server/manifest.go linguist-generated=true
