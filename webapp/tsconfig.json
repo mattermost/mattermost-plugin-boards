@@ -13,7 +13,7 @@
         "resolveJsonModule": true,
         "incremental": false,
         "baseUrl": "src",
-        "outDir": "../dist",
+        "outDir": "./dist",
         "moduleResolution": "node"
     },
     "include": [

@@ -19,8 +19,8 @@
         "mac/dist": true,
         "mac/temp": true,
         "focalboard*.db": true,
-        "webapp/dist/**": true,
-        "webapp/pack": true
+        "webapp/dist/**": false,
+        "webapp/pack": false 
     },
     "search.exclude": {
         "**/__snapshots__": true,

@@ -61,7 +61,7 @@ const config = {
             path.resolve(__dirname),
         ],
         alias: {
-            moment: path.resolve(__dirname, '../../webapp/node_modules/moment/'),
+            moment: path.resolve(__dirname, './node_modules/moment/'),
         },
         extensions: ['*', '.js', '.jsx', '.ts', '.tsx'],
     },
@@ -190,7 +190,7 @@ if (TARGET_IS_PRODUCT) {
         chunkFilename: '[name].[contenthash].js',
     };
 } else {
-    config.resolve.alias['react-intl'] = path.resolve(__dirname, '../../webapp/node_modules/react-intl/');
+    config.resolve.alias['react-intl'] = path.resolve(__dirname, './node_modules/react-intl/');
 
     config.externals = {
         react: 'React',
@@ -236,7 +236,7 @@ if (NPM_TARGET === 'start:product') {
             writeToDisk: false,
         },
         static: {
-            directory: path.join(__dirname, '../../webapp/static'),
+            directory: path.join(__dirname, './static'),
             publicPath: '/static',
         },
     };

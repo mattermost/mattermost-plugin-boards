@@ -9,7 +9,7 @@ import {getCurrentChannel} from '../store/channels'
 import {useAppSelector} from '../store/hooks'
 import {Utils} from '../utils'
 
-import appBarIcon from '../../../../webapp/static/app-bar-icon.png'
+import appBarIcon from '../../static/app-bar-icon.png'
 
 const RHSChannelBoardsHeader = () => {
     const currentChannel = useAppSelector(getCurrentChannel)

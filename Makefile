@@ -111,31 +111,35 @@ else
 endif
 endif
 
-# ## Ensures NPM dependencies are installed without having to run this all the time.
-# webapp/node_modules: $(wildcard webapp/package.json)
-# ifneq ($(HAS_WEBAPP),)
-# 	cd webapp && $(NPM) install
-# 	touch $@
-# endif
+## Ensures NPM dependencies are installed without having to run this all the time.
+webapp/node_modules: $(wildcard webapp/package.json)
+ifneq ($(HAS_WEBAPP),)
+	cd webapp && $(NPM) install
+	touch $@
+endif
 
-# ## Builds the webapp, if it exists.
-# .PHONY: webapp
-# webapp: webapp/node_modules
-# ifneq ($(HAS_WEBAPP),)
-# ifeq ($(MM_DEBUG),)
-# 	cd webapp && $(NPM) run build;
-# else
-# 	cd webapp && $(NPM) run debug;
-# endif
-# endif
+## Builds the webapp, if it exists.
+.PHONY: webapp-plugin
+webapp-plugin: webapp/node_modules
+ifneq ($(HAS_WEBAPP),)
+ifeq ($(MM_DEBUG),)
+	cd webapp && $(NPM) run build;
+else
+	cd webapp && $(NPM) run debug;
+endif
+endif
 
 ## Generates a tar bundle of the plugin for install.
+
+webapp: ## Build webapp.
+	cd webapp; npm run pack
+
 .PHONY: bundle
 bundle:
 	rm -rf dist/
 	mkdir -p dist/$(PLUGIN_ID)
 	cp $(MANIFEST_FILE) dist/$(PLUGIN_ID)/
-	cp -r ../webapp/pack dist/$(PLUGIN_ID)/
+	cp -r webapp/pack dist/$(PLUGIN_ID)/
 ifneq ($(wildcard $(ASSETS_DIR)/.),)
 	cp -r $(ASSETS_DIR) dist/$(PLUGIN_ID)/
 endif
@@ -321,7 +325,7 @@ deploy-to-mattermost-directory:
 	./build/bin/pluginctl disable $(PLUGIN_ID)
 	mkdir -p $(FOCALBOARD_PLUGIN_PATH)
 	cp $(MANIFEST_FILE) $(FOCALBOARD_PLUGIN_PATH)/
-	cp -r ../webapp/pack $(FOCALBOARD_PLUGIN_PATH)/
+	cp -r webapp/pack $(FOCALBOARD_PLUGIN_PATH)/
 	cp -r $(ASSETS_DIR) $(FOCALBOARD_PLUGIN_PATH)/
 	cp -r public $(FOCALBOARD_PLUGIN_PATH)/
 	mkdir -p $(FOCALBOARD_PLUGIN_PATH)/server
@@ -490,9 +494,6 @@ server-test-postgres: ## Run server tests using postgres
 	cd mattermost-plugin/server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=plugin-postgres-profile.coverage -count=1 -timeout=30m ./...
 	cd mattermost-plugin/server; go tool cover -func plugin-postgres-profile.coverage
 	docker-compose -f ./docker-testing/docker-compose-postgres.yml down -v --remove-orphans
-
-webapp: ## Build webapp.
-	cd webapp; npm run pack
 
 webapp-ci: ## Webapp CI: linting & testing.
 	cd webapp; npm run check
