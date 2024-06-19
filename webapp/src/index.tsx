@@ -5,43 +5,30 @@ import {createIntl, createIntlCache} from 'react-intl'
 import {Store, Action} from 'redux'
 import {Provider as ReduxProvider} from 'react-redux'
 import {createBrowserHistory, History} from 'history'
-
 import {rudderAnalytics, RudderTelemetryHandler} from 'mattermost-redux/client/rudder'
-
 import {GlobalState} from 'mattermost-redux/types/store'
-
 import {selectTeam} from 'mattermost-redux/actions/teams'
 
-import {SuiteWindow} from '../../../webapp/src/types/index'
-import {UserSettings} from '../../../webapp/src/userSettings'
-import {getMessages, getCurrentLanguage} from '../../../webapp/src/i18n'
-
-const windowAny = (window as SuiteWindow)
-windowAny.baseURL = process.env.TARGET_IS_PRODUCT ? '/plugins/boards' : '/plugins/focalboard'
-windowAny.frontendBaseURL = '/boards'
-windowAny.isFocalboardPlugin = true
-
-import App from '../../../webapp/src/app'
-import store from '../../../webapp/src/store'
-import {setTeam} from '../../../webapp/src/store/teams'
-import WithWebSockets from '../../../webapp/src/components/withWebSockets'
-import {setChannel} from '../../../webapp/src/store/channels'
-import {initialLoad} from '../../../webapp/src/store/initialLoad'
-import {Utils} from '../../../webapp/src/utils'
-import GlobalHeader from '../../../webapp/src/components/globalHeader/globalHeader'
-import FocalboardIcon from '../../../webapp/src/widgets/icons/logo'
-import {setMattermostTheme} from '../../../webapp/src/theme'
-
-import TelemetryClient, {TelemetryCategory, TelemetryActions} from '../../../webapp/src/telemetry/telemetryClient'
-
+import TelemetryClient, {TelemetryCategory, TelemetryActions} from './telemetry/telemetryClient'
+import {setMattermostTheme} from './theme'
+import FocalboardIcon from './widgets/icons/logo'
+import GlobalHeader from './components/globalHeader/globalHeader'
+import App from './app'
+import store from './store'
+import {setTeam} from './store/teams'
+import WithWebSockets from './components/withWebSockets'
+import {setChannel} from './store/channels'
+import {initialLoad} from './store/initialLoad'
+import {Utils} from './utils'
 import '../../../webapp/src/styles/focalboard-variables.scss'
 import '../../../webapp/src/styles/main.scss'
 import '../../../webapp/src/styles/labels.scss'
-import octoClient from '../../../webapp/src/octoClient'
-import {Board} from '../../../webapp/src/blocks/board'
-
-import appBarIcon from '../../../webapp/static/app-bar-icon.png'
-
+import octoClient from './octoClient'
+import {Board} from './blocks/board'
+import appBarIcon from './static/app-bar-icon.png'
+import {getMessages, getCurrentLanguage} from './i18n'
+import {UserSettings} from './userSettings'
+import {SuiteWindow} from './types/index'
 import BoardsUnfurl from './components/boardsUnfurl/boardsUnfurl'
 import RHSChannelBoards from './components/rhsChannelBoards'
 import RHSChannelBoardsHeader from './components/rhsChannelBoardsHeader'
@@ -56,17 +43,19 @@ import wsClient, {
     ACTION_UPDATE_BOARD_CATEGORY,
     ACTION_UPDATE_BOARD,
     ACTION_REORDER_CATEGORIES,
-} from './../../../webapp/src/wsclient'
-
+} from './wsclient'
 import manifest from './manifest'
 import ErrorBoundary from './error_boundary'
-
 // eslint-disable-next-line import/no-unresolved
 import {PluginRegistry} from './types/mattermost-webapp'
-
 import './plugin.scss'
 import CloudUpgradeNudge from "./components/cloudUpgradeNudge/cloudUpgradeNudge"
 import CreateBoardFromTemplate from './components/createBoardFromTemplate'
+
+const windowAny = (window as SuiteWindow)
+windowAny.baseURL = process.env.TARGET_IS_PRODUCT ? '/plugins/boards' : '/plugins/focalboard'
+windowAny.frontendBaseURL = '/boards'
+windowAny.isFocalboardPlugin = true
 
 function getSubpath(siteURL: string): string {
     const url = new URL(siteURL)

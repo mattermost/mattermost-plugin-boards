@@ -10,13 +10,13 @@ import {Provider as ReduxProvider} from 'react-redux'
 
 import {mocked} from 'jest-mock'
 
-import {createBoardView} from '../../../../../webapp/src/blocks/boardView'
+import {createBoardView} from '../../blocks/boardView'
 
-import {Utils} from '../../../../../webapp/src/utils'
-import {createCard} from '../../../../../webapp/src/blocks/card'
-import {createBoard} from '../../../../../webapp/src/blocks/board'
-import octoClient from '../../../../../webapp/src/octoClient'
-import {wrapIntl} from '../../../../../webapp/src/testUtils'
+import {Utils} from '../../utils'
+import {createCard} from '../../blocks/card'
+import {createBoard} from '../../blocks/board'
+import octoClient from '../../octoClient'
+import {wrapIntl} from '../../testUtils'
 
 import BoardsUnfurl from './boardsUnfurl'
 

@@ -3,7 +3,7 @@
 
 import React from 'react'
 
-import {Utils} from '../../../webapp/src/utils'
+import {Utils} from './utils'
 
 type State = {
     hasError: boolean

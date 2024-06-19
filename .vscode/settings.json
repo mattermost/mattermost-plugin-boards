@@ -10,7 +10,7 @@
     "files.exclude": {
         ".vscode": false,
         "**/__snapshots__": false,
-        "**/node_modules": true,
+        "**/node_modules": false,
         "bin": true,
         "files": true,
         "linux/config.json": true,

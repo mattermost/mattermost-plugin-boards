@@ -9,9 +9,10 @@ import {
     DraftStyleMap,
 } from 'draft-js'
 import {EditorPlugin} from '@draft-js-plugins/editor'
-import {Repeat, List} from 'immutable'
 
-// Inline style handlers
+
+import {List, Repeat} from 'immutable'
+
 import createBoldStyleStrategy from './inline-styles/boldStyleStrategy'
 import createItalicStyleStrategy from './inline-styles/italicStyleStrategy'
 import createStrikethroughStyleStrategy from './inline-styles/strikethroughStyleStrategy'

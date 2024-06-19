@@ -111,23 +111,23 @@ else
 endif
 endif
 
-## Ensures NPM dependencies are installed without having to run this all the time.
-webapp/node_modules: $(wildcard webapp/package.json)
-ifneq ($(HAS_WEBAPP),)
-	cd webapp && $(NPM) install
-	touch $@
-endif
+# ## Ensures NPM dependencies are installed without having to run this all the time.
+# webapp/node_modules: $(wildcard webapp/package.json)
+# ifneq ($(HAS_WEBAPP),)
+# 	cd webapp && $(NPM) install
+# 	touch $@
+# endif
 
-## Builds the webapp, if it exists.
-.PHONY: webapp
-webapp: webapp/node_modules
-ifneq ($(HAS_WEBAPP),)
-ifeq ($(MM_DEBUG),)
-	cd webapp && $(NPM) run build;
-else
-	cd webapp && $(NPM) run debug;
-endif
-endif
+# ## Builds the webapp, if it exists.
+# .PHONY: webapp
+# webapp: webapp/node_modules
+# ifneq ($(HAS_WEBAPP),)
+# ifeq ($(MM_DEBUG),)
+# 	cd webapp && $(NPM) run build;
+# else
+# 	cd webapp && $(NPM) run debug;
+# endif
+# endif
 
 ## Generates a tar bundle of the plugin for install.
 .PHONY: bundle
@@ -278,7 +278,9 @@ kill: detach
 ## Clean removes all build artifacts.
 .PHONY: clean
 clean:
-	rm -fr dist/
+	rm -rf bin
+	rm -rf dist
+	rm -rf webapp/pack
 ifneq ($(HAS_SERVER),)
 	rm -fr server/coverage.txt
 	rm -fr server/dist
@@ -348,12 +350,8 @@ all: webapp server ## Build server and webapp.
 
 prebuild: ## Run prebuild actions (install dependencies etc.).
 	cd webapp; npm install
-	cd mattermost-plugin/webapp; npm install
 
 ci: webapp-ci server-test ## Simulate CI, locally.
-
-templates-archive: ## Build templates archive file
-	cd server/assets/build-template-archive; go run -tags '$(BUILD_TAGS)' main.go --dir="../templates-boardarchive" --out="../templates.boardarchive"
 
 # server: ## Build server for local environment.
 # 	$(eval LDFLAGS += -X "github.com/mattermost/focalboard/server/model.Edition=dev")
@@ -429,14 +427,14 @@ modd-precheck:
 		exit 1; \
 	fi; \
 
-watch: modd-precheck ## Run both server and webapp watching for changes
-	env FOCALBOARD_BUILD_TAGS='$(BUILD_TAGS)' modd
+# watch: modd-precheck ## Run both server and webapp watching for changes
+# 	env FOCALBOARD_BUILD_TAGS='$(BUILD_TAGS)' modd
 
 # watch-single-user: modd-precheck ## Run both server and webapp in single user mode watching for changes
 # 	env FOCALBOARDSERVER_ARGS=--single-user FOCALBOARD_BUILD_TAGS='$(BUILD_TAGS)' modd
 
-watch-server-test: modd-precheck ## Run server tests watching for changes
-	env FOCALBOARD_BUILD_TAGS='$(BUILD_TAGS)' modd -f modd-servertest.conf
+# watch-server-test: modd-precheck ## Run server tests watching for changes
+# 	env FOCALBOARD_BUILD_TAGS='$(BUILD_TAGS)' modd -f modd-servertest.conf
 
 server-test: server-test-sqlite server-test-mysql server-test-mariadb server-test-postgres ## Run server tests
 
@@ -562,19 +560,5 @@ swagger: ## Generate swagger API spec and clients based on it.
 	cd server/swagger && openapi-generator generate -i swagger.yml -g swift5 -o clients/swift
 	cd server/swagger && openapi-generator generate -i swagger.yml -g python -o clients/python
 
-clean: ## Clean build artifacts.
-	rm -rf bin
-	rm -rf dist
-	rm -rf webapp/pack
-	rm -rf mac/temp
-	rm -rf mac/dist
-	rm -rf linux/dist
-	rm -rf win-wpf/msix
-	rm -f win-wpf/focalboard.msix
-
 cleanall: clean ## Clean all build artifacts and dependencies.
 	rm -rf webapp/node_modules
-
-## Help documentatin à la https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
-help:
-	@grep -E '^[0-9a-zA-Z_-]+:.*?## .*$$' ./Makefile | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

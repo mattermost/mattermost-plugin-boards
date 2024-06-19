@@ -3,31 +3,31 @@
 import React, {useState, useEffect} from 'react'
 import {IntlProvider, FormattedMessage, useIntl} from 'react-intl'
 
-import WithWebSockets from '../../../../../webapp/src/components/withWebSockets'
-import {useWebsockets} from '../../../../../webapp/src/hooks/websockets'
+import WithWebSockets from '../../components/withWebSockets'
+import {useWebsockets} from '../../hooks/websockets'
 
-import {getLanguage} from '../../../../../webapp/src/store/language'
-import {useAppSelector} from '../../../../../webapp/src/store/hooks'
-import {getCurrentTeamId} from '../../../../../webapp/src/store/teams'
+import {getLanguage} from '../../store/language'
+import {useAppSelector} from '../../store/hooks'
+import {getCurrentTeamId} from '../../store/teams'
 
-import {WSClient, MMWebSocketClient} from '../../../../../webapp/src/wsclient'
+import {WSClient, MMWebSocketClient} from '../../wsclient'
 import manifest from '../../manifest'
 
-import {getMessages} from './../../../../../webapp/src/i18n'
-import {Utils} from './../../../../../webapp/src/utils'
-import {Block} from './../../../../../webapp/src/blocks/block'
-import {Card} from './../../../../../webapp/src/blocks/card'
-import {Board} from './../../../../../webapp/src/blocks/board'
-import {ContentBlock} from './../../../../../webapp/src/blocks/contentBlock'
+import {getMessages} from './../../i18n'
+import {Utils} from './../../utils'
+import {Block} from './../../blocks/block'
+import {Card} from './../../blocks/card'
+import {Board} from './../../blocks/board'
+import {ContentBlock} from './../../blocks/contentBlock'
 
-import octoClient from './../../../../../webapp/src/octoClient'
+import octoClient from './../../octoClient'
 
 const noop = () => ''
 const Avatar = (window as any).Components?.Avatar || noop
 const imageURLForUser = (window as any).Components?.imageURLForUser || noop
 
 import './boardsUnfurl.scss'
-import '../../../../../webapp/src/styles/labels.scss'
+import '../../styles/labels.scss'
 
 type Props = {
     embed: {
