@@ -71,21 +71,6 @@ apply:
 check-style: webapp/node_modules
 	@echo Checking for style guide compliance
 
-ifneq ($(HAS_WEBAPP),)
-	cd webapp && npm run lint
-	cd webapp && npm run check-types
-endif
-
-ifneq ($(HAS_SERVER),)
-	@if ! [ -x "$$(command -v golangci-lint)" ]; then \
-		echo "golangci-lint is not installed. Please see https://github.com/golangci/golangci-lint#install-golangci-lint for installation instructions."; \
-		exit 1; \
-	fi; \
-
-	@echo Running golangci-lint
-	golangci-lint run ./...
-endif
-
 templates-archive: ## Build templates archive file
 	cd ./server/assets/build-template-archive; go run -tags '$(BUILD_TAGS)' main.go --dir="../templates-boardarchive" --out="../templates.boardarchive"
 
@@ -118,9 +103,9 @@ ifneq ($(HAS_WEBAPP),)
 	touch $@
 endif
 
-## Builds the webapp, if it exists.
-.PHONY: webapp-plugin
-webapp-plugin: webapp/node_modules
+## Generate dist and pack files for the webapp.
+.PHONY: webapp
+webapp: webapp/node_modules
 ifneq ($(HAS_WEBAPP),)
 ifeq ($(MM_DEBUG),)
 	cd webapp && $(NPM) run build;
@@ -128,12 +113,9 @@ else
 	cd webapp && $(NPM) run debug;
 endif
 endif
-
-## Generates a tar bundle of the plugin for install.
-
-webapp: ## Build webapp.
 	cd webapp; npm run pack
 
+## Generates a tar bundle of the plugin for install.
 .PHONY: bundle
 bundle:
 	rm -rf dist/
@@ -357,62 +339,6 @@ prebuild: ## Run prebuild actions (install dependencies etc.).
 
 ci: webapp-ci server-test ## Simulate CI, locally.
 
-# server: ## Build server for local environment.
-# 	$(eval LDFLAGS += -X "github.com/mattermost/focalboard/server/model.Edition=dev")
-# 	cd server; go build -ldflags '$(LDFLAGS)' -tags '$(BUILD_TAGS)' -o ../bin/focalboard-server ./main
-
-# server-mac: ## Build server for Mac.
-# 	mkdir -p bin/mac
-# 	$(eval LDFLAGS += -X "github.com/mattermost/focalboard/server/model.Edition=mac")
-# ifeq ($(FB_PROD),)
-# 	cd server; env GOOS=darwin GOARCH=$(MAC_GO_ARCH) go build -ldflags '$(LDFLAGS)' -tags '$(BUILD_TAGS)' -o ../bin/mac/focalboard-server ./main
-# else
-# # Always build x86 for production, to work on both Apple Silicon and legacy Macs
-# 	cd server; env GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 go build -ldflags '$(LDFLAGS)' -tags '$(BUILD_TAGS)' -o ../bin/mac/focalboard-server ./main
-# endif
-
-# server-linux: ## Build server for Linux.
-# 	mkdir -p bin/linux
-# 	$(eval LDFLAGS += -X "github.com/mattermost/focalboard/server/model.Edition=linux")
-# 	cd server; env GOOS=linux GOARCH=$(arch) go build -ldflags '$(LDFLAGS)' -tags '$(BUILD_TAGS)' -o ../bin/linux/focalboard-server ./main
-
-# server-docker: ## Build server for Docker Architectures.
-# 	mkdir -p bin/docker
-# 	$(eval LDFLAGS += -X "github.com/mattermost/focalboard/server/model.Edition=linux")
-# 	cd server; env GOOS=$(os) GOARCH=$(arch) go build -ldflags '$(LDFLAGS)' -tags '$(BUILD_TAGS)' -o ../bin/docker/focalboard-server ./main
-
-# server-win: ## Build server for Windows.
-# 	$(eval LDFLAGS += -X "github.com/mattermost/focalboard/server/model.Edition=win")
-# 	cd server; env GOOS=windows GOARCH=amd64 go build -ldflags '$(LDFLAGS)' -tags '$(BUILD_TAGS)' -o ../bin/win/focalboard-server.exe ./main
-
-# server-dll: ## Build server as Windows DLL.
-# 	$(eval LDFLAGS += -X "github.com/mattermost/focalboard/server/model.Edition=win")
-# 	cd server; env GOOS=windows GOARCH=amd64 go build -ldflags '$(LDFLAGS)' -tags '$(BUILD_TAGS)' -buildmode=c-shared -o ../bin/win-dll/focalboard-server.dll ./main
-
-# server-linux-package: server-linux webapp
-# 	rm -rf package
-# 	mkdir -p package/${PACKAGE_FOLDER}/bin
-# 	cp bin/linux/focalboard-server package/${PACKAGE_FOLDER}/bin
-# 	cp -R webapp/pack package/${PACKAGE_FOLDER}/pack
-# 	cp server-config.json package/${PACKAGE_FOLDER}/config.json
-# 	cp NOTICE.txt package/${PACKAGE_FOLDER}
-# 	cp webapp/NOTICE.txt package/${PACKAGE_FOLDER}/webapp-NOTICE.txt
-# 	mkdir -p dist
-# 	cd package && tar -czvf ../dist/focalboard-server-linux-amd64.tar.gz ${PACKAGE_FOLDER}
-# 	rm -rf package
-
-# server-linux-package-docker:
-# 	rm -rf package
-# 	mkdir -p package/${PACKAGE_FOLDER}/bin
-# 	cp bin/linux/focalboard-server package/${PACKAGE_FOLDER}/bin
-# 	cp -R webapp/pack package/${PACKAGE_FOLDER}/pack
-# 	cp server-config.json package/${PACKAGE_FOLDER}/config.json
-# 	cp NOTICE.txt package/${PACKAGE_FOLDER}
-# 	cp webapp/NOTICE.txt package/${PACKAGE_FOLDER}/webapp-NOTICE.txt
-# 	mkdir -p dist
-# 	cd package && tar -czvf ../dist/focalboard-server-linux-$(arch).tar.gz ${PACKAGE_FOLDER}
-# 	rm -rf package
-
 generate: ## Install and run code generators.
 	cd server; go install github.com/golang/mock/mockgen@v1.6.0
 	cd server; go generate ./...
@@ -423,22 +349,12 @@ server-lint: ## Run linters on server code.
 		exit 1; \
 	fi;
 	cd server; golangci-lint run ./...
-	cd mattermost-plugin; golangci-lint run ./...
 
 modd-precheck:
 	@if ! [ -x "$$(command -v modd)" ]; then \
 		echo "modd is not installed. Please see https://github.com/cortesi/modd#install for installation instructions"; \
 		exit 1; \
 	fi; \
-
-# watch: modd-precheck ## Run both server and webapp watching for changes
-# 	env FOCALBOARD_BUILD_TAGS='$(BUILD_TAGS)' modd
-
-# watch-single-user: modd-precheck ## Run both server and webapp in single user mode watching for changes
-# 	env FOCALBOARDSERVER_ARGS=--single-user FOCALBOARD_BUILD_TAGS='$(BUILD_TAGS)' modd
-
-# watch-server-test: modd-precheck ## Run server tests watching for changes
-# 	env FOCALBOARD_BUILD_TAGS='$(BUILD_TAGS)' modd -f modd-servertest.conf
 
 server-test: server-test-sqlite server-test-mysql server-test-mariadb server-test-postgres ## Run server tests
 
@@ -510,44 +426,6 @@ watch-plugin: modd-precheck ## Run and upload the plugin to a development server
 
 live-watch-plugin: modd-precheck ## Run and update locally the plugin in the development server
 	cd mattermost-plugin; make live-watch
-
-# mac-app: server-mac webapp ## Build Mac application.
-# 	rm -rf mac/temp
-# 	rm -rf mac/dist
-# 	rm -rf mac/resources/bin
-# 	rm -rf mac/resources/pack
-# 	mkdir -p mac/resources/bin
-# 	cp bin/mac/focalboard-server mac/resources/bin/focalboard-server
-# 	cp app-config.json mac/resources/config.json
-# 	cp -R webapp/pack mac/resources/pack
-# 	mkdir -p mac/temp
-# 	xcodebuild archive -workspace mac/Focalboard.xcworkspace -scheme Focalboard -archivePath mac/temp/focalboard.xcarchive CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED="NO" CODE_SIGNING_ALLOWED="NO" \
-# 		|| { echo "xcodebuild failed, did you install the full Xcode and not just the CLI tools?"; exit 1; }
-# 	mkdir -p mac/dist
-# 	cp -R mac/temp/focalboard.xcarchive/Products/Applications/Focalboard.app mac/dist/
-# 	# xcodebuild -exportArchive -archivePath mac/temp/focalboard.xcarchive -exportPath mac/dist -exportOptionsPlist mac/export.plist
-# 	cp NOTICE.txt mac/dist
-# 	cp webapp/NOTICE.txt mac/dist/webapp-NOTICE.txt
-# 	cd mac/dist; zip -r focalboard-mac.zip Focalboard.app MIT-COMPILED-LICENSE.md NOTICE.txt webapp-NOTICE.txt
-
-# win-wpf-app: server-dll webapp ## Build Windows WPF application.
-# 	cd win-wpf && ./build.bat
-# 	cd win-wpf && ./package.bat
-# 	cd win-wpf && ./package-zip.bat
-
-# linux-app: webapp ## Build Linux application.
-# 	rm -rf linux/temp
-# 	rm -rf linux/dist
-# 	mkdir -p linux/dist
-# 	mkdir -p linux/temp/focalboard-app
-# 	cp app-config.json linux/temp/focalboard-app/config.json
-# 	cp NOTICE.txt linux/temp/focalboard-app/
-# 	cp webapp/NOTICE.txt linux/temp/focalboard-app/webapp-NOTICE.txt
-# 	cp -R webapp/pack linux/temp/focalboard-app/pack
-# 	cd linux; make build
-# 	cp -R linux/bin/focalboard-app linux/temp/focalboard-app/
-# 	cd linux/temp; tar -zcf ../dist/focalboard-linux.tar.gz focalboard-app
-# 	rm -rf linux/temp
 
 swagger: ## Generate swagger API spec and clients based on it.
 	mkdir -p server/swagger/docs

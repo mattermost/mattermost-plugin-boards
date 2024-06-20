@@ -8,10 +8,10 @@ import (
 	"runtime/debug"
 
 	"github.com/gorilla/mux"
-	"github.com/mattermost/focalboard-plugin/server/app"
-	"github.com/mattermost/focalboard-plugin/server/model"
-	"github.com/mattermost/focalboard-plugin/server/services/audit"
-	"github.com/mattermost/focalboard-plugin/server/services/permissions"
+	"github.com/mattermost/mattermost-plugin-boards/server/app"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/services/audit"
+	"github.com/mattermost/mattermost-plugin-boards/server/services/permissions"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )

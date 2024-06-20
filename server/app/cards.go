@@ -6,8 +6,8 @@ package app
 import (
 	"fmt"
 
-	"github.com/mattermost/focalboard-plugin/server/model"
-	"github.com/mattermost/focalboard-plugin/server/utils"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 )
 
 func (a *App) CreateCard(card *model.Card, boardID string, userID string, disableNotify bool) (*model.Card, error) {

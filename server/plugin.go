@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/mattermost/focalboard-plugin/server/boards"
-	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/boards"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
 
 	pluginapi "github.com/mattermost/mattermost/server/public/pluginapi"
 

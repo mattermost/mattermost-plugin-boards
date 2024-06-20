@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mattermost/focalboard-plugin/server/client"
-	"github.com/mattermost/focalboard-plugin/server/model"
-	"github.com/mattermost/focalboard-plugin/server/utils"
+	"github.com/mattermost/mattermost-plugin-boards/server/client"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

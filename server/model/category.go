@@ -6,7 +6,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/mattermost/focalboard-plugin/server/utils"
+	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 )
 
 const (

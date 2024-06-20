@@ -15,7 +15,7 @@ func Test36AddUniqueConstraintToCategoryBoards(t *testing.T) {
 
 		// verifying if constraint has been added
 
-		//can't verify in sqlite, so skipping it
+		// can't verify in sqlite, so skipping it
 		if th.IsSQLite() {
 			return
 		}

@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/mattermost/focalboard-plugin/server/model"
-	"github.com/mattermost/focalboard-plugin/server/services/audit"
-	"github.com/mattermost/focalboard-plugin/server/utils"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/services/audit"
+	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 )
 
 func (a *API) registerUsersRoutes(r *mux.Router) {

@@ -88,4 +88,7 @@ const VersionMessage = React.memo(() => {
         </div>
     )
 })
+
+VersionMessage.displayName = 'VersionMessage'
+
 export default VersionMessage

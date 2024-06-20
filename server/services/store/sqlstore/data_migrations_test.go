@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

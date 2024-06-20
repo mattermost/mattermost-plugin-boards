@@ -11,7 +11,7 @@ import (
 	"sync"
 	"text/template"
 
-	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/wiggin77/merror"
 
 	mm_model "github.com/mattermost/mattermost/server/public/model"

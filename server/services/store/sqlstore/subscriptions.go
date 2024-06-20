@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )

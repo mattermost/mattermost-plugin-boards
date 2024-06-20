@@ -6,8 +6,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/mattermost/focalboard-plugin/server/model"
-	"github.com/mattermost/focalboard-plugin/server/services/config"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/services/config"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )

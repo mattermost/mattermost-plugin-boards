@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/mattermost/focalboard-plugin/server/services/store"
+	"github.com/mattermost/mattermost-plugin-boards/server/services/store"
 	"github.com/stretchr/testify/require"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"

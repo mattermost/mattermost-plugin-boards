@@ -58,6 +58,5 @@ func Test33RemoveDeletedCategoryBoards(t *testing.T) {
 		err = th.f.DB().Get(&count, "SELECT COUNT(*) FROM focalboard_category_boards")
 		require.NoError(t, err)
 		require.Equal(t, 5, count)
-
 	})
 }

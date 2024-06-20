@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/mattermost/focalboard-plugin/server/model"
-	"github.com/mattermost/focalboard-plugin/server/utils"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 )
 
 var errCategoryNotFound = errors.New("category ID specified in input does not exist for user")

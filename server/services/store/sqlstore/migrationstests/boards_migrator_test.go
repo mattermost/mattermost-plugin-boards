@@ -20,8 +20,8 @@ import (
 	mmSqlStore "github.com/mattermost/mattermost/server/public/utils/sql"
 	"github.com/mattermost/mattermost/server/v8/channels/db"
 
-	"github.com/mattermost/focalboard-plugin/server/model"
-	"github.com/mattermost/focalboard-plugin/server/services/store/sqlstore"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/services/store/sqlstore"
 )
 
 var tablePrefix = "focalboard_"
@@ -191,13 +191,13 @@ func (bm *BoardsMigrator) Setup() error {
 		return dbErr
 	}
 
-	if err := bm.db.Ping(); err != nil {
-		return err
+	if newErr := bm.db.Ping(); newErr != nil {
+		return newErr
 	}
 
 	if bm.withMattermostMigrations {
-		if err := bm.runMattermostMigrations(); err != nil {
-			return err
+		if newErr := bm.runMattermostMigrations(); newErr != nil {
+			return newErr
 		}
 	}
 

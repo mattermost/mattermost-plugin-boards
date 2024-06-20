@@ -1,7 +1,7 @@
 package ws
 
 import (
-	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
 )
 
 // UpdateCategoryMessage is sent on block updates.

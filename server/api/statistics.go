@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	mmModel "github.com/mattermost/mattermost/server/public/model"
 )
 

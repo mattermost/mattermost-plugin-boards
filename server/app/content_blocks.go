@@ -3,7 +3,7 @@ package app
 import (
 	"fmt"
 
-	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/pkg/errors"
 )
 

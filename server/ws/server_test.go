@@ -4,8 +4,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/mattermost/focalboard-plugin/server/auth"
-	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/auth"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 

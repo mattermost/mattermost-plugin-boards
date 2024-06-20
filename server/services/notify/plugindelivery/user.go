@@ -6,7 +6,7 @@ package plugindelivery
 import (
 	"strings"
 
-	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
 
 	mm_model "github.com/mattermost/mattermost/server/public/model"
 )

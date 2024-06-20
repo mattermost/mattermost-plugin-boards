@@ -2,7 +2,7 @@
 package ws
 
 import (
-	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
 )
 
 const (

@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
 )
 
 type contentOrderMatcher struct {

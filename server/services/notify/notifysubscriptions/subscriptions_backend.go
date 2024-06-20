@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mattermost/focalboard-plugin/server/model"
-	"github.com/mattermost/focalboard-plugin/server/services/notify"
-	"github.com/mattermost/focalboard-plugin/server/services/permissions"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/services/notify"
+	"github.com/mattermost/mattermost-plugin-boards/server/services/permissions"
 	"github.com/wiggin77/merror"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"

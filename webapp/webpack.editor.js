@@ -1,7 +1,10 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
-const merge = require('webpack-merge');
 const path = require('path');
+
+const merge = require('webpack-merge');
+
+
 const CopyPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
