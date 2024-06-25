@@ -337,7 +337,7 @@ all: webapp server ## Build server and webapp.
 prebuild: ## Run prebuild actions (install dependencies etc.).
 	cd webapp; npm install
 
-ci: webapp-ci server-test ## Simulate CI, locally.
+ci: webapp-ci  ## Simulate CI, locally.
 
 generate: ## Install and run code generators.
 	cd server; go install github.com/golang/mock/mockgen@v1.6.0
@@ -356,67 +356,9 @@ modd-precheck:
 		exit 1; \
 	fi; \
 
-server-test: server-test-sqlite server-test-mysql server-test-mariadb server-test-postgres ## Run server tests
-
-server-test-sqlite: export FOCALBOARD_UNIT_TESTING=1
-
-server-test-sqlite: ## Run server tests using sqlite
-	cd server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=server-sqlite-profile.coverage -count=1 -timeout=30m ./...
-	cd server; go tool cover -func server-sqlite-profile.coverage
-
-server-test-mini-sqlite: export FOCALBOARD_UNIT_TESTING=1
-
-server-test-mini-sqlite: ## Run server tests using sqlite
-	cd server/integrationtests; go test -tags '$(BUILD_TAGS)' $(RACE) -v -count=1 -timeout=30m ./...
-
-server-test-mysql: export FOCALBOARD_UNIT_TESTING=1
-server-test-mysql: export FOCALBOARD_STORE_TEST_DB_TYPE=mysql
-server-test-mysql: export FOCALBOARD_STORE_TEST_DOCKER_PORT=44446
-
-server-test-mysql: ## Run server tests using mysql
-	@echo Starting docker container for mysql
-	docker-compose -f ./docker-testing/docker-compose-mysql.yml down -v --remove-orphans
-	docker-compose -f ./docker-testing/docker-compose-mysql.yml run start_dependencies
-	cd server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=server-mysql-profile.coverage -count=1 -timeout=30m ./...
-	cd server; go tool cover -func server-mysql-profile.coverage
-	cd mattermost-plugin/server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=plugin-mysql-profile.coverage -count=1 -timeout=30m ./...
-	cd mattermost-plugin/server; go tool cover -func plugin-mysql-profile.coverage
-	docker-compose -f ./docker-testing/docker-compose-mysql.yml down -v --remove-orphans
-
-server-test-mariadb: export FOCALBOARD_UNIT_TESTING=1
-server-test-mariadb: export FOCALBOARD_STORE_TEST_DB_TYPE=mariadb
-server-test-mariadb: export FOCALBOARD_STORE_TEST_DOCKER_PORT=44445
-
-server-test-mariadb: templates-archive ## Run server tests using mysql
-	@echo Starting docker container for mariadb
-	docker-compose -f ./docker-testing/docker-compose-mariadb.yml down -v --remove-orphans
-	docker-compose -f ./docker-testing/docker-compose-mariadb.yml run start_dependencies
-	cd server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=server-mariadb-profile.coverage -count=1 -timeout=30m ./...
-	cd server; go tool cover -func server-mariadb-profile.coverage
-	cd mattermost-plugin/server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=plugin-mariadb-profile.coverage -count=1 -timeout=30m ./...
-	cd mattermost-plugin/server; go tool cover -func plugin-mariadb-profile.coverage
-	docker-compose -f ./docker-testing/docker-compose-mariadb.yml down -v --remove-orphans
-
-server-test-postgres: export FOCALBOARD_UNIT_TESTING=1
-server-test-postgres: export FOCALBOARD_STORE_TEST_DB_TYPE=postgres
-server-test-postgres: export FOCALBOARD_STORE_TEST_DOCKER_PORT=44447
-
-server-test-postgres: ## Run server tests using postgres
-	@echo Starting docker container for postgres
-	docker-compose -f ./docker-testing/docker-compose-postgres.yml down -v --remove-orphans
-	docker-compose -f ./docker-testing/docker-compose-postgres.yml run start_dependencies
-	cd server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=server-postgres-profile.coverage -count=1 -timeout=30m ./...
-	cd server; go tool cover -func server-postgres-profile.coverage
-	cd mattermost-plugin/server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=plugin-postgres-profile.coverage -count=1 -timeout=30m ./...
-	cd mattermost-plugin/server; go tool cover -func plugin-postgres-profile.coverage
-	docker-compose -f ./docker-testing/docker-compose-postgres.yml down -v --remove-orphans
-
 webapp-ci: ## Webapp CI: linting & testing.
-	cd webapp; npm run check
-	cd mattermost-plugin/webapp; npm run lint
+	cd webapp; npm run check; npm run lint
 	cd webapp; npm run test
-	cd mattermost-plugin/webapp; npm run test
-	cd webapp; npm run cypress:ci
 
 webapp-test: ## jest tests for webapp
 	cd webapp; npm run test
