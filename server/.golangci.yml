@@ -3,6 +3,7 @@ run:
   modules-download-mode: readonly
   skip-files:
     - product/boards_product.go
+    - services/store/sqlstore/migrations
 
 linters-settings:
   gofmt:
