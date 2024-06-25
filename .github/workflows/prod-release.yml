@@ -21,13 +21,13 @@ jobs:
       run: sed -i -e "s,placeholder_rudder_dataplane_url,${{ secrets.RUDDER_DATAPLANE_URL }},g" ${{ github.workspace }}/focalboard/server/services/telemetry/telemetry.go
 
     - name: Replace token 1 webapp
-      run: sed -i -e "s,placeholder_rudder_dataplane_url,${{ secrets.RUDDER_DATAPLANE_URL }},g" ${{ github.workspace }}/focalboard/mattermost-plugin/webapp/src/index.tsx
+      run: sed -i -e "s,placeholder_rudder_dataplane_url,${{ secrets.RUDDER_DATAPLANE_URL }},g" ${{ github.workspace }}/focalboard/webapp/src/index.tsx
 
     - name: Replace token 2 server
       run: sed -i -e "s,placeholder_rudder_key,${{ secrets.RUDDER_PROD_KEY }},g" ${{ github.workspace }}/focalboard/server/services/telemetry/telemetry.go
 
     - name: Replace token 2 webapp
-      run: sed -i -e "s,placeholder_rudder_key,${{ secrets.RUDDER_PROD_KEY }},g" ${{ github.workspace }}/focalboard/mattermost-plugin/webapp/src/index.tsx
+      run: sed -i -e "s,placeholder_rudder_key,${{ secrets.RUDDER_PROD_KEY }},g" ${{ github.workspace }}/focalboard/webapp/src/index.tsx
 
     - name: npm ci
       run: cd focalboard/webapp; npm ci --no-optional
@@ -82,13 +82,13 @@ jobs:
       run: sed -i -e "s,placeholder_rudder_dataplane_url,${{ secrets.RUDDER_DATAPLANE_URL }},g" ${{ github.workspace }}/focalboard/server/services/telemetry/telemetry.go
 
     - name: Replace token 1 webapp
-      run: sed -i -e "s,placeholder_rudder_dataplane_url,${{ secrets.RUDDER_DATAPLANE_URL }},g" ${{ github.workspace }}/focalboard/mattermost-plugin/webapp/src/index.tsx
+      run: sed -i -e "s,placeholder_rudder_dataplane_url,${{ secrets.RUDDER_DATAPLANE_URL }},g" ${{ github.workspace }}/focalboard/webapp/src/index.tsx
 
     - name: Replace token 2 server
       run: sed -i -e "s,placeholder_rudder_key,${{ secrets.RUDDER_PROD_KEY }},g" ${{ github.workspace }}/focalboard/server/services/telemetry/telemetry.go
 
     - name: Replace token 2 webapp
-      run: sed -i -e "s,placeholder_rudder_key,${{ secrets.RUDDER_PROD_KEY }},g" ${{ github.workspace }}/focalboard/mattermost-plugin/webapp/src/index.tsx
+      run: sed -i -e "s,placeholder_rudder_key,${{ secrets.RUDDER_PROD_KEY }},g" ${{ github.workspace }}/focalboard/webapp/src/index.tsx
 
     - name: npm ci
       run: cd focalboard/webapp; npm ci --no-optional
@@ -126,13 +126,13 @@ jobs:
       run: sed -i -e "s,placeholder_rudder_dataplane_url,${{ secrets.RUDDER_DATAPLANE_URL }},g" ${{ github.workspace }}/focalboard/server/services/telemetry/telemetry.go
 
     - name: Replace token 1 webapp
-      run: sed -i -e "s,placeholder_rudder_dataplane_url,${{ secrets.RUDDER_DATAPLANE_URL }},g" ${{ github.workspace }}/focalboard/mattermost-plugin/webapp/src/index.tsx
+      run: sed -i -e "s,placeholder_rudder_dataplane_url,${{ secrets.RUDDER_DATAPLANE_URL }},g" ${{ github.workspace }}/focalboard/webapp/src/index.tsx
 
     - name: Replace token 2 server
       run: sed -i -e "s,placeholder_rudder_key,${{ secrets.RUDDER_PROD_KEY }},g" ${{ github.workspace }}/focalboard/server/services/telemetry/telemetry.go
 
     - name: Replace token 2 webapp
-      run: sed -i -e "s,placeholder_rudder_key,${{ secrets.RUDDER_PROD_KEY }},g" ${{ github.workspace }}/focalboard/mattermost-plugin/webapp/src/index.tsx
+      run: sed -i -e "s,placeholder_rudder_key,${{ secrets.RUDDER_PROD_KEY }},g" ${{ github.workspace }}/focalboard/webapp/src/index.tsx
 
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.1
@@ -183,13 +183,13 @@ jobs:
       run: sed -i -e "s,placeholder_rudder_dataplane_url,${{ secrets.RUDDER_DATAPLANE_URL }},g" ${{ github.workspace }}/focalboard/server/services/telemetry/telemetry.go
 
     - name: Replace token 1 webapp
-      run: sed -i -e "s,placeholder_rudder_dataplane_url,${{ secrets.RUDDER_DATAPLANE_URL }},g" ${{ github.workspace }}/focalboard/mattermost-plugin/webapp/src/index.tsx
+      run: sed -i -e "s,placeholder_rudder_dataplane_url,${{ secrets.RUDDER_DATAPLANE_URL }},g" ${{ github.workspace }}/focalboard/webapp/src/index.tsx
 
     - name: Replace token 2 server
       run: sed -i -e "s,placeholder_rudder_key,${{ secrets.RUDDER_PROD_KEY }},g" ${{ github.workspace }}/focalboard/server/services/telemetry/telemetry.go
 
     - name: Replace token 2 webapp
-      run: sed -i -e "s,placeholder_rudder_key,${{ secrets.RUDDER_PROD_KEY }},g" ${{ github.workspace }}/focalboard/mattermost-plugin/webapp/src/index.tsx
+      run: sed -i -e "s,placeholder_rudder_key,${{ secrets.RUDDER_PROD_KEY }},g" ${{ github.workspace }}/focalboard/webapp/src/index.tsx
 
     - name: npm ci
       run: cd focalboard/webapp; npm ci --no-optional
@@ -208,7 +208,7 @@ jobs:
       run: cd focalboard; make webapp
 
     - name: npm ci plugin dependencies
-      run: cd focalboard/mattermost-plugin/webapp && npm ci
+      run: cd focalboard/webapp && npm ci
 
     - name: Build plugin
       run: cd focalboard/mattermost-plugin; make dist

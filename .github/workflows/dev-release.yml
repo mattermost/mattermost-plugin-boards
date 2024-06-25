@@ -208,7 +208,7 @@ jobs:
       run: cd focalboard; make webapp
 
     - name: npm ci plugin dependencies
-      run: cd focalboard/mattermost-plugin/webapp; npm ci --no-optional
+      run: cd focalboard/webapp; npm ci --no-optional
 
     - name: Build plugin
       run: cd focalboard/mattermost-plugin; make dist
