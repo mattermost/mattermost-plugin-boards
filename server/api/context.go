@@ -16,13 +16,3 @@ const (
 func SetContextConn(ctx context.Context, c net.Conn) context.Context {
 	return context.WithValue(ctx, httpConnContextKey, c)
 }
-
-// GetContextConn gets the stored connection from the request context.
-// func GetContextConn(r *http.Request) net.Conn {
-// 	value := r.Context().Value(httpConnContextKey)
-// 	if value == nil {
-// 		return nil
-// 	}
-
-// 	return value.(net.Conn)
-// }
