@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/mattermost/focalboard-plugin/server/api"
-	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/api"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
 
 	mmModel "github.com/mattermost/mattermost/server/public/model"
 )

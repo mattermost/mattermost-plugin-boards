@@ -8,8 +8,8 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/mattermost/focalboard-plugin/server/model"
-	"github.com/mattermost/focalboard-plugin/server/services/audit"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/services/audit"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )

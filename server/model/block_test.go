@@ -7,7 +7,7 @@ import (
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 
-	"github.com/mattermost/focalboard-plugin/server/utils"
+	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 
 	"github.com/stretchr/testify/require"
 )

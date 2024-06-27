@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/mattermost/focalboard-plugin/server/utils"
+	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )

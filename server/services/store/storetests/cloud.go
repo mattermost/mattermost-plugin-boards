@@ -9,9 +9,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/mattermost/focalboard-plugin/server/model"
-	storeservice "github.com/mattermost/focalboard-plugin/server/services/store"
-	"github.com/mattermost/focalboard-plugin/server/utils"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	storeservice "github.com/mattermost/mattermost-plugin-boards/server/services/store"
+	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 )
 
 func StoreTestCloudStore(t *testing.T, setup func(t *testing.T) (storeservice.Store, func())) {

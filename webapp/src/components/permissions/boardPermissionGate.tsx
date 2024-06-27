@@ -36,4 +36,6 @@ const BoardPermissionGate = React.memo((props: Props): React.ReactElement|null =
     return null
 })
 
+BoardPermissionGate.displayName = 'BoardPermissionGate'
+
 export default BoardPermissionGate

@@ -6,7 +6,7 @@ package notifysubscriptions
 import (
 	"strings"
 
-	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
 )
 
 func getBoardDescription(board *model.Block) string {

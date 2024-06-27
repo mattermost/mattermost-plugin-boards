@@ -43,16 +43,18 @@ function FBRoute(props: RouteProps) {
         !myConfig[UserSettingKey.WelcomePageViewed]
 
     if (showWelcomePage) {
-        redirect = ({match}: any) => {
+        const WelcomeRedirect = ({match}: any) => {
             if (props.getOriginalPath) {
                 return <Redirect to={`/welcome?r=${props.getOriginalPath!(match)}`}/>
             }
             return <Redirect to='/welcome'/>
         }
+        WelcomeRedirect.displayName = "WelcomeRedirect"
+        redirect = WelcomeRedirect
     }
 
     if (redirect === null && loggedIn === false && props.loginRequired) {
-        redirect = ({match}: any) => {
+        const LoginRedirect = ({match}: any) => {
             if (props.getOriginalPath) {
                 let redirectUrl = '/' + Utils.buildURL(props.getOriginalPath!(match))
                 if (redirectUrl.indexOf('//') === 0) {
@@ -63,6 +65,8 @@ function FBRoute(props: RouteProps) {
             }
             return <Redirect to='/error?id=not-logged-in'/>
         }
+        LoginRedirect.displayName = "LoginRedirect"
+        redirect = LoginRedirect
     }
 
     return (

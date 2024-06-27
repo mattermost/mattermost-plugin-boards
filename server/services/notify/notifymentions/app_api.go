@@ -2,7 +2,7 @@
 // See LICENSE.txt for license information.
 package notifymentions
 
-import "github.com/mattermost/focalboard-plugin/server/model"
+import "github.com/mattermost/mattermost-plugin-boards/server/model"
 
 type AppAPI interface {
 	GetMemberForBoard(boardID, userID string) (*model.BoardMember, error)

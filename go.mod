@@ -1,4 +1,4 @@
-module github.com/mattermost/focalboard-plugin
+module github.com/mattermost/mattermost-plugin-boards
 
 go 1.21
 

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/mattermost/focalboard-plugin/server/model"
-	"github.com/mattermost/focalboard-plugin/server/utils"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 )
 
 // GetActiveUserCount returns the number of users with active sessions within N seconds ago.

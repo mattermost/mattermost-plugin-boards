@@ -2,11 +2,11 @@
 package auth
 
 import (
-	"github.com/mattermost/focalboard-plugin/server/model"
-	"github.com/mattermost/focalboard-plugin/server/services/config"
-	"github.com/mattermost/focalboard-plugin/server/services/permissions"
-	"github.com/mattermost/focalboard-plugin/server/services/store"
-	"github.com/mattermost/focalboard-plugin/server/utils"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/services/config"
+	"github.com/mattermost/mattermost-plugin-boards/server/services/permissions"
+	"github.com/mattermost/mattermost-plugin-boards/server/services/store"
+	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 	"github.com/pkg/errors"
 )
 

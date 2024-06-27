@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/mattermost/focalboard-plugin/server/model"
-	"github.com/mattermost/focalboard-plugin/server/services/audit"
-	"github.com/mattermost/focalboard-plugin/server/services/auth"
-	"github.com/mattermost/focalboard-plugin/server/utils"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/services/audit"
+	"github.com/mattermost/mattermost-plugin-boards/server/services/auth"
+	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )

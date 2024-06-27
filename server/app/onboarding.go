@@ -3,7 +3,7 @@ package app
 import (
 	"errors"
 
-	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
 )
 
 const (

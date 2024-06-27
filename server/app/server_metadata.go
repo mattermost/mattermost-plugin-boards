@@ -3,7 +3,7 @@ package app
 import (
 	"runtime"
 
-	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
 )
 
 type ServerMetadata struct {

@@ -16,7 +16,7 @@ type ScheduledTask struct {
 	Recurring bool          `json:"recurring"`
 	function  func()
 	cancel    chan struct{}
-	cancelled chan struct{}
+	canceled  chan struct{}
 }
 
 func CreateTask(name string, function TaskFunc, timeToExecution time.Duration) *ScheduledTask {
@@ -34,11 +34,11 @@ func createTask(name string, function TaskFunc, interval time.Duration, recurrin
 		Recurring: recurring,
 		function:  function,
 		cancel:    make(chan struct{}),
-		cancelled: make(chan struct{}),
+		canceled:  make(chan struct{}),
 	}
 
 	go func() {
-		defer close(task.cancelled)
+		defer close(task.canceled)
 
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
@@ -62,7 +62,7 @@ func createTask(name string, function TaskFunc, interval time.Duration, recurrin
 
 func (task *ScheduledTask) Cancel() {
 	close(task.cancel)
-	<-task.cancelled
+	<-task.canceled
 }
 
 func (task *ScheduledTask) String() string {

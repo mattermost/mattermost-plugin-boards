@@ -3,8 +3,8 @@ package ws
 import (
 	"testing"
 
-	authMocks "github.com/mattermost/focalboard-plugin/server/auth/mocks"
-	wsMocks "github.com/mattermost/focalboard-plugin/server/ws/mocks"
+	authMocks "github.com/mattermost/mattermost-plugin-boards/server/auth/mocks"
+	wsMocks "github.com/mattermost/mattermost-plugin-boards/server/ws/mocks"
 
 	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/shared/mlog"

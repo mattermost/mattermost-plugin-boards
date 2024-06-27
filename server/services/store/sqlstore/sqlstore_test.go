@@ -6,9 +6,9 @@ package sqlstore
 import (
 	"testing"
 
-	"github.com/mattermost/focalboard-plugin/server/services/store/storetests"
+	"github.com/mattermost/mattermost-plugin-boards/server/services/store/storetests"
 
-	"github.com/mattermost/focalboard-plugin/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/stretchr/testify/require"
 )
 
