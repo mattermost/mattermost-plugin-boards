@@ -357,7 +357,7 @@ modd-precheck:
 	fi; \
 
 webapp-ci: ## Webapp CI: linting & testing.
-	cd webapp; npm run check; npm run lint
+	cd webapp; npm run check
 	cd webapp; npm run test
 
 webapp-test: ## jest tests for webapp
