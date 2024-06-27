@@ -131,54 +131,6 @@ func (a *API) handleGetTeam(w http.ResponseWriter, r *http.Request) {
 	auditRec.Success()
 }
 
-func (a *API) handlePostTeamRegenerateSignupToken(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation POST /teams/{teamID}/regenerate_signup_token regenerateSignupToken
-	//
-	// Regenerates the signup token for the root team
-	//
-	// ---
-	// produces:
-	// - application/json
-	// parameters:
-	// - name: teamID
-	//   in: path
-	//   description: Team ID
-	//   required: true
-	//   type: string
-	// security:
-	// - BearerAuth: []
-	// responses:
-	//   '200':
-	//     description: success
-	//   default:
-	//     description: internal error
-	//     schema:
-	//       "$ref": "#/definitions/ErrorResponse"
-	if a.MattermostAuth {
-		a.errorResponse(w, r, model.NewErrNotImplemented("not permitted in plugin mode"))
-		return
-	}
-
-	team, err := a.app.GetRootTeam()
-	if err != nil {
-		a.errorResponse(w, r, err)
-		return
-	}
-
-	auditRec := a.makeAuditRecord(r, "regenerateSignupToken", audit.Fail)
-	defer a.audit.LogRecord(audit.LevelModify, auditRec)
-
-	team.SignupToken = utils.NewID(utils.IDTypeToken)
-
-	if err = a.app.UpsertTeamSignupToken(*team); err != nil {
-		a.errorResponse(w, r, err)
-		return
-	}
-
-	jsonStringResponse(w, http.StatusOK, "{}")
-	auditRec.Success()
-}
-
 func (a *API) handleGetTeamUsers(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation GET /teams/{teamID}/users getTeamUsers
 	//
