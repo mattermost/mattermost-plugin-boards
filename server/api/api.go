@@ -41,7 +41,6 @@ type API struct {
 	MattermostAuth  bool
 	logger          mlog.LoggerIFace
 	audit           *audit.Audit
-	isPlugin        bool
 }
 
 func NewAPI(
@@ -51,7 +50,6 @@ func NewAPI(
 	permissions permissions.PermissionsService,
 	logger mlog.LoggerIFace,
 	audit *audit.Audit,
-	isPlugin bool,
 ) *API {
 	return &API{
 		app:             app,
@@ -60,7 +58,6 @@ func NewAPI(
 		permissions:     permissions,
 		logger:          logger,
 		audit:           audit,
-		isPlugin:        isPlugin,
 	}
 }
 
@@ -77,7 +74,7 @@ func (a *API) RegisterRoutes(r *mux.Router) {
 
 	// V2 routes (ToDo: migrate these to V3 when ready to ship V3)
 	a.registerUsersRoutes(apiv2)
-	a.registerAuthRoutes(apiv2)
+	// a.registerAuthRoutes(apiv2)
 	a.registerMembersRoutes(apiv2)
 	a.registerCategoriesRoutes(apiv2)
 	a.registerSharingRoutes(apiv2)
@@ -104,9 +101,9 @@ func (a *API) RegisterRoutes(r *mux.Router) {
 	a.registerSystemRoutes(r)
 }
 
-func (a *API) RegisterAdminRoutes(r *mux.Router) {
-	r.HandleFunc("/api/v2/admin/users/{username}/password", a.adminRequired(a.handleAdminSetPassword)).Methods("POST")
-}
+// func (a *API) RegisterAdminRoutes(r *mux.Router) {
+// 	r.HandleFunc("/api/v2/admin/users/{username}/password", a.adminRequired(a.handleAdminSetPassword)).Methods("POST")
+// }
 
 func getUserID(r *http.Request) string {
 	ctx := r.Context()
