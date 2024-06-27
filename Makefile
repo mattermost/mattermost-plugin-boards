@@ -71,6 +71,20 @@ apply:
 check-style: webapp/node_modules
 	@echo Checking for style guide compliance
 
+ifneq ($(HAS_WEBAPP),)
+	cd webapp && npm run check 
+	cd webapp && npm run check-types
+endif
+
+ifneq ($(HAS_SERVER),)
+	@if ! [ -x "$$(command -v golangci-lint)" ]; then \
+		echo "golangci-lint is not installed. Please see https://github.com/golangci/golangci-lint#install-golangci-lint for installation instructions."; \
+		exit 1; \
+	fi; \
+	@echo Running golangci-lint
+	cd server && golangci-lint run ./...
+endif
+
 templates-archive: ## Build templates archive file
 	cd ./server/assets/build-template-archive; go run -tags '$(BUILD_TAGS)' main.go --dir="../templates-boardarchive" --out="../templates.boardarchive"
 
@@ -380,6 +394,3 @@ swagger: ## Generate swagger API spec and clients based on it.
 	cd server/swagger && openapi-generator generate -i swagger.yml -g typescript-fetch -o clients/typescript
 	cd server/swagger && openapi-generator generate -i swagger.yml -g swift5 -o clients/swift
 	cd server/swagger && openapi-generator generate -i swagger.yml -g python -o clients/python
-
-cleanall: clean ## Clean all build artifacts and dependencies.
-	rm -rf webapp/node_modules

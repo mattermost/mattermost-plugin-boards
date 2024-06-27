@@ -7,10 +7,13 @@
 }
 
 .focalboard-body .feature-global-header>header {
+    /* stylelint-disable */
     z-index: 1000;
+    /* stylelint-enable */
 
     .Menu {
-        a, button {
+        a,
+        button {
             color: inherit;
 
             &:hover {
@@ -25,7 +28,7 @@
 }
 
 img.boards-rhs-header-logo {
-    color: white;
+    color: #fff;
     background: var(--button-bg);
     width: 24px;
     height: 24px;
