@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"io"
 	"strings"
-
-	"github.com/mattermost/mattermost-plugin-boards/server/services/auth"
 )
 
 const (
@@ -94,9 +92,6 @@ func (rd *RegisterRequest) IsValid() error {
 	}
 	if strings.TrimSpace(rd.Email) == "" {
 		return NewErrAuthParam("email is required")
-	}
-	if !auth.IsEmailValid(rd.Email) {
-		return NewErrAuthParam("invalid email format")
 	}
 	if rd.Password == "" {
 		return NewErrAuthParam("password is required")

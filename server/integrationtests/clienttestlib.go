@@ -11,7 +11,6 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/client"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/server"
-	"github.com/mattermost/mattermost-plugin-boards/server/services/auth"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/config"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/permissions/localpermissions"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/permissions/mmpermissions"
@@ -255,9 +254,6 @@ func newTestServerLocalMode() *server.Server {
 		panic(err)
 	}
 
-	// Reduce password has strength for unit tests to dramatically speed up account creation and login
-	auth.PasswordHashStrength = 4
-
 	return srv
 }
 
@@ -363,8 +359,6 @@ func (th *TestHelper) Start() *TestHelper {
 // InitBasic starts the test server and initializes the clients of the
 // helper, registering them and logging them into the system.
 func (th *TestHelper) InitBasic() *TestHelper {
-	// Reduce password has strength for unit tests to dramatically speed up account creation and login
-	auth.PasswordHashStrength = 4
 
 	th.Start()
 
