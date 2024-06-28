@@ -359,7 +359,6 @@ func (th *TestHelper) Start() *TestHelper {
 // InitBasic starts the test server and initializes the clients of the
 // helper, registering them and logging them into the system.
 func (th *TestHelper) InitBasic() *TestHelper {
-
 	th.Start()
 
 	// user1
