@@ -51,16 +51,6 @@ func (a *API) handleGetTemplates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isGuest, err := a.userIsGuest(userID)
-	if err != nil {
-		a.errorResponse(w, r, err)
-		return
-	}
-	if isGuest {
-		a.errorResponse(w, r, model.NewErrPermission("access denied to templates"))
-		return
-	}
-
 	auditRec := a.makeAuditRecord(r, "getTemplates", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelRead, auditRec)
 	auditRec.AddMeta("teamID", teamID)

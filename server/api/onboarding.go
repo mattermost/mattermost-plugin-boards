@@ -53,16 +53,6 @@ func (a *API) handleOnboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isGuest, err := a.userIsGuest(userID)
-	if err != nil {
-		a.errorResponse(w, r, err)
-		return
-	}
-	if isGuest {
-		a.errorResponse(w, r, model.NewErrPermission("access denied to create board"))
-		return
-	}
-
 	teamID, boardID, err := a.app.PrepareOnboardingTour(userID, teamID)
 	if err != nil {
 		a.errorResponse(w, r, err)

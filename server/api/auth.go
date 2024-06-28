@@ -19,8 +19,6 @@ func (a *API) attachSession(handler func(w http.ResponseWriter, r *http.Request)
 	return func(w http.ResponseWriter, r *http.Request) {
 		token, _ := auth.ParseAuthTokenFromRequest(r)
 
-		a.logger.Debug(`attachSession`, mlog.Bool("single_user", len(a.singleUserToken) > 0))
-
 		if a.MattermostAuth && r.Header.Get("Mattermost-User-Id") != "" {
 			userID := r.Header.Get("Mattermost-User-Id")
 			now := utils.GetMillis()

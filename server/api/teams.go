@@ -184,16 +184,7 @@ func (a *API) handleGetTeamUsers(w http.ResponseWriter, r *http.Request) {
 	auditRec := a.makeAuditRecord(r, "getUsers", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelRead, auditRec)
 
-	isGuest, err := a.userIsGuest(userID)
-	if err != nil {
-		a.errorResponse(w, r, err)
-		return
-	}
 	asGuestUser := ""
-	if isGuest {
-		asGuestUser = userID
-	}
-
 	users, err := a.app.SearchTeamUsers(teamID, searchQuery, asGuestUser, excludeBots)
 	if err != nil {
 		a.errorResponse(w, r, err)
