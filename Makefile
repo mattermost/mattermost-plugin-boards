@@ -154,6 +154,14 @@ endif
 
 	@echo plugin built at: dist/$(BUNDLE_NAME)
 
+info: ## Display build information
+	@echo "Build Number: $(BUILD_NUMBER)"
+	@echo "Build Date: $(BUILD_DATE)"
+	@echo "Build Hash: $(BUILD_HASH)"
+	@echo "Plugin ID: $(PLUGIN_ID)"
+	@echo "Plugin Version: $(PLUGIN_VERSION)"
+	@echo "Bundle Name: $(BUNDLE_NAME)"
+
 ## Builds and bundles the plugin.
 .PHONY: dist
 dist:	apply server webapp bundle
@@ -382,7 +390,7 @@ watch-plugin: modd-precheck ## Run and upload the plugin to a development server
 	env FOCALBOARD_BUILD_TAGS='$(BUILD_TAGS)' modd -f modd-watchplugin.conf
 
 live-watch-plugin: modd-precheck ## Run and update locally the plugin in the development server
-	cd mattermost-plugin; make live-watch
+	make live-watch
 
 swagger: ## Generate swagger API spec and clients based on it.
 	mkdir -p server/swagger/docs
