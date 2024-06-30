@@ -47,7 +47,6 @@ func TestGetBoardsForCompliance(t *testing.T) {
 		defer th.TearDown()
 
 		_ = th.CreateBoards(testTeamID, model.BoardTypeOpen, 2)
-		th.Logout(th.Client)
 
 		bcr, resp := clients.Anon.GetBoardsForCompliance(testTeamID, 0, 0)
 
@@ -134,7 +133,6 @@ func TestGetBoardsComplianceHistory(t *testing.T) {
 		defer th.TearDown()
 
 		_ = th.CreateBoards(testTeamID, model.BoardTypeOpen, 2)
-		th.Logout(th.Client)
 
 		bchr, resp := clients.Anon.GetBoardsComplianceHistory(utils.GetMillis()-OneDay, true, testTeamID, 0, 0)
 

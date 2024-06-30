@@ -17,7 +17,6 @@ func TestGetBoards(t *testing.T) {
 	t.Run("a non authenticated client should be rejected", func(t *testing.T) {
 		th := SetupTestHelper(t).InitBasic()
 		defer th.TearDown()
-		th.Logout(th.Client)
 
 		teamID := "0"
 		newBoard := &model.Board{
@@ -117,7 +116,6 @@ func TestCreateBoard(t *testing.T) {
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
 		th := SetupTestHelper(t).InitBasic()
 		defer th.TearDown()
-		th.Logout(th.Client)
 
 		newBoard := &model.Board{
 			Title:  "board title",
@@ -475,7 +473,6 @@ func TestSearchBoards(t *testing.T) {
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
 		th := SetupTestHelper(t).InitBasic()
 		defer th.TearDown()
-		th.Logout(th.Client)
 
 		boards, resp := th.Client.SearchBoardsForTeam(testTeamID, "term")
 		th.CheckUnauthorized(resp)
@@ -587,7 +584,6 @@ func TestGetBoard(t *testing.T) {
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
 		th := SetupTestHelper(t).InitBasic()
 		defer th.TearDown()
-		th.Logout(th.Client)
 
 		board, resp := th.Client.GetBoard("boar-id", "")
 		th.CheckUnauthorized(resp)
@@ -620,9 +616,6 @@ func TestGetBoard(t *testing.T) {
 		success, resp := th.Client.PostSharing(sharing)
 		th.CheckOK(resp)
 		require.True(t, success)
-
-		// the client logs out
-		th.Logout(th.Client)
 
 		// we make sure that the client cannot currently retrieve the
 		// board with no session
@@ -702,7 +695,6 @@ func TestGetBoardMetadata(t *testing.T) {
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
 		th := SetupTestHelperWithLicense(t, LicenseEnterprise).InitBasic()
 		defer th.TearDown()
-		th.Logout(th.Client)
 
 		boardMetadata, resp := th.Client.GetBoardMetadata("boar-id", "")
 		th.CheckUnauthorized(resp)
@@ -861,9 +853,6 @@ func TestGetBoardMetadata(t *testing.T) {
 		th.CheckOK(resp)
 		require.True(t, success)
 
-		// the client logs out
-		th.Logout(th.Client)
-
 		// we make sure that the client cannot currently retrieve the
 		// board with no session
 		boardMetadata, resp := th.Client.GetBoardMetadata(rBoard.ID, "")
@@ -883,7 +872,6 @@ func TestPatchBoard(t *testing.T) {
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
 		th := SetupTestHelper(t).InitBasic()
 		defer th.TearDown()
-		th.Logout(th.Client)
 
 		initialTitle := "title 1"
 		newBoard := &model.Board{
@@ -998,7 +986,6 @@ func TestDeleteBoard(t *testing.T) {
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
 		th := SetupTestHelper(t).InitBasic()
 		defer th.TearDown()
-		th.Logout(th.Client)
 
 		newBoard := &model.Board{
 			Title:  "title",
@@ -1076,7 +1063,6 @@ func TestUndeleteBoard(t *testing.T) {
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
 		th := SetupTestHelper(t).InitBasic()
 		defer th.TearDown()
-		th.Logout(th.Client)
 
 		newBoard := &model.Board{
 			Title:  "title",
@@ -1225,7 +1211,6 @@ func TestGetMembersForBoard(t *testing.T) {
 		th := SetupTestHelper(t).InitBasic()
 		defer th.TearDown()
 		board := createBoardWithUsers(th)
-		th.Logout(th.Client)
 
 		members, resp := th.Client.GetMembersForBoard(board.ID)
 		th.CheckUnauthorized(resp)
@@ -1270,7 +1255,6 @@ func TestAddMember(t *testing.T) {
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
 		th := SetupTestHelper(t).InitBasic()
 		defer th.TearDown()
-		th.Logout(th.Client)
 
 		newBoard := &model.Board{
 			Title:  "title",
@@ -1490,7 +1474,6 @@ func TestUpdateMember(t *testing.T) {
 			SchemeEditor: true,
 		}
 
-		th.Logout(th.Client)
 		member, resp := th.Client.UpdateBoardMember(updatedMember)
 		th.CheckUnauthorized(resp)
 		require.Nil(t, member)
@@ -1665,7 +1648,6 @@ func TestDeleteMember(t *testing.T) {
 			BoardID: board.ID,
 		}
 
-		th.Logout(th.Client)
 		success, resp := th.Client.DeleteBoardMember(member)
 		th.CheckUnauthorized(resp)
 		require.False(t, success)

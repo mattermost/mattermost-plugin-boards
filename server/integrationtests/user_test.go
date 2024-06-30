@@ -15,68 +15,6 @@ const (
 	fakeEmail    = "mock@test.com"
 )
 
-func TestUserRegister(t *testing.T) {
-	th := SetupTestHelper(t).Start()
-	defer th.TearDown()
-
-	// register
-	registerRequest := &model.RegisterRequest{
-		Username: fakeUsername,
-		Email:    fakeEmail,
-		Password: utils.NewID(utils.IDTypeNone),
-	}
-	success, resp := th.Client.Register(registerRequest)
-	require.NoError(t, resp.Error)
-	require.True(t, success)
-
-	// register again will fail
-	success, resp = th.Client.Register(registerRequest)
-	require.Error(t, resp.Error)
-	require.False(t, success)
-}
-
-func TestUserLogin(t *testing.T) {
-	th := SetupTestHelper(t).Start()
-	defer th.TearDown()
-
-	t.Run("with nonexist user", func(t *testing.T) {
-		loginRequest := &model.LoginRequest{
-			Type:     "normal",
-			Username: "nonexistuser",
-			Email:    "",
-			Password: utils.NewID(utils.IDTypeNone),
-		}
-		data, resp := th.Client.Login(loginRequest)
-		require.Error(t, resp.Error)
-		require.Nil(t, data)
-	})
-
-	t.Run("with registered user", func(t *testing.T) {
-		password := utils.NewID(utils.IDTypeNone)
-		// register
-		registerRequest := &model.RegisterRequest{
-			Username: fakeUsername,
-			Email:    fakeEmail,
-			Password: password,
-		}
-		success, resp := th.Client.Register(registerRequest)
-		require.NoError(t, resp.Error)
-		require.True(t, success)
-
-		// login
-		loginRequest := &model.LoginRequest{
-			Type:     "normal",
-			Username: fakeUsername,
-			Email:    fakeEmail,
-			Password: password,
-		}
-		data, resp := th.Client.Login(loginRequest)
-		require.NoError(t, resp.Error)
-		require.NotNil(t, data)
-		require.NotNil(t, data.Token)
-	})
-}
-
 func TestGetMe(t *testing.T) {
 	th := SetupTestHelper(t).Start()
 	defer th.TearDown()
@@ -86,64 +24,11 @@ func TestGetMe(t *testing.T) {
 		require.Error(t, resp.Error)
 		require.Nil(t, me)
 	})
-
-	t.Run("logged in", func(t *testing.T) {
-		// register
-		password := utils.NewID(utils.IDTypeNone)
-		registerRequest := &model.RegisterRequest{
-			Username: fakeUsername,
-			Email:    fakeEmail,
-			Password: password,
-		}
-		success, resp := th.Client.Register(registerRequest)
-		require.NoError(t, resp.Error)
-		require.True(t, success)
-		// login
-		loginRequest := &model.LoginRequest{
-			Type:     "normal",
-			Username: fakeUsername,
-			Email:    fakeEmail,
-			Password: password,
-		}
-		data, resp := th.Client.Login(loginRequest)
-		require.NoError(t, resp.Error)
-		require.NotNil(t, data)
-		require.NotNil(t, data.Token)
-
-		// get user me
-		me, resp := th.Client.GetMe()
-		require.NoError(t, resp.Error)
-		require.NotNil(t, me)
-		require.Equal(t, "", me.Email)
-		require.Equal(t, registerRequest.Username, me.Username)
-	})
 }
 
 func TestGetUser(t *testing.T) {
 	th := SetupTestHelper(t).Start()
 	defer th.TearDown()
-
-	// register
-	password := utils.NewID(utils.IDTypeNone)
-	registerRequest := &model.RegisterRequest{
-		Username: fakeUsername,
-		Email:    fakeEmail,
-		Password: password,
-	}
-	success, resp := th.Client.Register(registerRequest)
-	require.NoError(t, resp.Error)
-	require.True(t, success)
-	// login
-	loginRequest := &model.LoginRequest{
-		Type:     "normal",
-		Username: fakeUsername,
-		Email:    fakeEmail,
-		Password: password,
-	}
-	data, resp := th.Client.Login(loginRequest)
-	require.NoError(t, resp.Error)
-	require.NotNil(t, data)
-	require.NotNil(t, data.Token)
 
 	me, resp := th.Client.GetMe()
 	require.NoError(t, resp.Error)
@@ -241,39 +126,10 @@ func TestUserChangePassword(t *testing.T) {
 	th := SetupTestHelper(t).Start()
 	defer th.TearDown()
 
-	// register
-	password := utils.NewID(utils.IDTypeNone)
-	registerRequest := &model.RegisterRequest{
-		Username: fakeUsername,
-		Email:    fakeEmail,
-		Password: password,
-	}
-	success, resp := th.Client.Register(registerRequest)
-	require.NoError(t, resp.Error)
-	require.True(t, success)
-	// login
-	loginRequest := &model.LoginRequest{
-		Type:     "normal",
-		Username: fakeUsername,
-		Email:    fakeEmail,
-		Password: password,
-	}
-	data, resp := th.Client.Login(loginRequest)
-	require.NoError(t, resp.Error)
-	require.NotNil(t, data)
-	require.NotNil(t, data.Token)
-
 	originalMe, resp := th.Client.GetMe()
 	require.NoError(t, resp.Error)
 	require.NotNil(t, originalMe)
 
-	// change password
-	success, resp = th.Client.UserChangePassword(originalMe.ID, &model.ChangePasswordRequest{
-		OldPassword: password,
-		NewPassword: utils.NewID(utils.IDTypeNone),
-	})
-	require.NoError(t, resp.Error)
-	require.True(t, success)
 }
 
 func randomBytes(t *testing.T, n int) []byte {

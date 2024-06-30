@@ -361,17 +361,11 @@ func (th *TestHelper) Start() *TestHelper {
 func (th *TestHelper) InitBasic() *TestHelper {
 	th.Start()
 
-	// user1
-	th.RegisterAndLogin(th.Client, user1Username, "user1@sample.com", password, "")
-
 	// get token
 	team, resp := th.Client.GetTeam(model.GlobalTeamID)
 	th.CheckOK(resp)
 	require.NotNil(th.T, team)
 	require.NotNil(th.T, team.SignupToken)
-
-	// user2
-	th.RegisterAndLogin(th.Client2, user2Username, "user2@sample.com", password, team.SignupToken)
 
 	return th
 }
@@ -397,44 +391,6 @@ func (th *TestHelper) TearDown() {
 	if err := os.Remove(th.Server.Config().DBConfigString); err == nil {
 		logger.Debug("Removed test database", mlog.String("file", th.Server.Config().DBConfigString))
 	}
-}
-
-func (th *TestHelper) RegisterAndLogin(client *client.Client, username, email, password, token string) {
-	req := &model.RegisterRequest{
-		Username: username,
-		Email:    email,
-		Password: password,
-		Token:    token,
-	}
-
-	success, resp := th.Client.Register(req)
-	th.CheckOK(resp)
-	require.True(th.T, success)
-
-	th.Login(client, username, password)
-}
-
-func (th *TestHelper) Login(client *client.Client, username, password string) {
-	req := &model.LoginRequest{
-		Type:     "normal",
-		Username: username,
-		Password: password,
-	}
-	data, resp := client.Login(req)
-	th.CheckOK(resp)
-	require.NotNil(th.T, data)
-}
-
-func (th *TestHelper) Login1() {
-	th.Login(th.Client, user1Username, password)
-}
-
-func (th *TestHelper) Login2() {
-	th.Login(th.Client2, user2Username, password)
-}
-
-func (th *TestHelper) Logout(client *client.Client) {
-	client.Token = ""
 }
 
 func (th *TestHelper) Me(client *client.Client) *model.User {

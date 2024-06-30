@@ -91,7 +91,6 @@ func setupClients(th *TestHelper) Clients {
 
 func setupLocalClients(th *TestHelper) Clients {
 	th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
-	th.RegisterAndLogin(th.Client, "sysadmin", "sysadmin@sample.com", password, "")
 
 	clients := Clients{
 		Anon:         client.NewClient(th.Server.Config().ServerRoot, ""),
@@ -109,23 +108,11 @@ func setupLocalClients(th *TestHelper) Clients {
 	th.CheckOK(resp)
 	require.NotNil(th.T, team)
 	require.NotNil(th.T, team.SignupToken)
-
-	th.RegisterAndLogin(clients.NoTeamMember, userNoTeamMember, userNoTeamMember+"@sample.com", password, team.SignupToken)
 	userNoTeamMemberID = clients.NoTeamMember.GetUserID()
-
-	th.RegisterAndLogin(clients.TeamMember, userTeamMember, userTeamMember+"@sample.com", password, team.SignupToken)
 	userTeamMemberID = clients.TeamMember.GetUserID()
-
-	th.RegisterAndLogin(clients.Viewer, userViewer, userViewer+"@sample.com", password, team.SignupToken)
 	userViewerID = clients.Viewer.GetUserID()
-
-	th.RegisterAndLogin(clients.Commenter, userCommenter, userCommenter+"@sample.com", password, team.SignupToken)
 	userCommenterID = clients.Commenter.GetUserID()
-
-	th.RegisterAndLogin(clients.Editor, userEditor, userEditor+"@sample.com", password, team.SignupToken)
 	userEditorID = clients.Editor.GetUserID()
-
-	th.RegisterAndLogin(clients.Admin, userAdmin, userAdmin+"@sample.com", password, team.SignupToken)
 	userAdminID = clients.Admin.GetUserID()
 
 	return clients

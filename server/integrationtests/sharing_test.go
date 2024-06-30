@@ -16,15 +16,12 @@ func TestSharing(t *testing.T) {
 	token := utils.NewID(utils.IDTypeToken)
 
 	t.Run("an unauthenticated client should not be able to get a sharing", func(t *testing.T) {
-		th.Logout(th.Client)
-
 		sharing, resp := th.Client.GetSharing("board-id")
 		th.CheckUnauthorized(resp)
 		require.Nil(t, sharing)
 	})
 
 	t.Run("Check no initial sharing", func(t *testing.T) {
-		th.Login1()
 
 		teamID := "0"
 		newBoard := &model.Board{

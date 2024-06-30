@@ -17,7 +17,6 @@ func TestUploadFile(t *testing.T) {
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
 		th := SetupTestHelper(t).InitBasic()
 		defer th.TearDown()
-		th.Logout(th.Client)
 
 		file, resp := th.Client.TeamUploadFile(testTeamID, "test-board-id", bytes.NewBuffer([]byte("test")))
 		th.CheckUnauthorized(resp)
