@@ -147,15 +147,7 @@ func (a *API) handlePostSharing(w http.ResponseWriter, r *http.Request) {
 
 	// Stamp ModifiedBy
 	modifiedBy := userID
-	if userID == model.SingleUser {
-		modifiedBy = ""
-	}
 	sharing.ModifiedBy = modifiedBy
-
-	if userID == model.SingleUser {
-		userID = ""
-	}
-
 	if !a.app.GetClientConfig().EnablePublicSharedBoards {
 		a.logger.Warn(
 			"Attempt to turn on sharing for board via API failed, sharing off in configuration.",

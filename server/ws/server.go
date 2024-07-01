@@ -49,7 +49,6 @@ type Server struct {
 	listenersByBlock map[string][]*websocketSession
 	mu               sync.RWMutex
 	auth             *auth.Auth
-	singleUserToken  string
 	isMattermostAuth bool
 	logger           mlog.LoggerIFace
 	store            Store
@@ -79,7 +78,6 @@ func NewServer(auth *auth.Auth, singleUserToken string, isMattermostAuth bool, l
 			},
 		},
 		auth:             auth,
-		singleUserToken:  singleUserToken,
 		isMattermostAuth: isMattermostAuth,
 		logger:           logger,
 		store:            store,
@@ -212,22 +210,10 @@ func (ws *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 				mlog.String("teamID", command.TeamID),
 				mlog.Stringer("client", wsSession.conn.RemoteAddr()),
 			)
-
-			// if single user mode, check that the userID is valid and
-			// assume that the user has permission if so
-			if len(ws.singleUserToken) != 0 {
-				if wsSession.userID != model.SingleUser {
-					continue
-				}
-
-				// if not in single user mode validate that the session
-				// has permissions to the team
-			} else {
-				ws.logger.Debug("Not single user mode")
-				if !ws.auth.DoesUserHaveTeamAccess(wsSession.userID, command.TeamID) {
-					ws.logger.Error("WS user doesn't have team access", mlog.String("teamID", command.TeamID), mlog.String("userID", wsSession.userID))
-					continue
-				}
+			ws.logger.Debug("Not single user mode")
+			if !ws.auth.DoesUserHaveTeamAccess(wsSession.userID, command.TeamID) {
+				ws.logger.Error("WS user doesn't have team access", mlog.String("teamID", command.TeamID), mlog.String("userID", wsSession.userID))
+				continue
 			}
 
 			ws.subscribeListenerToTeam(wsSession, command.TeamID)
@@ -416,14 +402,6 @@ func (ws *Server) removeListenerFromBlock(listener *websocketSession, blockID st
 }
 
 func (ws *Server) getUserIDForToken(token string) string {
-	if len(ws.singleUserToken) > 0 {
-		if token == ws.singleUserToken {
-			return model.SingleUser
-		} else {
-			return ""
-		}
-	}
-
 	session, err := ws.auth.GetSession(token)
 	if session == nil || err != nil {
 		return ""

@@ -14,6 +14,7 @@ package sqlstore
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
@@ -584,6 +585,7 @@ func (s *SQLStore) GetUsersByTeam(teamID string, asGuestID string, showEmail boo
 }
 
 func (s *SQLStore) GetUsersList(userIDs []string, showEmail bool, showName bool) ([]*model.User, error) {
+	fmt.Println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
 	return s.getUsersList(s.db, userIDs, showEmail, showName)
 
 }

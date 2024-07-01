@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/auth"
-	"github.com/mattermost/mattermost-plugin-boards/server/model"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 
@@ -265,9 +264,7 @@ func TestBlocksSubscription(t *testing.T) {
 }
 
 func TestGetUserIDForTokenInSingleUserMode(t *testing.T) {
-	singleUserToken := "single-user-token"
 	server := NewServer(&auth.Auth{}, "token", false, &mlog.Logger{}, nil)
-	server.singleUserToken = singleUserToken
 
 	t.Run("Should return nothing if the token is empty", func(t *testing.T) {
 		require.Empty(t, server.getUserIDForToken(""))
@@ -275,9 +272,5 @@ func TestGetUserIDForTokenInSingleUserMode(t *testing.T) {
 
 	t.Run("Should return nothing if the token is invalid", func(t *testing.T) {
 		require.Empty(t, server.getUserIDForToken("invalid-token"))
-	})
-
-	t.Run("Should return the single user ID if the token is correct", func(t *testing.T) {
-		require.Equal(t, model.SingleUser, server.getUserIDForToken(singleUserToken))
 	})
 }

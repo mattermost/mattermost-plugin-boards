@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/audit"
-	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 )
 
 func (a *API) registerTeamsRoutes(r *mux.Router) {
@@ -268,31 +267,18 @@ func (a *API) handleGetTeamUsersByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if userIDs[0] == model.SingleUser {
-		ws, _ := a.app.GetRootTeam()
-		now := utils.GetMillis()
-		user := &model.User{
-			ID:       model.SingleUser,
-			Username: model.SingleUser,
-			Email:    model.SingleUser,
-			CreateAt: ws.UpdateAt,
-			UpdateAt: now,
-		}
-		users = append(users, user)
-	} else {
-		users, error = a.app.GetUsersList(userIDs)
-		if error != nil {
-			a.errorResponse(w, r, error)
-			return
-		}
+	users, error = a.app.GetUsersList(userIDs)
+	if error != nil {
+		a.errorResponse(w, r, error)
+		return
+	}
 
-		for i, u := range users {
-			if a.permissions.HasPermissionToTeam(u.ID, teamID, model.PermissionManageTeam) {
-				users[i].Permissions = append(users[i].Permissions, model.PermissionManageTeam.Id)
-			}
-			if a.permissions.HasPermissionTo(u.ID, model.PermissionManageSystem) {
-				users[i].Permissions = append(users[i].Permissions, model.PermissionManageSystem.Id)
-			}
+	for i, u := range users {
+		if a.permissions.HasPermissionToTeam(u.ID, teamID, model.PermissionManageTeam) {
+			users[i].Permissions = append(users[i].Permissions, model.PermissionManageTeam.Id)
+		}
+		if a.permissions.HasPermissionTo(u.ID, model.PermissionManageSystem) {
+			users[i].Permissions = append(users[i].Permissions, model.PermissionManageSystem.Id)
 		}
 	}
 
