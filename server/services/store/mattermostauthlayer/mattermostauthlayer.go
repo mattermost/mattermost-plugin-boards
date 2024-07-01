@@ -369,7 +369,6 @@ func (s *MattermostAuthLayer) GetUsersByTeam(teamID string, asGuestID string, sh
 }
 
 func (s *MattermostAuthLayer) GetUsersList(userIDs []string, showEmail, showName bool) ([]*model.User, error) {
-	fmt.Println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 	query := s.baseUserQuery(showEmail, showName).
 		Where(sq.Eq{"u.id": userIDs})
 
