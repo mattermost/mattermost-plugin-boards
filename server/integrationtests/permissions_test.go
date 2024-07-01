@@ -2644,36 +2644,6 @@ func TestPermissionsGetUser(t *testing.T) {
 	})
 }
 
-func TestPermissionsUserChangePassword(t *testing.T) {
-	postBody := toJSON(t, model.ChangePasswordRequest{
-		OldPassword: password,
-		NewPassword: "newpa$$word123",
-	})
-
-	t.Run("plugin", func(t *testing.T) {
-		th := SetupTestHelperPluginMode(t)
-		defer th.TearDown()
-		clients := setupClients(th)
-		testData := setupData(t, th)
-		ttCases := []TestCase{
-			{"/users/{USER_ADMIN_ID}/changepassword", methodPost, postBody, userAnon, http.StatusUnauthorized, 0},
-			{"/users/{USER_ADMIN_ID}/changepassword", methodPost, postBody, userAdmin, http.StatusNotImplemented, 0},
-		}
-		runTestCases(t, ttCases, testData, clients)
-	})
-	t.Run("local", func(t *testing.T) {
-		th := SetupTestHelperLocalMode(t)
-		defer th.TearDown()
-		clients := setupLocalClients(th)
-		testData := setupData(t, th)
-		ttCases := []TestCase{
-			{"/users/{USER_ADMIN_ID}/changepassword", methodPost, postBody, userAnon, http.StatusUnauthorized, 0},
-			{"/users/{USER_ADMIN_ID}/changepassword", methodPost, postBody, userAdmin, http.StatusOK, 0},
-		}
-		runTestCases(t, ttCases, testData, clients)
-	})
-}
-
 func TestPermissionsUpdateUserConfig(t *testing.T) {
 	patch := toJSON(t, model.UserPreferencesPatch{UpdatedFields: map[string]string{"test": "test"}})
 
@@ -2860,39 +2830,6 @@ func TestPermissionsDeleteBoardsAndBlocks(t *testing.T) {
 	})
 }
 
-func TestPermissionsLogin(t *testing.T) {
-	loginReq := func(username, password string) string {
-		return toJSON(t, model.LoginRequest{
-			Type:     "normal",
-			Username: username,
-			Password: password,
-		})
-	}
-
-	t.Run("plugin", func(t *testing.T) {
-		th := SetupTestHelperPluginMode(t)
-		defer th.TearDown()
-		clients := setupClients(th)
-		testData := setupData(t, th)
-		ttCases := []TestCase{
-			{"/login", methodPost, loginReq(userAnon, password), userAnon, http.StatusNotImplemented, 0},
-			{"/login", methodPost, loginReq(userAdmin, password), userAdmin, http.StatusNotImplemented, 0},
-		}
-		runTestCases(t, ttCases, testData, clients)
-	})
-	t.Run("local", func(t *testing.T) {
-		th := SetupTestHelperLocalMode(t)
-		defer th.TearDown()
-		clients := setupLocalClients(th)
-		testData := setupData(t, th)
-		ttCases := []TestCase{
-			{"/login", methodPost, loginReq(userAnon, password), userAnon, http.StatusUnauthorized, 0},
-			{"/login", methodPost, loginReq(userAdmin, password), userAdmin, http.StatusOK, 1},
-		}
-		runTestCases(t, ttCases, testData, clients)
-	})
-}
-
 func TestPermissionsLogout(t *testing.T) {
 	t.Run("plugin", func(t *testing.T) {
 		th := SetupTestHelperPluginMode(t)
@@ -2913,43 +2850,6 @@ func TestPermissionsLogout(t *testing.T) {
 		ttCases := []TestCase{
 			{"/logout", methodPost, "", userAnon, http.StatusUnauthorized, 0},
 			{"/logout", methodPost, "", userAdmin, http.StatusOK, 0},
-		}
-		runTestCases(t, ttCases, testData, clients)
-	})
-}
-
-func TestPermissionsRegister(t *testing.T) {
-	t.Run("plugin", func(t *testing.T) {
-		th := SetupTestHelperPluginMode(t)
-		defer th.TearDown()
-		clients := setupClients(th)
-		testData := setupData(t, th)
-		ttCases := []TestCase{
-			{"/register", methodPost, "", userAnon, http.StatusNotImplemented, 0},
-			{"/register", methodPost, "", userAdmin, http.StatusNotImplemented, 0},
-		}
-		runTestCases(t, ttCases, testData, clients)
-	})
-	t.Run("local", func(t *testing.T) {
-		th := SetupTestHelperLocalMode(t)
-		defer th.TearDown()
-		clients := setupLocalClients(th)
-		testData := setupData(t, th)
-
-		team, resp := th.Client.GetTeam(model.GlobalTeamID)
-		th.CheckOK(resp)
-		require.NotNil(th.T, team)
-		require.NotNil(th.T, team.SignupToken)
-
-		postData := toJSON(t, model.RegisterRequest{
-			Username: "newuser",
-			Email:    "newuser@test.com",
-			Password: password,
-			Token:    team.SignupToken,
-		})
-
-		ttCases := []TestCase{
-			{"/register", methodPost, postData, userAnon, http.StatusOK, 0},
 		}
 		runTestCases(t, ttCases, testData, clients)
 	})

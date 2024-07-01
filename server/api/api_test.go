@@ -27,7 +27,6 @@ func TestErrorResponse(t *testing.T) {
 		// bad request
 		{"ErrBadRequest", model.NewErrBadRequest("bad field"), http.StatusBadRequest, "bad field"},
 		{"ErrViewsLimitReached", model.ErrViewsLimitReached, http.StatusBadRequest, "limit reached"},
-		{"ErrAuthParam", model.NewErrAuthParam("password is required"), http.StatusBadRequest, "password is required"},
 		{"ErrInvalidCategory", model.NewErrInvalidCategory("open"), http.StatusBadRequest, "open"},
 		{"ErrBoardMemberIsLastAdmin", model.ErrBoardMemberIsLastAdmin, http.StatusBadRequest, "no admins"},
 		{"ErrBoardIDMismatch", model.ErrBoardIDMismatch, http.StatusBadRequest, "Board IDs do not match"},

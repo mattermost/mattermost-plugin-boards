@@ -185,12 +185,6 @@ func IsErrBadRequest(err error) bool {
 		return true
 	}
 
-	// check if this is a model.ErrAuthParam
-	var ap *ErrAuthParam
-	if errors.As(err, &ap) {
-		return true
-	}
-
 	// check if this is a model.ErrInvalidCategory
 	var ic *ErrInvalidCategory
 	if errors.As(err, &ic) {
