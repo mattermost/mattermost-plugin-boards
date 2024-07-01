@@ -22,7 +22,6 @@ func TestSharing(t *testing.T) {
 	})
 
 	t.Run("Check no initial sharing", func(t *testing.T) {
-
 		teamID := "0"
 		newBoard := &model.Board{
 			TeamID: teamID,

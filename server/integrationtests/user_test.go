@@ -10,11 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	fakeUsername = "fakeUsername"
-	fakeEmail    = "mock@test.com"
-)
-
 func TestGetMe(t *testing.T) {
 	th := SetupTestHelper(t).Start()
 	defer th.TearDown()
@@ -129,7 +124,6 @@ func TestUserChangePassword(t *testing.T) {
 	originalMe, resp := th.Client.GetMe()
 	require.NoError(t, resp.Error)
 	require.NotNil(t, originalMe)
-
 }
 
 func randomBytes(t *testing.T, n int) []byte {
