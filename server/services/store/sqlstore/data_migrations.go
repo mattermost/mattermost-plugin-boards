@@ -351,7 +351,6 @@ func (s *SQLStore) createCategoryBoards(db sq.BaseRunner) error {
 // group messages. This function migrates all boards
 // belonging to a DM to the best possible team.
 func (s *SQLStore) RunTeamLessBoardsMigration() error {
-
 	setting, err := s.GetSystemSetting(TeamLessBoardsMigrationKey)
 	if err != nil {
 		return fmt.Errorf("cannot get teamless boards migration state: %w", err)
@@ -550,7 +549,6 @@ func (s *SQLStore) getBoardUserTeams(tx sq.BaseRunner, board *model.Board) (map[
 }
 
 func (s *SQLStore) RunDeletedMembershipBoardsMigration() error {
-
 	setting, err := s.GetSystemSetting(DeletedMembershipBoardsMigrationKey)
 	if err != nil {
 		return fmt.Errorf("cannot get deleted membership boards migration state: %w", err)
