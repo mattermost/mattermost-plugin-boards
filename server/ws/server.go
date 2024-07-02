@@ -67,7 +67,7 @@ func (wss *websocketSession) isAuthenticated() bool {
 }
 
 // NewServer creates a new Server.
-func NewServer(auth *auth.Auth, singleUserToken string, isMattermostAuth bool, logger mlog.LoggerIFace, store Store) *Server {
+func NewServer(auth *auth.Auth, logger mlog.LoggerIFace, store Store) *Server {
 	return &Server{
 		listeners:        make(map[*websocketSession]bool),
 		listenersByTeam:  make(map[string][]*websocketSession),
@@ -78,7 +78,7 @@ func NewServer(auth *auth.Auth, singleUserToken string, isMattermostAuth bool, l
 			},
 		},
 		auth:             auth,
-		isMattermostAuth: isMattermostAuth,
+		isMattermostAuth: true,
 		logger:           logger,
 		store:            store,
 	}

@@ -13,7 +13,7 @@ import (
 )
 
 func TestTeamSubscription(t *testing.T) {
-	server := NewServer(&auth.Auth{}, "token", false, &mlog.Logger{}, nil)
+	server := NewServer(&auth.Auth{}, &mlog.Logger{}, nil)
 	session := &websocketSession{
 		conn:   &websocket.Conn{},
 		mu:     sync.Mutex{},
@@ -145,7 +145,7 @@ func TestTeamSubscription(t *testing.T) {
 }
 
 func TestBlocksSubscription(t *testing.T) {
-	server := NewServer(&auth.Auth{}, "token", false, &mlog.Logger{}, nil)
+	server := NewServer(&auth.Auth{}, &mlog.Logger{}, nil)
 	session := &websocketSession{
 		conn:   &websocket.Conn{},
 		mu:     sync.Mutex{},
@@ -264,7 +264,7 @@ func TestBlocksSubscription(t *testing.T) {
 }
 
 func TestGetUserIDForTokenInSingleUserMode(t *testing.T) {
-	server := NewServer(&auth.Auth{}, "token", false, &mlog.Logger{}, nil)
+	server := NewServer(&auth.Auth{}, &mlog.Logger{}, nil)
 
 	t.Run("Should return nothing if the token is empty", func(t *testing.T) {
 		require.Empty(t, server.getUserIDForToken(""))

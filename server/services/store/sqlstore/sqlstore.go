@@ -9,7 +9,6 @@ import (
 	sq "github.com/Masterminds/squirrel"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
-	"github.com/mattermost/mattermost-plugin-boards/server/services/store"
 	"github.com/mattermost/mattermost/server/public/pluginapi/cluster"
 
 	mmModel "github.com/mattermost/mattermost/server/public/model"
@@ -169,18 +168,6 @@ func (s *SQLStore) elementInColumn(column string) string {
 		return fmt.Sprintf("position(? in %s) > 0", column)
 	}
 	return ""
-}
-
-func (s *SQLStore) getLicense(db sq.BaseRunner) *mmModel.License {
-	return nil
-}
-
-func (s *SQLStore) searchUserChannels(db sq.BaseRunner, teamID, userID, query string) ([]*mmModel.Channel, error) {
-	return nil, store.NewNotSupportedError("search user channels not supported on standalone mode")
-}
-
-func (s *SQLStore) getChannel(db sq.BaseRunner, teamID, channel string) (*mmModel.Channel, error) {
-	return nil, store.NewNotSupportedError("get channel not supported on standalone mode")
 }
 
 func (s *SQLStore) DBVersion() string {
