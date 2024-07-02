@@ -10,9 +10,8 @@ import (
 )
 
 type TestHelper struct {
-	t        *testing.T
-	f        *foundation.Foundation
-	isPlugin bool
+	t *testing.T
+	f *foundation.Foundation
 }
 
 func (th *TestHelper) IsPostgres() bool {
@@ -33,20 +32,19 @@ func SetupPluginTestHelper(t *testing.T) (*TestHelper, func()) {
 		t.Skip("Skipping plugin mode test for SQLite")
 	}
 
-	return setupTestHelper(t, true)
+	return setupTestHelper(t)
 }
 
 func SetupTestHelper(t *testing.T) (*TestHelper, func()) {
-	return setupTestHelper(t, false)
+	return setupTestHelper(t)
 }
 
-func setupTestHelper(t *testing.T, isPlugin bool) (*TestHelper, func()) {
-	f := foundation.New(t, NewBoardsMigrator(isPlugin))
+func setupTestHelper(t *testing.T) (*TestHelper, func()) {
+	f := foundation.New(t, NewBoardsMigrator(true))
 
 	th := &TestHelper{
-		t:        t,
-		f:        f,
-		isPlugin: isPlugin,
+		t: t,
+		f: f,
 	}
 
 	tearDown := func() {

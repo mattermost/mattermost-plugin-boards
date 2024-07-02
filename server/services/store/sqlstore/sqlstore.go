@@ -22,8 +22,6 @@ type SQLStore struct {
 	tablePrefix      string
 	connectionString string
 	dbPingAttempts   int
-	isPlugin         bool
-	isSingleUser     bool
 	logger           mlog.LoggerIFace
 	NewMutexFn       MutexFactory
 	servicesAPI      servicesAPI
@@ -51,8 +49,6 @@ func New(params Params) (*SQLStore, error) {
 		tablePrefix:      params.TablePrefix,
 		connectionString: params.ConnectionString,
 		logger:           params.Logger,
-		isPlugin:         params.IsPlugin,
-		isSingleUser:     params.IsSingleUser,
 		NewMutexFn:       params.NewMutexFn,
 		servicesAPI:      params.ServicesAPI,
 		configFn:         params.ConfigFn,
