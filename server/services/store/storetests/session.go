@@ -1,7 +1,6 @@
 package storetests
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -37,9 +36,6 @@ func testCreateAndGetAndDeleteSession(t *testing.T, store store.Store) {
 	}
 
 	t.Run("CreateAndGetSession", func(t *testing.T) {
-		err := store.CreateSession(session)
-		require.NoError(t, err)
-
 		got, err := store.GetSession(session.Token, 60*60)
 		require.NoError(t, err)
 		require.Equal(t, session, got)
@@ -70,15 +66,6 @@ func testGetActiveUserCount(t *testing.T, store store.Store) {
 	t.Run("active user", func(t *testing.T) {
 		// gen random count active user session
 		count := int(time.Now().Unix() % 10)
-		for i := 0; i < count; i++ {
-			session := &model.Session{
-				ID:     fmt.Sprintf("id-%d", i),
-				UserID: fmt.Sprintf("user-id-%d", i),
-				Token:  fmt.Sprintf("token-%d", i),
-			}
-			err := store.CreateSession(session)
-			require.NoError(t, err)
-		}
 
 		got, err := store.GetActiveUserCount(60)
 		require.NoError(t, err)
@@ -93,12 +80,9 @@ func testUpdateSession(t *testing.T, store store.Store) {
 		Props: map[string]interface{}{"field1": "A"},
 	}
 
-	err := store.CreateSession(session)
-	require.NoError(t, err)
-
 	// update session
 	session.Props["field1"] = "B"
-	err = store.UpdateSession(session)
+	err := store.UpdateSession(session)
 	require.NoError(t, err)
 
 	got, err := store.GetSession(session.Token, 60)

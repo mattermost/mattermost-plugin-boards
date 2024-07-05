@@ -52,11 +52,6 @@ func (s *SQLStore) CanSeeUser(seerID string, seenID string) (bool, error) {
 
 }
 
-func (s *SQLStore) CleanUpSessions(expireTime int64) error {
-	return errors.New("no clean up sessions allowed from focalboard, update it using mattermost") 
-
-}
-
 func (s *SQLStore) CreateBoardsAndBlocks(bab *model.BoardsAndBlocks, userID string) (*model.BoardsAndBlocks, error) {
 	if s.dbType == model.SqliteDBType {
 		return s.createBoardsAndBlocks(s.db, bab, userID)
@@ -129,18 +124,8 @@ func (s *SQLStore) CreateCategory(category model.Category) error {
 
 }
 
-func (s *SQLStore) CreateSession(session *model.Session) error {
-	return errors.New("no update allowed from focalboard, update it using mattermost") 
-
-}
-
 func (s *SQLStore) CreateSubscription(sub *model.Subscription) (*model.Subscription, error) {
 	return s.createSubscription(s.db, sub)
-
-}
-
-func (s *SQLStore) CreateUser(user *model.User) (*model.User, error) {
-	return nil, errors.New("no user creation allowed from focalboard, create it using mattermost") 
 
 }
 
@@ -926,21 +911,6 @@ func (s *SQLStore) UpdateSession(session *model.Session) error {
 
 func (s *SQLStore) UpdateSubscribersNotifiedAt(blockID string, notifiedAt int64) error {
 	return s.updateSubscribersNotifiedAt(s.db, blockID, notifiedAt)
-
-}
-
-func (s *SQLStore) UpdateUser(user *model.User) (*model.User, error) {
-	return nil, errors.New("no update allowed from focalboard, update it using mattermost") 
-
-}
-
-func (s *SQLStore) UpdateUserPassword(username string, password string) error {
-	return errors.New("no update allowed from focalboard, update it using mattermost") 
-
-}
-
-func (s *SQLStore) UpdateUserPasswordByID(userID string, password string) error {
-	return errors.New("no update allowed from focalboard, update it using mattermost") 
 
 }
 

@@ -65,20 +65,6 @@ func (mr *MockStoreMockRecorder) CanSeeUser(arg0, arg1 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanSeeUser", reflect.TypeOf((*MockStore)(nil).CanSeeUser), arg0, arg1)
 }
 
-// CleanUpSessions mocks base method.
-func (m *MockStore) CleanUpSessions(arg0 int64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CleanUpSessions", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CleanUpSessions indicates an expected call of CleanUpSessions.
-func (mr *MockStoreMockRecorder) CleanUpSessions(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanUpSessions", reflect.TypeOf((*MockStore)(nil).CleanUpSessions), arg0)
-}
-
 // CreateBoardsAndBlocks mocks base method.
 func (m *MockStore) CreateBoardsAndBlocks(arg0 *model.BoardsAndBlocks, arg1 string) (*model.BoardsAndBlocks, error) {
 	m.ctrl.T.Helper()
