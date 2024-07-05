@@ -92,6 +92,16 @@ func (a *API) handleCreateBoardsAndBlocks(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	isGuest, err := a.userIsGuest(userID)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+	if isGuest {
+		a.errorResponse(w, r, model.NewErrPermission("access denied to create board"))
+		return
+	}
+
 	for _, block := range newBab.Blocks {
 		// Error checking
 		if len(block.Type) < 1 {

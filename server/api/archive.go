@@ -137,6 +137,16 @@ func (a *API) handleArchiveImport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	isGuest, err := a.userIsGuest(userID)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+	if isGuest {
+		a.errorResponse(w, r, model.NewErrPermission("access denied to create board"))
+		return
+	}
+
 	file, handle, err := r.FormFile(UploadFormFileKey)
 	if err != nil {
 		fmt.Fprintf(w, "%v", err)
@@ -210,7 +220,13 @@ func (a *API) handleArchiveExportTeam(w http.ResponseWriter, r *http.Request) {
 	defer a.audit.LogRecord(audit.LevelRead, auditRec)
 	auditRec.AddMeta("TeamID", teamID)
 
-	boards, err := a.app.GetBoardsForUserAndTeam(userID, teamID, false)
+	isGuest, err := a.userIsGuest(userID)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	boards, err := a.app.GetBoardsForUserAndTeam(userID, teamID, !isGuest)
 	if err != nil {
 		a.errorResponse(w, r, err)
 		return

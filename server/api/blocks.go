@@ -98,6 +98,19 @@ func (a *API) handleGetBlocks(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+		if board.IsTemplate {
+			var isGuest bool
+			isGuest, err = a.userIsGuest(userID)
+			if err != nil {
+				a.errorResponse(w, r, err)
+				return
+			}
+
+			if isGuest {
+				a.errorResponse(w, r, model.NewErrPermission("guest are not allowed to get board templates"))
+				return
+			}
+		}
 	}
 
 	auditRec := a.makeAuditRecord(r, "getBlocks", audit.Fail)
