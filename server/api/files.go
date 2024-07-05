@@ -75,8 +75,8 @@ func FileInfoResponseFromJSON(data io.Reader) (*mmModel.FileInfo, error) {
 
 func (a *API) registerFilesRoutes(r *mux.Router) {
 	// Files API
-	r.HandleFunc("/files/teams/{teamID}/{boardID}/{filename}", a.attachSession(a.handleServeFile, false)).Methods("GET")
-	r.HandleFunc("/files/teams/{teamID}/{boardID}/{filename}/info", a.attachSession(a.getFileInfo, false)).Methods("GET")
+	r.HandleFunc("/files/teams/{teamID}/{boardID}/{filename}", a.attachSession(a.handleServeFile)).Methods("GET")
+	r.HandleFunc("/files/teams/{teamID}/{boardID}/{filename}/info", a.attachSession(a.getFileInfo)).Methods("GET")
 	r.HandleFunc("/teams/{teamID}/{boardID}/files", a.sessionRequired(a.handleUploadFile)).Methods("POST")
 }
 

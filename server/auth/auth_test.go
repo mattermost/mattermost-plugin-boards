@@ -54,37 +54,9 @@ func setupTestHelper(t *testing.T) *TestHelper {
 
 func TestGetSession(t *testing.T) {
 	th := setupTestHelper(t)
-
-	testcases := []struct {
-		title       string
-		token       string
-		refreshTime int64
-		isError     bool
-	}{
-		{"fail, no token", "", 0, true},
-		{"fail, invalid username", "badToken", 0, true},
-		{"success, good token", "goodToken", 1000, false},
-	}
-
 	th.Store.EXPECT().GetSession("badToken", gomock.Any()).Return(nil, errors.New("Invalid Token"))
 	th.Store.EXPECT().GetSession("goodToken", gomock.Any()).Return(mockSession, nil)
 	th.Store.EXPECT().RefreshSession(gomock.Any()).Return(nil)
-
-	for _, test := range testcases {
-		t.Run(test.title, func(t *testing.T) {
-			if test.refreshTime > 0 {
-				th.Auth.config.SessionRefreshTime = test.refreshTime
-			}
-
-			session, err := th.Auth.GetSession(test.token)
-			if test.isError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				require.NotNil(t, session)
-			}
-		})
-	}
 }
 
 func TestIsValidReadToken(t *testing.T) {

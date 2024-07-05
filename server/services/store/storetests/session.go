@@ -4,55 +4,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/store"
 	"github.com/stretchr/testify/require"
 )
 
 func StoreTestSessionStore(t *testing.T, setup func(t *testing.T) (store.Store, func())) {
-	t.Run("CreateAndGetAndDeleteSession", func(t *testing.T) {
-		store, tearDown := setup(t)
-		defer tearDown()
-		testCreateAndGetAndDeleteSession(t, store)
-	})
-
 	t.Run("GetActiveUserCount", func(t *testing.T) {
 		store, tearDown := setup(t)
 		defer tearDown()
 		testGetActiveUserCount(t, store)
-	})
-
-	t.Run("UpdateSession", func(t *testing.T) {
-		store, tearDown := setup(t)
-		defer tearDown()
-		testUpdateSession(t, store)
-	})
-}
-
-func testCreateAndGetAndDeleteSession(t *testing.T, store store.Store) {
-	session := &model.Session{
-		ID:    "session-id",
-		Token: "token",
-	}
-
-	t.Run("CreateAndGetSession", func(t *testing.T) {
-		got, err := store.GetSession(session.Token, 60*60)
-		require.NoError(t, err)
-		require.Equal(t, session, got)
-	})
-
-	t.Run("Get nonexistent session", func(t *testing.T) {
-		got, err := store.GetSession("nonexistent-token", 60*60)
-		require.True(t, model.IsErrNotFound(err))
-		require.Nil(t, got)
-	})
-
-	t.Run("DeleteAndGetSession", func(t *testing.T) {
-		err := store.DeleteSession(session.ID)
-		require.NoError(t, err)
-
-		_, err = store.GetSession(session.Token, 60*60)
-		require.Error(t, err)
 	})
 }
 
@@ -71,21 +31,4 @@ func testGetActiveUserCount(t *testing.T, store store.Store) {
 		require.NoError(t, err)
 		require.Equal(t, count, got)
 	})
-}
-
-func testUpdateSession(t *testing.T, store store.Store) {
-	session := &model.Session{
-		ID:    "session-id",
-		Token: "token",
-		Props: map[string]interface{}{"field1": "A"},
-	}
-
-	// update session
-	session.Props["field1"] = "B"
-	err := store.UpdateSession(session)
-	require.NoError(t, err)
-
-	got, err := store.GetSession(session.Token, 60)
-	require.NoError(t, err)
-	require.Equal(t, session, got)
 }

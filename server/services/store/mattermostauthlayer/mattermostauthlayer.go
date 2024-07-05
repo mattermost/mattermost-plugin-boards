@@ -220,22 +220,6 @@ func (s *MattermostAuthLayer) GetActiveUserCount(updatedSecondsAgo int64) (int, 
 	return count, nil
 }
 
-func (s *MattermostAuthLayer) GetSession(token string, expireTime int64) (*model.Session, error) {
-	return nil, store.NewNotSupportedError("sessions not used when using mattermost")
-}
-
-func (s *MattermostAuthLayer) RefreshSession(session *model.Session) error {
-	return store.NewNotSupportedError("no update allowed from focalboard, update it using mattermost")
-}
-
-func (s *MattermostAuthLayer) UpdateSession(session *model.Session) error {
-	return store.NewNotSupportedError("no update allowed from focalboard, update it using mattermost")
-}
-
-func (s *MattermostAuthLayer) DeleteSession(sessionID string) error {
-	return store.NewNotSupportedError("no update allowed from focalboard, update it using mattermost")
-}
-
 func (s *MattermostAuthLayer) GetTeam(id string) (*model.Team, error) {
 	if id == "0" {
 		team := model.Team{

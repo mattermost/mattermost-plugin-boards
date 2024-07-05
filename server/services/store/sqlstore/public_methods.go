@@ -226,11 +226,6 @@ func (s *SQLStore) DeleteNotificationHint(blockID string) error {
 
 }
 
-func (s *SQLStore) DeleteSession(sessionID string) error {
-	return errors.New("no delete session allowed from focalboard, update it using mattermost") 
-
-}
-
 func (s *SQLStore) DeleteSubscription(blockID string, subscriberID string) error {
 	return s.deleteSubscription(s.db, blockID, subscriberID)
 
@@ -456,11 +451,6 @@ func (s *SQLStore) GetNotificationHint(blockID string) (*model.NotificationHint,
 
 func (s *SQLStore) GetRegisteredUserCount() (int, error) {
 	return 0, errors.New("registered user count not supported in focalboard, will fetch from mattermost") 
-
-}
-
-func (s *SQLStore) GetSession(token string, expireTime int64) (*model.Session, error) {
-	return nil, errors.New("sessions not used when using mattermost") 
 
 }
 
@@ -757,11 +747,6 @@ func (s *SQLStore) PostMessage(message string, postType string, channelID string
 
 }
 
-func (s *SQLStore) RefreshSession(session *model.Session) error {
-	return errors.New("no update allowed from focalboard, update it using mattermost") 
-
-}
-
 func (s *SQLStore) RemoveDefaultTemplates(boards []*model.Board) error {
 	return s.removeDefaultTemplates(s.db, boards)
 
@@ -901,11 +886,6 @@ func (s *SQLStore) UpdateCardLimitTimestamp(cardLimit int) (int64, error) {
 
 func (s *SQLStore) UpdateCategory(category model.Category) error {
 	return s.updateCategory(s.db, category)
-
-}
-
-func (s *SQLStore) UpdateSession(session *model.Session) error {
-	return errors.New("no update allowed from focalboard, update it using mattermost") 
 
 }
 

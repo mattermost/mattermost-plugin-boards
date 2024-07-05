@@ -16,7 +16,7 @@ import (
 
 func (a *API) registerBlocksRoutes(r *mux.Router) {
 	// Blocks APIs
-	r.HandleFunc("/boards/{boardID}/blocks", a.attachSession(a.handleGetBlocks, false)).Methods("GET")
+	r.HandleFunc("/boards/{boardID}/blocks", a.attachSession(a.handleGetBlocks)).Methods("GET")
 	r.HandleFunc("/boards/{boardID}/blocks", a.sessionRequired(a.handlePostBlocks)).Methods("POST")
 	r.HandleFunc("/boards/{boardID}/blocks", a.sessionRequired(a.handlePatchBlocks)).Methods("PATCH")
 	r.HandleFunc("/boards/{boardID}/blocks/{blockID}", a.sessionRequired(a.handleDeleteBlock)).Methods("DELETE")

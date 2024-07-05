@@ -5,20 +5,15 @@ import (
 	"net/http"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
-	"github.com/mattermost/mattermost-plugin-boards/server/services/auth"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
-
-	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )
 
 func (a *API) sessionRequired(handler func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
-	return a.attachSession(handler, true)
+	return a.attachSession(handler)
 }
 
-func (a *API) attachSession(handler func(w http.ResponseWriter, r *http.Request), required bool) func(w http.ResponseWriter, r *http.Request) {
+func (a *API) attachSession(handler func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		token, _ := auth.ParseAuthTokenFromRequest(r)
-
 		if a.MattermostAuth && r.Header.Get("Mattermost-User-Id") != "" {
 			userID := r.Header.Get("Mattermost-User-Id")
 			now := utils.GetMillis()
@@ -37,30 +32,6 @@ func (a *API) attachSession(handler func(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		session, err := a.app.GetSession(token)
-		if err != nil {
-			if required {
-				a.errorResponse(w, r, model.NewErrUnauthorized(err.Error()))
-				return
-			}
-
-			handler(w, r)
-			return
-		}
-
-		authService := session.AuthService
-		if authService != a.authService {
-			msg := `Session authService mismatch`
-			a.logger.Error(msg,
-				mlog.String("sessionID", session.ID),
-				mlog.String("want", a.authService),
-				mlog.String("got", authService),
-			)
-			a.errorResponse(w, r, model.NewErrUnauthorized(msg))
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), sessionContextKey, session)
-		handler(w, r.WithContext(ctx))
+		a.errorResponse(w, r, model.NewErrUnauthorized("Unauthorized"))
 	}
 }

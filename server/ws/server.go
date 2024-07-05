@@ -402,12 +402,7 @@ func (ws *Server) removeListenerFromBlock(listener *websocketSession, blockID st
 }
 
 func (ws *Server) getUserIDForToken(token string) string {
-	session, err := ws.auth.GetSession(token)
-	if session == nil || err != nil {
-		return ""
-	}
-
-	return session.UserID
+	return ""
 }
 
 func (ws *Server) authenticateListener(wsSession *websocketSession, token string) {

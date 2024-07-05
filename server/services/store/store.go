@@ -66,10 +66,6 @@ type Store interface {
 	GetUserPreferences(userID string) (mmModel.Preferences, error)
 
 	GetActiveUserCount(updatedSecondsAgo int64) (int, error)
-	GetSession(token string, expireTime int64) (*model.Session, error)
-	RefreshSession(session *model.Session) error
-	UpdateSession(session *model.Session) error
-	DeleteSession(sessionID string) error
 
 	UpsertSharing(sharing model.Sharing) error
 	GetSharing(rootID string) (*model.Sharing, error)
