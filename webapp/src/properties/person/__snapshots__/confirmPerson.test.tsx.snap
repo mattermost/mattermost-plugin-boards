@@ -14,7 +14,6 @@ exports[`properties/person select user - cancel 1`] = `
       aria-live="polite"
       aria-relevant="additions text"
       class="css-1f43avz-a11yText-A11yText"
-      role="log"
     />
     <div
       class="react-select__control css-18140j1-Control"
@@ -36,7 +35,6 @@ exports[`properties/person select user - cancel 1`] = `
           data-value=""
         >
           <input
-            aria-activedescendant=""
             aria-autocomplete="list"
             aria-expanded="false"
             aria-haspopup="true"
@@ -114,23 +112,14 @@ exports[`properties/person select user - cancel 2`] = `
       aria-live="polite"
       aria-relevant="additions text"
       class="css-1f43avz-a11yText-A11yText"
-      role="log"
     >
       <span
         id="aria-selection"
       />
       <span
-        id="aria-focused"
-      />
-      <span
-        id="aria-results"
+        id="aria-context"
       >
-        2 results available.
-      </span>
-      <span
-        id="aria-guidance"
-      >
-        Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.
+        option username-4 focused, 1 of 2. 2 results available. Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.
       </span>
     </span>
     <div
@@ -153,11 +142,11 @@ exports[`properties/person select user - cancel 2`] = `
           data-value=""
         >
           <input
-            aria-activedescendant="react-select-4-option-1-0"
             aria-autocomplete="list"
             aria-controls="react-select-4-listbox"
             aria-expanded="true"
             aria-haspopup="true"
+            aria-owns="react-select-4-listbox"
             autocapitalize="none"
             autocomplete="off"
             autocorrect="off"
@@ -216,12 +205,10 @@ exports[`properties/person select user - cancel 2`] = `
     </div>
     <div
       class="react-select__menu css-1slvcut-menu"
+      id="react-select-4-listbox"
     >
       <div
-        aria-multiselectable="false"
         class="react-select__menu-list css-1d1qzc4-MenuList"
-        id="react-select-4-listbox"
-        role="listbox"
       >
         <div
           class="react-select__group css-syji7d-Group"
@@ -235,10 +222,8 @@ exports[`properties/person select user - cancel 2`] = `
           <div>
             <div
               aria-disabled="false"
-              aria-selected="false"
               class="react-select__option react-select__option--is-focused css-63bi6m-option"
               id="react-select-4-option-1-0"
-              role="option"
               tabindex="-1"
             >
               <div
@@ -249,10 +234,8 @@ exports[`properties/person select user - cancel 2`] = `
             </div>
             <div
               aria-disabled="false"
-              aria-selected="false"
               class="react-select__option css-1uk8033-option"
               id="react-select-4-option-1-1"
-              role="option"
               tabindex="-1"
             >
               <div
@@ -283,7 +266,6 @@ exports[`properties/person select user - confirm 1`] = `
       aria-live="polite"
       aria-relevant="additions text"
       class="css-1f43avz-a11yText-A11yText"
-      role="log"
     />
     <div
       class="react-select__control css-18140j1-Control"
@@ -305,7 +287,6 @@ exports[`properties/person select user - confirm 1`] = `
           data-value=""
         >
           <input
-            aria-activedescendant=""
             aria-autocomplete="list"
             aria-expanded="false"
             aria-haspopup="true"
@@ -383,23 +364,14 @@ exports[`properties/person select user - confirm 2`] = `
       aria-live="polite"
       aria-relevant="additions text"
       class="css-1f43avz-a11yText-A11yText"
-      role="log"
     >
       <span
         id="aria-selection"
       />
       <span
-        id="aria-focused"
-      />
-      <span
-        id="aria-results"
+        id="aria-context"
       >
-        2 results available.
-      </span>
-      <span
-        id="aria-guidance"
-      >
-        Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.
+        option username-4 focused, 1 of 2. 2 results available. Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.
       </span>
     </span>
     <div
@@ -422,11 +394,11 @@ exports[`properties/person select user - confirm 2`] = `
           data-value=""
         >
           <input
-            aria-activedescendant="react-select-2-option-1-0"
             aria-autocomplete="list"
             aria-controls="react-select-2-listbox"
             aria-expanded="true"
             aria-haspopup="true"
+            aria-owns="react-select-2-listbox"
             autocapitalize="none"
             autocomplete="off"
             autocorrect="off"
@@ -485,12 +457,10 @@ exports[`properties/person select user - confirm 2`] = `
     </div>
     <div
       class="react-select__menu css-1slvcut-menu"
+      id="react-select-2-listbox"
     >
       <div
-        aria-multiselectable="false"
         class="react-select__menu-list css-1d1qzc4-MenuList"
-        id="react-select-2-listbox"
-        role="listbox"
       >
         <div
           class="react-select__group css-syji7d-Group"
@@ -504,10 +474,8 @@ exports[`properties/person select user - confirm 2`] = `
           <div>
             <div
               aria-disabled="false"
-              aria-selected="false"
               class="react-select__option react-select__option--is-focused css-63bi6m-option"
               id="react-select-2-option-1-0"
-              role="option"
               tabindex="-1"
             >
               <div
@@ -518,10 +486,8 @@ exports[`properties/person select user - confirm 2`] = `
             </div>
             <div
               aria-disabled="false"
-              aria-selected="false"
               class="react-select__option css-1uk8033-option"
               id="react-select-2-option-1-1"
-              role="option"
               tabindex="-1"
             >
               <div

@@ -9,7 +9,7 @@ import {wrapIntl} from '../testUtils'
 
 import CreateBoardFromTemplate from './createBoardFromTemplate'
 
-jest.mock('../../../../webapp/src/hooks/useGetAllTemplates', () => ({
+jest.mock('../hooks/useGetAllTemplates', () => ({
     useGetAllTemplates: () => [{id: 'id', title: 'title', description: 'description', icon: '🍔'}]
 }))
 

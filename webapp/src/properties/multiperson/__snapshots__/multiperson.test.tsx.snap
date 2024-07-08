@@ -14,7 +14,6 @@ exports[`properties/multiperson not readonly 1`] = `
       aria-live="polite"
       aria-relevant="additions text"
       class="css-1f43avz-a11yText-A11yText"
-      role="log"
     />
     <div
       class="react-select__control css-18140j1-Control"
@@ -89,7 +88,6 @@ exports[`properties/multiperson not readonly 1`] = `
           data-value=""
         >
           <input
-            aria-activedescendant=""
             aria-autocomplete="list"
             aria-expanded="false"
             aria-haspopup="true"
@@ -167,7 +165,6 @@ exports[`properties/multiperson not readonly not existing user 1`] = `
       aria-live="polite"
       aria-relevant="additions text"
       class="css-1f43avz-a11yText-A11yText"
-      role="log"
     />
     <div
       class="react-select__control css-18140j1-Control"
@@ -186,7 +183,6 @@ exports[`properties/multiperson not readonly not existing user 1`] = `
           data-value=""
         >
           <input
-            aria-activedescendant=""
             aria-autocomplete="list"
             aria-describedby="react-select-2-placeholder"
             aria-expanded="false"
@@ -267,23 +263,14 @@ exports[`properties/multiperson user dropdown open 1`] = `
       aria-live="polite"
       aria-relevant="additions text"
       class="css-1f43avz-a11yText-A11yText"
-      role="log"
     >
       <span
         id="aria-selection"
       />
       <span
-        id="aria-focused"
-      />
-      <span
-        id="aria-results"
+        id="aria-context"
       >
-        1 result available.
-      </span>
-      <span
-        id="aria-guidance"
-      >
-        Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.
+        option username-3 focused, 1 of 1. 1 result available. Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.
       </span>
     </span>
     <div
@@ -359,11 +346,11 @@ exports[`properties/multiperson user dropdown open 1`] = `
           data-value=""
         >
           <input
-            aria-activedescendant="react-select-4-option-2"
             aria-autocomplete="list"
             aria-controls="react-select-4-listbox"
             aria-expanded="true"
             aria-haspopup="true"
+            aria-owns="react-select-4-listbox"
             autocapitalize="none"
             autocomplete="off"
             autocorrect="off"
@@ -422,19 +409,15 @@ exports[`properties/multiperson user dropdown open 1`] = `
     </div>
     <div
       class="react-select__menu css-1slvcut-menu"
+      id="react-select-4-listbox"
     >
       <div
-        aria-multiselectable="true"
         class="react-select__menu-list react-select__menu-list--is-multi css-1d1qzc4-MenuList"
-        id="react-select-4-listbox"
-        role="listbox"
       >
         <div
           aria-disabled="false"
-          aria-selected="false"
           class="react-select__option react-select__option--is-focused css-63bi6m-option"
           id="react-select-4-option-2"
-          role="option"
           tabindex="-1"
         >
           <div

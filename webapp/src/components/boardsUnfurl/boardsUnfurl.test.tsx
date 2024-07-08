@@ -20,13 +20,13 @@ import {wrapIntl} from '../../testUtils'
 
 import BoardsUnfurl from './boardsUnfurl'
 
-jest.mock('../../../../../webapp/src/octoClient')
-jest.mock('../../../../../webapp/src/utils')
+jest.mock('../../octoClient')
+jest.mock('../../utils')
 const mockedOctoClient = mocked(octoClient, true)
 const mockedUtils = mocked(Utils, true)
-mockedUtils.createGuid = jest.requireActual('../../../../../webapp/src/utils').Utils.createGuid
-mockedUtils.blockTypeToIDType = jest.requireActual('../../../../../webapp/src/utils').Utils.blockTypeToIDType
-mockedUtils.displayDateTime = jest.requireActual('../../../../../webapp/src/utils').Utils.displayDateTime
+mockedUtils.createGuid = jest.requireActual('../../utils').Utils.createGuid
+mockedUtils.blockTypeToIDType = jest.requireActual('../../utils').Utils.blockTypeToIDType
+mockedUtils.displayDateTime = jest.requireActual('../../utils').Utils.displayDateTime
 
 let mockDisplayDateTime: jest.SpyInstance
 
