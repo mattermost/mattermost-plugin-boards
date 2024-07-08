@@ -14,15 +14,15 @@
         "incremental": false,
         "baseUrl": "src",
         "outDir": "./dist",
-        "moduleResolution": "node"
+        "moduleResolution": "node",
+        "skipLibCheck": true
     },
     "include": [
-        ".",
 		"src/**/*"
     ],
     "exclude": [
         ".git",
-        "**/node_modules/*",
+        "./node_modules/**",
         "dist",
         "pack"
     ]
