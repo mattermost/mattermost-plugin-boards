@@ -383,7 +383,7 @@ modd-precheck:
 webapp-ci: ## Webapp CI: linting & testing.
 	cd webapp; npm run check
 	cd webapp; npm run test
-	cd webapp: npm run check-types
+	cd webapp; npm run check-types
 
 webapp-test: ## jest tests for webapp
 	cd webapp; npm run test

@@ -37,5 +37,5 @@ jobs:
     - name: Lint & test webapp
       run: cd focalboard; make webapp-ci
     
-    - name: server test
+    - name: Lint & test server 
       run: cd focalboard; make server-ci
