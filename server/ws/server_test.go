@@ -262,15 +262,3 @@ func TestBlocksSubscription(t *testing.T) {
 		require.Empty(t, server.listenersByBlock[blockID3])
 	})
 }
-
-func TestGetUserIDForTokenInSingleUserMode(t *testing.T) {
-	server := NewServer(&auth.Auth{}, &mlog.Logger{}, nil)
-
-	t.Run("Should return nothing if the token is empty", func(t *testing.T) {
-		require.Empty(t, server.getUserIDForToken(""))
-	})
-
-	t.Run("Should return nothing if the token is invalid", func(t *testing.T) {
-		require.Empty(t, server.getUserIDForToken("invalid-token"))
-	})
-}

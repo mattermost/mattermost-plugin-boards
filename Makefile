@@ -365,6 +365,8 @@ generate: ## Install and run code generators.
 	cd server; go install github.com/golang/mock/mockgen@v1.6.0
 	cd server; go generate ./...
 
+server-ci: server-lint server-test ## Server CI: linting & testing. 
+
 server-lint: ## Run linters on server code.
 	@if ! [ -x "$$(command -v golangci-lint)" ]; then \
 		echo "golangci-lint is not installed. Please see https://github.com/golangci/golangci-lint#install-golangci-lint for installation instructions."; \
@@ -391,6 +393,10 @@ watch-plugin: modd-precheck ## Run and upload the plugin to a development server
 
 live-watch-plugin: modd-precheck ## Run and update locally the plugin in the development server
 	make live-watch
+
+server-test: ## Run server tests
+	@echo Starting tests for server
+	cd server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=plugin-profile.coverage -count=1 -timeout=30m ./...
 
 swagger: ## Generate swagger API spec and clients based on it.
 	mkdir -p server/swagger/docs
