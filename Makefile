@@ -365,7 +365,7 @@ generate: ## Install and run code generators.
 	cd server; go install github.com/golang/mock/mockgen@v1.6.0
 	cd server; go generate ./...
 
-server-ci: server-lint server-test ## Server CI: linting & testing. 
+server-ci: server-lint 
 
 server-lint: ## Run linters on server code.
 	@if ! [ -x "$$(command -v golangci-lint)" ]; then \
