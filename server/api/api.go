@@ -199,7 +199,7 @@ func (a *API) errorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	}
 
 	a.logger.Warn("api error response",
-		mlog.Int("code", http.StatusInternalServerError),
+		mlog.Int("code", errorResponse.ErrorCode),
 		mlog.Err(err),
 		mlog.String("api", r.URL.Path),
 	)
