@@ -194,45 +194,7 @@ func (a *API) handleArchiveExportTeam(w http.ResponseWriter, r *http.Request) {
 	//     description: internal error
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
-	if a.MattermostAuth {
-		a.errorResponse(w, r, model.NewErrNotImplemented("not permitted in plugin mode"))
-		return
-	}
+	a.errorResponse(w, r, model.NewErrNotImplemented("not permitted in plugin mode"))
+	return
 
-	vars := mux.Vars(r)
-	teamID := vars["teamID"]
-
-	ctx := r.Context()
-	session, _ := ctx.Value(sessionContextKey).(*model.Session)
-	userID := session.UserID
-
-	auditRec := a.makeAuditRecord(r, "archiveExportTeam", audit.Fail)
-	defer a.audit.LogRecord(audit.LevelRead, auditRec)
-	auditRec.AddMeta("TeamID", teamID)
-
-	boards, err := a.app.GetBoardsForUserAndTeam(userID, teamID, false)
-	if err != nil {
-		a.errorResponse(w, r, err)
-		return
-	}
-	ids := []string{}
-	for _, board := range boards {
-		ids = append(ids, board.ID)
-	}
-
-	opts := model.ExportArchiveOptions{
-		TeamID:   teamID,
-		BoardIDs: ids,
-	}
-
-	filename := fmt.Sprintf("archive-%s%s", time.Now().Format("2006-01-02"), archiveExtension)
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set("Content-Disposition", "attachment; filename="+filename)
-	w.Header().Set("Content-Transfer-Encoding", "binary")
-
-	if err := a.app.ExportArchive(w, opts); err != nil {
-		a.errorResponse(w, r, err)
-	}
-
-	auditRec.Success()
 }

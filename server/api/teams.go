@@ -100,20 +100,12 @@ func (a *API) handleGetTeam(w http.ResponseWriter, r *http.Request) {
 	var team *model.Team
 	var err error
 
-	if a.MattermostAuth {
-		team, err = a.app.GetTeam(teamID)
-		if model.IsErrNotFound(err) {
-			a.errorResponse(w, r, model.NewErrUnauthorized("invalid team"))
-		}
-		if err != nil {
-			a.errorResponse(w, r, err)
-		}
-	} else {
-		team, err = a.app.GetRootTeam()
-		if err != nil {
-			a.errorResponse(w, r, err)
-			return
-		}
+	team, err = a.app.GetTeam(teamID)
+	if model.IsErrNotFound(err) {
+		a.errorResponse(w, r, model.NewErrUnauthorized("invalid team"))
+	}
+	if err != nil {
+		a.errorResponse(w, r, err)
 	}
 
 	auditRec := a.makeAuditRecord(r, "getTeam", audit.Fail)

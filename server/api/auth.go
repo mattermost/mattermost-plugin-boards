@@ -14,7 +14,7 @@ func (a *API) sessionRequired(handler func(w http.ResponseWriter, r *http.Reques
 
 func (a *API) attachSession(handler func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if a.MattermostAuth && r.Header.Get("Mattermost-User-Id") != "" {
+		if r.Header.Get("Mattermost-User-Id") != "" {
 			userID := r.Header.Get("Mattermost-User-Id")
 			now := utils.GetMillis()
 			session := &model.Session{

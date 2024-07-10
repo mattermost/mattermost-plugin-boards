@@ -198,8 +198,6 @@ func New(params Params) (*Server, error) {
 		app:                 app,
 	}
 
-	server.initHandlers()
-
 	return &server, nil
 }
 
