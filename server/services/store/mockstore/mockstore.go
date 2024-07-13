@@ -65,20 +65,6 @@ func (mr *MockStoreMockRecorder) CanSeeUser(arg0, arg1 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanSeeUser", reflect.TypeOf((*MockStore)(nil).CanSeeUser), arg0, arg1)
 }
 
-// CleanUpSessions mocks base method.
-func (m *MockStore) CleanUpSessions(arg0 int64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CleanUpSessions", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CleanUpSessions indicates an expected call of CleanUpSessions.
-func (mr *MockStoreMockRecorder) CleanUpSessions(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanUpSessions", reflect.TypeOf((*MockStore)(nil).CleanUpSessions), arg0)
-}
-
 // CreateBoardsAndBlocks mocks base method.
 func (m *MockStore) CreateBoardsAndBlocks(arg0 *model.BoardsAndBlocks, arg1 string) (*model.BoardsAndBlocks, error) {
 	m.ctrl.T.Helper()
@@ -906,12 +892,6 @@ func (m *MockStore) GetSession(arg0 string, arg1 int64) (*model.Session, error) 
 	return ret0, ret1
 }
 
-// GetSession indicates an expected call of GetSession.
-func (mr *MockStoreMockRecorder) GetSession(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSession", reflect.TypeOf((*MockStore)(nil).GetSession), arg0, arg1)
-}
-
 // GetSharing mocks base method.
 func (m *MockStore) GetSharing(arg0 string) (*model.Sharing, error) {
 	m.ctrl.T.Helper()
@@ -1394,12 +1374,6 @@ func (m *MockStore) RefreshSession(arg0 *model.Session) error {
 	ret := m.ctrl.Call(m, "RefreshSession", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
-}
-
-// RefreshSession indicates an expected call of RefreshSession.
-func (mr *MockStoreMockRecorder) RefreshSession(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshSession", reflect.TypeOf((*MockStore)(nil).RefreshSession), arg0)
 }
 
 // RemoveDefaultTemplates mocks base method.

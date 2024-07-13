@@ -22,8 +22,6 @@ type Params struct {
 	TablePrefix      string
 	Logger           mlog.LoggerIFace
 	DB               *sql.DB
-	IsPlugin         bool
-	IsSingleUser     bool
 	NewMutexFn       MutexFactory
 	ServicesAPI      servicesAPI
 	SkipMigrations   bool
@@ -31,7 +29,7 @@ type Params struct {
 }
 
 func (p Params) CheckValid() error {
-	if p.IsPlugin && p.NewMutexFn == nil {
+	if p.NewMutexFn == nil {
 		return ErrStoreParam{name: "NewMutexFn", issue: "cannot be nil in plugin mode"}
 	}
 	return nil

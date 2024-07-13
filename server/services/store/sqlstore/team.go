@@ -91,46 +91,6 @@ func (s *SQLStore) upsertTeamSettings(db sq.BaseRunner, team model.Team) error {
 	return err
 }
 
-func (s *SQLStore) getTeam(db sq.BaseRunner, id string) (*model.Team, error) {
-	var settingsJSON string
-
-	query := s.getQueryBuilder(db).
-		Select(
-			"id",
-			"signup_token",
-			"COALESCE(settings, '{}')",
-			"modified_by",
-			"update_at",
-		).
-		From(s.tablePrefix + "teams").
-		Where(sq.Eq{"id": id})
-	row := query.QueryRow()
-	team := model.Team{}
-
-	err := row.Scan(
-		&team.ID,
-		&team.SignupToken,
-		&settingsJSON,
-		&team.ModifiedBy,
-		&team.UpdateAt,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal([]byte(settingsJSON), &team.Settings)
-	if err != nil {
-		s.logger.Error(`ERROR GetTeam settings json.Unmarshal`, mlog.Err(err))
-		return nil, err
-	}
-
-	return &team, nil
-}
-
-func (s *SQLStore) getTeamsForUser(db sq.BaseRunner, _ string) ([]*model.Team, error) {
-	return s.getAllTeams(db)
-}
-
 func (s *SQLStore) getTeamCount(db sq.BaseRunner) (int64, error) {
 	query := s.getQueryBuilder(db).
 		Select(

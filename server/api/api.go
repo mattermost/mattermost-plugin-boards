@@ -34,12 +34,11 @@ var (
 // REST APIs
 
 type API struct {
-	app            *app.App
-	authService    string
-	permissions    permissions.PermissionsService
-	MattermostAuth bool
-	logger         mlog.LoggerIFace
-	audit          *audit.Audit
+	app         *app.App
+	authService string
+	permissions permissions.PermissionsService
+	logger      mlog.LoggerIFace
+	audit       *audit.Audit
 }
 
 func NewAPI(

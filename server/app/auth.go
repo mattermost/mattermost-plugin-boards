@@ -14,11 +14,6 @@ const (
 	SecondsPerMinute = 60
 )
 
-// GetSession Get a user active session and refresh the session if is needed.
-func (a *App) GetSession(token string) (*model.Session, error) {
-	return a.auth.GetSession(token)
-}
-
 // IsValidReadToken validates the read token for a block.
 func (a *App) IsValidReadToken(boardID string, readToken string) (bool, error) {
 	return a.auth.IsValidReadToken(boardID, readToken)

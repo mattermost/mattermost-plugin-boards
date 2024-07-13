@@ -60,22 +60,12 @@ type Store interface {
 	GetUsersList(userIDs []string, showEmail, showName bool) ([]*model.User, error)
 	GetUserByEmail(email string) (*model.User, error)
 	GetUserByUsername(username string) (*model.User, error)
-	CreateUser(user *model.User) (*model.User, error)
-	UpdateUser(user *model.User) (*model.User, error)
-	UpdateUserPassword(username, password string) error
-	UpdateUserPasswordByID(userID, password string) error
 	GetUsersByTeam(teamID string, asGuestID string, showEmail, showName bool) ([]*model.User, error)
 	SearchUsersByTeam(teamID string, searchQuery string, asGuestID string, excludeBots bool, showEmail, showName bool) ([]*model.User, error)
 	PatchUserPreferences(userID string, patch model.UserPreferencesPatch) (mmModel.Preferences, error)
 	GetUserPreferences(userID string) (mmModel.Preferences, error)
 
 	GetActiveUserCount(updatedSecondsAgo int64) (int, error)
-	GetSession(token string, expireTime int64) (*model.Session, error)
-	CreateSession(session *model.Session) error
-	RefreshSession(session *model.Session) error
-	UpdateSession(session *model.Session) error
-	DeleteSession(sessionID string) error
-	CleanUpSessions(expireTime int64) error
 
 	UpsertSharing(sharing model.Sharing) error
 	GetSharing(rootID string) (*model.Sharing, error)

@@ -15,23 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createTestUsers(t *testing.T, store store.Store, num int) []*model.User {
-	var users []*model.User
-	for i := 0; i < num; i++ {
-		user := &model.User{
-			ID:       utils.NewID(utils.IDTypeUser),
-			Username: fmt.Sprintf("mooncake.%d", i),
-			Email:    fmt.Sprintf("mooncake.%d@example.com", i),
-		}
-		newUser, err := store.CreateUser(user)
-		require.NoError(t, err)
-		require.NotNil(t, newUser)
-
-		users = append(users, user)
-	}
-	return users
-}
-
 func createTestBlocks(t *testing.T, store store.Store, userID string, num int) []*model.Block {
 	var blocks []*model.Block
 	for i := 0; i < num; i++ {

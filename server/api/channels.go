@@ -50,11 +50,6 @@ func (a *API) handleGetChannel(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 
-	if !a.MattermostAuth {
-		a.errorResponse(w, r, model.NewErrNotImplemented("not permitted in standalone mode"))
-		return
-	}
-
 	teamID := mux.Vars(r)["teamID"]
 	channelID := mux.Vars(r)["channelID"]
 	userID := getUserID(r)
