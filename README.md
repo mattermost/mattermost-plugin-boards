@@ -1,25 +1,18 @@
-> [!WARNING]
-> **Effective September 15th, 2023, Mattermost, Inc. staff are no longer reviewing or merging pull requests for either Focalboard or the Mattermost Boards plugin in this repository (`mattermost/focalboard`). We encourage the community to fork this repository for continued development and contributions.**
->
-> The reason behind these changes is to focus Mattermost developer resources on improving the platform’s performance and core features to ensure Mattermost continues being resilient, stable, and best-in-breed for critical operations.
->
-> ️💡 [Learn more](https://forum.mattermost.com/t/upcoming-product-changes-to-boards-and-various-plugins/16669)
-
-# Mattermost boards plugin 
+# Mattermost Boards
 
 ### A self-hosted plugin for managing boards withing a Mattermost installation
 
-Focalboard is an open source, multilingual, self-hosted project management tool that's an alternative to Trello, Notion, and Asana.
+Mattermost boards plugins is an open source, multilingual, self-hosted project management tool that's an alternative to Trello, Notion, and Asana.
 
 **[Mattermost Boards](https://mattermost.com/boards/)** is the Mattermost plugin version of Focalboard that combines project management tools with messaging and collaboration for teams of all sizes. To access and use **Mattermost Boards**, install or upgrade to Mattermost v6.0 or later as a [self-hosted server](https://docs.mattermost.com/guides/deployment.html?utm_source=focalboard&utm_campaign=focalboard) or [Cloud server](https://mattermost.com/get-started/?utm_source=focalboard&utm_campaign=focalboard). After logging into Mattermost, select the menu in the top left corner of Mattermost and select **Boards**.
 
 ![Focalboard](website/site/static/img/hero.jpg)
 
-## Try Focalboard
+## Try Mattermost Boards Plugin 
 
 ### Mattermost Plugin
 
-After downloading and installing the plugin in the System Console, select the menu in the top left corner and select **Boards**. Access the latest releases of the focalboard plugin by downloading the `mattermost-plugin-focalboard.tar.gz` file from the releases in this repository: <https://github.com/mattermost/focalboard/releases>
+Access the latest releases of the focalboard plugin by downloading the `mattermost-plugin-focalboard.tar.gz` file from the releases in this repository: <https://github.com/mattermost/focalboard/releases>. After downloading and installing the plugin in the System Console, select the menu in the top left corner and select **Boards**. 
 
 
 ### API Docs
@@ -30,7 +23,7 @@ Boards API docs can be found over at <https://htmlpreview.github.io/?https://git
 
 Our [developer guide](https://developers.mattermost.com/contribute/more-info/focalboard/mattermost-boards-setup-guide/) has detailed instructions on how to set up your development environment for the **Mattermost boards plugin**. You can also join the [~Focalboard community channel](https://community.mattermost.com/core/channels/focalboard) to connect with other developers.
 
-Clone [mattermost-server](https://github.com/mattermost/mattermost-server) into sibling directory.
+Clone [mattermost](https://github.com/mattermost/mattermost-server) into sibling directory.
 
 You also want to have the environment variable `MM_DEBUG"true"` set, otherwise the plugin
 will be compiled for Linux, Windows, and Darwin ARM64 and x64 architecture every single time. Setting
