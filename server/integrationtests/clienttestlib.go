@@ -150,8 +150,7 @@ func newTestServerWithLicense(singleUserToken string, licenseType LicenseType) *
 	if err = logger.Configure("", cfg.LoggingCfgJSON, nil); err != nil {
 		panic(err)
 	}
-	singleUser := len(singleUserToken) > 0
-	innerStore, err := server.NewStore(cfg, singleUser, logger)
+	innerStore, err := server.NewStore(cfg, logger)
 	if err != nil {
 		panic(err)
 	}
@@ -199,7 +198,7 @@ func NewTestServerPluginMode() *server.Server {
 	if err = logger.Configure("", cfg.LoggingCfgJSON, nil); err != nil {
 		panic(err)
 	}
-	innerStore, err := server.NewStore(cfg, false, logger)
+	innerStore, err := server.NewStore(cfg, logger)
 	if err != nil {
 		panic(err)
 	}
@@ -235,7 +234,7 @@ func newTestServerLocalMode() *server.Server {
 		panic(err)
 	}
 
-	db, err := server.NewStore(cfg, false, logger)
+	db, err := server.NewStore(cfg, logger)
 	if err != nil {
 		panic(err)
 	}

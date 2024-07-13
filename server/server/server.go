@@ -201,7 +201,7 @@ func New(params Params) (*Server, error) {
 	return &server, nil
 }
 
-func NewStore(config *config.Configuration, isSingleUser bool, logger mlog.LoggerIFace) (store.Store, error) {
+func NewStore(config *config.Configuration, logger mlog.LoggerIFace) (store.Store, error) {
 	sqlDB, err := sql.Open(config.DBType, config.DBConfigString)
 	if err != nil {
 		logger.Error("connectDatabase failed", mlog.Err(err))
@@ -221,8 +221,6 @@ func NewStore(config *config.Configuration, isSingleUser bool, logger mlog.Logge
 		TablePrefix:      config.DBTablePrefix,
 		Logger:           logger,
 		DB:               sqlDB,
-		IsPlugin:         false,
-		IsSingleUser:     isSingleUser,
 	}
 
 	var db store.Store

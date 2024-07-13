@@ -154,20 +154,18 @@ func (s *SQLStore) RunCategoryUUIDIDMigration() error {
 		return txErr
 	}
 
-	if s.isPlugin {
-		if err := s.createCategories(tx); err != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				s.logger.Error("category UUIDs insert categories transaction rollback error", mlog.Err(rollbackErr), mlog.String("methodName", "setSystemSetting"))
-			}
-			return err
+	if err := s.createCategories(tx); err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			s.logger.Error("category UUIDs insert categories transaction rollback error", mlog.Err(rollbackErr), mlog.String("methodName", "setSystemSetting"))
 		}
+		return err
+	}
 
-		if err := s.createCategoryBoards(tx); err != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				s.logger.Error("category UUIDs insert category boards transaction rollback error", mlog.Err(rollbackErr), mlog.String("methodName", "setSystemSetting"))
-			}
-			return err
+	if err := s.createCategoryBoards(tx); err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			s.logger.Error("category UUIDs insert category boards transaction rollback error", mlog.Err(rollbackErr), mlog.String("methodName", "setSystemSetting"))
 		}
+		return err
 	}
 
 	if err := s.setSystemSetting(tx, CategoryUUIDIDMigrationKey, strconv.FormatBool(true)); err != nil {
@@ -353,10 +351,6 @@ func (s *SQLStore) createCategoryBoards(db sq.BaseRunner) error {
 // group messages. This function migrates all boards
 // belonging to a DM to the best possible team.
 func (s *SQLStore) RunTeamLessBoardsMigration() error {
-	if !s.isPlugin {
-		return nil
-	}
-
 	setting, err := s.GetSystemSetting(TeamLessBoardsMigrationKey)
 	if err != nil {
 		return fmt.Errorf("cannot get teamless boards migration state: %w", err)
@@ -555,10 +549,6 @@ func (s *SQLStore) getBoardUserTeams(tx sq.BaseRunner, board *model.Board) (map[
 }
 
 func (s *SQLStore) RunDeletedMembershipBoardsMigration() error {
-	if !s.isPlugin {
-		return nil
-	}
-
 	setting, err := s.GetSystemSetting(DeletedMembershipBoardsMigrationKey)
 	if err != nil {
 		return fmt.Errorf("cannot get deleted membership boards migration state: %w", err)
@@ -661,7 +651,7 @@ func (s *SQLStore) RunFixCollationsAndCharsetsMigration() error {
 	var collation string
 	var charSet string
 	var err error
-	if !s.isPlugin || os.Getenv("FOCALBOARD_UNIT_TESTING") == "1" {
+	if os.Getenv("FOCALBOARD_UNIT_TESTING") == "1" {
 		collation = "utf8mb4_general_ci"
 		charSet = "utf8mb4"
 	} else {

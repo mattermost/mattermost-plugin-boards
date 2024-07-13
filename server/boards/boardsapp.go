@@ -78,7 +78,6 @@ func NewBoardsApp(api model.ServicesAPI) (*BoardsApp, error) {
 		TablePrefix:      cfg.DBTablePrefix,
 		Logger:           logger,
 		DB:               sqlDB,
-		IsPlugin:         true,
 		NewMutexFn: func(name string) (*cluster.Mutex, error) {
 			return cluster.NewMutex(&mutexAPIAdapter{api: api}, name)
 		},

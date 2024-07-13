@@ -210,7 +210,6 @@ func (bm *BoardsMigrator) Setup() error {
 		TablePrefix:      tablePrefix,
 		Logger:           logger,
 		DB:               bm.db,
-		IsPlugin:         bm.withMattermostMigrations,
 		NewMutexFn: func(name string) (*cluster.Mutex, error) {
 			return nil, fmt.Errorf("not implemented")
 		},
