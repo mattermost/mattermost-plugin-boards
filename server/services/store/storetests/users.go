@@ -15,7 +15,6 @@ import (
 
 //nolint:dupl
 func StoreTestUserStore(t *testing.T, setup func(t *testing.T) (store.Store, func())) {
-
 	t.Run("CreateAndGetUser", func(t *testing.T) {
 		store, tearDown := setup(t)
 		defer tearDown()

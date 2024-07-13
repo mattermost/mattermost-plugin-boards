@@ -205,6 +205,4 @@ func (a *API) handleArchiveExportTeam(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 	a.errorResponse(w, r, model.NewErrNotImplemented("not permitted in plugin mode"))
-	return
-
 }
