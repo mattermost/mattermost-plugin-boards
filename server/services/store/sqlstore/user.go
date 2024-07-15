@@ -105,8 +105,8 @@ func mmUserToFbUser(mmUser *mmModel.User) model.User {
 	}
 }
 
-func (s *SQLStore) GetRegisteredUserCount() (int, error) {
-	query := s.getQueryBuilder(s.db).
+func (s *SQLStore) getRegisteredUserCount(db sq.BaseRunner) (int, error) {
+	query := s.getQueryBuilder(db).
 		Select("count(*)").
 		From("Users").
 		Where(sq.Eq{"deleteAt": 0})
@@ -121,7 +121,7 @@ func (s *SQLStore) GetRegisteredUserCount() (int, error) {
 	return count, nil
 }
 
-func (s *SQLStore) GetUserByID(userID string) (*model.User, error) {
+func (s *SQLStore) getUserByID(_ sq.BaseRunner, userID string) (*model.User, error) {
 	mmuser, err := s.servicesAPI.GetUserByID(userID)
 	if err != nil {
 		return nil, err
@@ -131,7 +131,7 @@ func (s *SQLStore) GetUserByID(userID string) (*model.User, error) {
 	return &user, nil
 }
 
-func (s *SQLStore) GetUserByEmail(email string) (*model.User, error) {
+func (s *SQLStore) getUserByEmail(_ sq.BaseRunner, email string) (*model.User, error) {
 	mmuser, err := s.servicesAPI.GetUserByEmail(email)
 	if err != nil {
 		return nil, err
@@ -140,7 +140,7 @@ func (s *SQLStore) GetUserByEmail(email string) (*model.User, error) {
 	return &user, nil
 }
 
-func (s *SQLStore) GetUserByUsername(username string) (*model.User, error) {
+func (s *SQLStore) getUserByUsername(_ sq.BaseRunner, username string) (*model.User, error) {
 	mmuser, err := s.servicesAPI.GetUserByUsername(username)
 	if err != nil {
 		return nil, err
@@ -149,7 +149,7 @@ func (s *SQLStore) GetUserByUsername(username string) (*model.User, error) {
 	return &user, nil
 }
 
-func (s *SQLStore) PatchUserPreferences(userID string, patch model.UserPreferencesPatch) (mmModel.Preferences, error) {
+func (s *SQLStore) patchUserPreferences(_ sq.BaseRunner, userID string, patch model.UserPreferencesPatch) (mmModel.Preferences, error) {
 	preferences, err := s.GetUserPreferences(userID)
 	if err != nil {
 		return nil, err
@@ -232,13 +232,13 @@ func (s *SQLStore) PatchUserPreferences(userID string, patch model.UserPreferenc
 	return preferences, nil
 }
 
-func (s *SQLStore) GetUserPreferences(userID string) (mmModel.Preferences, error) {
+func (s *SQLStore) getUserPreferences(_ sq.BaseRunner, userID string) (mmModel.Preferences, error) {
 	return s.servicesAPI.GetPreferencesForUser(userID)
 }
 
 // GetActiveUserCount returns the number of users with active sessions within N seconds ago.
-func (s *SQLStore) GetActiveUserCount(updatedSecondsAgo int64) (int, error) {
-	query := s.getQueryBuilder(s.db).
+func (s *SQLStore) getActiveUserCount(db sq.BaseRunner, updatedSecondsAgo int64) (int, error) {
+	query := s.getQueryBuilder(db).
 		Select("count(distinct userId)").
 		From("Sessions").
 		Where(sq.Gt{"LastActivityAt": utils.GetMillis() - utils.SecondsToMillis(updatedSecondsAgo)})
@@ -254,7 +254,7 @@ func (s *SQLStore) GetActiveUserCount(updatedSecondsAgo int64) (int, error) {
 	return count, nil
 }
 
-func (s *SQLStore) GetUsersByTeam(teamID string, asGuestID string, showEmail, showName bool) ([]*model.User, error) {
+func (s *SQLStore) getUsersByTeam(_ sq.BaseRunner, teamID string, asGuestID string, showEmail, showName bool) ([]*model.User, error) {
 	query := s.baseUserQuery(showEmail, showName).
 		Where(sq.Eq{"u.deleteAt": 0})
 
@@ -291,7 +291,7 @@ func (s *SQLStore) GetUsersByTeam(teamID string, asGuestID string, showEmail, sh
 	return users, nil
 }
 
-func (s *SQLStore) GetUsersList(userIDs []string, showEmail, showName bool) ([]*model.User, error) {
+func (s *SQLStore) getUsersList(_ sq.BaseRunner, userIDs []string, showEmail, showName bool) ([]*model.User, error) {
 	query := s.baseUserQuery(showEmail, showName).
 		Where(sq.Eq{"u.id": userIDs})
 
@@ -313,7 +313,7 @@ func (s *SQLStore) GetUsersList(userIDs []string, showEmail, showName bool) ([]*
 	return users, nil
 }
 
-func (s *SQLStore) SearchUsersByTeam(teamID string, searchQuery string, asGuestID string, excludeBots, showEmail, showName bool) ([]*model.User, error) {
+func (s *SQLStore) searchUsersByTeam(_ sq.BaseRunner, teamID string, searchQuery string, asGuestID string, excludeBots, showEmail, showName bool) ([]*model.User, error) {
 	query := s.baseUserQuery(showEmail, showName).
 		Where(sq.Eq{"u.deleteAt": 0}).
 		Where(sq.Or{
@@ -362,7 +362,7 @@ func (s *SQLStore) SearchUsersByTeam(teamID string, searchQuery string, asGuestI
 	return users, nil
 }
 
-func (s *SQLStore) GetUserTimezone(userID string) (string, error) {
+func (s *SQLStore) getUserTimezone(_ sq.BaseRunner, userID string) (string, error) {
 	user, err := s.servicesAPI.GetUserByID(userID)
 	if err != nil {
 		return "", err
@@ -371,7 +371,7 @@ func (s *SQLStore) GetUserTimezone(userID string) (string, error) {
 	return mmModel.GetPreferredTimezone(timezone), nil
 }
 
-func (s *SQLStore) CanSeeUser(seerID string, seenID string) (bool, error) {
+func (s *SQLStore) canSeeUser(_ sq.BaseRunner, seerID string, seenID string) (bool, error) {
 	mmuser, appErr := s.servicesAPI.GetUserByID(seerID)
 	if appErr != nil {
 		return false, appErr

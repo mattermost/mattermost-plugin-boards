@@ -164,7 +164,7 @@ func (s *SQLStore) getAllTeams(db sq.BaseRunner) ([]*model.Team, error) {
 	return teams, nil
 }
 
-func (s *SQLStore) GetTeam(id string) (*model.Team, error) {
+func (s *SQLStore) getTeam(db sq.BaseRunner, id string) (*model.Team, error) {
 	if id == "0" {
 		team := model.Team{
 			ID:    id,
@@ -174,7 +174,7 @@ func (s *SQLStore) GetTeam(id string) (*model.Team, error) {
 		return &team, nil
 	}
 
-	query := s.getQueryBuilder(s.db).
+	query := s.getQueryBuilder(db).
 		Select("DisplayName").
 		From("Teams").
 		Where(sq.Eq{"ID": id})
@@ -193,8 +193,8 @@ func (s *SQLStore) GetTeam(id string) (*model.Team, error) {
 	return &model.Team{ID: id, Title: displayName}, nil
 }
 
-func (s *SQLStore) GetTeamsForUser(userID string) ([]*model.Team, error) {
-	query := s.getQueryBuilder(s.db).
+func (s *SQLStore) getTeamsForUser(db sq.BaseRunner, userID string) ([]*model.Team, error) {
+	query := s.getQueryBuilder(db).
 		Select("t.Id", "t.DisplayName").
 		From("Teams as t").
 		Join("TeamMembers as tm on t.Id=tm.TeamId").

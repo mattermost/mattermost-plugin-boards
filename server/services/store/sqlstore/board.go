@@ -764,7 +764,7 @@ func (s *SQLStore) getBoardMemberHistory(db sq.BaseRunner, boardID, userID strin
 	return memberHistory, nil
 }
 
-func (s *SQLStore) GetBoardsForUserAndTeam(userID, teamID string, includePublicBoards bool) ([]*model.Board, error) {
+func (s *SQLStore) getBoardsForUserAndTeam(_ sq.BaseRunner, userID, teamID string, includePublicBoards bool) ([]*model.Board, error) {
 	if includePublicBoards {
 		boards, err := s.SearchBoardsForUserInTeam(teamID, "", userID)
 		if err != nil {
@@ -798,11 +798,11 @@ func (s *SQLStore) GetBoardsForUserAndTeam(userID, teamID string, includePublicB
 	return boards, nil
 }
 
-func (s *SQLStore) SearchBoardsForUserInTeam(teamID, term, userID string) ([]*model.Board, error) {
+func (s *SQLStore) searchBoardsForUserInTeam(db sq.BaseRunner, teamID, term, userID string) ([]*model.Board, error) {
 	// as we're joining three queries, we need to avoid numbered
 	// placeholders until the join is done, so we use the default
 	// question mark placeholder here
-	builder := s.getQueryBuilder(s.db).PlaceholderFormat(sq.Question)
+	builder := s.getQueryBuilder(db).PlaceholderFormat(sq.Question)
 
 	openBoardsQ := builder.
 		Select(boardFields("b.")...).
@@ -882,7 +882,7 @@ func (s *SQLStore) SearchBoardsForUserInTeam(teamID, term, userID string) ([]*mo
 		}
 	}
 
-	rows, err := s.db.Query(unionSQL, unionArgs...)
+	rows, err := db.Query(unionSQL, unionArgs...)
 	if err != nil {
 		s.logger.Error(`searchBoardsForUserInTeam ERROR`, mlog.Err(err))
 		return nil, err
@@ -892,11 +892,11 @@ func (s *SQLStore) SearchBoardsForUserInTeam(teamID, term, userID string) ([]*mo
 	return s.boardsFromRows(rows)
 }
 
-func (s *SQLStore) SearchBoardsForUser(term string, searchField model.BoardSearchField, userID string, includePublicBoards bool) ([]*model.Board, error) {
+func (s *SQLStore) searchBoardsForUser(db sq.BaseRunner, term string, searchField model.BoardSearchField, userID string, includePublicBoards bool) ([]*model.Board, error) {
 	// as we're joining three queries, we need to avoid numbered
 	// placeholders until the join is done, so we use the default
 	// question mark placeholder here
-	builder := s.getQueryBuilder(s.db).PlaceholderFormat(sq.Question)
+	builder := s.getQueryBuilder(db).PlaceholderFormat(sq.Question)
 
 	boardMembersQ := builder.
 		Select(boardFields("b.")...).
@@ -1007,7 +1007,7 @@ func (s *SQLStore) SearchBoardsForUser(term string, searchField model.BoardSearc
 		}
 	}
 
-	rows, err := s.db.Query(unionSQL, unionArgs...)
+	rows, err := db.Query(unionSQL, unionArgs...)
 	if err != nil {
 		s.logger.Error(`searchBoardsForUser ERROR`, mlog.Err(err))
 		return nil, err

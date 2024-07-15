@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	sq "github.com/Masterminds/squirrel"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
@@ -19,7 +20,7 @@ func (s *SQLStore) getBoardsBotID() (string, error) {
 	return boardsBotID, nil
 }
 
-func (s *SQLStore) SendMessage(message, postType string, receipts []string) error {
+func (s *SQLStore) sendMessage(_ sq.BaseRunner, message, postType string, receipts []string) error {
 	botID, err := s.getBoardsBotID()
 	if err != nil {
 		return err
@@ -49,7 +50,7 @@ func (s *SQLStore) SendMessage(message, postType string, receipts []string) erro
 	return nil
 }
 
-func (s *SQLStore) PostMessage(message, postType, channelID string) error {
+func (s *SQLStore) postMessage(_ sq.BaseRunner, message, postType, channelID string) error {
 	botID, err := s.getBoardsBotID()
 	if err != nil {
 		return err

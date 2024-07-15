@@ -3,10 +3,11 @@ package sqlstore
 import (
 	"strings"
 
+	sq "github.com/Masterminds/squirrel"
 	mmModel "github.com/mattermost/mattermost/server/public/model"
 )
 
-func (s *SQLStore) SearchUserChannels(teamID, userID, query string) ([]*mmModel.Channel, error) {
+func (s *SQLStore) searchUserChannels(_ sq.BaseRunner, teamID, userID, query string) ([]*mmModel.Channel, error) {
 	channels, err := s.servicesAPI.GetChannelsForTeamForUser(teamID, userID, false)
 	if err != nil {
 		return nil, err
@@ -29,7 +30,7 @@ func (s *SQLStore) SearchUserChannels(teamID, userID, query string) ([]*mmModel.
 	return result, nil
 }
 
-func (s *SQLStore) GetChannel(teamID, channelID string) (*mmModel.Channel, error) {
+func (s *SQLStore) getChannel(_ sq.BaseRunner, _, channelID string) (*mmModel.Channel, error) {
 	channel, err := s.servicesAPI.GetChannelByID(channelID)
 	if err != nil {
 		return nil, err

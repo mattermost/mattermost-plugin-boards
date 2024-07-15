@@ -4,12 +4,13 @@ import (
 	"errors"
 	"net/http"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )
 
-func (s *SQLStore) GetFileInfo(id string) (*mmModel.FileInfo, error) {
+func (s *SQLStore) getFileInfo(_ sq.BaseRunner, id string) (*mmModel.FileInfo, error) {
 	fileInfo, err := s.servicesAPI.GetFileInfo(id)
 	if err != nil {
 		// Not finding fileinfo is fine because we don't have data for
@@ -32,8 +33,8 @@ func (s *SQLStore) GetFileInfo(id string) (*mmModel.FileInfo, error) {
 	return fileInfo, nil
 }
 
-func (s *SQLStore) SaveFileInfo(fileInfo *mmModel.FileInfo) error {
-	query := s.getQueryBuilder(s.db).
+func (s *SQLStore) saveFileInfo(db sq.BaseRunner, fileInfo *mmModel.FileInfo) error {
+	query := s.getQueryBuilder(db).
 		Insert("FileInfo").
 		Columns(
 			"Id",
