@@ -80,7 +80,7 @@ func (s *SQLStore) getTemplateBoards(db sq.BaseRunner, teamID, userID string) ([
 	}
 	defer s.CloseRows(rows)
 
-	userTemplates, err := s.boardsFromRows(rows)
+	userTemplates, err := s.boardsFromRows(rows, false)
 	if err != nil {
 		return nil, err
 	}
