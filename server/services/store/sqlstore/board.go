@@ -80,9 +80,8 @@ var boardMemberFields = []string{
 	"BM.scheme_viewer",
 }
 
-func (s *SQLStore) boardsFromRows(rows *sql.Rows, removeDuplicates bool) ([]*model.Board, error) {
+func (s *SQLStore) boardsFromRows(rows *sql.Rows) ([]*model.Board, error) {
 	boards := []*model.Board{}
-	idMap := make(map[string]struct{})
 
 	for rows.Next() {
 		var board model.Board
@@ -112,14 +111,6 @@ func (s *SQLStore) boardsFromRows(rows *sql.Rows, removeDuplicates bool) ([]*mod
 		if err != nil {
 			s.logger.Error("boardsFromRows scan error", mlog.Err(err))
 			return nil, err
-		}
-
-		if removeDuplicates {
-			if _, ok := idMap[board.ID]; ok {
-				continue
-			} else {
-				idMap[board.ID] = struct{}{}
-			}
 		}
 
 		err = json.Unmarshal(propertiesBytes, &board.Properties)
@@ -227,7 +218,7 @@ func (s *SQLStore) getBoardsFieldsByCondition(db sq.BaseRunner, fields []string,
 	}
 	defer s.CloseRows(rows)
 
-	boards, err := s.boardsFromRows(rows, false)
+	boards, err := s.boardsFromRows(rows)
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +248,7 @@ func (s *SQLStore) getBoardsInTeamByIds(db sq.BaseRunner, boardIDs []string, tea
 	}
 	defer s.CloseRows(rows)
 
-	boards, err := s.boardsFromRows(rows, false)
+	boards, err := s.boardsFromRows(rows)
 	if err != nil {
 		return nil, err
 	}
@@ -656,7 +647,7 @@ func (s *SQLStore) getBoardHistory(db sq.BaseRunner, boardID string, opts model.
 	}
 	defer s.CloseRows(rows)
 
-	return s.boardsFromRows(rows, false)
+	return s.boardsFromRows(rows)
 }
 
 func (s *SQLStore) undeleteBoard(db sq.BaseRunner, boardID string, modifiedBy string) error {
@@ -898,7 +889,7 @@ func (s *SQLStore) SearchBoardsForUserInTeam(teamID, term, userID string) ([]*mo
 	}
 	defer s.CloseRows(rows)
 
-	return s.boardsFromRows(rows, false)
+	return s.boardsFromRows(rows)
 }
 
 func (s *SQLStore) SearchBoardsForUser(term string, searchField model.BoardSearchField, userID string, includePublicBoards bool) ([]*model.Board, error) {
@@ -1023,5 +1014,5 @@ func (s *SQLStore) SearchBoardsForUser(term string, searchField model.BoardSearc
 	}
 	defer s.CloseRows(rows)
 
-	return s.boardsFromRows(rows, false)
+	return s.boardsFromRows(rows)
 }

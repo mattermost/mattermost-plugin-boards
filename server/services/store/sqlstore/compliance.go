@@ -34,7 +34,7 @@ func (s *SQLStore) getBoardsForCompliance(db sq.BaseRunner, opts model.QueryBoar
 	}
 	defer s.CloseRows(rows)
 
-	boards, err := s.boardsFromRows(rows, false)
+	boards, err := s.boardsFromRows(rows)
 	if err != nil {
 		return nil, false, err
 	}

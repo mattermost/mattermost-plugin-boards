@@ -632,7 +632,7 @@ func (s *SQLStore) getDeletedMembershipBoards(tx sq.BaseRunner) ([]*model.Board,
 	}
 	defer s.CloseRows(rows)
 
-	boards, err := s.boardsFromRows(rows, false)
+	boards, err := s.boardsFromRows(rows)
 	if err != nil {
 		return nil, err
 	}
