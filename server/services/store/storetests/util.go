@@ -15,23 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createTestBlocks(t *testing.T, store store.Store, userID string, num int) []*model.Block {
-	var blocks []*model.Block
-	for i := 0; i < num; i++ {
-		block := &model.Block{
-			ID:        utils.NewID(utils.IDTypeBlock),
-			BoardID:   utils.NewID(utils.IDTypeBoard),
-			Type:      model.TypeCard,
-			CreatedBy: userID,
-		}
-		err := store.InsertBlock(block, userID)
-		require.NoError(t, err)
-
-		blocks = append(blocks, block)
-	}
-	return blocks
-}
-
 func createTestBlocksForCard(t *testing.T, store store.Store, cardID string, num int) []*model.Block {
 	card, err := store.GetBlock(cardID)
 	require.NoError(t, err)

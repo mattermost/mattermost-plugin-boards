@@ -20,7 +20,6 @@ exports[`components/blocksEditor/blocksEditor should match snapshot on empty 1`]
           aria-live="polite"
           aria-relevant="additions text"
           class="css-1f43avz-a11yText-A11yText"
-          role="log"
         />
         <div
           class=" css-1haocjs-control"
@@ -39,7 +38,6 @@ exports[`components/blocksEditor/blocksEditor should match snapshot on empty 1`]
               data-value=""
             >
               <input
-                aria-activedescendant=""
                 aria-autocomplete="list"
                 aria-describedby="react-select-2-placeholder"
                 aria-expanded="false"
@@ -402,7 +400,6 @@ exports[`components/blocksEditor/blocksEditor should match snapshot with blocks 
           aria-live="polite"
           aria-relevant="additions text"
           class="css-1f43avz-a11yText-A11yText"
-          role="log"
         />
         <div
           class=" css-1haocjs-control"
@@ -421,7 +418,6 @@ exports[`components/blocksEditor/blocksEditor should match snapshot with blocks 
               data-value=""
             >
               <input
-                aria-activedescendant=""
                 aria-autocomplete="list"
                 aria-describedby="react-select-3-placeholder"
                 aria-expanded="false"
