@@ -6,13 +6,11 @@ Mattermost boards plugins is an open source, multilingual, self-hosted project m
 
 **[Mattermost Boards](https://mattermost.com/boards/)** is the Mattermost plugin version of Focalboard that combines project management tools with messaging and collaboration for teams of all sizes. To access and use **Mattermost Boards**, install or upgrade to Mattermost v6.0 or later as a [self-hosted server](https://docs.mattermost.com/guides/deployment.html?utm_source=focalboard&utm_campaign=focalboard) or [Cloud server](https://mattermost.com/get-started/?utm_source=focalboard&utm_campaign=focalboard). After logging into Mattermost, select the menu in the top left corner of Mattermost and select **Boards**.
 
-![Focalboard](website/site/static/img/hero.jpg)
-
 ## Try Mattermost Boards Plugin 
 
 ### Mattermost Plugin
 
-Access the latest releases of the focalboard plugin by downloading the `mattermost-plugin-focalboard.tar.gz` file from the releases in this repository: <https://github.com/mattermost/focalboard/releases>. After downloading and installing the plugin in the System Console, select the menu in the top left corner and select **Boards**. 
+Access the latest releases of the mattermost boards plugin by downloading the `mattermost-plugin-focalboard.tar.gz` file from the releases in this repository: <https://github.com/mattermost/focalboard/releases>. After downloading and installing the plugin in the System Console, select the menu in the top left corner and select **Boards**. 
 
 
 ### API Docs
