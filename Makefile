@@ -394,9 +394,31 @@ watch-plugin: modd-precheck ## Run and upload the plugin to a development server
 live-watch-plugin: modd-precheck ## Run and update locally the plugin in the development server
 	make live-watch
 
-server-test: ## Run server tests
-	@echo Starting tests for server
-	cd server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=plugin-profile.coverage -count=1 -timeout=30m ./...
+server-test: server-test-mysql server-test-postgres
+
+server-test-mysql: export FOCALBOARD_UNIT_TESTING=1
+server-test-mysql: export FOCALBOARD_STORE_TEST_DB_TYPE=mysql
+server-test-mysql: export FOCALBOARD_STORE_TEST_DOCKER_PORT=44446
+
+server-test-mysql: ## Run server tests using mysql
+	@echo Starting docker container for mysql
+	docker-compose -f ./docker-testing/docker-compose-mysql.yml down -v --remove-orphans
+	docker-compose -f ./docker-testing/docker-compose-mysql.yml run start_dependencies
+	cd server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=server-mysql-profile.coverage -count=1 -timeout=30m ./...
+	cd server; go tool cover -func server-mysql-profile.coverage
+	docker-compose -f ./docker-testing/docker-compose-mysql.yml down -v --remove-orphans
+
+server-test-postgres: export FOCALBOARD_UNIT_TESTING=1
+server-test-postgres: export FOCALBOARD_STORE_TEST_DB_TYPE=postgres
+server-test-postgres: export FOCALBOARD_STORE_TEST_DOCKER_PORT=44447
+
+server-test-postgres: ## Run server tests using postgres
+	@echo Starting docker container for postgres
+	docker-compose -f ./docker-testing/docker-compose-postgres.yml down -v --remove-orphans
+	docker-compose -f ./docker-testing/docker-compose-postgres.yml run start_dependencies
+	cd server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=server-postgres-profile.coverage -count=1 -timeout=30m ./...
+	cd server; go tool cover -func server-postgres-profile.coverage
+	docker-compose -f ./docker-testing/docker-compose-postgres.yml down -v --remove-orphans
 
 swagger: ## Generate swagger API spec and clients based on it.
 	mkdir -p server/swagger/docs
