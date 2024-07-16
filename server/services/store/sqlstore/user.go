@@ -149,8 +149,8 @@ func (s *SQLStore) getUserByUsername(_ sq.BaseRunner, username string) (*model.U
 	return &user, nil
 }
 
-func (s *SQLStore) patchUserPreferences(_ sq.BaseRunner, userID string, patch model.UserPreferencesPatch) (mmModel.Preferences, error) {
-	preferences, err := s.GetUserPreferences(userID)
+func (s *SQLStore) patchUserPreferences(db sq.BaseRunner, userID string, patch model.UserPreferencesPatch) (mmModel.Preferences, error) {
+	preferences, err := s.getUserPreferences(db, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -254,7 +254,7 @@ func (s *SQLStore) getActiveUserCount(db sq.BaseRunner, updatedSecondsAgo int64)
 	return count, nil
 }
 
-func (s *SQLStore) getUsersByTeam(_ sq.BaseRunner, teamID string, asGuestID string, showEmail, showName bool) ([]*model.User, error) {
+func (s *SQLStore) getUsersByTeam(db sq.BaseRunner, teamID string, asGuestID string, showEmail, showName bool) ([]*model.User, error) {
 	query := s.baseUserQuery(showEmail, showName).
 		Where(sq.Eq{"u.deleteAt": 0})
 
@@ -263,7 +263,7 @@ func (s *SQLStore) getUsersByTeam(_ sq.BaseRunner, teamID string, asGuestID stri
 			Join("TeamMembers as tm ON tm.UserID = u.id").
 			Where(sq.Eq{"tm.TeamId": teamID})
 	} else {
-		boards, err := s.GetBoardsForUserAndTeam(asGuestID, teamID, false)
+		boards, err := s.getBoardsForUserAndTeam(db, asGuestID, teamID, false)
 		if err != nil {
 			return nil, err
 		}
@@ -313,7 +313,7 @@ func (s *SQLStore) getUsersList(_ sq.BaseRunner, userIDs []string, showEmail, sh
 	return users, nil
 }
 
-func (s *SQLStore) searchUsersByTeam(_ sq.BaseRunner, teamID string, searchQuery string, asGuestID string, excludeBots, showEmail, showName bool) ([]*model.User, error) {
+func (s *SQLStore) searchUsersByTeam(db sq.BaseRunner, teamID string, searchQuery string, asGuestID string, excludeBots, showEmail, showName bool) ([]*model.User, error) {
 	query := s.baseUserQuery(showEmail, showName).
 		Where(sq.Eq{"u.deleteAt": 0}).
 		Where(sq.Or{
@@ -335,7 +335,7 @@ func (s *SQLStore) searchUsersByTeam(_ sq.BaseRunner, teamID string, searchQuery
 			Join("TeamMembers as tm ON tm.UserID = u.id").
 			Where(sq.Eq{"tm.TeamId": teamID})
 	} else {
-		boards, err := s.GetBoardsForUserAndTeam(asGuestID, teamID, false)
+		boards, err := s.getBoardsForUserAndTeam(db, asGuestID, teamID, false)
 		if err != nil {
 			return nil, err
 		}
@@ -371,7 +371,7 @@ func (s *SQLStore) getUserTimezone(_ sq.BaseRunner, userID string) (string, erro
 	return mmModel.GetPreferredTimezone(timezone), nil
 }
 
-func (s *SQLStore) canSeeUser(_ sq.BaseRunner, seerID string, seenID string) (bool, error) {
+func (s *SQLStore) canSeeUser(db sq.BaseRunner, seerID string, seenID string) (bool, error) {
 	mmuser, appErr := s.servicesAPI.GetUserByID(seerID)
 	if appErr != nil {
 		return false, appErr
@@ -380,7 +380,7 @@ func (s *SQLStore) canSeeUser(_ sq.BaseRunner, seerID string, seenID string) (bo
 		return true, nil
 	}
 
-	query := s.getQueryBuilder(s.db).
+	query := s.getQueryBuilder(db).
 		Select("1").
 		From(s.tablePrefix + "board_members AS bm1").
 		Join(s.tablePrefix + "board_members AS bm2 ON bm1.board_id=bm2.board_id").
@@ -405,7 +405,7 @@ func (s *SQLStore) canSeeUser(_ sq.BaseRunner, seerID string, seenID string) (bo
 		return true, err
 	}
 
-	query = s.getQueryBuilder(s.db).
+	query = s.getQueryBuilder(db).
 		Select("1").
 		From("channelmembers AS cm1").
 		Join("channelmembers AS cm2 ON cm1.channelid=cm2.channelid").

@@ -20,7 +20,7 @@ func (s *SQLStore) getBoardsBotID() (string, error) {
 	return boardsBotID, nil
 }
 
-func (s *SQLStore) sendMessage(_ sq.BaseRunner, message, postType string, receipts []string) error {
+func (s *SQLStore) sendMessage(db sq.BaseRunner, message, postType string, receipts []string) error {
 	botID, err := s.getBoardsBotID()
 	if err != nil {
 		return err
@@ -38,7 +38,7 @@ func (s *SQLStore) sendMessage(_ sq.BaseRunner, message, postType string, receip
 			continue
 		}
 
-		if err := s.PostMessage(message, postType, channel.Id); err != nil {
+		if err := s.postMessage(db, message, postType, channel.Id); err != nil {
 			s.logger.Error(
 				"failed to send message to receipt from SendMessage",
 				mlog.String("receipt", receipt),

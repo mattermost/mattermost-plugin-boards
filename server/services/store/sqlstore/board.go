@@ -764,9 +764,9 @@ func (s *SQLStore) getBoardMemberHistory(db sq.BaseRunner, boardID, userID strin
 	return memberHistory, nil
 }
 
-func (s *SQLStore) getBoardsForUserAndTeam(_ sq.BaseRunner, userID, teamID string, includePublicBoards bool) ([]*model.Board, error) {
+func (s *SQLStore) getBoardsForUserAndTeam(db sq.BaseRunner, userID, teamID string, includePublicBoards bool) ([]*model.Board, error) {
 	if includePublicBoards {
-		boards, err := s.SearchBoardsForUserInTeam(teamID, "", userID)
+		boards, err := s.searchBoardsForUserInTeam(db, teamID, "", userID)
 		if err != nil {
 			return nil, err
 		}
@@ -775,7 +775,7 @@ func (s *SQLStore) getBoardsForUserAndTeam(_ sq.BaseRunner, userID, teamID strin
 
 	// retrieve only direct memberships for user
 	// this is usually done for guests.
-	members, err := s.GetMembersForUser(userID)
+	members, err := s.getMembersForUser(db, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -784,7 +784,7 @@ func (s *SQLStore) getBoardsForUserAndTeam(_ sq.BaseRunner, userID, teamID strin
 		boardIDs = append(boardIDs, m.BoardID)
 	}
 
-	boards, err := s.GetBoardsInTeamByIds(boardIDs, teamID)
+	boards, err := s.getBoardsInTeamByIds(db, boardIDs, teamID)
 	if model.IsErrNotFound(err) {
 		if boards == nil {
 			boards = []*model.Board{}
@@ -972,7 +972,7 @@ func (s *SQLStore) searchBoardsForUser(db sq.BaseRunner, term string, searchFiel
 	}
 
 	unionQ := boardMembersQ
-	user, err := s.GetUserByID(userID)
+	user, err := s.getUserByID(db, userID)
 	if err != nil {
 		return nil, err
 	}
