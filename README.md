@@ -4,22 +4,11 @@
 
 Mattermost boards plugins is an open source, multilingual, self-hosted project management tool that's an alternative to Trello, Notion, and Asana.
 
-**[Mattermost Boards](https://mattermost.com/boards/)** is the Mattermost plugin version of Focalboard that combines project management tools with messaging and collaboration for teams of all sizes. To access and use **Mattermost Boards**, install or upgrade to Mattermost v6.0 or later as a [self-hosted server](https://docs.mattermost.com/guides/deployment.html?utm_source=focalboard&utm_campaign=focalboard) or [Cloud server](https://mattermost.com/get-started/?utm_source=focalboard&utm_campaign=focalboard). After logging into Mattermost, select the menu in the top left corner of Mattermost and select **Boards**.
-
 ## Try Mattermost Boards Plugin 
 
-### Mattermost Plugin
-
-Access the latest releases of the mattermost boards plugin by downloading the `mattermost-plugin-focalboard.tar.gz` file from the releases in this repository: <https://github.com/mattermost/focalboard/releases>. After downloading and installing the plugin in the System Console, select the menu in the top left corner and select **Boards**. 
-
-
-### API Docs
-
-Boards API docs can be found over at <https://htmlpreview.github.io/?https://github.com/mattermost/focalboard/blob/main/server/swagger/docs/html/index.html>
+Access the latest releases of the mattermost boards plugin by downloading the `mattermost-plugin-focalboard.tar.gz` file from the releases in this repository: <https://github.com/mattermost/mattermost-plugin-boards/releases>. After downloading and installing the plugin in the System Console, select the menu in the top left corner and select **Boards**. 
 
 ### Getting started
-
-Our [developer guide](https://developers.mattermost.com/contribute/more-info/focalboard/mattermost-boards-setup-guide/) has detailed instructions on how to set up your development environment for the **Mattermost boards plugin**. You can also join the [~Focalboard community channel](https://community.mattermost.com/core/channels/focalboard) to connect with other developers.
 
 Clone [mattermost](https://github.com/mattermost/mattermost-server) into sibling directory.
 
@@ -50,7 +39,7 @@ Set the following environment variables to true before running `make dist`-
 ### Deploying with Local Mode
 
 If your Mattermost server is running locally, you can
-enable [local mode](https://docs.mattermost.com/administration/mmctl-cli-tool.html#local-mode) to streamline deploying
+enable [local mode](https://docs.mattermost.com/manage/mmctl-command-line-tool.html) to streamline deploying
 your plugin. Edit your server configuration as follows:
 
 ```
@@ -124,9 +113,3 @@ Before checking in commits, run `make ci`, which is similar to the `.gitlab-ci.y
 * **Server unit tests**: `make server-test`
 * **Web app ESLint**: `cd webapp; npm run check`
 * **Web app unit tests**: `cd webapp; npm run test`
-
-### Staying informed
-
-* **Changes**: See the [CHANGELOG](CHANGELOG.md) for the latest updates
-* **Bug Reports**: [File a bug report](https://github.com/mattermost/focalboard/issues/new?assignees=&labels=bug&template=bug_report.md&title=)
-* **Chat**: Join the [~Focalboard community channel](https://community.mattermost.com/core/channels/focalboard)
