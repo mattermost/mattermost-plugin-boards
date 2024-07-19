@@ -6,5 +6,5 @@ import (
 )
 
 func (s *SQLStore) getLicense(_ sq.BaseRunner) *mmModel.License {
-	return nil
+	return s.servicesAPI.GetLicense()
 }
