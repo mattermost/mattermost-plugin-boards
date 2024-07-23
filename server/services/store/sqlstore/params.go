@@ -13,6 +13,21 @@ import (
 // You can use plugin-api or product-api adapter implementations.
 type servicesAPI interface {
 	GetChannelByID(string) (*mmModel.Channel, error)
+	GetDirectChannel(userID1, userID2 string) (*mmModel.Channel, error)
+	GetChannelMember(channelID string, userID string) (*mmModel.ChannelMember, error)
+	GetChannelsForTeamForUser(teamID string, userID string, includeDeleted bool) (mmModel.ChannelList, error)
+	GetUserByID(userID string) (*mmModel.User, error)
+	UpdateUser(user *mmModel.User) (*mmModel.User, error)
+	GetUserByEmail(email string) (*mmModel.User, error)
+	GetUserByUsername(username string) (*mmModel.User, error)
+	GetLicense() *mmModel.License
+	GetFileInfo(fileID string) (*mmModel.FileInfo, error)
+	EnsureBot(bot *mmModel.Bot) (string, error)
+	CreatePost(post *mmModel.Post) (*mmModel.Post, error)
+	GetTeamMember(teamID string, userID string) (*mmModel.TeamMember, error)
+	GetPreferencesForUser(userID string) (mmModel.Preferences, error)
+	DeletePreferencesForUser(userID string, preferences mmModel.Preferences) error
+	UpdatePreferencesForUser(userID string, preferences mmModel.Preferences) error
 }
 
 type Params struct {

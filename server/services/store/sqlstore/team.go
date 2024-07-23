@@ -163,3 +163,64 @@ func (s *SQLStore) getAllTeams(db sq.BaseRunner) ([]*model.Team, error) {
 
 	return teams, nil
 }
+
+func (s *SQLStore) getTeam(db sq.BaseRunner, id string) (*model.Team, error) {
+	if id == "0" {
+		team := model.Team{
+			ID:    id,
+			Title: "",
+		}
+
+		return &team, nil
+	}
+
+	query := s.getQueryBuilder(db).
+		Select("DisplayName").
+		From("Teams").
+		Where(sq.Eq{"ID": id})
+
+	row := query.QueryRow()
+	var displayName string
+	err := row.Scan(&displayName)
+	if err != nil && !model.IsErrNotFound(err) {
+		s.logger.Error("GetTeam scan error",
+			mlog.String("team_id", id),
+			mlog.Err(err),
+		)
+		return nil, err
+	}
+
+	return &model.Team{ID: id, Title: displayName}, nil
+}
+
+func (s *SQLStore) getTeamsForUser(db sq.BaseRunner, userID string) ([]*model.Team, error) {
+	query := s.getQueryBuilder(db).
+		Select("t.Id", "t.DisplayName").
+		From("Teams as t").
+		Join("TeamMembers as tm on t.Id=tm.TeamId").
+		Where(sq.Eq{"tm.UserId": userID}).
+		Where(sq.Eq{"tm.DeleteAt": 0})
+
+	rows, err := query.Query()
+	if err != nil {
+		return nil, err
+	}
+	defer s.CloseRows(rows)
+
+	teams := []*model.Team{}
+	for rows.Next() {
+		var team model.Team
+
+		err := rows.Scan(
+			&team.ID,
+			&team.Title,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		teams = append(teams, &team)
+	}
+
+	return teams, nil
+}

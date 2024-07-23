@@ -14,7 +14,6 @@ package sqlstore
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
@@ -48,7 +47,7 @@ func (s *SQLStore) AddUpdateCategoryBoard(userID string, categoryID string, boar
 }
 
 func (s *SQLStore) CanSeeUser(seerID string, seenID string) (bool, error) {
-	return false, errors.New("can see user not supported in focalboard, will fetch from mattermost") 
+	return s.canSeeUser(s.db, seerID, seenID)
 
 }
 
@@ -280,7 +279,7 @@ func (s *SQLStore) DuplicateBoard(boardID string, userID string, toTeam string, 
 }
 
 func (s *SQLStore) GetActiveUserCount(updatedSecondsAgo int64) (int, error) {
-	return 0, errors.New("active user count not supported in focalboard when using plugin mode, will fetch from mattermost") 
+	return s.getActiveUserCount(s.db, updatedSecondsAgo)
 
 }
 
@@ -390,7 +389,7 @@ func (s *SQLStore) GetBoardsForCompliance(opts model.QueryBoardsForComplianceOpt
 }
 
 func (s *SQLStore) GetBoardsForUserAndTeam(userID string, teamID string, includePublicBoards bool) ([]*model.Board, error) {
-	return nil, errors.New("boards for user and team will be fetch from mattermost not from focalboard while using in plugin mode") 
+	return s.getBoardsForUserAndTeam(s.db, userID, teamID, includePublicBoards)
 
 }
 
@@ -410,17 +409,17 @@ func (s *SQLStore) GetCategory(id string) (*model.Category, error) {
 }
 
 func (s *SQLStore) GetChannel(teamID string, channelID string) (*mmModel.Channel, error) {
-	return nil, errors.New("channel will be fetch from mattermost not from focalboard while using in plugin mode") 
+	return s.getChannel(s.db, teamID, channelID)
 
 }
 
 func (s *SQLStore) GetFileInfo(id string) (*mmModel.FileInfo, error) {
-	return nil, errors.New("file info will be fetch from mattermost not from focalboard while using in plugin mode") 
+	return s.getFileInfo(s.db, id)
 
 }
 
 func (s *SQLStore) GetLicense() *mmModel.License {
-	return nil 
+	return s.getLicense(s.db)
 
 }
 
@@ -450,7 +449,7 @@ func (s *SQLStore) GetNotificationHint(blockID string) (*model.NotificationHint,
 }
 
 func (s *SQLStore) GetRegisteredUserCount() (int, error) {
-	return 0, errors.New("registered user count not supported in focalboard, will fetch from mattermost") 
+	return s.getRegisteredUserCount(s.db)
 
 }
 
@@ -495,7 +494,7 @@ func (s *SQLStore) GetSystemSettings() (map[string]string, error) {
 }
 
 func (s *SQLStore) GetTeam(ID string) (*model.Team, error) {
-	return nil, errors.New("team will be fetch from mattermost not from focalboard while using in plugin mode") 
+	return s.getTeam(s.db, ID)
 
 }
 
@@ -505,7 +504,7 @@ func (s *SQLStore) GetTeamCount() (int64, error) {
 }
 
 func (s *SQLStore) GetTeamsForUser(userID string) ([]*model.Team, error) {
-	return nil, errors.New("teams for user will be fetch from mattermost not from focalboard while using in plugin mode") 
+	return s.getTeamsForUser(s.db, userID)
 
 }
 
@@ -520,17 +519,17 @@ func (s *SQLStore) GetUsedCardsCount() (int, error) {
 }
 
 func (s *SQLStore) GetUserByEmail(email string) (*model.User, error) {
-	return nil, errors.New("user email will be fetch from mattermost not from focalboard while using in plugin mode") 
+	return s.getUserByEmail(s.db, email)
 
 }
 
 func (s *SQLStore) GetUserByID(userID string) (*model.User, error) {
-	return nil, errors.New("user id will be fetch from mattermost not from focalboard while using in plugin mode") 
+	return s.getUserByID(s.db, userID)
 
 }
 
 func (s *SQLStore) GetUserByUsername(username string) (*model.User, error) {
-	return nil, errors.New("user username will be fetch from mattermost not from focalboard while using in plugin mode") 
+	return s.getUserByUsername(s.db, username)
 
 }
 
@@ -545,22 +544,22 @@ func (s *SQLStore) GetUserCategoryBoards(userID string, teamID string) ([]model.
 }
 
 func (s *SQLStore) GetUserPreferences(userID string) (mmModel.Preferences, error) {
-	return nil, errors.New("user preferences will be fetch from mattermost not from focalboard while using in plugin mode") 
+	return s.getUserPreferences(s.db, userID)
 
 }
 
 func (s *SQLStore) GetUserTimezone(userID string) (string, error) {
-	return "", errors.New("user timezone will be fetch from mattermost not from focalboard while using in plugin mode") 
+	return s.getUserTimezone(s.db, userID)
 
 }
 
 func (s *SQLStore) GetUsersByTeam(teamID string, asGuestID string, showEmail bool, showName bool) ([]*model.User, error) {
-	return nil, errors.New("users by team will be fetch from mattermost not from focalboard while using in plugin mode") 
+	return s.getUsersByTeam(s.db, teamID, asGuestID, showEmail, showName)
 
 }
 
 func (s *SQLStore) GetUsersList(userIDs []string, showEmail bool, showName bool) ([]*model.User, error) {
-	return nil, errors.New("users list will be fetch from mattermost not from focalboard while using in plugin mode") 
+	return s.getUsersList(s.db, userIDs, showEmail, showName)
 
 }
 
@@ -738,12 +737,12 @@ func (s *SQLStore) PatchBoardsAndBlocks(pbab *model.PatchBoardsAndBlocks, userID
 }
 
 func (s *SQLStore) PatchUserPreferences(userID string, patch model.UserPreferencesPatch) (mmModel.Preferences, error) {
-	return nil, errors.New("no patch allowed from focalboard, patch it using mattermost") 
+	return s.patchUserPreferences(s.db, userID, patch)
 
 }
 
 func (s *SQLStore) PostMessage(message string, postType string, channelID string) error {
-	return errors.New("no post message allowed from focalboard, post it using mattermost") 
+	return s.postMessage(s.db, message, postType, channelID)
 
 }
 
@@ -787,7 +786,7 @@ func (s *SQLStore) RunDataRetention(globalRetentionDate int64, batchSize int64) 
 }
 
 func (s *SQLStore) SaveFileInfo(fileInfo *mmModel.FileInfo) error {
-	return errors.New("no save file info allowed from focalboard, save it using mattermost") 
+	return s.saveFileInfo(s.db, fileInfo)
 
 }
 
@@ -797,27 +796,27 @@ func (s *SQLStore) SaveMember(bm *model.BoardMember) (*model.BoardMember, error)
 }
 
 func (s *SQLStore) SearchBoardsForUser(term string, searchField model.BoardSearchField, userID string, includePublicBoards bool) ([]*model.Board, error) {
-	return nil, errors.New("searching boards for user will be using from mattermost not from focalboard in plugin mode") 
+	return s.searchBoardsForUser(s.db, term, searchField, userID, includePublicBoards)
 
 }
 
 func (s *SQLStore) SearchBoardsForUserInTeam(teamID string, term string, userID string) ([]*model.Board, error) {
-	return nil, errors.New("searching boards for user in team will be using from mattermost not from focalboard in plugin mode") 
+	return s.searchBoardsForUserInTeam(s.db, teamID, term, userID)
 
 }
 
 func (s *SQLStore) SearchUserChannels(teamID string, userID string, query string) ([]*mmModel.Channel, error) {
-	return nil, errors.New("searching user channels will be fetch from mattermost not from focalboard while using in plugin mode") 
+	return s.searchUserChannels(s.db, teamID, userID, query)
 
 }
 
 func (s *SQLStore) SearchUsersByTeam(teamID string, searchQuery string, asGuestID string, excludeBots bool, showEmail bool, showName bool) ([]*model.User, error) {
-	return nil, errors.New("searching users by team will be fetch from mattermost not from focalboard while using in plugin mode") 
+	return s.searchUsersByTeam(s.db, teamID, searchQuery, asGuestID, excludeBots, showEmail, showName)
 
 }
 
 func (s *SQLStore) SendMessage(message string, postType string, receipts []string) error {
-	return errors.New("no send message allowed from focalboard, send it using mattermost") 
+	return s.sendMessage(s.db, message, postType, receipts)
 
 }
 
