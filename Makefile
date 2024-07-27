@@ -35,7 +35,8 @@ GO_BUILD_FLAGS ?= -ldflags '$(LDFLAGS)'
 MM_UTILITIES_DIR ?= ../mattermost-utilities
 DLV_DEBUG_PORT := 2346
 MATTERMOST_PLUGINS_PATH=$(MM_SERVER_PATH)/plugins
-FOCALBOARD_PLUGIN_PATH=$(MATTERMOST_PLUGINS_PATH)/focalboard
+BOARD_PLUGIN_PATH=$(MATTERMOST_PLUGINS_PATH)/boards
+PLUGIN_NAME=boards
 
 export GO111MODULE=on
 
@@ -50,7 +51,7 @@ default: all
 # Verify environment, and define PLUGIN_ID, PLUGIN_VERSION, HAS_SERVER and HAS_WEBAPP as needed.
 include build/setup.mk
 
-BUNDLE_NAME ?= $(PLUGIN_ID)-$(PLUGIN_VERSION).tar.gz
+BUNDLE_NAME ?= $(PLUGIN_NAME)-$(PLUGIN_VERSION).tar.gz
 
 # Include custom makefile, if present
 ifneq ($(wildcard build/custom.mk),)
@@ -133,24 +134,24 @@ endif
 .PHONY: bundle
 bundle:
 	rm -rf dist/
-	mkdir -p dist/$(PLUGIN_ID)
-	cp $(MANIFEST_FILE) dist/$(PLUGIN_ID)/
-	cp -r webapp/pack dist/$(PLUGIN_ID)/
+	mkdir -p dist/$(PLUGIN_NAME)
+	cp $(MANIFEST_FILE) dist/$(PLUGIN_NAME)/
+	cp -r webapp/pack dist/$(PLUGIN_NAME)/
 ifneq ($(wildcard $(ASSETS_DIR)/.),)
-	cp -r $(ASSETS_DIR) dist/$(PLUGIN_ID)/
+	cp -r $(ASSETS_DIR) dist/$(PLUGIN_NAME)/
 endif
 ifneq ($(HAS_PUBLIC),)
-	cp -r public dist/$(PLUGIN_ID)/public/
+	cp -r public dist/$(PLUGIN_NAME)/public/
 endif
 ifneq ($(HAS_SERVER),)
-	mkdir -p dist/$(PLUGIN_ID)/server
-	cp -r server/dist dist/$(PLUGIN_ID)/server/
+	mkdir -p dist/$(PLUGIN_NAME)/server
+	cp -r server/dist dist/$(PLUGIN_NAME)/server/
 endif
 ifneq ($(HAS_WEBAPP),)
-	mkdir -p dist/$(PLUGIN_ID)/webapp
-	cp -r webapp/dist dist/$(PLUGIN_ID)/webapp/
+	mkdir -p dist/$(PLUGIN_NAME)/webapp
+	cp -r webapp/dist dist/$(PLUGIN_NAME)/webapp/
 endif
-	cd dist && tar -cvzf $(BUNDLE_NAME) $(PLUGIN_ID)
+	cd dist && tar -cvzf $(BUNDLE_NAME) $(PLUGIN_NAME)
 
 	@echo plugin built at: dist/$(BUNDLE_NAME)
 
