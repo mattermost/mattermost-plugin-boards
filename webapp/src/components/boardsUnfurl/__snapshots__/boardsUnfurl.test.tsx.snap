@@ -4,7 +4,7 @@ exports[`components/boardsUnfurl/BoardsUnfurl renders normally 1`] = `
 <div>
   <a
     class="FocalboardUnfurl"
-    href="http://localhost:8065/test"
+    href="http://localhost/test"
     rel="noopener noreferrer"
     target="_blank"
   >
@@ -63,7 +63,7 @@ exports[`components/boardsUnfurl/BoardsUnfurl renders when limited 1`] = `
 <div>
   <a
     class="FocalboardUnfurl"
-    href="http://localhost:8065/test"
+    href="http://localhost/test"
     rel="noopener noreferrer"
     target="_blank"
   >

@@ -8,7 +8,6 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	model "github.com/mattermost/mattermost-plugin-boards/server/model"
 )
 
 // MockAuthInterface is a mock of AuthInterface interface.
@@ -46,21 +45,6 @@ func (m *MockAuthInterface) DoesUserHaveTeamAccess(arg0, arg1 string) bool {
 func (mr *MockAuthInterfaceMockRecorder) DoesUserHaveTeamAccess(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DoesUserHaveTeamAccess", reflect.TypeOf((*MockAuthInterface)(nil).DoesUserHaveTeamAccess), arg0, arg1)
-}
-
-// GetSession mocks base method.
-func (m *MockAuthInterface) GetSession(arg0 string) (*model.Session, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSession", arg0)
-	ret0, _ := ret[0].(*model.Session)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetSession indicates an expected call of GetSession.
-func (mr *MockAuthInterfaceMockRecorder) GetSession(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSession", reflect.TypeOf((*MockAuthInterface)(nil).GetSession), arg0)
 }
 
 // IsValidReadToken mocks base method.

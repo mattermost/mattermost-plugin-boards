@@ -15,7 +15,7 @@ import (
 func (a *API) registerBoardsRoutes(r *mux.Router) {
 	r.HandleFunc("/teams/{teamID}/boards", a.sessionRequired(a.handleGetBoards)).Methods("GET")
 	r.HandleFunc("/boards", a.sessionRequired(a.handleCreateBoard)).Methods("POST")
-	r.HandleFunc("/boards/{boardID}", a.attachSession(a.handleGetBoard, false)).Methods("GET")
+	r.HandleFunc("/boards/{boardID}", a.attachSession(a.handleGetBoard)).Methods("GET")
 	r.HandleFunc("/boards/{boardID}", a.sessionRequired(a.handlePatchBoard)).Methods("PATCH")
 	r.HandleFunc("/boards/{boardID}", a.sessionRequired(a.handleDeleteBoard)).Methods("DELETE")
 	r.HandleFunc("/boards/{boardID}/duplicate", a.sessionRequired(a.handleDuplicateBoard)).Methods("POST")
@@ -255,7 +255,6 @@ func (a *API) handleGetBoard(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			}
-
 			if !a.permissions.HasPermissionToTeam(userID, board.TeamID, model.PermissionViewTeam) {
 				a.errorResponse(w, r, model.NewErrPermission("access denied to board"))
 				return

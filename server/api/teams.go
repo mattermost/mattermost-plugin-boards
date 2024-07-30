@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/audit"
-	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 )
 
 func (a *API) registerTeamsRoutes(r *mux.Router) {
@@ -101,20 +100,12 @@ func (a *API) handleGetTeam(w http.ResponseWriter, r *http.Request) {
 	var team *model.Team
 	var err error
 
-	if a.MattermostAuth {
-		team, err = a.app.GetTeam(teamID)
-		if model.IsErrNotFound(err) {
-			a.errorResponse(w, r, model.NewErrUnauthorized("invalid team"))
-		}
-		if err != nil {
-			a.errorResponse(w, r, err)
-		}
-	} else {
-		team, err = a.app.GetRootTeam()
-		if err != nil {
-			a.errorResponse(w, r, err)
-			return
-		}
+	team, err = a.app.GetTeam(teamID)
+	if model.IsErrNotFound(err) {
+		a.errorResponse(w, r, model.NewErrUnauthorized("invalid team"))
+	}
+	if err != nil {
+		a.errorResponse(w, r, err)
 	}
 
 	auditRec := a.makeAuditRecord(r, "getTeam", audit.Fail)
@@ -128,54 +119,6 @@ func (a *API) handleGetTeam(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonBytesResponse(w, http.StatusOK, data)
-	auditRec.Success()
-}
-
-func (a *API) handlePostTeamRegenerateSignupToken(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation POST /teams/{teamID}/regenerate_signup_token regenerateSignupToken
-	//
-	// Regenerates the signup token for the root team
-	//
-	// ---
-	// produces:
-	// - application/json
-	// parameters:
-	// - name: teamID
-	//   in: path
-	//   description: Team ID
-	//   required: true
-	//   type: string
-	// security:
-	// - BearerAuth: []
-	// responses:
-	//   '200':
-	//     description: success
-	//   default:
-	//     description: internal error
-	//     schema:
-	//       "$ref": "#/definitions/ErrorResponse"
-	if a.MattermostAuth {
-		a.errorResponse(w, r, model.NewErrNotImplemented("not permitted in plugin mode"))
-		return
-	}
-
-	team, err := a.app.GetRootTeam()
-	if err != nil {
-		a.errorResponse(w, r, err)
-		return
-	}
-
-	auditRec := a.makeAuditRecord(r, "regenerateSignupToken", audit.Fail)
-	defer a.audit.LogRecord(audit.LevelModify, auditRec)
-
-	team.SignupToken = utils.NewID(utils.IDTypeToken)
-
-	if err = a.app.UpsertTeamSignupToken(*team); err != nil {
-		a.errorResponse(w, r, err)
-		return
-	}
-
-	jsonStringResponse(w, http.StatusOK, "{}")
 	auditRec.Success()
 }
 
@@ -325,31 +268,18 @@ func (a *API) handleGetTeamUsersByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if userIDs[0] == model.SingleUser {
-		ws, _ := a.app.GetRootTeam()
-		now := utils.GetMillis()
-		user := &model.User{
-			ID:       model.SingleUser,
-			Username: model.SingleUser,
-			Email:    model.SingleUser,
-			CreateAt: ws.UpdateAt,
-			UpdateAt: now,
-		}
-		users = append(users, user)
-	} else {
-		users, error = a.app.GetUsersList(userIDs)
-		if error != nil {
-			a.errorResponse(w, r, error)
-			return
-		}
+	users, error = a.app.GetUsersList(userIDs)
+	if error != nil {
+		a.errorResponse(w, r, error)
+		return
+	}
 
-		for i, u := range users {
-			if a.permissions.HasPermissionToTeam(u.ID, teamID, model.PermissionManageTeam) {
-				users[i].Permissions = append(users[i].Permissions, model.PermissionManageTeam.Id)
-			}
-			if a.permissions.HasPermissionTo(u.ID, model.PermissionManageSystem) {
-				users[i].Permissions = append(users[i].Permissions, model.PermissionManageSystem.Id)
-			}
+	for i, u := range users {
+		if a.permissions.HasPermissionToTeam(u.ID, teamID, model.PermissionManageTeam) {
+			users[i].Permissions = append(users[i].Permissions, model.PermissionManageTeam.Id)
+		}
+		if a.permissions.HasPermissionTo(u.ID, model.PermissionManageSystem) {
+			users[i].Permissions = append(users[i].Permissions, model.PermissionManageSystem.Id)
 		}
 	}
 

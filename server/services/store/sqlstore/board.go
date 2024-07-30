@@ -234,36 +234,6 @@ func (s *SQLStore) getBoard(db sq.BaseRunner, boardID string) (*model.Board, err
 	return s.getBoardByCondition(db, sq.Eq{"id": boardID})
 }
 
-func (s *SQLStore) getBoardsForUserAndTeam(db sq.BaseRunner, userID, teamID string, includePublicBoards bool) ([]*model.Board, error) {
-	query := s.getQueryBuilder(db).
-		Select(boardFields("b.")...).
-		Distinct().
-		From(s.tablePrefix + "boards as b").
-		LeftJoin(s.tablePrefix + "board_members as bm on b.id=bm.board_id").
-		Where(sq.Eq{"b.team_id": teamID}).
-		Where(sq.Eq{"b.is_template": false})
-
-	if includePublicBoards {
-		query = query.Where(sq.Or{
-			sq.Eq{"b.type": model.BoardTypeOpen},
-			sq.Eq{"bm.user_id": userID},
-		})
-	} else {
-		query = query.Where(sq.Or{
-			sq.Eq{"bm.user_id": userID},
-		})
-	}
-
-	rows, err := query.Query()
-	if err != nil {
-		s.logger.Error(`getBoardsForUserAndTeam ERROR`, mlog.Err(err))
-		return nil, err
-	}
-	defer s.CloseRows(rows)
-
-	return s.boardsFromRows(rows)
-}
-
 func (s *SQLStore) getBoardsInTeamByIds(db sq.BaseRunner, boardIDs []string, teamID string) ([]*model.Board, error) {
 	query := s.getQueryBuilder(db).
 		Select(boardFields("b.")...).
@@ -646,112 +616,6 @@ func (s *SQLStore) getMembersForBoard(db sq.BaseRunner, boardID string) ([]*mode
 	return s.boardMembersFromRows(rows)
 }
 
-// searchBoardsForUser returns all boards that match with the
-// term that are either private and which the user is a member of, or
-// they're open, regardless of the user membership.
-// Search is case-insensitive.
-func (s *SQLStore) searchBoardsForUser(db sq.BaseRunner, term string, searchField model.BoardSearchField, userID string, includePublicBoards bool) ([]*model.Board, error) {
-	query := s.getQueryBuilder(db).
-		Select(boardFields("b.")...).
-		Distinct().
-		From(s.tablePrefix + "boards as b").
-		LeftJoin(s.tablePrefix + "board_members as bm on b.id=bm.board_id").
-		Where(sq.Eq{"b.is_template": false})
-
-	if includePublicBoards {
-		query = query.Where(sq.Or{
-			sq.Eq{"b.type": model.BoardTypeOpen},
-			sq.Eq{"bm.user_id": userID},
-		})
-	} else {
-		query = query.Where(sq.Or{
-			sq.Eq{"bm.user_id": userID},
-		})
-	}
-
-	if term != "" {
-		if searchField == model.BoardSearchFieldPropertyName {
-			switch s.dbType {
-			case model.PostgresDBType:
-				where := "b.properties->? is not null"
-				query = query.Where(where, term)
-			case model.MysqlDBType, model.SqliteDBType:
-				where := "JSON_EXTRACT(b.properties, ?) IS NOT NULL"
-				query = query.Where(where, "$."+term)
-			default:
-				where := "b.properties LIKE ?"
-				query = query.Where(where, "%\""+term+"\"%")
-			}
-		} else { // model.BoardSearchFieldTitle
-			// break search query into space separated words
-			// and search for all words.
-			// This should later be upgraded to industrial-strength
-			// word tokenizer, that uses much more than space
-			// to break words.
-			conditions := sq.And{}
-			for _, word := range strings.Split(strings.TrimSpace(term), " ") {
-				conditions = append(conditions, sq.Like{"lower(b.title)": "%" + strings.ToLower(word) + "%"})
-			}
-			query = query.Where(conditions)
-		}
-	}
-
-	rows, err := query.Query()
-	if err != nil {
-		s.logger.Error(`searchBoardsForUser ERROR`, mlog.Err(err))
-		return nil, err
-	}
-	defer s.CloseRows(rows)
-
-	return s.boardsFromRows(rows)
-}
-
-// searchBoardsForUserInTeam returns all boards that match with the
-// term that are either private and which the user is a member of, or
-// they're open, regardless of the user membership.
-// Search is case-insensitive.
-func (s *SQLStore) searchBoardsForUserInTeam(db sq.BaseRunner, teamID, term, userID string) ([]*model.Board, error) {
-	query := s.getQueryBuilder(db).
-		Select(boardFields("b.")...).
-		Distinct().
-		From(s.tablePrefix + "boards as b").
-		LeftJoin(s.tablePrefix + "board_members as bm on b.id=bm.board_id").
-		Where(sq.Eq{"b.is_template": false}).
-		Where(sq.Eq{"b.team_id": teamID}).
-		Where(sq.Or{
-			sq.Eq{"b.type": model.BoardTypeOpen},
-			sq.And{
-				sq.Eq{"b.type": model.BoardTypePrivate},
-				sq.Eq{"bm.user_id": userID},
-			},
-		})
-
-	if term != "" {
-		// break search query into space separated words
-		// and search for all words.
-		// This should later be upgraded to industrial-strength
-		// word tokenizer, that uses much more than space
-		// to break words.
-
-		conditions := sq.And{}
-
-		for _, word := range strings.Split(strings.TrimSpace(term), " ") {
-			conditions = append(conditions, sq.Like{"lower(b.title)": "%" + strings.ToLower(word) + "%"})
-		}
-
-		query = query.Where(conditions)
-	}
-
-	rows, err := query.Query()
-	if err != nil {
-		s.logger.Error(`searchBoardsForUser ERROR`, mlog.Err(err))
-		return nil, err
-	}
-	defer s.CloseRows(rows)
-
-	return s.boardsFromRows(rows)
-}
-
 func (s *SQLStore) getBoardHistory(db sq.BaseRunner, boardID string, opts model.QueryBoardHistoryOptions) ([]*model.Board, error) {
 	var order string
 	if opts.Descending {
@@ -898,4 +762,257 @@ func (s *SQLStore) getBoardMemberHistory(db sq.BaseRunner, boardID, userID strin
 	}
 
 	return memberHistory, nil
+}
+
+func (s *SQLStore) getBoardsForUserAndTeam(db sq.BaseRunner, userID, teamID string, includePublicBoards bool) ([]*model.Board, error) {
+	if includePublicBoards {
+		boards, err := s.searchBoardsForUserInTeam(db, teamID, "", userID)
+		if err != nil {
+			return nil, err
+		}
+		return boards, nil
+	}
+
+	// retrieve only direct memberships for user
+	// this is usually done for guests.
+	members, err := s.getMembersForUser(db, userID)
+	if err != nil {
+		return nil, err
+	}
+	boardIDs := []string{}
+	for _, m := range members {
+		boardIDs = append(boardIDs, m.BoardID)
+	}
+
+	boards, err := s.getBoardsInTeamByIds(db, boardIDs, teamID)
+	if model.IsErrNotFound(err) {
+		if boards == nil {
+			boards = []*model.Board{}
+		}
+		return boards, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return boards, nil
+}
+
+func (s *SQLStore) searchBoardsForUserInTeam(db sq.BaseRunner, teamID, term, userID string) ([]*model.Board, error) {
+	// as we're joining three queries, we need to avoid numbered
+	// placeholders until the join is done, so we use the default
+	// question mark placeholder here
+	builder := s.getQueryBuilder(db).PlaceholderFormat(sq.Question)
+
+	openBoardsQ := builder.
+		Select(boardFields("b.")...).
+		From(s.tablePrefix + "boards as b").
+		Where(sq.Eq{
+			"b.is_template": false,
+			"b.team_id":     teamID,
+			"b.type":        model.BoardTypeOpen,
+		})
+
+	memberBoardsQ := builder.
+		Select(boardFields("b.")...).
+		From(s.tablePrefix + "boards AS b").
+		Join(s.tablePrefix + "board_members AS bm on b.id = bm.board_id").
+		Where(sq.Eq{
+			"b.is_template": false,
+			"b.team_id":     teamID,
+			"bm.user_id":    userID,
+		})
+
+	channelMemberBoardsQ := builder.
+		Select(boardFields("b.")...).
+		From(s.tablePrefix + "boards AS b").
+		Join("ChannelMembers AS cm on cm.channelId = b.channel_id").
+		Where(sq.Eq{
+			"b.is_template": false,
+			"b.team_id":     teamID,
+			"cm.userId":     userID,
+		})
+
+	if term != "" {
+		// break search query into space separated words
+		// and search for all words.
+		// This should later be upgraded to industrial-strength
+		// word tokenizer, that uses much more than space
+		// to break words.
+
+		conditions := sq.And{}
+
+		for _, word := range strings.Split(strings.TrimSpace(term), " ") {
+			conditions = append(conditions, sq.Like{"lower(b.title)": "%" + strings.ToLower(word) + "%"})
+		}
+
+		openBoardsQ = openBoardsQ.Where(conditions)
+		memberBoardsQ = memberBoardsQ.Where(conditions)
+		channelMemberBoardsQ = channelMemberBoardsQ.Where(conditions)
+	}
+
+	memberBoardsSQL, memberBoardsArgs, err := memberBoardsQ.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("SearchBoardsForUserInTeam error getting memberBoardsSQL: %w", err)
+	}
+
+	channelMemberBoardsSQL, channelMemberBoardsArgs, err := channelMemberBoardsQ.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("SearchBoardsForUserInTeam error getting channelMemberBoardsSQL: %w", err)
+	}
+
+	unionQ := openBoardsQ.
+		Prefix("(").
+		Suffix(") UNION ("+memberBoardsSQL, memberBoardsArgs...).
+		Suffix(") UNION ("+channelMemberBoardsSQL+")", channelMemberBoardsArgs...)
+
+	unionSQL, unionArgs, err := unionQ.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("SearchBoardsForUserInTeam error getting unionSQL: %w", err)
+	}
+
+	// if we're using postgres or sqlite, we need to replace the
+	// question mark placeholder with the numbered dollar one, now
+	// that the full query is built
+	if s.dbType == model.PostgresDBType || s.dbType == model.SqliteDBType {
+		var rErr error
+		unionSQL, rErr = sq.Dollar.ReplacePlaceholders(unionSQL)
+		if rErr != nil {
+			return nil, fmt.Errorf("SearchBoardsForUserInTeam unable to replace unionSQL placeholders: %w", rErr)
+		}
+	}
+
+	rows, err := db.Query(unionSQL, unionArgs...)
+	if err != nil {
+		s.logger.Error(`searchBoardsForUserInTeam ERROR`, mlog.Err(err))
+		return nil, err
+	}
+	defer s.CloseRows(rows)
+
+	return s.boardsFromRows(rows)
+}
+
+func (s *SQLStore) searchBoardsForUser(db sq.BaseRunner, term string, searchField model.BoardSearchField, userID string, includePublicBoards bool) ([]*model.Board, error) {
+	// as we're joining three queries, we need to avoid numbered
+	// placeholders until the join is done, so we use the default
+	// question mark placeholder here
+	builder := s.getQueryBuilder(db).PlaceholderFormat(sq.Question)
+
+	boardMembersQ := builder.
+		Select(boardFields("b.")...).
+		From(s.tablePrefix + "boards as b").
+		Join(s.tablePrefix + "board_members as bm on b.id=bm.board_id").
+		Where(sq.Eq{
+			"b.is_template": false,
+			"bm.user_id":    userID,
+		})
+
+	teamMembersQ := builder.
+		Select(boardFields("b.")...).
+		From(s.tablePrefix + "boards as b").
+		Join("TeamMembers as tm on tm.teamid=b.team_id").
+		Where(sq.Eq{
+			"b.is_template": false,
+			"tm.userID":     userID,
+			"tm.deleteAt":   0,
+			"b.type":        model.BoardTypeOpen,
+		})
+
+	channelMembersQ := builder.
+		Select(boardFields("b.")...).
+		From(s.tablePrefix + "boards as b").
+		Join("ChannelMembers as cm on cm.channelId=b.channel_id").
+		Where(sq.Eq{
+			"b.is_template": false,
+			"cm.userId":     userID,
+		})
+
+	if term != "" {
+		if searchField == model.BoardSearchFieldPropertyName {
+			var where, whereTerm string
+			switch s.dbType {
+			case model.PostgresDBType:
+				where = "b.properties->? is not null"
+				whereTerm = term
+			case model.MysqlDBType, model.SqliteDBType:
+				where = "JSON_EXTRACT(b.properties, ?) IS NOT NULL"
+				whereTerm = "$." + term
+			default:
+				where = "b.properties LIKE ?"
+				whereTerm = "%\"" + term + "\"%"
+			}
+			boardMembersQ = boardMembersQ.Where(where, whereTerm)
+			teamMembersQ = teamMembersQ.Where(where, whereTerm)
+			channelMembersQ = channelMembersQ.Where(where, whereTerm)
+		} else { // model.BoardSearchFieldTitle
+			// break search query into space separated words
+			// and search for all words.
+			// This should later be upgraded to industrial-strength
+			// word tokenizer, that uses much more than space
+			// to break words.
+			conditions := sq.And{}
+			for _, word := range strings.Split(strings.TrimSpace(term), " ") {
+				conditions = append(conditions, sq.Like{"lower(b.title)": "%" + strings.ToLower(word) + "%"})
+			}
+
+			boardMembersQ = boardMembersQ.Where(conditions)
+			teamMembersQ = teamMembersQ.Where(conditions)
+			channelMembersQ = channelMembersQ.Where(conditions)
+		}
+	}
+
+	teamMembersSQL, teamMembersArgs, err := teamMembersQ.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("SearchBoardsForUser error getting teamMembersSQL: %w", err)
+	}
+
+	channelMembersSQL, channelMembersArgs, err := channelMembersQ.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("SearchBoardsForUser error getting channelMembersSQL: %w", err)
+	}
+
+	unionQ := boardMembersQ
+	user, err := s.getUserByID(db, userID)
+	if err != nil {
+		return nil, err
+	}
+	// NOTE: theoretically, could do e.g. `isGuest := !includePublicBoards`
+	// but that introduces some tight coupling + fragility
+	if !user.IsGuest {
+		unionQ = unionQ.
+			Prefix("(").
+			Suffix(") UNION ("+channelMembersSQL+")", channelMembersArgs...)
+		if includePublicBoards {
+			unionQ = unionQ.Suffix(" UNION ("+teamMembersSQL+")", teamMembersArgs...)
+		}
+	} else if includePublicBoards {
+		unionQ = unionQ.
+			Prefix("(").
+			Suffix(") UNION ("+teamMembersSQL+")", teamMembersArgs...)
+	}
+
+	unionSQL, unionArgs, err := unionQ.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("SearchBoardsForUser error getting unionSQL: %w", err)
+	}
+
+	// if we're using postgres or sqlite, we need to replace the
+	// question mark placeholder with the numbered dollar one, now
+	// that the full query is built
+	if s.dbType == model.PostgresDBType || s.dbType == model.SqliteDBType {
+		var rErr error
+		unionSQL, rErr = sq.Dollar.ReplacePlaceholders(unionSQL)
+		if rErr != nil {
+			return nil, fmt.Errorf("SearchBoardsForUser unable to replace unionSQL placeholders: %w", rErr)
+		}
+	}
+
+	rows, err := db.Query(unionSQL, unionArgs...)
+	if err != nil {
+		s.logger.Error(`searchBoardsForUser ERROR`, mlog.Err(err))
+		return nil, err
+	}
+	defer s.CloseRows(rows)
+
+	return s.boardsFromRows(rows)
 }

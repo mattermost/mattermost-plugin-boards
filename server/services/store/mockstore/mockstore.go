@@ -65,20 +65,6 @@ func (mr *MockStoreMockRecorder) CanSeeUser(arg0, arg1 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanSeeUser", reflect.TypeOf((*MockStore)(nil).CanSeeUser), arg0, arg1)
 }
 
-// CleanUpSessions mocks base method.
-func (m *MockStore) CleanUpSessions(arg0 int64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CleanUpSessions", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CleanUpSessions indicates an expected call of CleanUpSessions.
-func (mr *MockStoreMockRecorder) CleanUpSessions(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanUpSessions", reflect.TypeOf((*MockStore)(nil).CleanUpSessions), arg0)
-}
-
 // CreateBoardsAndBlocks mocks base method.
 func (m *MockStore) CreateBoardsAndBlocks(arg0 *model.BoardsAndBlocks, arg1 string) (*model.BoardsAndBlocks, error) {
 	m.ctrl.T.Helper()
@@ -124,20 +110,6 @@ func (mr *MockStoreMockRecorder) CreateCategory(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCategory", reflect.TypeOf((*MockStore)(nil).CreateCategory), arg0)
 }
 
-// CreateSession mocks base method.
-func (m *MockStore) CreateSession(arg0 *model.Session) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateSession", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreateSession indicates an expected call of CreateSession.
-func (mr *MockStoreMockRecorder) CreateSession(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSession", reflect.TypeOf((*MockStore)(nil).CreateSession), arg0)
-}
-
 // CreateSubscription mocks base method.
 func (m *MockStore) CreateSubscription(arg0 *model.Subscription) (*model.Subscription, error) {
 	m.ctrl.T.Helper()
@@ -151,21 +123,6 @@ func (m *MockStore) CreateSubscription(arg0 *model.Subscription) (*model.Subscri
 func (mr *MockStoreMockRecorder) CreateSubscription(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSubscription", reflect.TypeOf((*MockStore)(nil).CreateSubscription), arg0)
-}
-
-// CreateUser mocks base method.
-func (m *MockStore) CreateUser(arg0 *model.User) (*model.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateUser", arg0)
-	ret0, _ := ret[0].(*model.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateUser indicates an expected call of CreateUser.
-func (mr *MockStoreMockRecorder) CreateUser(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockStore)(nil).CreateUser), arg0)
 }
 
 // DBType mocks base method.
@@ -306,20 +263,6 @@ func (m *MockStore) DeleteNotificationHint(arg0 string) error {
 func (mr *MockStoreMockRecorder) DeleteNotificationHint(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteNotificationHint", reflect.TypeOf((*MockStore)(nil).DeleteNotificationHint), arg0)
-}
-
-// DeleteSession mocks base method.
-func (m *MockStore) DeleteSession(arg0 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteSession", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteSession indicates an expected call of DeleteSession.
-func (mr *MockStoreMockRecorder) DeleteSession(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSession", reflect.TypeOf((*MockStore)(nil).DeleteSession), arg0)
 }
 
 // DeleteSubscription mocks base method.
@@ -897,21 +840,6 @@ func (mr *MockStoreMockRecorder) GetRegisteredUserCount() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRegisteredUserCount", reflect.TypeOf((*MockStore)(nil).GetRegisteredUserCount))
 }
 
-// GetSession mocks base method.
-func (m *MockStore) GetSession(arg0 string, arg1 int64) (*model.Session, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSession", arg0, arg1)
-	ret0, _ := ret[0].(*model.Session)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetSession indicates an expected call of GetSession.
-func (mr *MockStoreMockRecorder) GetSession(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSession", reflect.TypeOf((*MockStore)(nil).GetSession), arg0, arg1)
-}
-
 // GetSharing mocks base method.
 func (m *MockStore) GetSharing(arg0 string) (*model.Sharing, error) {
 	m.ctrl.T.Helper()
@@ -1388,20 +1316,6 @@ func (mr *MockStoreMockRecorder) PostMessage(arg0, arg1, arg2 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostMessage", reflect.TypeOf((*MockStore)(nil).PostMessage), arg0, arg1, arg2)
 }
 
-// RefreshSession mocks base method.
-func (m *MockStore) RefreshSession(arg0 *model.Session) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RefreshSession", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RefreshSession indicates an expected call of RefreshSession.
-func (mr *MockStoreMockRecorder) RefreshSession(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshSession", reflect.TypeOf((*MockStore)(nil).RefreshSession), arg0)
-}
-
 // RemoveDefaultTemplates mocks base method.
 func (m *MockStore) RemoveDefaultTemplates(arg0 []*model.Board) error {
 	m.ctrl.T.Helper()
@@ -1663,20 +1577,6 @@ func (mr *MockStoreMockRecorder) UpdateCategory(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCategory", reflect.TypeOf((*MockStore)(nil).UpdateCategory), arg0)
 }
 
-// UpdateSession mocks base method.
-func (m *MockStore) UpdateSession(arg0 *model.Session) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateSession", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateSession indicates an expected call of UpdateSession.
-func (mr *MockStoreMockRecorder) UpdateSession(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSession", reflect.TypeOf((*MockStore)(nil).UpdateSession), arg0)
-}
-
 // UpdateSubscribersNotifiedAt mocks base method.
 func (m *MockStore) UpdateSubscribersNotifiedAt(arg0 string, arg1 int64) error {
 	m.ctrl.T.Helper()
@@ -1689,49 +1589,6 @@ func (m *MockStore) UpdateSubscribersNotifiedAt(arg0 string, arg1 int64) error {
 func (mr *MockStoreMockRecorder) UpdateSubscribersNotifiedAt(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSubscribersNotifiedAt", reflect.TypeOf((*MockStore)(nil).UpdateSubscribersNotifiedAt), arg0, arg1)
-}
-
-// UpdateUser mocks base method.
-func (m *MockStore) UpdateUser(arg0 *model.User) (*model.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateUser", arg0)
-	ret0, _ := ret[0].(*model.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateUser indicates an expected call of UpdateUser.
-func (mr *MockStoreMockRecorder) UpdateUser(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockStore)(nil).UpdateUser), arg0)
-}
-
-// UpdateUserPassword mocks base method.
-func (m *MockStore) UpdateUserPassword(arg0, arg1 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateUserPassword", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateUserPassword indicates an expected call of UpdateUserPassword.
-func (mr *MockStoreMockRecorder) UpdateUserPassword(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserPassword", reflect.TypeOf((*MockStore)(nil).UpdateUserPassword), arg0, arg1)
-}
-
-// UpdateUserPasswordByID mocks base method.
-func (m *MockStore) UpdateUserPasswordByID(arg0, arg1 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateUserPasswordByID", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateUserPasswordByID indicates an expected call of UpdateUserPasswordByID.
-func (mr *MockStoreMockRecorder) UpdateUserPasswordByID(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserPasswordByID", reflect.TypeOf((*MockStore)(nil).UpdateUserPasswordByID), arg0, arg1)
 }
 
 // UpsertNotificationHint mocks base method.

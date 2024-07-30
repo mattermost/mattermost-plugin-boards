@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/audit"
-	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 )
 
 func (a *API) registerUsersRoutes(r *mux.Router) {
@@ -70,23 +69,10 @@ func (a *API) handleGetUsersList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if userIDs[0] == model.SingleUser {
-		ws, _ := a.app.GetRootTeam()
-		now := utils.GetMillis()
-		user := &model.User{
-			ID:       model.SingleUser,
-			Username: model.SingleUser,
-			Email:    model.SingleUser,
-			CreateAt: ws.UpdateAt,
-			UpdateAt: now,
-		}
-		users = append(users, user)
-	} else {
-		users, error = a.app.GetUsersList(userIDs)
-		if error != nil {
-			a.errorResponse(w, r, error)
-			return
-		}
+	users, error = a.app.GetUsersList(userIDs)
+	if error != nil {
+		a.errorResponse(w, r, error)
+		return
 	}
 
 	ctx := r.Context()
@@ -163,23 +149,11 @@ func (a *API) handleGetMe(w http.ResponseWriter, r *http.Request) {
 	auditRec := a.makeAuditRecord(r, "getMe", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelRead, auditRec)
 
-	if userID == model.SingleUser {
-		ws, _ := a.app.GetRootTeam()
-		now := utils.GetMillis()
-		user = &model.User{
-			ID:       model.SingleUser,
-			Username: model.SingleUser,
-			Email:    model.SingleUser,
-			CreateAt: ws.UpdateAt,
-			UpdateAt: now,
-		}
-	} else {
-		user, err = a.app.GetUser(userID)
-		if err != nil {
-			// ToDo: wrap with an invalid token error
-			a.errorResponse(w, r, err)
-			return
-		}
+	user, err = a.app.GetUser(userID)
+	if err != nil {
+		// ToDo: wrap with an invalid token error
+		a.errorResponse(w, r, err)
+		return
 	}
 
 	if teamID != "" && a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionManageTeam) {

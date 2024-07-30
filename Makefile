@@ -35,7 +35,8 @@ GO_BUILD_FLAGS ?= -ldflags '$(LDFLAGS)'
 MM_UTILITIES_DIR ?= ../mattermost-utilities
 DLV_DEBUG_PORT := 2346
 MATTERMOST_PLUGINS_PATH=$(MM_SERVER_PATH)/plugins
-FOCALBOARD_PLUGIN_PATH=$(MATTERMOST_PLUGINS_PATH)/focalboard
+BOARD_PLUGIN_PATH=$(MATTERMOST_PLUGINS_PATH)/boards
+PLUGIN_NAME=boards
 
 export GO111MODULE=on
 
@@ -50,7 +51,7 @@ default: all
 # Verify environment, and define PLUGIN_ID, PLUGIN_VERSION, HAS_SERVER and HAS_WEBAPP as needed.
 include build/setup.mk
 
-BUNDLE_NAME ?= $(PLUGIN_ID)-$(PLUGIN_VERSION).tar.gz
+BUNDLE_NAME ?= $(PLUGIN_NAME)-$(PLUGIN_VERSION).tar.gz
 
 # Include custom makefile, if present
 ifneq ($(wildcard build/custom.mk),)
@@ -133,26 +134,34 @@ endif
 .PHONY: bundle
 bundle:
 	rm -rf dist/
-	mkdir -p dist/$(PLUGIN_ID)
-	cp $(MANIFEST_FILE) dist/$(PLUGIN_ID)/
-	cp -r webapp/pack dist/$(PLUGIN_ID)/
+	mkdir -p dist/$(PLUGIN_NAME)
+	cp $(MANIFEST_FILE) dist/$(PLUGIN_NAME)/
+	cp -r webapp/pack dist/$(PLUGIN_NAME)/
 ifneq ($(wildcard $(ASSETS_DIR)/.),)
-	cp -r $(ASSETS_DIR) dist/$(PLUGIN_ID)/
+	cp -r $(ASSETS_DIR) dist/$(PLUGIN_NAME)/
 endif
 ifneq ($(HAS_PUBLIC),)
-	cp -r public dist/$(PLUGIN_ID)/public/
+	cp -r public dist/$(PLUGIN_NAME)/public/
 endif
 ifneq ($(HAS_SERVER),)
-	mkdir -p dist/$(PLUGIN_ID)/server
-	cp -r server/dist dist/$(PLUGIN_ID)/server/
+	mkdir -p dist/$(PLUGIN_NAME)/server
+	cp -r server/dist dist/$(PLUGIN_NAME)/server/
 endif
 ifneq ($(HAS_WEBAPP),)
-	mkdir -p dist/$(PLUGIN_ID)/webapp
-	cp -r webapp/dist dist/$(PLUGIN_ID)/webapp/
+	mkdir -p dist/$(PLUGIN_NAME)/webapp
+	cp -r webapp/dist dist/$(PLUGIN_NAME)/webapp/
 endif
-	cd dist && tar -cvzf $(BUNDLE_NAME) $(PLUGIN_ID)
+	cd dist && tar -cvzf $(BUNDLE_NAME) $(PLUGIN_NAME)
 
 	@echo plugin built at: dist/$(BUNDLE_NAME)
+
+info: ## Display build information
+	@echo "Build Number: $(BUILD_NUMBER)"
+	@echo "Build Date: $(BUILD_DATE)"
+	@echo "Build Hash: $(BUILD_HASH)"
+	@echo "Plugin ID: $(PLUGIN_ID)"
+	@echo "Plugin Version: $(PLUGIN_VERSION)"
+	@echo "Bundle Name: $(BUNDLE_NAME)"
 
 ## Builds and bundles the plugin.
 .PHONY: dist
@@ -357,6 +366,8 @@ generate: ## Install and run code generators.
 	cd server; go install github.com/golang/mock/mockgen@v1.6.0
 	cd server; go generate ./...
 
+server-ci: server-lint 
+
 server-lint: ## Run linters on server code.
 	@if ! [ -x "$$(command -v golangci-lint)" ]; then \
 		echo "golangci-lint is not installed. Please see https://github.com/golangci/golangci-lint#install-golangci-lint for installation instructions."; \
@@ -373,7 +384,7 @@ modd-precheck:
 webapp-ci: ## Webapp CI: linting & testing.
 	cd webapp; npm run check
 	cd webapp; npm run test
-	cd webapp: npm run check-types
+	cd webapp; npm run check-types
 
 webapp-test: ## jest tests for webapp
 	cd webapp; npm run test
@@ -382,7 +393,11 @@ watch-plugin: modd-precheck ## Run and upload the plugin to a development server
 	env FOCALBOARD_BUILD_TAGS='$(BUILD_TAGS)' modd -f modd-watchplugin.conf
 
 live-watch-plugin: modd-precheck ## Run and update locally the plugin in the development server
-	cd mattermost-plugin; make live-watch
+	make live-watch
+
+server-test: ## Run server tests
+	@echo Starting tests for server
+	cd server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=plugin-profile.coverage -count=1 -timeout=30m ./...
 
 swagger: ## Generate swagger API spec and clients based on it.
 	mkdir -p server/swagger/docs
@@ -395,3 +410,110 @@ swagger: ## Generate swagger API spec and clients based on it.
 	cd server/swagger && openapi-generator generate -i swagger.yml -g typescript-fetch -o clients/typescript
 	cd server/swagger && openapi-generator generate -i swagger.yml -g swift5 -o clients/swift
 	cd server/swagger && openapi-generator generate -i swagger.yml -g python -o clients/python
+
+# ====================================================================================
+# Used for semver bumping
+PROTECTED_BRANCH := main 
+APP_NAME    := $(shell basename -s .git `git config --get remote.origin.url`)
+CURRENT_VERSION := $(shell git describe --abbrev=0 --tags)
+VERSION_PARTS := $(subst ., ,$(subst v,,$(subst -rc, ,$(CURRENT_VERSION))))
+MAJOR := $(word 1,$(VERSION_PARTS))
+MINOR := $(word 2,$(VERSION_PARTS))
+PATCH := $(word 3,$(VERSION_PARTS))
+RC := $(shell echo $(CURRENT_VERSION) | grep -oE 'rc[0-9]+' | sed 's/rc//')
+# Check if current branch is protected
+define check_protected_branch
+	@current_branch=$$(git rev-parse --abbrev-ref HEAD); \
+	if ! echo "$(PROTECTED_BRANCH)" | grep -wq "$$current_branch" && ! echo "$$current_branch" | grep -q "^release"; then \
+		echo "Error: Tagging is only allowed from $(PROTECTED_BRANCH) or release branches. You are on $$current_branch branch."; \
+		exit 1; \
+	fi
+endef
+# Check if there are pending pulls
+define check_pending_pulls
+	@git fetch; \
+	current_branch=$$(git rev-parse --abbrev-ref HEAD); \
+	if [ "$$(git rev-parse HEAD)" != "$$(git rev-parse origin/$$current_branch)" ]; then \
+		echo "Error: Your branch is not up to date with upstream. Please pull the latest changes before performing a release"; \
+		exit 1; \
+	fi
+endef
+# Prompt for approval
+define prompt_approval
+	@read -p "About to bump $(APP_NAME) to version $(1), approve? (y/n) " userinput; \
+	if [ "$$userinput" != "y" ]; then \
+		echo "Bump aborted."; \
+		exit 1; \
+	fi
+endef
+# ====================================================================================
+
+.PHONY: patch minor major patch-rc minor-rc major-rc
+
+patch: ## to bump patch version (semver)
+	$(call check_protected_branch)
+	$(call check_pending_pulls)
+	@$(eval PATCH := $(shell echo $$(($(PATCH)+1))))
+	$(call prompt_approval,$(MAJOR).$(MINOR).$(PATCH))
+	@echo Bumping $(APP_NAME) to Patch version $(MAJOR).$(MINOR).$(PATCH)
+	git tag -s -a v$(MAJOR).$(MINOR).$(PATCH) -m "Bumping $(APP_NAME) to Patch version $(MAJOR).$(MINOR).$(PATCH)"
+	git push origin v$(MAJOR).$(MINOR).$(PATCH)
+	@echo Bumped $(APP_NAME) to Patch version $(MAJOR).$(MINOR).$(PATCH)
+
+minor: ## to bump minor version (semver)
+	$(call check_protected_branch)
+	$(call check_pending_pulls)
+	@$(eval MINOR := $(shell echo $$(($(MINOR)+1))))
+	@$(eval PATCH := 0)
+	$(call prompt_approval,$(MAJOR).$(MINOR).$(PATCH))
+	@echo Bumping $(APP_NAME) to Minor version $(MAJOR).$(MINOR).$(PATCH)
+	git tag -s -a v$(MAJOR).$(MINOR).$(PATCH) -m "Bumping $(APP_NAME) to Minor version $(MAJOR).$(MINOR).$(PATCH)"
+	git push origin v$(MAJOR).$(MINOR).$(PATCH)
+	@echo Bumped $(APP_NAME) to Minor version $(MAJOR).$(MINOR).$(PATCH)
+
+major: ## to bump major version (semver)
+	$(call check_protected_branch)
+	$(call check_pending_pulls)
+	$(eval MAJOR := $(shell echo $$(($(MAJOR)+1))))
+	$(eval MINOR := 0)
+	$(eval PATCH := 0)
+	$(call prompt_approval,$(MAJOR).$(MINOR).$(PATCH))
+	@echo Bumping $(APP_NAME) to Major version $(MAJOR).$(MINOR).$(PATCH)
+	git tag -s -a v$(MAJOR).$(MINOR).$(PATCH) -m "Bumping $(APP_NAME) to Major version $(MAJOR).$(MINOR).$(PATCH)"
+	git push origin v$(MAJOR).$(MINOR).$(PATCH)
+	@echo Bumped $(APP_NAME) to Major version $(MAJOR).$(MINOR).$(PATCH)
+
+patch-rc: ## to bump patch release candidate version (semver)
+	$(call check_protected_branch)
+	$(call check_pending_pulls)
+	@$(eval RC := $(shell echo $$(($(RC)+1))))
+	$(call prompt_approval,$(MAJOR).$(MINOR).$(PATCH)-rc$(RC))
+	@echo Bumping $(APP_NAME) to Patch RC version $(MAJOR).$(MINOR).$(PATCH)-rc$(RC)
+	git tag -s -a v$(MAJOR).$(MINOR).$(PATCH)-rc$(RC) -m "Bumping $(APP_NAME) to Patch RC version $(MAJOR).$(MINOR).$(PATCH)-rc$(RC)"
+	git push origin v$(MAJOR).$(MINOR).$(PATCH)-rc$(RC)
+	@echo Bumped $(APP_NAME) to Patch RC version $(MAJOR).$(MINOR).$(PATCH)-rc$(RC)
+
+minor-rc: ## to bump minor release candidate version (semver)
+	$(call check_protected_branch)
+	$(call check_pending_pulls)
+	@$(eval MINOR := $(shell echo $$(($(MINOR)+1))))
+	@$(eval PATCH := 0)
+	@$(eval RC := 1)
+	$(call prompt_approval,$(MAJOR).$(MINOR).$(PATCH)-rc$(RC))
+	@echo Bumping $(APP_NAME) to Minor RC version $(MAJOR).$(MINOR).$(PATCH)-rc$(RC)
+	git tag -s -a v$(MAJOR).$(MINOR).$(PATCH)-rc$(RC) -m "Bumping $(APP_NAME) to Minor RC version $(MAJOR).$(MINOR).$(PATCH)-rc$(RC)"
+	git push origin v$(MAJOR).$(MINOR).$(PATCH)-rc$(RC)
+	@echo Bumped $(APP_NAME) to Minor RC version $(MAJOR).$(MINOR).$(PATCH)-rc$(RC)
+
+major-rc: ## to bump major release candidate version (semver)
+	$(call check_protected_branch)
+	$(call check_pending_pulls)
+	@$(eval MAJOR := $(shell echo $$(($(MAJOR)+1))))
+	@$(eval MINOR := 0)
+	@$(eval PATCH := 0)
+	@$(eval RC := 1)
+	$(call prompt_approval,$(MAJOR).$(MINOR).$(PATCH)-rc$(RC))
+	@echo Bumping $(APP_NAME) to Major RC version $(MAJOR).$(MINOR).$(PATCH)-rc$(RC)
+	git tag -s -a v$(MAJOR).$(MINOR).$(PATCH)-rc$(RC) -m "Bumping $(APP_NAME) to Major RC version $(MAJOR).$(MINOR).$(PATCH)-rc$(RC)"
+	git push origin v$(MAJOR).$(MINOR).$(PATCH)-rc$(RC)
+	@echo Bumped $(APP_NAME) to Major RC version $(MAJOR).$(MINOR).$(PATCH)-rc$(RC)

@@ -1,6 +1,9 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+import React from 'react'
 import {Channel, ChannelMembership} from 'mattermost-redux/types/channels'
 
 export interface PluginRegistry {
@@ -19,7 +22,6 @@ export interface PluginRegistry {
     registerRootComponent(component: React.ElementType)
     registerInsightsHandler(handler: (timeRange: string, page: number, perPage: number, teamId: string, insightType: string) => void)
     registerSiteStatisticsHandler(handler: () => void)
-
     registerActionAfterChannelCreation(component: React.Element)
 
     // Add more if needed from https://developers.mattermost.com/extend/plugins/webapp/reference

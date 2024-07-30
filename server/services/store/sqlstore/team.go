@@ -91,46 +91,6 @@ func (s *SQLStore) upsertTeamSettings(db sq.BaseRunner, team model.Team) error {
 	return err
 }
 
-func (s *SQLStore) getTeam(db sq.BaseRunner, id string) (*model.Team, error) {
-	var settingsJSON string
-
-	query := s.getQueryBuilder(db).
-		Select(
-			"id",
-			"signup_token",
-			"COALESCE(settings, '{}')",
-			"modified_by",
-			"update_at",
-		).
-		From(s.tablePrefix + "teams").
-		Where(sq.Eq{"id": id})
-	row := query.QueryRow()
-	team := model.Team{}
-
-	err := row.Scan(
-		&team.ID,
-		&team.SignupToken,
-		&settingsJSON,
-		&team.ModifiedBy,
-		&team.UpdateAt,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal([]byte(settingsJSON), &team.Settings)
-	if err != nil {
-		s.logger.Error(`ERROR GetTeam settings json.Unmarshal`, mlog.Err(err))
-		return nil, err
-	}
-
-	return &team, nil
-}
-
-func (s *SQLStore) getTeamsForUser(db sq.BaseRunner, _ string) ([]*model.Team, error) {
-	return s.getAllTeams(db)
-}
-
 func (s *SQLStore) getTeamCount(db sq.BaseRunner) (int64, error) {
 	query := s.getQueryBuilder(db).
 		Select(
@@ -199,6 +159,67 @@ func (s *SQLStore) getAllTeams(db sq.BaseRunner) ([]*model.Team, error) {
 	teams, err := s.teamsFromRows(rows)
 	if err != nil {
 		return nil, err
+	}
+
+	return teams, nil
+}
+
+func (s *SQLStore) getTeam(db sq.BaseRunner, id string) (*model.Team, error) {
+	if id == "0" {
+		team := model.Team{
+			ID:    id,
+			Title: "",
+		}
+
+		return &team, nil
+	}
+
+	query := s.getQueryBuilder(db).
+		Select("DisplayName").
+		From("Teams").
+		Where(sq.Eq{"ID": id})
+
+	row := query.QueryRow()
+	var displayName string
+	err := row.Scan(&displayName)
+	if err != nil && !model.IsErrNotFound(err) {
+		s.logger.Error("GetTeam scan error",
+			mlog.String("team_id", id),
+			mlog.Err(err),
+		)
+		return nil, err
+	}
+
+	return &model.Team{ID: id, Title: displayName}, nil
+}
+
+func (s *SQLStore) getTeamsForUser(db sq.BaseRunner, userID string) ([]*model.Team, error) {
+	query := s.getQueryBuilder(db).
+		Select("t.Id", "t.DisplayName").
+		From("Teams as t").
+		Join("TeamMembers as tm on t.Id=tm.TeamId").
+		Where(sq.Eq{"tm.UserId": userID}).
+		Where(sq.Eq{"tm.DeleteAt": 0})
+
+	rows, err := query.Query()
+	if err != nil {
+		return nil, err
+	}
+	defer s.CloseRows(rows)
+
+	teams := []*model.Team{}
+	for rows.Next() {
+		var team model.Team
+
+		err := rows.Scan(
+			&team.ID,
+			&team.Title,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		teams = append(teams, &team)
 	}
 
 	return teams, nil

@@ -3,88 +3,14 @@ package auth
 import (
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
-	"github.com/mattermost/mattermost-plugin-boards/server/services/config"
-	"github.com/mattermost/mattermost-plugin-boards/server/services/permissions/localpermissions"
-	mockpermissions "github.com/mattermost/mattermost-plugin-boards/server/services/permissions/mocks"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/store/mockstore"
-	"github.com/mattermost/mattermost-plugin-boards/server/utils"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/require"
-
-	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )
 
 type TestHelper struct {
 	Auth    *Auth
 	Session model.Session
 	Store   *mockstore.MockStore
-}
-
-var mockSession = &model.Session{
-	ID:       utils.NewID(utils.IDTypeSession),
-	Token:    "goodToken",
-	UserID:   "12345",
-	CreateAt: utils.GetMillis() - utils.SecondsToMillis(2000),
-	UpdateAt: utils.GetMillis() - utils.SecondsToMillis(2000),
-}
-
-func setupTestHelper(t *testing.T) *TestHelper {
-	ctrl := gomock.NewController(t)
-	ctrlPermissions := gomock.NewController(t)
-	cfg := config.Configuration{}
-	mockStore := mockstore.NewMockStore(ctrl)
-	mockPermissions := mockpermissions.NewMockStore(ctrlPermissions)
-	logger, err := mlog.NewLogger()
-	require.NoError(t, err)
-	newAuth := New(&cfg, mockStore, localpermissions.New(mockPermissions, logger))
-
-	// called during default template setup for every test
-	mockStore.EXPECT().GetTemplateBoards("0", "").AnyTimes()
-	mockStore.EXPECT().RemoveDefaultTemplates(gomock.Any()).AnyTimes()
-	mockStore.EXPECT().InsertBlock(gomock.Any(), gomock.Any()).AnyTimes()
-
-	return &TestHelper{
-		Auth:    newAuth,
-		Session: *mockSession,
-		Store:   mockStore,
-	}
-}
-
-func TestGetSession(t *testing.T) {
-	th := setupTestHelper(t)
-
-	testcases := []struct {
-		title       string
-		token       string
-		refreshTime int64
-		isError     bool
-	}{
-		{"fail, no token", "", 0, true},
-		{"fail, invalid username", "badToken", 0, true},
-		{"success, good token", "goodToken", 1000, false},
-	}
-
-	th.Store.EXPECT().GetSession("badToken", gomock.Any()).Return(nil, errors.New("Invalid Token"))
-	th.Store.EXPECT().GetSession("goodToken", gomock.Any()).Return(mockSession, nil)
-	th.Store.EXPECT().RefreshSession(gomock.Any()).Return(nil)
-
-	for _, test := range testcases {
-		t.Run(test.title, func(t *testing.T) {
-			if test.refreshTime > 0 {
-				th.Auth.config.SessionRefreshTime = test.refreshTime
-			}
-
-			session, err := th.Auth.GetSession(test.token)
-			if test.isError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				require.NotNil(t, session)
-			}
-		})
-	}
 }
 
 func TestIsValidReadToken(t *testing.T) {

@@ -51,11 +51,6 @@ func (s *SQLStore) CanSeeUser(seerID string, seenID string) (bool, error) {
 
 }
 
-func (s *SQLStore) CleanUpSessions(expireTime int64) error {
-	return s.cleanUpSessions(s.db, expireTime)
-
-}
-
 func (s *SQLStore) CreateBoardsAndBlocks(bab *model.BoardsAndBlocks, userID string) (*model.BoardsAndBlocks, error) {
 	if s.dbType == model.SqliteDBType {
 		return s.createBoardsAndBlocks(s.db, bab, userID)
@@ -128,18 +123,8 @@ func (s *SQLStore) CreateCategory(category model.Category) error {
 
 }
 
-func (s *SQLStore) CreateSession(session *model.Session) error {
-	return s.createSession(s.db, session)
-
-}
-
 func (s *SQLStore) CreateSubscription(sub *model.Subscription) (*model.Subscription, error) {
 	return s.createSubscription(s.db, sub)
-
-}
-
-func (s *SQLStore) CreateUser(user *model.User) (*model.User, error) {
-	return s.createUser(s.db, user)
 
 }
 
@@ -237,11 +222,6 @@ func (s *SQLStore) DeleteMember(boardID string, userID string) error {
 
 func (s *SQLStore) DeleteNotificationHint(blockID string) error {
 	return s.deleteNotificationHint(s.db, blockID)
-
-}
-
-func (s *SQLStore) DeleteSession(sessionID string) error {
-	return s.deleteSession(s.db, sessionID)
 
 }
 
@@ -470,11 +450,6 @@ func (s *SQLStore) GetNotificationHint(blockID string) (*model.NotificationHint,
 
 func (s *SQLStore) GetRegisteredUserCount() (int, error) {
 	return s.getRegisteredUserCount(s.db)
-
-}
-
-func (s *SQLStore) GetSession(token string, expireTime int64) (*model.Session, error) {
-	return s.getSession(s.db, token, expireTime)
 
 }
 
@@ -771,11 +746,6 @@ func (s *SQLStore) PostMessage(message string, postType string, channelID string
 
 }
 
-func (s *SQLStore) RefreshSession(session *model.Session) error {
-	return s.refreshSession(s.db, session)
-
-}
-
 func (s *SQLStore) RemoveDefaultTemplates(boards []*model.Board) error {
 	return s.removeDefaultTemplates(s.db, boards)
 
@@ -918,28 +888,8 @@ func (s *SQLStore) UpdateCategory(category model.Category) error {
 
 }
 
-func (s *SQLStore) UpdateSession(session *model.Session) error {
-	return s.updateSession(s.db, session)
-
-}
-
 func (s *SQLStore) UpdateSubscribersNotifiedAt(blockID string, notifiedAt int64) error {
 	return s.updateSubscribersNotifiedAt(s.db, blockID, notifiedAt)
-
-}
-
-func (s *SQLStore) UpdateUser(user *model.User) (*model.User, error) {
-	return s.updateUser(s.db, user)
-
-}
-
-func (s *SQLStore) UpdateUserPassword(username string, password string) error {
-	return s.updateUserPassword(s.db, username, password)
-
-}
-
-func (s *SQLStore) UpdateUserPasswordByID(userID string, password string) error {
-	return s.updateUserPasswordByID(s.db, userID, password)
 
 }
 

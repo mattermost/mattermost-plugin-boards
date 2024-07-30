@@ -11,7 +11,6 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/client"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/server"
-	"github.com/mattermost/mattermost-plugin-boards/server/services/auth"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/config"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/permissions/localpermissions"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/permissions/mmpermissions"
@@ -151,8 +150,7 @@ func newTestServerWithLicense(singleUserToken string, licenseType LicenseType) *
 	if err = logger.Configure("", cfg.LoggingCfgJSON, nil); err != nil {
 		panic(err)
 	}
-	singleUser := len(singleUserToken) > 0
-	innerStore, err := server.NewStore(cfg, singleUser, logger)
+	innerStore, err := server.NewStore(cfg, logger)
 	if err != nil {
 		panic(err)
 	}
@@ -200,7 +198,7 @@ func NewTestServerPluginMode() *server.Server {
 	if err = logger.Configure("", cfg.LoggingCfgJSON, nil); err != nil {
 		panic(err)
 	}
-	innerStore, err := server.NewStore(cfg, false, logger)
+	innerStore, err := server.NewStore(cfg, logger)
 	if err != nil {
 		panic(err)
 	}
@@ -236,7 +234,7 @@ func newTestServerLocalMode() *server.Server {
 		panic(err)
 	}
 
-	db, err := server.NewStore(cfg, false, logger)
+	db, err := server.NewStore(cfg, logger)
 	if err != nil {
 		panic(err)
 	}
@@ -254,9 +252,6 @@ func newTestServerLocalMode() *server.Server {
 	if err != nil {
 		panic(err)
 	}
-
-	// Reduce password has strength for unit tests to dramatically speed up account creation and login
-	auth.PasswordHashStrength = 4
 
 	return srv
 }
@@ -363,22 +358,13 @@ func (th *TestHelper) Start() *TestHelper {
 // InitBasic starts the test server and initializes the clients of the
 // helper, registering them and logging them into the system.
 func (th *TestHelper) InitBasic() *TestHelper {
-	// Reduce password has strength for unit tests to dramatically speed up account creation and login
-	auth.PasswordHashStrength = 4
-
 	th.Start()
-
-	// user1
-	th.RegisterAndLogin(th.Client, user1Username, "user1@sample.com", password, "")
 
 	// get token
 	team, resp := th.Client.GetTeam(model.GlobalTeamID)
 	th.CheckOK(resp)
 	require.NotNil(th.T, team)
 	require.NotNil(th.T, team.SignupToken)
-
-	// user2
-	th.RegisterAndLogin(th.Client2, user2Username, "user2@sample.com", password, team.SignupToken)
 
 	return th
 }
@@ -404,44 +390,6 @@ func (th *TestHelper) TearDown() {
 	if err := os.Remove(th.Server.Config().DBConfigString); err == nil {
 		logger.Debug("Removed test database", mlog.String("file", th.Server.Config().DBConfigString))
 	}
-}
-
-func (th *TestHelper) RegisterAndLogin(client *client.Client, username, email, password, token string) {
-	req := &model.RegisterRequest{
-		Username: username,
-		Email:    email,
-		Password: password,
-		Token:    token,
-	}
-
-	success, resp := th.Client.Register(req)
-	th.CheckOK(resp)
-	require.True(th.T, success)
-
-	th.Login(client, username, password)
-}
-
-func (th *TestHelper) Login(client *client.Client, username, password string) {
-	req := &model.LoginRequest{
-		Type:     "normal",
-		Username: username,
-		Password: password,
-	}
-	data, resp := client.Login(req)
-	th.CheckOK(resp)
-	require.NotNil(th.T, data)
-}
-
-func (th *TestHelper) Login1() {
-	th.Login(th.Client, user1Username, password)
-}
-
-func (th *TestHelper) Login2() {
-	th.Login(th.Client2, user2Username, password)
-}
-
-func (th *TestHelper) Logout(client *client.Client) {
-	client.Token = ""
 }
 
 func (th *TestHelper) Me(client *client.Client) *model.User {

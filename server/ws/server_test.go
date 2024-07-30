@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/auth"
-	"github.com/mattermost/mattermost-plugin-boards/server/model"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 
@@ -14,7 +13,7 @@ import (
 )
 
 func TestTeamSubscription(t *testing.T) {
-	server := NewServer(&auth.Auth{}, "token", false, &mlog.Logger{}, nil)
+	server := NewServer(&auth.Auth{}, &mlog.Logger{}, nil)
 	session := &websocketSession{
 		conn:   &websocket.Conn{},
 		mu:     sync.Mutex{},
@@ -146,7 +145,7 @@ func TestTeamSubscription(t *testing.T) {
 }
 
 func TestBlocksSubscription(t *testing.T) {
-	server := NewServer(&auth.Auth{}, "token", false, &mlog.Logger{}, nil)
+	server := NewServer(&auth.Auth{}, &mlog.Logger{}, nil)
 	session := &websocketSession{
 		conn:   &websocket.Conn{},
 		mu:     sync.Mutex{},
@@ -261,23 +260,5 @@ func TestBlocksSubscription(t *testing.T) {
 		require.Empty(t, server.listenersByBlock[blockID1])
 		require.Empty(t, server.listenersByBlock[blockID2])
 		require.Empty(t, server.listenersByBlock[blockID3])
-	})
-}
-
-func TestGetUserIDForTokenInSingleUserMode(t *testing.T) {
-	singleUserToken := "single-user-token"
-	server := NewServer(&auth.Auth{}, "token", false, &mlog.Logger{}, nil)
-	server.singleUserToken = singleUserToken
-
-	t.Run("Should return nothing if the token is empty", func(t *testing.T) {
-		require.Empty(t, server.getUserIDForToken(""))
-	})
-
-	t.Run("Should return nothing if the token is invalid", func(t *testing.T) {
-		require.Empty(t, server.getUserIDForToken("invalid-token"))
-	})
-
-	t.Run("Should return the single user ID if the token is correct", func(t *testing.T) {
-		require.Equal(t, model.SingleUser, server.getUserIDForToken(singleUserToken))
 	})
 }

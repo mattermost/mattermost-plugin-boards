@@ -14,7 +14,6 @@ exports[`components/blocksEditor/rootInput should match Display snapshot 1`] = `
       aria-live="polite"
       aria-relevant="additions text"
       class="css-1f43avz-a11yText-A11yText"
-      role="log"
     />
     <div
       class=" css-1haocjs-control"
@@ -27,7 +26,6 @@ exports[`components/blocksEditor/rootInput should match Display snapshot 1`] = `
           data-value="test-value"
         >
           <input
-            aria-activedescendant=""
             aria-autocomplete="list"
             aria-describedby="react-select-2-placeholder"
             aria-expanded="false"
@@ -68,7 +66,6 @@ exports[`components/blocksEditor/rootInput should match Input snapshot 1`] = `
       aria-live="polite"
       aria-relevant="additions text"
       class="css-1f43avz-a11yText-A11yText"
-      role="log"
     />
     <div
       class=" css-1haocjs-control"
@@ -81,7 +78,6 @@ exports[`components/blocksEditor/rootInput should match Input snapshot 1`] = `
           data-value="test-value"
         >
           <input
-            aria-activedescendant=""
             aria-autocomplete="list"
             aria-describedby="react-select-3-placeholder"
             aria-expanded="false"
@@ -122,7 +118,6 @@ exports[`components/blocksEditor/rootInput should match Input snapshot with menu
       aria-live="polite"
       aria-relevant="additions text"
       class="css-1f43avz-a11yText-A11yText"
-      role="log"
     />
     <div
       class=" css-1haocjs-control"
@@ -141,12 +136,12 @@ exports[`components/blocksEditor/rootInput should match Input snapshot with menu
           data-value=""
         >
           <input
-            aria-activedescendant="react-select-4-option-0"
             aria-autocomplete="list"
             aria-controls="react-select-4-listbox"
             aria-describedby="react-select-4-placeholder"
             aria-expanded="true"
             aria-haspopup="true"
+            aria-owns="react-select-4-listbox"
             autocapitalize="none"
             autocomplete="off"
             autocorrect="off"
@@ -170,119 +165,95 @@ exports[`components/blocksEditor/rootInput should match Input snapshot with menu
     >
       <div
         class=" css-45h7mv-menu"
+        id="react-select-4-listbox"
       >
         <div
-          aria-multiselectable="false"
           class=" css-1d1qzc4-MenuList"
-          id="react-select-4-listbox"
-          role="listbox"
         >
           <div
             aria-disabled="false"
-            aria-selected="false"
             class=" css-8e5kjb-option"
             id="react-select-4-option-0"
-            role="option"
             tabindex="-1"
           >
             /title Creates a new Title block.
           </div>
           <div
             aria-disabled="false"
-            aria-selected="false"
             class=" css-x3yilo-option"
             id="react-select-4-option-1"
-            role="option"
             tabindex="-1"
           >
             /subtitle Creates a new Sub title block.
           </div>
           <div
             aria-disabled="false"
-            aria-selected="false"
             class=" css-x3yilo-option"
             id="react-select-4-option-2"
-            role="option"
             tabindex="-1"
           >
             /subsubtitle Creates a new Sub Sub title block.
           </div>
           <div
             aria-disabled="false"
-            aria-selected="false"
             class=" css-x3yilo-option"
             id="react-select-4-option-3"
-            role="option"
             tabindex="-1"
           >
             /image Creates a new Image block.
           </div>
           <div
             aria-disabled="false"
-            aria-selected="false"
             class=" css-x3yilo-option"
             id="react-select-4-option-4"
-            role="option"
             tabindex="-1"
           >
             /text Creates a new Text block.
           </div>
           <div
             aria-disabled="false"
-            aria-selected="false"
             class=" css-x3yilo-option"
             id="react-select-4-option-5"
-            role="option"
             tabindex="-1"
           >
             /divider Creates a new Divider block.
           </div>
           <div
             aria-disabled="false"
-            aria-selected="false"
             class=" css-x3yilo-option"
             id="react-select-4-option-6"
-            role="option"
             tabindex="-1"
           >
             /list-item Creates a new List item block.
           </div>
           <div
             aria-disabled="false"
-            aria-selected="false"
             class=" css-x3yilo-option"
             id="react-select-4-option-7"
-            role="option"
             tabindex="-1"
           >
             /attachment Creates a new Attachment block.
           </div>
           <div
             aria-disabled="false"
-            aria-selected="false"
             class=" css-x3yilo-option"
             id="react-select-4-option-8"
-            role="option"
             tabindex="-1"
           >
             /quote Creates a new Quote block.
           </div>
           <div
             aria-disabled="false"
-            aria-selected="false"
             class=" css-x3yilo-option"
             id="react-select-4-option-9"
-            role="option"
             tabindex="-1"
           >
             /video Creates a new Video block.
           </div>
           <div
             aria-disabled="false"
-            aria-selected="false"
             class=" css-x3yilo-option"
             id="react-select-4-option-10"
-            role="option"
             tabindex="-1"
           >
             /checkbox Creates a new Checkbox block.

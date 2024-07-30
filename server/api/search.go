@@ -51,11 +51,6 @@ func (a *API) handleSearchMyChannels(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 
-	if !a.MattermostAuth {
-		a.errorResponse(w, r, model.NewErrNotImplemented("not permitted in standalone mode"))
-		return
-	}
-
 	query := r.URL.Query()
 	searchQuery := query.Get("search")
 
@@ -225,11 +220,6 @@ func (a *API) handleSearchLinkableBoards(w http.ResponseWriter, r *http.Request)
 	//     description: internal error
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
-
-	if !a.MattermostAuth {
-		a.errorResponse(w, r, model.NewErrNotImplemented("not permitted in standalone mode"))
-		return
-	}
 
 	teamID := mux.Vars(r)["teamID"]
 	term := r.URL.Query().Get("q")

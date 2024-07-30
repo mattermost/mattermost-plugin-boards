@@ -14,7 +14,6 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/services/notify"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/permissions/mmpermissions"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/store"
-	"github.com/mattermost/mattermost-plugin-boards/server/services/store/mattermostauthlayer"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/store/sqlstore"
 	"github.com/mattermost/mattermost-plugin-boards/server/ws"
 	"github.com/mattermost/mattermost/server/public/pluginapi/cluster"
@@ -78,7 +77,6 @@ func NewBoardsApp(api model.ServicesAPI) (*BoardsApp, error) {
 		TablePrefix:      cfg.DBTablePrefix,
 		Logger:           logger,
 		DB:               sqlDB,
-		IsPlugin:         true,
 		NewMutexFn: func(name string) (*cluster.Mutex, error) {
 			return cluster.NewMutex(&mutexAPIAdapter{api: api}, name)
 		},
@@ -90,13 +88,6 @@ func NewBoardsApp(api model.ServicesAPI) (*BoardsApp, error) {
 	db, err = sqlstore.New(storeParams)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing the DB: %w", err)
-	}
-	if cfg.AuthMode == server.MattermostAuthMod {
-		layeredStore, err2 := mattermostauthlayer.New(cfg.DBType, sqlDB, db, logger, api, storeParams.TablePrefix)
-		if err2 != nil {
-			return nil, fmt.Errorf("error initializing the DB: %w", err2)
-		}
-		db = layeredStore
 	}
 
 	permissionsService := mmpermissions.New(db, api, logger)

@@ -40,10 +40,6 @@ import (
 const (
 	cleanupSessionTaskFrequency = 10 * time.Minute
 	updateMetricsTaskFrequency  = 15 * time.Minute
-
-	minSessionExpiryTime = int64(60 * 60 * 24 * 31) // 31 days
-
-	MattermostAuthMod = "mattermost"
 )
 
 type Server struct {
@@ -78,7 +74,7 @@ func New(params Params) (*Server, error) {
 	// if no ws adapter is provided, we spin up a websocket server
 	wsAdapter := params.WSAdapter
 	if wsAdapter == nil {
-		wsAdapter = ws.NewServer(authenticator, params.SingleUserToken, params.Cfg.AuthMode == MattermostAuthMod, params.Logger, params.DBStore)
+		wsAdapter = ws.NewServer(authenticator, params.Logger, params.DBStore)
 	}
 
 	filesBackendSettings := filestore.FileBackendSettings{}
@@ -143,11 +139,10 @@ func New(params Params) (*Server, error) {
 	}
 	app := app.New(params.Cfg, wsAdapter, appServices)
 
-	focalboardAPI := api.NewAPI(app, params.SingleUserToken, params.Cfg.AuthMode, params.PermissionsService, params.Logger, auditService, params.IsPlugin)
+	focalboardAPI := api.NewAPI(app, params.SingleUserToken, params.Cfg.AuthMode, params.PermissionsService, params.Logger, auditService)
 
 	// Local router for admin APIs
 	localRouter := mux.NewRouter()
-	focalboardAPI.RegisterAdminRoutes(localRouter)
 
 	// Init team
 	if _, err := app.GetRootTeam(); err != nil {
@@ -203,12 +198,10 @@ func New(params Params) (*Server, error) {
 		app:                 app,
 	}
 
-	server.initHandlers()
-
 	return &server, nil
 }
 
-func NewStore(config *config.Configuration, isSingleUser bool, logger mlog.LoggerIFace) (store.Store, error) {
+func NewStore(config *config.Configuration, logger mlog.LoggerIFace) (store.Store, error) {
 	sqlDB, err := sql.Open(config.DBType, config.DBConfigString)
 	if err != nil {
 		logger.Error("connectDatabase failed", mlog.Err(err))
@@ -228,8 +221,6 @@ func NewStore(config *config.Configuration, isSingleUser bool, logger mlog.Logge
 		TablePrefix:      config.DBTablePrefix,
 		Logger:           logger,
 		DB:               sqlDB,
-		IsPlugin:         false,
-		IsSingleUser:     isSingleUser,
 	}
 
 	var db store.Store
@@ -252,19 +243,6 @@ func (s *Server) Start() error {
 		if err := s.startLocalModeServer(); err != nil {
 			return err
 		}
-	}
-
-	if s.config.AuthMode != MattermostAuthMod {
-		s.cleanUpSessionsTask = scheduler.CreateRecurringTask("cleanUpSessions", func() {
-			secondsAgo := minSessionExpiryTime
-			if secondsAgo < s.config.SessionExpireTime {
-				secondsAgo = s.config.SessionExpireTime
-			}
-
-			if err := s.store.CleanUpSessions(secondsAgo); err != nil {
-				s.logger.Error("Unable to clean up the sessions", mlog.Err(err))
-			}
-		}, cleanupSessionTaskFrequency)
 	}
 
 	metricsUpdater := func() {

@@ -17,7 +17,6 @@ func TestCreateCard(t *testing.T) {
 		defer th.TearDown()
 
 		board := th.CreateBoard(testTeamID, model.BoardTypeOpen)
-		th.Logout(th.Client)
 
 		card := &model.Card{
 			Title: "basic card",
@@ -157,8 +156,6 @@ func TestGetCards(t *testing.T) {
 	})
 
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		th.Logout(th.Client)
-
 		cards, resp := th.Client.GetCards(board.ID, 0, 10)
 		th.CheckUnauthorized(resp)
 		require.Nil(t, cards)
@@ -172,8 +169,6 @@ func TestPatchCard(t *testing.T) {
 
 		_, cards := th.CreateBoardAndCards(testTeamID, model.BoardTypeOpen, 1)
 		card := cards[0]
-
-		th.Logout(th.Client)
 
 		newTitle := "another title"
 		patch := &model.CardPatch{
@@ -242,8 +237,6 @@ func TestGetCard(t *testing.T) {
 
 		_, cards := th.CreateBoardAndCards(testTeamID, model.BoardTypeOpen, 1)
 		card := cards[0]
-
-		th.Logout(th.Client)
 
 		cardFetched, resp := th.Client.GetCard(card.ID)
 		th.CheckUnauthorized(resp)

@@ -34,14 +34,11 @@ var (
 // REST APIs
 
 type API struct {
-	app             *app.App
-	authService     string
-	permissions     permissions.PermissionsService
-	singleUserToken string
-	MattermostAuth  bool
-	logger          mlog.LoggerIFace
-	audit           *audit.Audit
-	isPlugin        bool
+	app         *app.App
+	authService string
+	permissions permissions.PermissionsService
+	logger      mlog.LoggerIFace
+	audit       *audit.Audit
 }
 
 func NewAPI(
@@ -51,16 +48,13 @@ func NewAPI(
 	permissions permissions.PermissionsService,
 	logger mlog.LoggerIFace,
 	audit *audit.Audit,
-	isPlugin bool,
 ) *API {
 	return &API{
-		app:             app,
-		singleUserToken: singleUserToken,
-		authService:     authService,
-		permissions:     permissions,
-		logger:          logger,
-		audit:           audit,
-		isPlugin:        isPlugin,
+		app:         app,
+		authService: authService,
+		permissions: permissions,
+		logger:      logger,
+		audit:       audit,
 	}
 }
 
@@ -77,7 +71,6 @@ func (a *API) RegisterRoutes(r *mux.Router) {
 
 	// V2 routes (ToDo: migrate these to V3 when ready to ship V3)
 	a.registerUsersRoutes(apiv2)
-	a.registerAuthRoutes(apiv2)
 	a.registerMembersRoutes(apiv2)
 	a.registerCategoriesRoutes(apiv2)
 	a.registerSharingRoutes(apiv2)
@@ -102,10 +95,6 @@ func (a *API) RegisterRoutes(r *mux.Router) {
 
 	// System routes are outside the /api/v2 path
 	a.registerSystemRoutes(r)
-}
-
-func (a *API) RegisterAdminRoutes(r *mux.Router) {
-	r.HandleFunc("/api/v2/admin/users/{username}/password", a.adminRequired(a.handleAdminSetPassword)).Methods("POST")
 }
 
 func getUserID(r *http.Request) string {
@@ -169,9 +158,6 @@ func (a *API) hasValidReadTokenForBoard(r *http.Request, boardID string) bool {
 }
 
 func (a *API) userIsGuest(userID string) (bool, error) {
-	if a.singleUserToken != "" {
-		return false, nil
-	}
 	return a.app.UserIsGuest(userID)
 }
 

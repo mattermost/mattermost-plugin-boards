@@ -15,7 +15,7 @@ import {wrapIntl} from '../testUtils'
 
 import BoardSelector from './boardSelector'
 
-jest.mock('../../../../webapp/src/octoClient')
+jest.mock('../octoClient')
 const mockedOctoClient = mocked(octoClient, true)
 
 const wait = (ms: number) => {
