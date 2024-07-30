@@ -11,7 +11,7 @@ import {selectTeam} from 'mattermost-redux/actions/teams'
 
 import appBarIcon from '../static/app-bar-icon.png'
 
-import TelemetryClient, {TelemetryCategory, TelemetryActions} from './telemetry/telemetryClient'
+import TelemetryClient, {TelemetryActions, TelemetryCategory} from './telemetry/telemetryClient'
 import {setMattermostTheme} from './theme'
 import FocalboardIcon from './widgets/icons/logo'
 import GlobalHeader from './components/globalHeader/globalHeader'
