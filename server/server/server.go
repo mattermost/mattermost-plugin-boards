@@ -3,6 +3,7 @@ package server
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -31,8 +32,10 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 	"github.com/mattermost/mattermost-plugin-boards/server/web"
 	"github.com/mattermost/mattermost-plugin-boards/server/ws"
+	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/oklog/run"
 
+	"github.com/mattermost/mattermost/server/public/pluginapi/cluster"
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 	"github.com/mattermost/mattermost/server/v8/platform/shared/filestore"
 )
@@ -201,6 +204,22 @@ func New(params Params) (*Server, error) {
 	return &server, nil
 }
 
+type MyPluginAPI struct {
+	// Add fields as necessary
+}
+
+func (api *MyPluginAPI) KVSetWithOptions(key string, value []byte, options model.PluginKVSetOptions) (bool, *model.AppError) {
+	// Implement the method
+	// For example:
+	return true, nil
+}
+
+func (api *MyPluginAPI) LogError(msg string, keyValuePairs ...interface{}) {
+	// Implement the method
+	// For example:
+	log.Printf(msg, keyValuePairs...)
+}
+
 func NewStore(config *config.Configuration, logger mlog.LoggerIFace) (store.Store, error) {
 	sqlDB, err := sql.Open(config.DBType, config.DBConfigString)
 	if err != nil {
@@ -214,6 +233,8 @@ func NewStore(config *config.Configuration, logger mlog.LoggerIFace) (store.Stor
 		return nil, err
 	}
 
+	myAPI := &MyPluginAPI{}
+
 	storeParams := sqlstore.Params{
 		DBType:           config.DBType,
 		DBPingAttempts:   config.DBPingAttempts,
@@ -221,6 +242,9 @@ func NewStore(config *config.Configuration, logger mlog.LoggerIFace) (store.Stor
 		TablePrefix:      config.DBTablePrefix,
 		Logger:           logger,
 		DB:               sqlDB,
+		NewMutexFn: func(name string) (*cluster.Mutex, error) {
+			return cluster.NewMutex(myAPI, "test")
+		},
 	}
 
 	var db store.Store
