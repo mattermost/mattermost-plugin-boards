@@ -1,11 +1,13 @@
 {
 	"name": "focalboard",
-	"version": "8.0.0",
+	"version": "9.0.0",
 	"private": true,
 	"description": "",
 	"scripts": {
 		"build": "webpack --mode=production",
 		"build:watch": "webpack --mode=production --watch",
+		"debug": "webpack --mode=development",
+		"debug:watch": "webpack --mode=development --watch",
 		"pack": "cross-env NODE_ENV=production webpack --config webpack.prod.js",
 		"packdev": "cross-env NODE_ENV=dev webpack --config webpack.dev.js",
 		"watchdev": "cross-env NODE_ENV=dev webpack --watch --progress --config webpack.dev.js",
