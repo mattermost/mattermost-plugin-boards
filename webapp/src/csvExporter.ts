@@ -15,21 +15,21 @@ const hashSignToken = '___hash_sign___'
 class CsvExporter {
     static exportTableCsv(board: Board, activeView: BoardView, cards: Card[], intl: IntlShape, view?: BoardView): void {
         const viewToExport = view ?? activeView
-
+        
         if (!viewToExport) {
             return
         }
 
         const rows = CsvExporter.generateTableArray(board, cards, viewToExport, intl)
 
-        let csvContent = 'data:text/csv;charset=utf-8,'
+        let csvContent = ''
 
         rows.forEach((row) => {
             const encodedRow = row.join(',')
             csvContent += encodedRow + '\r\n'
         })
 
-        const encodedUri = encodeURI(csvContent).replace(hashSignToken, '%23')
+        const encodedUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent)
 
         const filename = `${Utils.sanitizeFilename(viewToExport.title || 'Untitled')}.csv`
         const link = document.createElement('a')
