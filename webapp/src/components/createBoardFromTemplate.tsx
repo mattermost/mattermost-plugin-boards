@@ -16,6 +16,7 @@ import CompassIcon from '../widgets/icons/compassIcon'
 import {useAppSelector} from '../store/hooks'
 import {mutator} from '../mutator'
 import {useGetAllTemplates} from '../hooks/useGetAllTemplates'
+import {getSelectBaseStyle} from '../theme'
 
 import './createBoardFromTemplate.scss'
 import {Board} from '../blocks/board'
@@ -179,13 +180,20 @@ const CreateBoardFromTemplate = (props: Props) => {
     }, [setSelectedBoardTemplateId])
 
     const selectorStyles = {
+        ...getSelectBaseStyle(),
+        control: (baseStyles: CSSObject): CSSObject => ({
+            ...baseStyles,
+            backgroundColor: 'var(--center-channel-bg)',
+        }),
         menu: (baseStyles: CSSObject): CSSObject => ({
             ...baseStyles,
             height: '164px',
+            backgroundColor: 'var(--center-channel-bg)',
         }),
         menuList: (baseStyles: CSSObject): CSSObject => ({
             ...baseStyles,
             height: '160px',
+            backgroundColor: 'var(--center-channel-bg)'
         }),
         menuPortal: (baseStyles: CSSObject): CSSObject => ({
             ...baseStyles,
@@ -193,14 +201,14 @@ const CreateBoardFromTemplate = (props: Props) => {
         }),
         valueContainer: (baseStyles: CSSObject): CSSObject => ({
             ...baseStyles,
-            overflow: 'visible'
+            overflow: 'visible',
         }),
         placeholder: (baseStyles: CSSObject, state: PlaceholderProps<ReactSelectItem, false, GroupBase<ReactSelectItem>>): CSSObject => {
             const modifyPlaceholder = state.selectProps.menuIsOpen || (!state.selectProps.menuIsOpen && state.hasValue)
             return {
                 ...baseStyles,
                 position: 'absolute',
-                backgroundColor: 'var(--sys-center-channel-bg)',
+                backgroundColor: 'var(--center-channel-bg)',
                 padding: '0 3px',
                 top: modifyPlaceholder ? -15 : '18%',
                 transition: 'top 0.5s, font-size 0.5s, color 0.5s',
