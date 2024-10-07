@@ -1,7 +1,13 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import {createAsyncThunk, createSlice, PayloadAction} from '@reduxjs/toolkit'
+import {createAsyncThunk, createSelector, createSlice, PayloadAction} from '@reduxjs/toolkit'
+
+import {GlobalState} from 'mattermost-redux/types/store'
+
+import {Channel} from 'mattermost-redux/types/channels'
+
+import {IDMappedObjects} from 'mattermost-redux/types/utilities'
 
 import octoClient from '../octoClient'
 
@@ -87,3 +93,19 @@ export const getCurrentTeamId = (state: RootState): string => state.teams.curren
 export const getCurrentTeam = (state: RootState): Team|null => state.teams.current
 export const getFirstTeam = (state: RootState): Team|null => state.teams.allTeams[0]
 export const getAllTeams = (state: RootState): Team[] => state.teams.allTeams
+
+
+export const getChannelsNameMapInTeam: (state: GlobalState, teamId: string) => Record<string, Channel> = createSelector(
+    (state: GlobalState) => state.entities.channels.channels,
+    (state: GlobalState) => state.entities.channels.channelsInTeam as unknown as { [id in Team['id']]: Set<Channel['id']> },
+    (state: GlobalState, teamId: string): string => teamId,
+    (channels: IDMappedObjects<Channel>, channelsInTeams: { [id in Team['id']]: Set<Channel['id']>; }, teamId: string): Record<string, Channel> => {
+        const channelsInTeam = channelsInTeams[teamId] || new Set()
+        const channelMap: Record<string, Channel> = {}
+        channelsInTeam.forEach((id) => {
+            const channel = channels[id]
+            channelMap[channel.name] = channel
+        })
+        return channelMap
+    },
+)

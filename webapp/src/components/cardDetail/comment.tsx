@@ -3,6 +3,10 @@
 import React, {FC} from 'react'
 import {useIntl} from 'react-intl'
 
+import {getChannelsNameMapInTeam} from 'mattermost-redux/selectors/entities/channels'
+
+import {Provider} from 'react-redux'
+
 import {Block} from '../../blocks/block'
 import mutator from '../../mutator'
 import {Utils} from '../../utils'
@@ -17,6 +21,9 @@ import Tooltip from '../../widgets/tooltip'
 import GuestBadge from '../../widgets/guestBadge'
 
 import './comment.scss'
+import {formatText, messageHtmlToComponent} from '../../webapp_globals'
+import {getCurrentTeam} from '../../store/teams'
+
 
 type Props = {
     comment: Block
@@ -28,9 +35,20 @@ type Props = {
 const Comment: FC<Props> = (props: Props) => {
     const {comment, userId, userImageUrl} = props
     const intl = useIntl()
-    const html = Utils.htmlFromMarkdown(comment.title)
+    // const html = Utils.htmlFromMarkdown(comment.title)
     const user = useAppSelector(getUser(userId))
     const date = new Date(comment.createAt)
+
+    const selectedTeam = useAppSelector(getCurrentTeam)
+    const channelNamesMap =  getChannelsNameMapInTeam((window as any).store.getState(), selectedTeam!.id)
+
+    const formattedText = messageHtmlToComponent(formatText(comment.title, {
+        singleline: false,
+        atMentions: true,
+        mentionHighlight: false,
+        team: selectedTeam,
+        channelNamesMap,
+    }))
 
     return (
         <div
@@ -65,10 +83,14 @@ const Comment: FC<Props> = (props: Props) => {
                     </MenuWrapper>
                 )}
             </div>
-            <div
+            {/* <div
                 className='comment-text'
                 dangerouslySetInnerHTML={{__html: html}}
-            />
+            /> */}
+            {/* <FormattedMarkdown value={comment.title}/> */}
+            <Provider store={(window as any).store}>
+                {formattedText}
+            </Provider>
         </div>
     )
 }
