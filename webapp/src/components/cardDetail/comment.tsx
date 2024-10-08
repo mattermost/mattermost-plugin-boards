@@ -35,7 +35,6 @@ type Props = {
 const Comment: FC<Props> = (props: Props) => {
     const {comment, userId, userImageUrl} = props
     const intl = useIntl()
-    // const html = Utils.htmlFromMarkdown(comment.title)
     const user = useAppSelector(getUser(userId))
     const date = new Date(comment.createAt)
 
@@ -83,11 +82,6 @@ const Comment: FC<Props> = (props: Props) => {
                     </MenuWrapper>
                 )}
             </div>
-            {/* <div
-                className='comment-text'
-                dangerouslySetInnerHTML={{__html: html}}
-            /> */}
-            {/* <FormattedMarkdown value={comment.title}/> */}
             <Provider store={(window as any).store}>
                 {formattedText}
             </Provider>
