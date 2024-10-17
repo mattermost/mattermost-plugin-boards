@@ -68,7 +68,7 @@ func (a *App) GetFileInfo(filename string) (*mm_model.FileInfo, error) {
 	fileInfoID := getFileInfoID(parts[0])
 
 	if (fileInfoID) == "" {
-		return nil, nil
+		return nil, model.NewErrNotFound("No file found with name" + filename)
 	}
 
 	fileInfo, err := a.store.GetFileInfo(fileInfoID)
