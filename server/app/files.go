@@ -60,7 +60,16 @@ func (a *App) GetFileInfo(filename string) (*mm_model.FileInfo, error) {
 	// filename is in the format 7<some-alphanumeric-string>.<extension>
 	// we want to extract the <some-alphanumeric-string> part of this as this
 	// will be the fileinfo id.
-	fileInfoID := getFileInfoID(strings.Split(filename, ".")[0])
+	parts := strings.Split(filename, ".")
+	if len(parts) < 1 || len(parts[0]) <= 1 {
+		return nil, model.NewErrNotFound("No file found with name" + filename)
+	}
+
+	fileInfoID := getFileInfoID(parts[0])
+
+	if (fileInfoID) == "" {
+		return nil, model.NewErrNotFound("No file found with name" + filename)
+	}
 
 	fileInfo, err := a.store.GetFileInfo(fileInfoID)
 	if err != nil {

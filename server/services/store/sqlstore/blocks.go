@@ -355,7 +355,7 @@ func (s *SQLStore) deleteBlock(db sq.BaseRunner, blockID string, modifiedBy stri
 
 func retrieveFileIDFromBlockFieldStorage(id string) string {
 	parts := strings.Split(id, ".")
-	if len(parts) < 1 {
+	if len(parts) < 1 || len(parts[0]) <= 1 {
 		return ""
 	}
 	return parts[0][1:]
