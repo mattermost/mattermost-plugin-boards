@@ -41,13 +41,16 @@ const Comment: FC<Props> = (props: Props) => {
     const selectedTeam = useAppSelector(getCurrentTeam)
     const channelNamesMap =  getChannelsNameMapInTeam((window as any).store.getState(), selectedTeam!.id)
 
-    const formattedText = messageHtmlToComponent(formatText(comment.title, {
-        singleline: false,
-        atMentions: true,
-        mentionHighlight: false,
-        team: selectedTeam,
-        channelNamesMap,
-    }))
+    const formattedText = 
+    <Provider store={(window as any).store}>
+        {messageHtmlToComponent(formatText(comment.title, {
+            singleline: false,
+            atMentions: true,
+            mentionHighlight: false,
+            team: selectedTeam,
+            channelNamesMap,
+        }))}
+    </Provider>
 
     return (
         <div
@@ -82,9 +85,7 @@ const Comment: FC<Props> = (props: Props) => {
                     </MenuWrapper>
                 )}
             </div>
-            <Provider store={(window as any).store}>
-                {formattedText}
-            </Provider>
+            {formattedText}
         </div>
     )
 }
