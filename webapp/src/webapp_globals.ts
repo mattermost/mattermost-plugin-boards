@@ -25,8 +25,7 @@ export type MattermostWindow = {
     PostUtils: PostUtils;
 }
 
+const postUtils = (global as unknown as MattermostWindow).PostUtils
 
-export const {
-    formatText,
-    messageHtmlToComponent,
-} = (global as unknown as MattermostWindow).PostUtils ?? {}
+export const formatText = postUtils ? postUtils.formatText : () => ''
+export const messageHtmlToComponent = postUtils ? postUtils.messageHtmlToComponent : () => null
