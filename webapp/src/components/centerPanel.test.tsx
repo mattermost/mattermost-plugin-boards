@@ -15,7 +15,10 @@ import octoClient from '../octoClient'
 import Mutator from '../mutator'
 import {Constants} from '../constants'
 
+import {mockMMStore} from '../../tests/mock_window'
+
 import CenterPanel from './centerPanel'
+
 Object.defineProperty(Constants, 'versionString', {value: '1.0.0'})
 jest.mock('react-router-dom', () => {
     const originalModule = jest.requireActual('react-router-dom')
@@ -502,6 +505,7 @@ describe('components/centerPanel', () => {
         })
 
         test('click on new card to edit template', () => {
+            (window as any).store = mockMMStore
             activeView.fields.viewType = 'table'
             activeView.fields.defaultTemplateId = '1'
             const {container} = render(wrapDNDIntl(
