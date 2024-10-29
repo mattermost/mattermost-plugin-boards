@@ -5,11 +5,14 @@ import (
 	"crypto/md5"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
@@ -570,8 +573,71 @@ func (s *SQLStore) getMemberForBoard(db sq.BaseRunner, boardID, userID string) (
 	}
 
 	if len(members) == 0 {
-		message := fmt.Sprintf("board member BoardID=%s UserID=%s", boardID, userID)
-		return nil, model.NewErrNotFound(message)
+
+		if userID == model.SystemUserID {
+			return nil, model.NewErrNotFound(userID)
+		}
+		var user *model.User
+		// No synthetic memberships for guests
+		user, err := s.GetUserByID(userID)
+		if err != nil {
+			return nil, err
+		}
+		if user.IsGuest {
+			return nil, model.NewErrNotFound("user is a guest")
+		}
+
+		b, boardErr := s.GetBoard(boardID)
+		if boardErr != nil {
+			return nil, boardErr
+		}
+
+		if b.ChannelID != "" {
+			_, memberErr := s.servicesAPI.GetChannelMember(b.ChannelID, userID)
+			if memberErr != nil {
+				var appErr *mmModel.AppError
+				if errors.As(memberErr, &appErr) && appErr.StatusCode == http.StatusNotFound {
+					// Plugin API returns error if channel member doesn't exist.
+					// We're fine if it doesn't exist, so its not an error for us.
+					message := fmt.Sprintf("member BoardID=%s UserID=%s", boardID, userID)
+					return nil, model.NewErrNotFound(message)
+				}
+
+				return nil, memberErr
+			}
+
+			return &model.BoardMember{
+				BoardID:         boardID,
+				UserID:          userID,
+				Roles:           "editor",
+				SchemeAdmin:     false,
+				SchemeEditor:    true,
+				SchemeCommenter: false,
+				SchemeViewer:    false,
+				Synthetic:       true,
+			}, nil
+		}
+		if b.Type == model.BoardTypeOpen && b.IsTemplate {
+			_, memberErr := s.servicesAPI.GetTeamMember(b.TeamID, userID)
+			if memberErr != nil {
+				var appErr *mmModel.AppError
+				if errors.As(memberErr, &appErr) && appErr.StatusCode == http.StatusNotFound {
+					return nil, model.NewErrNotFound(userID)
+				}
+				return nil, memberErr
+			}
+
+			return &model.BoardMember{
+				BoardID:         boardID,
+				UserID:          userID,
+				Roles:           "viewer",
+				SchemeAdmin:     false,
+				SchemeEditor:    false,
+				SchemeCommenter: false,
+				SchemeViewer:    true,
+				Synthetic:       true,
+			}, nil
+		}
 	}
 
 	return members[0], nil
