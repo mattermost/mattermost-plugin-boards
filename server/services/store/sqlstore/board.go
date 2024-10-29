@@ -573,7 +573,6 @@ func (s *SQLStore) getMemberForBoard(db sq.BaseRunner, boardID, userID string) (
 	}
 
 	if len(members) == 0 {
-
 		if userID == model.SystemUserID {
 			return nil, model.NewErrNotFound(userID)
 		}
