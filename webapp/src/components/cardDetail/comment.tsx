@@ -49,7 +49,9 @@ const Comment: FC<Props> = (props: Props) => {
             mentionHighlight: false,
             team: selectedTeam,
             channelNamesMap,
-        }))}
+        }), {
+            fetchMissingUsers: true, 
+        })}
     </Provider>
 
     return (

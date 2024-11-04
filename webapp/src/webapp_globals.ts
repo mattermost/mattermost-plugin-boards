@@ -16,9 +16,13 @@ type Options = {
     channelNamesMap: NameMappedObjects<Channel>;
 }
 
+type Props = {
+    fetchMissingUsers: boolean;
+}
+
 export type PostUtils = {
     formatText: (text: string, option: Options) => string;
-    messageHtmlToComponent: (html: string) => React.ReactNode;
+    messageHtmlToComponent: (html: string, options: Props) => React.ReactNode;
 }
 
 export type MattermostWindow = {
