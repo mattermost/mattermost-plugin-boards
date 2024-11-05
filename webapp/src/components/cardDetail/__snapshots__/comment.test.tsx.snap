@@ -118,11 +118,9 @@ exports[`components/cardDetail/comment return comment 1`] = `
       </div>
     </div>
     <div
-      class="comment-text"
+      class="mocked-message-html"
     >
-      <p>
-        Test comment
-      </p>
+      Test Comment
     </div>
   </div>
 </div>
@@ -246,11 +244,9 @@ exports[`components/cardDetail/comment return comment and delete comment 1`] = `
       </div>
     </div>
     <div
-      class="comment-text"
+      class="mocked-message-html"
     >
-      <p>
-        Test comment
-      </p>
+      Test Comment
     </div>
   </div>
 </div>
@@ -285,11 +281,9 @@ exports[`components/cardDetail/comment return comment readonly 1`] = `
       </div>
     </div>
     <div
-      class="comment-text"
+      class="mocked-message-html"
     >
-      <p>
-        Test comment
-      </p>
+      Test Comment
     </div>
   </div>
 </div>
@@ -422,11 +416,9 @@ exports[`components/cardDetail/comment return guest comment 1`] = `
       </div>
     </div>
     <div
-      class="comment-text"
+      class="mocked-message-html"
     >
-      <p>
-        Test comment
-      </p>
+      Test Comment
     </div>
   </div>
 </div>
@@ -559,11 +551,9 @@ exports[`components/cardDetail/comment return guest comment and delete comment 1
       </div>
     </div>
     <div
-      class="comment-text"
+      class="mocked-message-html"
     >
-      <p>
-        Test comment
-      </p>
+      Test Comment
     </div>
   </div>
 </div>
@@ -607,11 +597,9 @@ exports[`components/cardDetail/comment return guest comment readonly 1`] = `
       </div>
     </div>
     <div
-      class="comment-text"
+      class="mocked-message-html"
     >
-      <p>
-        Test comment
-      </p>
+      Test Comment
     </div>
   </div>
 </div>

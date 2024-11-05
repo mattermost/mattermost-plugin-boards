@@ -14,10 +14,16 @@ import {TestBlockFactory} from '../../test/testBlockFactory'
 
 import mutator from '../../mutator'
 
+import {mockMMStore} from '../../../tests/mock_window'
+
 import Comment from './comment'
 
 jest.mock('../../mutator')
 const mockedMutator = mocked(mutator, true)
+jest.mock('../../webapp_globals', () => ({
+    ...jest.requireActual('../../webapp_globals'),
+    messageHtmlToComponent: jest.fn(() => <div className="mocked-message-html">Test Comment</div>),
+}))
 
 const board = TestBlockFactory.createBoard()
 const card = TestBlockFactory.createCard(board)
@@ -30,9 +36,13 @@ comment.title = 'Test comment'
 const userImageUrl = 'data:image/svg+xml'
 
 describe('components/cardDetail/comment', () => {
+    (window as any).store = mockMMStore
     const state = {
         users: {
             boardUsers: {[comment.modifiedBy]: {username: 'username_1'}},
+        },
+        teams: {
+            current: {id: 'team_id'},
         },
     }
     const store = mockStateStore([], state)
@@ -101,7 +111,19 @@ describe('components/cardDetail/comment', () => {
     })
 
     test('return guest comment', () => {
-        const localStore = mockStateStore([], {users: {boardUsers: {[comment.modifiedBy]: {username: 'username_1', is_guest: true}}}})
+        const localStore = mockStateStore([], {
+            users: {
+                boardUsers: {
+                    [comment.modifiedBy]: {
+                        username: 'username_1', 
+                        is_guest: true
+                    }
+                }
+            }, 
+            teams: {
+                current: {id: 'team_id'},
+            }
+        })
         const {container} = render(wrapIntl(
             <ReduxProvider store={localStore}>
                 <Comment
@@ -118,7 +140,19 @@ describe('components/cardDetail/comment', () => {
     })
 
     test('return guest comment readonly', () => {
-        const localStore = mockStateStore([], {users: {boardUsers: {[comment.modifiedBy]: {username: 'username_1', is_guest: true}}}})
+        const localStore = mockStateStore([], {
+            users: {
+                boardUsers: {
+                    [comment.modifiedBy]: {
+                        username: 'username_1', 
+                        is_guest: true
+                    }
+                }
+            },
+            teams: {
+                current: {id: 'team_id'},
+            },
+        })
         const {container} = render(wrapIntl(
             <ReduxProvider store={localStore}>
                 <Comment
@@ -133,7 +167,19 @@ describe('components/cardDetail/comment', () => {
     })
 
     test('return guest comment and delete comment', () => {
-        const localStore = mockStateStore([], {users: {boardUsers: {[comment.modifiedBy]: {username: 'username_1', is_guest: true}}}})
+        const localStore = mockStateStore([], {
+            users: {
+                boardUsers: {
+                    [comment.modifiedBy]: {
+                        username: 'username_1',
+                        is_guest: true
+                    }
+                }
+            },
+            teams: {
+                current: {id: 'team_id'},
+            },
+        })
         const {container} = render(wrapIntl(
             <ReduxProvider store={localStore}>
                 <Comment

@@ -41,9 +41,10 @@ const mockedOctoClient = mocked(octoClient, true)
 mockedUtils.createGuid.mockReturnValue('test-id')
 mockedUtils.generateClassName = jest.requireActual('../utils').Utils.generateClassName
 describe('components/centerPanel', () => {
+    (window as any).store = mockMMStore
     const board = TestBlockFactory.createBoard()
     board.id = '1'
-    board.teamId = 'team-id'
+    board.teamId = 'team_id'
     const activeView = TestBlockFactory.createBoardView(board)
     activeView.id = '1'
     const card1 = TestBlockFactory.createCard(board)
@@ -94,7 +95,7 @@ describe('components/centerPanel', () => {
             blockSubscriptions: [],
         },
         teams: {
-            current: {id: 'team-id'},
+            current: {id: 'team_id'},
         },
         boards: {
             current: board.id,
@@ -505,7 +506,6 @@ describe('components/centerPanel', () => {
         })
 
         test('click on new card to edit template', () => {
-            (window as any).store = mockMMStore
             activeView.fields.viewType = 'table'
             activeView.fields.defaultTemplateId = '1'
             const {container} = render(wrapDNDIntl(

@@ -16,8 +16,14 @@ import {Utils} from '../../utils'
 
 import {FetchMock} from '../../test/fetchMock'
 
+import {mockMMStore} from '../../../tests/mock_window'
+
 import CommentsList from './commentsList'
 
+jest.mock('../../webapp_globals', () => ({
+    ...jest.requireActual('../../webapp_globals'),
+    messageHtmlToComponent: jest.fn(() => <div className="mocked-message-html">Demo Comments</div>),
+}))
 global.fetch = FetchMock.fn
 jest.spyOn(Utils, 'displayDateTime').mockReturnValue('a long time ago')
 jest.spyOn(Utils, 'relativeDisplayDateTime').mockReturnValue('a long time ago')
@@ -31,6 +37,7 @@ beforeAll(() => {
 })
 
 describe('components/cardDetail/CommentsList', () => {
+    (window as any).store= mockMMStore
     const createdAt = Date.parse('01 Jan 2021 00:00:00 GMT')
     const comment1: CommentBlock = {
         id: 'comment_id_1',
@@ -100,7 +107,7 @@ describe('components/cardDetail/CommentsList', () => {
         expect(container).toMatchSnapshot()
 
         // Comments show up
-        const comments = container!.querySelectorAll('.comment-text')
+        const comments = container!.querySelectorAll('.mocked-message-html')
         expect(comments.length).toBe(2)
 
         // Add comment option visible when readonly mode is off
@@ -112,6 +119,12 @@ describe('components/cardDetail/CommentsList', () => {
         const mockStore = configureStore([])
         const store = mockStore({
             users: {
+                me: {
+                    id: 'user-id-1',
+                    roles: 'system_admin',
+                    username: 'username_1',
+                    email: 'username@email.com'
+                },
                 boardUsers: {
                     'user-id-1': {username: 'username_1'},
                 },
@@ -126,7 +139,7 @@ describe('components/cardDetail/CommentsList', () => {
                 },
             },
             teams: {
-                current: {id: 'team_id_1'},
+                current: {id: 'team_id'},
             },
         })
 
@@ -153,7 +166,7 @@ describe('components/cardDetail/CommentsList', () => {
         expect(container).toMatchSnapshot()
 
         // Comments show up
-        const comments = container!.querySelectorAll('.comment-text')
+        const comments = container!.querySelectorAll('.mocked-message-html')
         expect(comments.length).toBe(2)
 
         // Add comment option visible when readonly mode is off
