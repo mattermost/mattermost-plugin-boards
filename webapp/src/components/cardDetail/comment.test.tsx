@@ -20,10 +20,6 @@ import Comment from './comment'
 
 jest.mock('../../mutator')
 const mockedMutator = mocked(mutator, true)
-jest.mock('../../webapp_globals', () => ({
-    ...jest.requireActual('../../webapp_globals'),
-    messageHtmlToComponent: jest.fn(() => <div className="mocked-message-html">Test Comment</div>),
-}))
 
 const board = TestBlockFactory.createBoard()
 const card = TestBlockFactory.createCard(board)

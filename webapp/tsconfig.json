@@ -15,7 +15,8 @@
         "baseUrl": "src",
         "outDir": "./dist",
         "moduleResolution": "node",
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "types": ["jest", "node"],
     },
     "include": [
 		"src/**/*"

@@ -27,10 +27,6 @@ import CardDetail from './cardDetail'
 
 global.fetch = FetchMock.fn
 jest.mock('../../octoClient')
-jest.mock('../../webapp_globals', () => ({
-    ...jest.requireActual('../../webapp_globals'),
-    messageHtmlToComponent: jest.fn(() => <div className="mocked-message-html">Test Comment</div>),
-}))
 
 const mockedOctoClient = mocked(octoClient, true)
 

@@ -20,10 +20,6 @@ import {mockMMStore} from '../../../tests/mock_window'
 
 import CommentsList from './commentsList'
 
-jest.mock('../../webapp_globals', () => ({
-    ...jest.requireActual('../../webapp_globals'),
-    messageHtmlToComponent: jest.fn(() => <div className="mocked-message-html">Demo Comments</div>),
-}))
 global.fetch = FetchMock.fn
 jest.spyOn(Utils, 'displayDateTime').mockReturnValue('a long time ago')
 jest.spyOn(Utils, 'relativeDisplayDateTime').mockReturnValue('a long time ago')
