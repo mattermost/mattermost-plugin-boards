@@ -15,7 +15,10 @@ import octoClient from '../octoClient'
 import Mutator from '../mutator'
 import {Constants} from '../constants'
 
+import {mockMMStore} from '../../tests/mock_window'
+
 import CenterPanel from './centerPanel'
+
 Object.defineProperty(Constants, 'versionString', {value: '1.0.0'})
 jest.mock('react-router-dom', () => {
     const originalModule = jest.requireActual('react-router-dom')
@@ -38,9 +41,10 @@ const mockedOctoClient = mocked(octoClient, true)
 mockedUtils.createGuid.mockReturnValue('test-id')
 mockedUtils.generateClassName = jest.requireActual('../utils').Utils.generateClassName
 describe('components/centerPanel', () => {
+    (window as any).store = mockMMStore
     const board = TestBlockFactory.createBoard()
     board.id = '1'
-    board.teamId = 'team-id'
+    board.teamId = 'team_id'
     const activeView = TestBlockFactory.createBoardView(board)
     activeView.id = '1'
     const card1 = TestBlockFactory.createCard(board)
@@ -91,7 +95,7 @@ describe('components/centerPanel', () => {
             blockSubscriptions: [],
         },
         teams: {
-            current: {id: 'team-id'},
+            current: {id: 'team_id'},
         },
         boards: {
             current: board.id,

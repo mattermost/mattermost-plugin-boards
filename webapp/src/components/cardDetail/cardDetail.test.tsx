@@ -21,6 +21,8 @@ import octoClient from '../../octoClient'
 
 import {createTextBlock} from '../../blocks/textBlock'
 
+import {mockMMStore} from '../../../tests/mock_window'
+
 import CardDetail from './cardDetail'
 
 global.fetch = FetchMock.fn
@@ -42,6 +44,7 @@ beforeAll(() => {
 })
 
 describe('components/cardDetail/CardDetail', () => {
+    (window as any).store = mockMMStore
     const board = TestBlockFactory.createBoard()
 
     const view = TestBlockFactory.createBoardView(board)
@@ -73,7 +76,7 @@ describe('components/cardDetail/CardDetail', () => {
                 },
             },
             teams: {
-                current: {id: 'team-id'},
+                current: {id: 'team_id'},
             },
             boards: {
                 boards: {
@@ -126,7 +129,7 @@ describe('components/cardDetail/CardDetail', () => {
         expect(container).toBeDefined()
 
         // Comments show up
-        const comments = container!.querySelectorAll('.comment-text')
+        const comments = container!.querySelectorAll('.mocked-message-html')
         expect(comments.length).toBe(2)
 
         // Add comment option visible when readonly mode is off
@@ -138,7 +141,7 @@ describe('components/cardDetail/CardDetail', () => {
         const mockStore = configureStore([])
         const store = mockStore({
             teams: {
-                current: {id: 'team-id'},
+                current: {id: 'team_id'},
             },
             boards: {
                 boards: {
@@ -190,7 +193,7 @@ describe('components/cardDetail/CardDetail', () => {
         expect(container).toBeDefined()
 
         // comments show up
-        const comments = container!.querySelectorAll('.comment-text')
+        const comments = container!.querySelectorAll('.mocked-message-html')
         expect(comments.length).toBe(2)
 
         // Add comment option is not shown in readonly mode
@@ -223,7 +226,7 @@ describe('components/cardDetail/CardDetail', () => {
                 },
             },
             teams: {
-                current: {id: 'team-id'},
+                current: {id: 'team_id'},
             },
             boards: {
                 boards: {
@@ -330,7 +333,7 @@ describe('components/cardDetail/CardDetail', () => {
                 },
             },
             teams: {
-                current: {id: 'team-id'},
+                current: {id: 'team_id'},
             },
             boards: {
                 boards: {
@@ -435,7 +438,7 @@ describe('components/cardDetail/CardDetail', () => {
                 },
             },
             teams: {
-                current: {id: 'team-id'},
+                current: {id: 'team_id'},
             },
             boards: {
                 boards: {
@@ -533,7 +536,7 @@ describe('components/cardDetail/CardDetail', () => {
                 ],
             },
             teams: {
-                current: {id: 'team-id'},
+                current: {id: 'team_id'},
             },
             boards: {
                 boards: {

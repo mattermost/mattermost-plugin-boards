@@ -97,7 +97,8 @@
 		"collectCoverageFrom": [
 			"src/**/*.{ts,tsx,js,jsx}",
 			"!src/test/**"
-		]
+		],
+		"setupFiles": ["./tests/setupFile.ts"]
 	},
 	"devDependencies": {
 		"@formatjs/cli": "^4.8.2",
