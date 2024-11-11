@@ -2,7 +2,9 @@
 // See LICENSE.txt for license information.
 import React, {useEffect} from 'react'
 
-import wsClient, {MMWebSocketClient} from '../wsclient'
+import {useWebSocketClient} from '@hmhealey/plugin-support'
+
+import wsClient from '../wsclient'
 import {Utils} from '../utils'
 
 type Props = {
@@ -11,13 +13,14 @@ type Props = {
         id: string
         version: string
     }
-    webSocketClient?: MMWebSocketClient
     children: React.ReactNode
 }
 
 // WithWebSockets component initialises the websocket connection if
 // it's not yet running and subscribes to the current team
 const WithWebSockets = (props: Props): React.ReactElement => {
+    const webSocketClient = useWebSocketClient()
+
     const queryString = new URLSearchParams(window.location.search)
 
     useEffect(() => {
@@ -42,7 +45,7 @@ const WithWebSockets = (props: Props): React.ReactElement => {
             return
         }
 
-        if (!props.webSocketClient) {
+        if (!webSocketClient) {
             Utils.logWarn('Trying to initialise Boards websocket in plugin mode without base connection. Aborting')
             return
         }
@@ -52,9 +55,9 @@ const WithWebSockets = (props: Props): React.ReactElement => {
             return
         }
 
-        wsClient.initPlugin(props.manifest?.id, props.manifest?.version, props.webSocketClient)
+        wsClient.initPlugin(props.manifest?.id, props.manifest?.version, webSocketClient)
         wsClient.open()
-    }, [props.webSocketClient])
+    }, [webSocketClient])
 
     useEffect(() => {
         // if we're running on a plugin instance or we don't have a

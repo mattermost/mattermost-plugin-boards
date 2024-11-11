@@ -1,6 +1,8 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
+import {WebSocketClient as MMWebSocketClient} from '@mattermost/client'
+
 import {ClientConfig} from './config/clientConfig'
 
 import {CategoryOrder, Utils, WSMessagePayloads} from './utils'
@@ -63,15 +65,6 @@ export interface Subscription {
     deleteAt?: number
 }
 
-// The Mattermost websocket client interface
-export interface MMWebSocketClient {
-    conn: WebSocket | null
-    sendMessage(action: string, data: any, responseCallback?: () => void): void /* eslint-disable-line @typescript-eslint/no-explicit-any */
-    addFirstConnectListener(callback: () => void): void
-    addReconnectListener(callback: () => void): void
-    addErrorListener(callback: (event: Event) => void): void
-    addCloseListener(callback: (connectFailCount: number) => void): void
-}
 
 type OnChangeHandler = (client: WSClient, items: any[]) => void
 type OnReconnectHandler = (client: WSClient) => void

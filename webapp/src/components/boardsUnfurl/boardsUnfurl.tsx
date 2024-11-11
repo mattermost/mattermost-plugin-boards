@@ -10,7 +10,7 @@ import {getLanguage} from '../../store/language'
 import {useAppSelector} from '../../store/hooks'
 import {getCurrentTeamId} from '../../store/teams'
 
-import {WSClient, MMWebSocketClient} from '../../wsclient'
+import {WSClient} from '../../wsclient'
 import manifest from '../../manifest'
 
 import {getMessages} from './../../i18n'
@@ -33,7 +33,6 @@ type Props = {
     embed: {
         data: string,
     },
-    webSocketClient?: MMWebSocketClient,
 }
 
 class FocalboardEmbeddedData {
@@ -60,7 +59,7 @@ export const BoardsUnfurl = (props: Props): JSX.Element => {
 
     const intl = useIntl()
 
-    const {embed, webSocketClient} = props
+    const {embed} = props
     const focalboardInformation: FocalboardEmbeddedData = new FocalboardEmbeddedData(embed.data)
     const currentTeamId = useAppSelector(getCurrentTeamId)
     const {teamID, cardID, boardID, readToken, originalPath} = focalboardInformation
@@ -182,7 +181,7 @@ export const BoardsUnfurl = (props: Props): JSX.Element => {
     }
 
     return (
-        <WithWebSockets manifest={manifest} webSocketClient={webSocketClient}>
+        <WithWebSockets manifest={manifest}>
             {!loading && (!card || !board) && <></>}
             {!loading && card && board &&
                 <a

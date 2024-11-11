@@ -39,7 +39,6 @@ import RHSChannelBoards from './components/rhsChannelBoards'
 import RHSChannelBoardsHeader from './components/rhsChannelBoardsHeader'
 import BoardSelector from './components/boardSelector'
 import wsClient, {
-    MMWebSocketClient,
     ACTION_UPDATE_BLOCK,
     ACTION_UPDATE_CLIENT_CONFIG,
     ACTION_UPDATE_SUBSCRIPTION,
@@ -84,10 +83,6 @@ const TELEMETRY_OPTIONS = {
     anonymousId: '00000000000000000000000000',
 }
 
-type Props = {
-    webSocketClient: MMWebSocketClient
-}
-
 function customHistory() {
     const history = createBrowserHistory({basename: Utils.getFrontendBaseURL()})
 
@@ -128,7 +123,7 @@ function customHistory() {
 
 let browserHistory: History<unknown>
 
-const MainApp = (props: Props) => {
+const MainApp = () => {
     useEffect(() => {
         document.body.classList.add('focalboard-body')
         document.body.classList.add('app__body')
@@ -149,7 +144,7 @@ const MainApp = (props: Props) => {
     return (
         <ErrorBoundary>
             <ReduxProvider store={store}>
-                <WithWebSockets manifest={manifest} webSocketClient={props.webSocketClient}>
+                <WithWebSockets manifest={manifest}>
                     <div id='focalboard-app'>
                         <App history={browserHistory} />
                     </div>
@@ -315,9 +310,9 @@ export default class Plugin {
 
             // TODO rhsId isn't a value returned by this?
             const {rhsId, toggleRHSPlugin} = this.registry.registerRightHandSidebarComponent({
-                component: (props: {webSocketClient: MMWebSocketClient}) => (
+                component: () => (
                     <ReduxProvider store={store}>
-                        <WithWebSockets manifest={manifest} webSocketClient={props.webSocketClient}>
+                        <WithWebSockets manifest={manifest}>
                             <RHSChannelBoards />
                         </WithWebSockets>
                     </ReduxProvider>
@@ -377,11 +372,10 @@ export default class Plugin {
 
             this.registry.registerPostWillRenderEmbedComponent({
                 match: (embed: PostEmbed) => embed.type === 'boards' as PostEmbedType,
-                component: (props: {embed: {data: string}, webSocketClient: MMWebSocketClient}) => (
+                component: (props: {embed: {data: string}}) => (
                     <ReduxProvider store={store}>
                         <BoardsUnfurl
                             embed={props.embed}
-                            webSocketClient={props.webSocketClient}
                         />
                     </ReduxProvider>
                 ),
@@ -416,9 +410,9 @@ export default class Plugin {
         }
 
         this.boardSelectorId = this.registry.registerRootComponent({
-            component: (props: {webSocketClient: MMWebSocketClient}) => (
+            component: () => (
                 <ReduxProvider store={store}>
-                    <WithWebSockets manifest={manifest} webSocketClient={props.webSocketClient}>
+                    <WithWebSockets manifest={manifest}>
                         <BoardSelector />
                     </WithWebSockets>
                 </ReduxProvider>
