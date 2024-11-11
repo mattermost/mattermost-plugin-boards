@@ -105,7 +105,7 @@ const Sidebar = (props: Props) => {
 
     useEffect(() => {
         loadTheme()
-    }, [])
+    }, [team?.id])
 
     useEffect(() => {
         function handleResize() {
