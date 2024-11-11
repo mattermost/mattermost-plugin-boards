@@ -11,6 +11,8 @@ import {Team} from '@mattermost/types/teams'
 
 import {Channel} from '@mattermost/types/channels'
 
+import {useFormatTextToComponent} from '@hmhealey/plugin-support'
+
 import {Block} from '../../blocks/block'
 import mutator from '../../mutator'
 import {Utils} from '../../utils'
@@ -44,17 +46,18 @@ const Comment: FC<Props> = (props: Props) => {
     const selectedTeam = useAppSelector(getCurrentTeam)
     const channelNamesMap =  getChannelsNameMapInTeam((window as any).store.getState(), selectedTeam!.id)
 
-    const formattedText =
-    <Provider store={(window as any).store}>
-        {window.PostUtils.messageHtmlToComponent(window.PostUtils.formatText(comment.title, {
-            atMentions: true,
-            mentionHighlight: false,
-            team: (selectedTeam || undefined) as Team | undefined,
-            channelNamesMap: channelNamesMap as unknown as Record<string, Channel>,
-        }), {
-            fetchMissingUsers: true,
-        })}
-    </Provider>
+    const formatTextToComponent = useFormatTextToComponent({
+        atMentions: true,
+        mentionHighlight: false,
+        team: (selectedTeam || undefined) as Team | undefined,
+        channelNamesMap: channelNamesMap as unknown as Record<string, Channel>,
+        fetchMissingUsers: true,
+    })
+    const formattedText = (
+        <Provider store={(window as any).store}>
+            {formatTextToComponent(comment.title)}
+        </Provider>
+    )
 
     return (
         <div
