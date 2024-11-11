@@ -1,13 +1,16 @@
 /* eslint-disable */
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
+import {InternalPluginRegistry, PluginRegistry} from '@hmhealey/plugin-support'
+import {WebSocketMessage} from '@mattermost/client'
+import {PostEmbed, PostEmbedType} from '@mattermost/types/posts'
+import {GlobalState} from '@mattermost/types/store'
 import React, {useEffect} from 'react'
 import {createIntl, createIntlCache} from 'react-intl'
 import {Store, Action} from 'redux'
 import {Provider as ReduxProvider} from 'react-redux'
 import {createBrowserHistory, History} from 'history'
 import {rudderAnalytics, RudderTelemetryHandler} from 'mattermost-redux/client/rudder'
-import {GlobalState} from 'mattermost-redux/types/store'
 import {selectTeam} from 'mattermost-redux/actions/teams'
 
 import appBarIcon from '../static/app-bar-icon.png'
@@ -49,7 +52,6 @@ import wsClient, {
 import manifest from './manifest'
 import ErrorBoundary from './error_boundary'
 // eslint-disable-next-line import/no-unresolved
-import {PluginRegistry} from './types/mattermost-webapp'
 import './plugin.scss'
 import CloudUpgradeNudge from "./components/cloudUpgradeNudge/cloudUpgradeNudge"
 import CreateBoardFromTemplate from './components/createBoardFromTemplate'
@@ -170,10 +172,9 @@ export default class Plugin {
     channelHeaderButtonId?: string
     rhsId?: string
     boardSelectorId?: string
-    registry?: PluginRegistry
+    registry?: PluginRegistry & InternalPluginRegistry
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
-    async initialize(registry: PluginRegistry, mmStore: Store<GlobalState, Action<Record<string, unknown>>>): Promise<void> {
+    async initialize(registry: PluginRegistry & InternalPluginRegistry, mmStore: Store<GlobalState, Action<Record<string, unknown>>>): Promise<void> {
         const siteURL = mmStore.getState().entities.general.config.SiteURL
         const subpath = siteURL ? getSubpath(siteURL) : ''
         windowAny.frontendBaseURL = subpath + windowAny.frontendBaseURL
@@ -196,31 +197,59 @@ export default class Plugin {
         const productID = process.env.TARGET_IS_PRODUCT ? 'boards' : manifest.id
 
         // register websocket handlers
-        this.registry?.registerWebSocketEventHandler(`custom_${productID}_${ACTION_UPDATE_BOARD}`, (e: any) => wsClient.updateHandler(e.data))
-        this.registry?.registerWebSocketEventHandler(`custom_${productID}_${ACTION_UPDATE_CATEGORY}`, (e: any) => wsClient.updateHandler(e.data))
-        this.registry?.registerWebSocketEventHandler(`custom_${productID}_${ACTION_UPDATE_BOARD_CATEGORY}`, (e: any) => wsClient.updateHandler(e.data))
-        this.registry?.registerWebSocketEventHandler(`custom_${productID}_${ACTION_UPDATE_CLIENT_CONFIG}`, (e: any) => wsClient.updateClientConfigHandler(e.data))
-        this.registry?.registerWebSocketEventHandler(`custom_${productID}_${ACTION_UPDATE_CARD_LIMIT_TIMESTAMP}`, (e: any) => wsClient.updateCardLimitTimestampHandler(e.data))
-        this.registry?.registerWebSocketEventHandler(`custom_${productID}_${ACTION_UPDATE_SUBSCRIPTION}`, (e: any) => wsClient.updateSubscriptionHandler(e.data))
-        this.registry?.registerWebSocketEventHandler(`custom_${productID}_${ACTION_REORDER_CATEGORIES}`, (e) => wsClient.updateHandler(e.data))
+        this.registry?.registerWebSocketEventHandler({
+            event: `custom_${productID}_${ACTION_UPDATE_BOARD}`,
+            handler: (e: WebSocketMessage) => wsClient.updateHandler(e.data)})
+        this.registry?.registerWebSocketEventHandler({
+            event: `custom_${productID}_${ACTION_UPDATE_CATEGORY}`,
+            handler: (e: WebSocketMessage) => wsClient.updateHandler(e.data)})
+        this.registry?.registerWebSocketEventHandler({
+            event: `custom_${productID}_${ACTION_UPDATE_BOARD_CATEGORY}`,
+            handler: (e: WebSocketMessage) => wsClient.updateHandler(e.data)
+        })
+        this.registry?.registerWebSocketEventHandler({
+            event: `custom_${productID}_${ACTION_UPDATE_CLIENT_CONFIG}`,
+            handler: (e: WebSocketMessage) => wsClient.updateClientConfigHandler(e.data)
+        })
+        this.registry?.registerWebSocketEventHandler({
+            event: `custom_${productID}_${ACTION_UPDATE_CARD_LIMIT_TIMESTAMP}`,
+            handler: (e: WebSocketMessage) => wsClient.updateCardLimitTimestampHandler(e.data)
+        })
+        this.registry?.registerWebSocketEventHandler({
+            event: `custom_${productID}_${ACTION_UPDATE_SUBSCRIPTION}`,
+            handler: (e: WebSocketMessage) => wsClient.updateSubscriptionHandler(e.data)
+        })
+        this.registry?.registerWebSocketEventHandler({
+            event: `custom_${productID}_${ACTION_REORDER_CATEGORIES}`,
+            handler: (e: WebSocketMessage) => wsClient.updateHandler(e.data)
+        })
 
-        this.registry?.registerWebSocketEventHandler('plugin_statuses_changed', (e: any) => wsClient.pluginStatusesChangedHandler(e.data))
-        this.registry?.registerPostTypeComponent('custom_cloud_upgrade_nudge', CloudUpgradeNudge)
-        this.registry?.registerWebSocketEventHandler('preferences_changed', (e: any) => {
-            let preferences
-            try {
-                preferences = JSON.parse(e.data.preferences)
-            } catch {
-                preferences = []
-            }
-            if (preferences) {
-                for (const preference of preferences) {
-                    if (preference.category === 'theme' && theme !== preference.value) {
-                        setMattermostTheme(JSON.parse(preference.value))
-                        theme = preference.value
-                    }
-                    if (preference.category === 'display_settings' && preference.name === 'name_format') {
-                        UserSettings.nameFormat = preference.value
+        this.registry?.registerWebSocketEventHandler({
+            event: 'plugin_statuses_changed',
+            handler: (e: WebSocketMessage) => wsClient.pluginStatusesChangedHandler(e.data)
+        })
+        this.registry?.registerPostTypeComponent({
+            type: 'custom_cloud_upgrade_nudge',
+            component: CloudUpgradeNudge
+        })
+        this.registry?.registerWebSocketEventHandler({
+            event: 'preferences_changed',
+            handler: (e: WebSocketMessage) => {
+                let preferences
+                try {
+                    preferences = JSON.parse(e.data.preferences)
+                } catch {
+                    preferences = []
+                }
+                if (preferences) {
+                    for (const preference of preferences) {
+                        if (preference.category === 'theme' && theme !== preference.value) {
+                            setMattermostTheme(JSON.parse(preference.value))
+                            theme = preference.value
+                        }
+                        if (preference.category === 'display_settings' && preference.name === 'name_format') {
+                            UserSettings.nameFormat = preference.value
+                        }
                     }
                 }
             }
@@ -284,59 +313,71 @@ export default class Plugin {
         if (this.registry.registerProduct) {
             windowAny.frontendBaseURL = subpath + '/boards'
 
-            const {rhsId, toggleRHSPlugin} = this.registry.registerRightHandSidebarComponent(
-                (props: {webSocketClient: MMWebSocketClient}) => (
+            // TODO rhsId isn't a value returned by this?
+            const {rhsId, toggleRHSPlugin} = this.registry.registerRightHandSidebarComponent({
+                component: (props: {webSocketClient: MMWebSocketClient}) => (
                     <ReduxProvider store={store}>
                         <WithWebSockets manifest={manifest} webSocketClient={props.webSocketClient}>
                             <RHSChannelBoards />
                         </WithWebSockets>
                     </ReduxProvider>
                 ),
-                <ErrorBoundary>
+                title: <ErrorBoundary>
                     <ReduxProvider store={store}>
                         <RHSChannelBoardsHeader />
                     </ReduxProvider>
                 </ErrorBoundary>
                 ,
-            )
+            }) as any
             this.rhsId = rhsId
 
-            this.channelHeaderButtonId = registry.registerChannelHeaderButtonAction(<FocalboardIcon />, () => mmStore.dispatch(toggleRHSPlugin), 'Boards', 'Boards')
+            this.channelHeaderButtonId = registry.registerChannelHeaderButtonAction({
+                icon: <FocalboardIcon />,
+                action: () => mmStore.dispatch(toggleRHSPlugin),
+                dropdownText: 'Boards',
+                tooltipText: 'Boards',
+            })
 
-            this.registry.registerProduct(
-                '/boards',
-                'product-boards',
-                'Boards',
-                '/boards',
-                MainApp,
-                HeaderComponent,
-                () => null,
-                true,
-            )
+            this.registry.registerProduct({
+                baseURL: '/boards',
+                switcherIcon: 'product-boards',
+                switcherText: 'Boards',
+                switcherLinkURL: '/boards',
+                mainComponent: MainApp,
+                headerCentreComponent: HeaderComponent,
+                headerRightComponent: () => null,
+                showTeamSidebar: true,
+            })
 
             if (this.registry.registerAppBarComponent) {
-                this.registry.registerAppBarComponent(Utils.buildURL(appBarIcon, true), () => mmStore.dispatch(toggleRHSPlugin), intl.formatMessage({id: 'AppBar.Tooltip', defaultMessage: 'Toggle Linked Boards'}))
+                this.registry.registerAppBarComponent({
+                    iconUrl: Utils.buildURL(appBarIcon, true),
+                    action: () => mmStore.dispatch(toggleRHSPlugin),
+                    tooltipText: intl.formatMessage({id: 'AppBar.Tooltip', defaultMessage: 'Toggle Linked Boards'})
+                })
             }
 
             if (this.registry.registerActionAfterChannelCreation) {
-                this.registry.registerActionAfterChannelCreation((props: {
-                    setCanCreate: (canCreate: boolean) => void,
-                    setAction: (fn: () => (channelId: string, teamId: string) => Promise<Board | undefined>) => void,
-                    newBoardInfoIcon: React.ReactNode,
-                }) => (
-                    <ReduxProvider store={store}>
-                        <CreateBoardFromTemplate
-                            setCanCreate={props.setCanCreate}
-                            setAction={props.setAction}
-                            newBoardInfoIcon={props.newBoardInfoIcon}
-                        />
-                    </ReduxProvider>
-                ))
+                this.registry.registerActionAfterChannelCreation({
+                    component: (props: {
+                        setCanCreate: (canCreate: boolean) => void,
+                        setAction: (fn: () => (channelId: string, teamId: string) => Promise<Board | undefined>) => void,
+                        newBoardInfoIcon: React.ReactNode,
+                    }) => (
+                        <ReduxProvider store={store}>
+                            <CreateBoardFromTemplate
+                                setCanCreate={props.setCanCreate}
+                                setAction={props.setAction}
+                                newBoardInfoIcon={props.newBoardInfoIcon}
+                            />
+                        </ReduxProvider>
+                    )
+                })
             }
 
-            this.registry.registerPostWillRenderEmbedComponent(
-                (embed) => embed.type === 'boards',
-                (props: {embed: {data: string}, webSocketClient: MMWebSocketClient}) => (
+            this.registry.registerPostWillRenderEmbedComponent({
+                match: (embed: PostEmbed) => embed.type === 'boards' as PostEmbedType,
+                component: (props: {embed: {data: string}, webSocketClient: MMWebSocketClient}) => (
                     <ReduxProvider store={store}>
                         <BoardsUnfurl
                             embed={props.embed}
@@ -344,41 +385,45 @@ export default class Plugin {
                         />
                     </ReduxProvider>
                 ),
-                false
-            )
+                toggleable: false
+            })
 
             // Site statistics handler
             if (registry.registerSiteStatisticsHandler) {
-                registry.registerSiteStatisticsHandler(async () => {
-                    const siteStats = await octoClient.getSiteStatistics()
-                    if (siteStats) {
-                        return {
-                            boards_count: {
-                                name: intl.formatMessage({id: 'SiteStats.total_boards', defaultMessage: 'Total Boards'}),
-                                id: 'total_boards',
-                                icon: 'icon-product-boards',
-                                value: siteStats.board_count,
-                            },
-                            cards_count: {
-                                name: intl.formatMessage({id: 'SiteStats.total_cards', defaultMessage: 'Total Cards'}),
-                                id: 'total_cards',
-                                icon: 'icon-products',
-                                value: siteStats.card_count,
-                            },
+                registry.registerSiteStatisticsHandler({
+                    handler: async () => {
+                        const siteStats = await octoClient.getSiteStatistics()
+                        if (siteStats) {
+                            return {
+                                boards_count: {
+                                    name: intl.formatMessage({id: 'SiteStats.total_boards', defaultMessage: 'Total Boards'}),
+                                    id: 'total_boards',
+                                    icon: 'icon-product-boards',
+                                    value: siteStats.board_count,
+                                },
+                                cards_count: {
+                                    name: intl.formatMessage({id: 'SiteStats.total_cards', defaultMessage: 'Total Cards'}),
+                                    id: 'total_cards',
+                                    icon: 'icon-products',
+                                    value: siteStats.card_count,
+                                },
+                            }
                         }
+                        return {}
                     }
-                    return {}
                 })
             }
         }
 
-        this.boardSelectorId = this.registry.registerRootComponent((props: {webSocketClient: MMWebSocketClient}) => (
-            <ReduxProvider store={store}>
-                <WithWebSockets manifest={manifest} webSocketClient={props.webSocketClient}>
-                    <BoardSelector />
-                </WithWebSockets>
-            </ReduxProvider>
-        ))
+        this.boardSelectorId = this.registry.registerRootComponent({
+            component: (props: {webSocketClient: MMWebSocketClient}) => (
+                <ReduxProvider store={store}>
+                    <WithWebSockets manifest={manifest} webSocketClient={props.webSocketClient}>
+                        <BoardSelector />
+                    </WithWebSockets>
+                </ReduxProvider>
+            )
+        })
 
         const config = await octoClient.getClientConfig()
         if (config?.telemetry) {
@@ -424,16 +469,16 @@ export default class Plugin {
 
     uninitialize(): void {
         if (this.channelHeaderButtonId) {
-            this.registry?.unregisterComponent(this.channelHeaderButtonId)
+            this.registry?.unregisterComponent({componentId: this.channelHeaderButtonId})
         }
         if (this.rhsId) {
-            this.registry?.unregisterComponent(this.rhsId)
+            this.registry?.unregisterComponent({componentId: this.rhsId})
         }
         if (this.boardSelectorId) {
-            this.registry?.unregisterComponent(this.boardSelectorId)
+            this.registry?.unregisterComponent({componentId: this.boardSelectorId})
         }
 
         // unregister websocket handlers
-        this.registry?.unregisterWebSocketEventHandler(wsClient.clientPrefix + ACTION_UPDATE_BLOCK)
+        this.registry?.unregisterWebSocketEventHandler({event: wsClient.clientPrefix + ACTION_UPDATE_BLOCK})
     }
 }

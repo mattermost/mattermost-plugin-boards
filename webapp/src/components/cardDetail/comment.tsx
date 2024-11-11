@@ -7,6 +7,10 @@ import {getChannelsNameMapInTeam} from 'mattermost-redux/selectors/entities/chan
 
 import {Provider} from 'react-redux'
 
+import {Team} from '@mattermost/types/teams'
+
+import {Channel} from '@mattermost/types/channels'
+
 import {Block} from '../../blocks/block'
 import mutator from '../../mutator'
 import {Utils} from '../../utils'
@@ -21,7 +25,6 @@ import Tooltip from '../../widgets/tooltip'
 import GuestBadge from '../../widgets/guestBadge'
 
 import './comment.scss'
-import {formatText, messageHtmlToComponent} from '../../webapp_globals'
 import {getCurrentTeam} from '../../store/teams'
 
 
@@ -41,16 +44,15 @@ const Comment: FC<Props> = (props: Props) => {
     const selectedTeam = useAppSelector(getCurrentTeam)
     const channelNamesMap =  getChannelsNameMapInTeam((window as any).store.getState(), selectedTeam!.id)
 
-    const formattedText = 
+    const formattedText =
     <Provider store={(window as any).store}>
-        {messageHtmlToComponent(formatText(comment.title, {
-            singleline: false,
+        {window.PostUtils.messageHtmlToComponent(window.PostUtils.formatText(comment.title, {
             atMentions: true,
             mentionHighlight: false,
-            team: selectedTeam,
-            channelNamesMap,
+            team: (selectedTeam || undefined) as Team | undefined,
+            channelNamesMap: channelNamesMap as unknown as Record<string, Channel>,
         }), {
-            fetchMissingUsers: true, 
+            fetchMissingUsers: true,
         })}
     </Provider>
 
