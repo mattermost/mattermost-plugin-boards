@@ -11,7 +11,7 @@ import {Team} from '@mattermost/types/teams'
 
 import {Channel} from '@mattermost/types/channels'
 
-import {useFormatTextToComponent} from '@hmhealey/plugin-support'
+import {useFormatTextToComponent, useWebAppSelector, useWebAppStore} from '@hmhealey/plugin-support'
 
 import {Block} from '../../blocks/block'
 import mutator from '../../mutator'
@@ -44,7 +44,17 @@ const Comment: FC<Props> = (props: Props) => {
     const date = new Date(comment.createAt)
 
     const selectedTeam = useAppSelector(getCurrentTeam)
-    const channelNamesMap =  getChannelsNameMapInTeam((window as any).store.getState(), selectedTeam!.id)
+
+    /*
+     * TODO This doesn't currently work because Boards paves over the web app's Redux context. It seems like
+     * React Redux has some way to apply a custom context to Boards' selectors to stop that from happening,
+     * but if I can't get that working, I'll need to add the web app's React Redux context to the PluginContext.
+     *
+     * Also, if I'm going to keep pushing people to using the old version of mattermost-redux, we need to find
+     * a way to have the plugin support package override its version of GlobalState...
+     */
+
+    const channelNamesMap = useWebAppSelector((state) => getChannelsNameMapInTeam(state, selectedTeam!.id))
 
     const formatTextToComponent = useFormatTextToComponent({
         atMentions: true,
@@ -54,7 +64,7 @@ const Comment: FC<Props> = (props: Props) => {
         fetchMissingUsers: true,
     })
     const formattedText = (
-        <Provider store={(window as any).store}>
+        <Provider store={useWebAppStore()}>
             {formatTextToComponent(comment.title)}
         </Provider>
     )
