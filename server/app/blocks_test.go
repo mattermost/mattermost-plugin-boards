@@ -54,7 +54,7 @@ func TestPatchBlocks(t *testing.T) {
 		blockPatches := model.BlockPatchBatch{
 			BlockIDs: []string{"block1"},
 			BlockPatches: []model.BlockPatch{
-				{Title: mmModel.NewString("new title")},
+				{Title: mmModel.NewPointer("new title")},
 			},
 		}
 
@@ -81,13 +81,13 @@ func TestPatchBlocks(t *testing.T) {
 		th.App.SetCardLimit(5)
 
 		fakeLicense := &mmModel.License{
-			Features: &mmModel.Features{Cloud: mmModel.NewBool(true)},
+			Features: &mmModel.Features{Cloud: mmModel.NewPointer(true)},
 		}
 
 		blockPatches := model.BlockPatchBatch{
 			BlockIDs: []string{"block1"},
 			BlockPatches: []model.BlockPatch{
-				{Title: mmModel.NewString("new title")},
+				{Title: mmModel.NewPointer("new title")},
 			},
 		}
 
@@ -225,7 +225,7 @@ func TestInsertBlocks(t *testing.T) {
 
 		// setting up mocks for limits
 		fakeLicense := &mmModel.License{
-			Features: &mmModel.Features{Cloud: mmModel.NewBool(true)},
+			Features: &mmModel.Features{Cloud: mmModel.NewPointer(true)},
 		}
 		th.Store.EXPECT().GetLicense().Return(fakeLicense)
 
@@ -251,7 +251,7 @@ func TestInsertBlocks(t *testing.T) {
 
 		// setting up mocks for limits
 		fakeLicense := &mmModel.License{
-			Features: &mmModel.Features{Cloud: mmModel.NewBool(true)},
+			Features: &mmModel.Features{Cloud: mmModel.NewPointer(true)},
 		}
 		th.Store.EXPECT().GetLicense().Return(fakeLicense)
 
@@ -286,7 +286,7 @@ func TestInsertBlocks(t *testing.T) {
 
 		// setting up mocks for limits
 		fakeLicense := &mmModel.License{
-			Features: &mmModel.Features{Cloud: mmModel.NewBool(true)},
+			Features: &mmModel.Features{Cloud: mmModel.NewPointer(true)},
 		}
 		th.Store.EXPECT().GetLicense().Return(fakeLicense).Times(2)
 
