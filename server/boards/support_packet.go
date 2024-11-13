@@ -27,11 +27,11 @@ func (b *BoardsApp) GenerateSupportData(_ *plugin.Context) ([]*model.FileData, e
 
 	boardCount, err := b.server.Store().GetBoardCount()
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to get boards count")
+		return nil, errors.Wrap(err, "Failed to get active boards count")
 	}
 	usedCardsCount, err := b.server.Store().GetUsedCardsCount()
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to get used cards count")
+		return nil, errors.Wrap(err, "Failed to get active cards count")
 	}
 
 	diagnostics := SupportPacket{
