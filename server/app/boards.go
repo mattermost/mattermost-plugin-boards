@@ -31,8 +31,8 @@ func (a *App) GetBoard(boardID string) (*model.Board, error) {
 	return board, nil
 }
 
-func (a *App) GetBoardCount() (int64, error) {
-	return a.store.GetBoardCount()
+func (a *App) GetBoardCount(includeDeleted bool) (int64, error) {
+	return a.store.GetBoardCount(includeDeleted)
 }
 
 func (a *App) GetBoardMetadata(boardID string) (*model.Board, *model.BoardMetadata, error) {

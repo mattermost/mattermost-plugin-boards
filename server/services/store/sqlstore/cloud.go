@@ -18,16 +18,19 @@ var ErrInvalidCardLimitValue = errors.New("card limit value is invalid")
 // activeCardsQuery applies the necessary filters to the query for it
 // to fetch an active cards window if the cardLimit is set, or all the
 // active cards if it's 0.
-func (s *SQLStore) activeCardsQuery(builder sq.StatementBuilderType, selectStr string, cardLimit int) sq.SelectBuilder {
+// If includeDeleted is true, the query wiil include cards from deleted boards.
+func (s *SQLStore) activeCardsQuery(builder sq.StatementBuilderType, selectStr string, cardLimit int, includeDeleted bool) sq.SelectBuilder {
 	query := builder.
 		Select(selectStr).
 		From(s.tablePrefix + "blocks b").
 		Join(s.tablePrefix + "boards bd on b.board_id=bd.id").
 		Where(sq.Eq{
-			"b.delete_at":    0,
 			"b.type":         model.TypeCard,
 			"bd.is_template": false,
 		})
+	if !includeDeleted {
+		query = query.Where(sq.Eq{"bd.delete_at": 0})
+	}
 
 	if cardLimit != 0 {
 		query = query.
@@ -38,12 +41,26 @@ func (s *SQLStore) activeCardsQuery(builder sq.StatementBuilderType, selectStr s
 	return query
 }
 
-// getUsedCardsCount returns the amount of active cards in the server.
-func (s *SQLStore) getUsedCardsCount(db sq.BaseRunner) (int, error) {
-	row := s.activeCardsQuery(s.getQueryBuilder(db), "count(b.id)", 0).
+// getCardsCount returns the amount of cards in the server.
+func (s *SQLStore) getCardsCount(db sq.BaseRunner) (int64, error) {
+	row := s.activeCardsQuery(s.getQueryBuilder(db), "count(b.id)", 0, true).
 		QueryRow()
 
-	var usedCards int
+	var usedCards int64
+	err := row.Scan(&usedCards)
+	if err != nil {
+		return 0, err
+	}
+
+	return usedCards, nil
+}
+
+// getUsedCardsCount returns the amount of active cards in the server.
+func (s *SQLStore) getUsedCardsCount(db sq.BaseRunner) (int64, error) {
+	row := s.activeCardsQuery(s.getQueryBuilder(db), "count(b.id)", 0, false).
+		QueryRow()
+
+	var usedCards int64
 	err := row.Scan(&usedCards)
 	if err != nil {
 		return 0, err
@@ -89,7 +106,7 @@ func (s *SQLStore) updateCardLimitTimestamp(db sq.BaseRunner, cardLimit int) (in
 
 	var value interface{} = 0
 	if cardLimit != 0 {
-		value = s.activeCardsQuery(sq.StatementBuilder, "b.update_at", cardLimit).
+		value = s.activeCardsQuery(sq.StatementBuilder, "b.update_at", cardLimit, false).
 			OrderBy("b.update_at DESC").
 			Prefix("COALESCE((").Suffix("), 0)")
 	}
