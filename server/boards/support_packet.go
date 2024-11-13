@@ -16,8 +16,8 @@ import (
 
 type SupportPacket struct {
 	Version string `yaml:"version"`
-	// The total number boards.
-	TotalBoards int64 `yaml:"total_boards"`
+	// The total number of active boards.
+	ActiveBoards int64 `yaml:"active_boards"`
 	// The total number of active cards.
 	ActiveCards int64 `yaml:"active_cards"`
 }
@@ -35,9 +35,9 @@ func (b *BoardsApp) GenerateSupportData(_ *plugin.Context) ([]*model.FileData, e
 	}
 
 	diagnostics := SupportPacket{
-		Version:     b.manifest.Version,
-		TotalBoards: boardCount,
-		ActiveCards: int64(usedCardsCount),
+		Version:      b.manifest.Version,
+		ActiveBoards: boardCount,
+		ActiveCards:  int64(usedCardsCount),
 	}
 	data, err := yaml.Marshal(diagnostics)
 	if err != nil {
