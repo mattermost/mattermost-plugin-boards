@@ -101,11 +101,8 @@ const Sidebar = (props: Props) => {
         if (team) {
             dispatch(fetchSidebarCategories(team!.id))
         }
-    }, [team?.id])
-
-    useEffect(() => {
         loadTheme()
-    }, [])
+    }, [team?.id])
 
     useEffect(() => {
         function handleResize() {
