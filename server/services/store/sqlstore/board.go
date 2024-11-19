@@ -685,6 +685,14 @@ func (s *SQLStore) getMembersForUser(db sq.BaseRunner, userID string) ([]*model.
 		return nil, err
 	}
 
+	user, err := s.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+	if user.IsGuest {
+		return explicitMembers, nil
+	}
+
 	newQuery := s.getQueryBuilder(db).
 		Select("CM.userID, B.Id").
 		From(s.tablePrefix + "boards AS B").
@@ -703,15 +711,6 @@ func (s *SQLStore) getMembersForUser(db sq.BaseRunner, userID string) ([]*model.
 	for _, m := range explicitMembers {
 		members = append(members, m)
 		existingMembers[m.BoardID] = true
-	}
-
-	// No synthetic memberships for guests
-	user, err := s.GetUserByID(userID)
-	if err != nil {
-		return nil, err
-	}
-	if user.IsGuest {
-		return members, nil
 	}
 
 	implicitMembers, err := s.implicitBoardMembershipsFromRows(rows)
