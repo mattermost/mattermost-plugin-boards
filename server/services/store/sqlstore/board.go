@@ -693,13 +693,13 @@ func (s *SQLStore) getMembersForUser(db sq.BaseRunner, userID string) ([]*model.
 		return explicitMembers, nil
 	}
 
-	newQuery := s.getQueryBuilder(db).
+	implicitMembersQuery := s.getQueryBuilder(db).
 		Select("CM.userID, B.Id").
 		From(s.tablePrefix + "boards AS B").
 		Join("ChannelMembers AS CM ON B.channel_id=CM.channelId").
 		Where(sq.Eq{"CM.userID": userID})
 
-	rows, err := newQuery.Query()
+	rows, err := implicitMembersQuery.Query()
 	if err != nil {
 		s.logger.Error(`getMembersForUser ERROR`, mlog.Err(err))
 		return nil, err
@@ -746,7 +746,7 @@ func (s *SQLStore) getMembersForBoard(db sq.BaseRunner, boardID string) ([]*mode
 		return nil, err
 	}
 
-	newQuery := s.getQueryBuilder(db).
+	implicitMembersQuery := s.getQueryBuilder(db).
 		Select("CM.userID, B.Id").
 		From(s.tablePrefix + "boards AS B").
 		Join("ChannelMembers AS CM ON B.channel_id=CM.channelId").
@@ -758,7 +758,7 @@ func (s *SQLStore) getMembersForBoard(db sq.BaseRunner, boardID string) ([]*mode
 		Where(sq.NotEq{"U.roles": "system_guest"}).
 		Where(sq.Eq{"bo.UserId IS NOT NULL": false})
 
-	rows, err := newQuery.Query()
+	rows, err := implicitMembersQuery.Query()
 	if err != nil {
 		s.logger.Error(`getMembersForBoard ERROR`, mlog.Err(err))
 		return nil, err
