@@ -642,6 +642,29 @@ func (s *SQLStore) getMemberForBoard(db sq.BaseRunner, boardID, userID string) (
 	return members[0], nil
 }
 
+func (s *SQLStore) implicitBoardMembershipsFromRows(rows *sql.Rows) ([]*model.BoardMember, error) {
+	boardMembers := []*model.BoardMember{}
+
+	for rows.Next() {
+		var boardMember model.BoardMember
+
+		err := rows.Scan(
+			&boardMember.UserID,
+			&boardMember.BoardID,
+		)
+		if err != nil {
+			return nil, err
+		}
+		boardMember.Roles = "editor"
+		boardMember.SchemeEditor = true
+		boardMember.Synthetic = true
+
+		boardMembers = append(boardMembers, &boardMember)
+	}
+
+	return boardMembers, nil
+}
+
 func (s *SQLStore) getMembersForUser(db sq.BaseRunner, userID string) ([]*model.BoardMember, error) {
 	query := s.getQueryBuilder(db).
 		Select(boardMemberFields...).
@@ -649,16 +672,55 @@ func (s *SQLStore) getMembersForUser(db sq.BaseRunner, userID string) ([]*model.
 		LeftJoin(s.tablePrefix + "boards AS B ON B.id=BM.board_id").
 		Where(sq.Eq{"BM.user_id": userID})
 
-	rows, err := query.Query()
+	explicitMemberRows, err := query.Query()
+	if err != nil {
+		s.logger.Error(`getMembersForUser ERROR`, mlog.Err(err))
+		return nil, err
+	}
+	defer s.CloseRows(explicitMemberRows)
+
+	explicitMembers, err := s.boardMembersFromRows(explicitMemberRows)
+	if err != nil {
+		s.logger.Error(`getMembersForUser ERROR`, mlog.Err(err))
+		return nil, err
+	}
+
+	user, err := s.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+	if user.IsGuest {
+		return explicitMembers, nil
+	}
+
+	implicitMembersQuery := s.getQueryBuilder(db).
+		Select("CM.userID, B.Id").
+		From(s.tablePrefix + "boards AS B").
+		Join("ChannelMembers AS CM ON B.channel_id=CM.channelId").
+		Where(sq.Eq{"CM.userID": userID})
+
+	rows, err := implicitMembersQuery.Query()
 	if err != nil {
 		s.logger.Error(`getMembersForUser ERROR`, mlog.Err(err))
 		return nil, err
 	}
 	defer s.CloseRows(rows)
 
-	members, err := s.boardMembersFromRows(rows)
+	members := []*model.BoardMember{}
+	existingMembers := map[string]bool{}
+	for _, m := range explicitMembers {
+		members = append(members, m)
+		existingMembers[m.BoardID] = true
+	}
+
+	implicitMembers, err := s.implicitBoardMembershipsFromRows(rows)
 	if err != nil {
 		return nil, err
+	}
+	for _, m := range implicitMembers {
+		if !existingMembers[m.BoardID] {
+			members = append(members, m)
+		}
 	}
 
 	return members, nil
@@ -671,14 +733,55 @@ func (s *SQLStore) getMembersForBoard(db sq.BaseRunner, boardID string) ([]*mode
 		LeftJoin(s.tablePrefix + "boards AS B ON B.id=BM.board_id").
 		Where(sq.Eq{"BM.board_id": boardID})
 
-	rows, err := query.Query()
+	explicitMemberRows, err := query.Query()
+	if err != nil {
+		s.logger.Error(`getMembersForBoard ERROR`, mlog.Err(err))
+		return nil, err
+	}
+	defer s.CloseRows(explicitMemberRows)
+
+	explicitMembers, err := s.boardMembersFromRows(explicitMemberRows)
+	if err != nil {
+		s.logger.Error(`getMembersForBoard ERROR`, mlog.Err(err))
+		return nil, err
+	}
+
+	implicitMembersQuery := s.getQueryBuilder(db).
+		Select("CM.userID, B.Id").
+		From(s.tablePrefix + "boards AS B").
+		Join("ChannelMembers AS CM ON B.channel_id=CM.channelId").
+		Join("Users as U on CM.userID = U.id").
+		LeftJoin("Bots as bo on U.id = bo.UserID").
+		Where(sq.Eq{"B.id": boardID}).
+		Where(sq.NotEq{"B.channel_id": ""}).
+		// Filter out guests as they don't have synthetic membership
+		Where(sq.NotEq{"U.roles": "system_guest"}).
+		Where(sq.Eq{"bo.UserId IS NOT NULL": false})
+
+	rows, err := implicitMembersQuery.Query()
 	if err != nil {
 		s.logger.Error(`getMembersForBoard ERROR`, mlog.Err(err))
 		return nil, err
 	}
 	defer s.CloseRows(rows)
 
-	return s.boardMembersFromRows(rows)
+	implicitMembers, err := s.implicitBoardMembershipsFromRows(rows)
+	if err != nil {
+		return nil, err
+	}
+	members := []*model.BoardMember{}
+	existingMembers := map[string]bool{}
+	for _, m := range explicitMembers {
+		members = append(members, m)
+		existingMembers[m.UserID] = true
+	}
+	for _, m := range implicitMembers {
+		if !existingMembers[m.UserID] {
+			members = append(members, m)
+		}
+	}
+
+	return members, nil
 }
 
 func (s *SQLStore) getBoardHistory(db sq.BaseRunner, boardID string, opts model.QueryBoardHistoryOptions) ([]*model.Board, error) {
