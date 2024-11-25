@@ -568,7 +568,6 @@ func (s *SQLStore) getMemberForBoard(db sq.BaseRunner, boardID, userID string) (
 	defer s.CloseRows(rows)
 
 	members, err := s.boardMembersFromRows(rows)
-	fmt.Println("members", members)
 	if err != nil {
 		return nil, err
 	}
