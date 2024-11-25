@@ -86,7 +86,9 @@ const Comment: FC<Props> = (props: Props) => {
                     </MenuWrapper>
                 )}
             </div>
-            {formattedText}
+            <div className='comment-markdown'>
+                {formattedText}
+            </div>
         </div>
     )
 }

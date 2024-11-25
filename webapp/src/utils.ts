@@ -309,10 +309,6 @@ class Utils {
     }
 
     static getMarkdownRenderer(): marked.Renderer {
-        marked.setOptions({
-            gfm: true,
-            breaks: true,
-        })
         const renderer = new marked.Renderer()
         renderer.link = (href, title, contents) => {
             return '<a ' +

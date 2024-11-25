@@ -64,4 +64,8 @@
     .comment-text * {
         user-select: text;
     }
+
+    .comment-markdown {
+        white-space: pre-wrap;
+    }
 }
