@@ -118,9 +118,13 @@ exports[`components/cardDetail/comment return comment 1`] = `
       </div>
     </div>
     <div
-      class="mocked-message-html"
+      class="comment-markdown"
     >
-      Test Comment
+      <div
+        class="mocked-message-html"
+      >
+        Test Comment
+      </div>
     </div>
   </div>
 </div>
@@ -244,9 +248,13 @@ exports[`components/cardDetail/comment return comment and delete comment 1`] = `
       </div>
     </div>
     <div
-      class="mocked-message-html"
+      class="comment-markdown"
     >
-      Test Comment
+      <div
+        class="mocked-message-html"
+      >
+        Test Comment
+      </div>
     </div>
   </div>
 </div>
@@ -281,9 +289,13 @@ exports[`components/cardDetail/comment return comment readonly 1`] = `
       </div>
     </div>
     <div
-      class="mocked-message-html"
+      class="comment-markdown"
     >
-      Test Comment
+      <div
+        class="mocked-message-html"
+      >
+        Test Comment
+      </div>
     </div>
   </div>
 </div>
@@ -416,9 +428,13 @@ exports[`components/cardDetail/comment return guest comment 1`] = `
       </div>
     </div>
     <div
-      class="mocked-message-html"
+      class="comment-markdown"
     >
-      Test Comment
+      <div
+        class="mocked-message-html"
+      >
+        Test Comment
+      </div>
     </div>
   </div>
 </div>
@@ -551,9 +567,13 @@ exports[`components/cardDetail/comment return guest comment and delete comment 1
       </div>
     </div>
     <div
-      class="mocked-message-html"
+      class="comment-markdown"
     >
-      Test Comment
+      <div
+        class="mocked-message-html"
+      >
+        Test Comment
+      </div>
     </div>
   </div>
 </div>
@@ -597,9 +617,13 @@ exports[`components/cardDetail/comment return guest comment readonly 1`] = `
       </div>
     </div>
     <div
-      class="mocked-message-html"
+      class="comment-markdown"
     >
-      Test Comment
+      <div
+        class="mocked-message-html"
+      >
+        Test Comment
+      </div>
     </div>
   </div>
 </div>
