@@ -308,6 +308,28 @@ class Utils {
         return this.htmlFromMarkdownWithRenderer(text, renderer)
     }
 
+    static getMarkdownRenderer(): marked.Renderer {
+        marked.setOptions({
+            gfm: true,
+            breaks: true,
+        })
+        const renderer = new marked.Renderer()
+        renderer.link = (href, title, contents) => {
+            return '<a ' +
+                'target="_blank" ' +
+                'rel="noreferrer" ' +
+                `href="${encodeURI(decodeURI(href || ''))}" ` +
+                `title="${title || ''}" ` +
+                `onclick="${(window.openInNewBrowser ? ' openInNewBrowser && openInNewBrowser(event.target.href);' : '')}"` +
+            '>' + contents + '</a>'
+        }
+
+        renderer.table = (header, body) => {
+            return `<div class="table-responsive"><table class="markdown__table"><thead>${header}</thead><tbody>${body}</tbody></table></div>`
+        } 
+        return renderer
+    }
+
     static htmlFromMarkdownWithRenderer(text: string, renderer: marked.Renderer): string {
         const html = marked(text.replace(/</g, '&lt;'), {renderer, breaks: true})
         return html.trim()
