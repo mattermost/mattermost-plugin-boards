@@ -289,22 +289,7 @@ class Utils {
     // Markdown
 
     static htmlFromMarkdown(text: string): string {
-        // HACKHACK: Somehow, marked doesn't encode angle brackets
-        const renderer = new marked.Renderer()
-        renderer.link = (href, title, contents) => {
-            return '<a ' +
-                'target="_blank" ' +
-                'rel="noreferrer" ' +
-                `href="${encodeURI(decodeURI(href || ''))}" ` +
-                `title="${title || ''}" ` +
-                `onclick="${(window.openInNewBrowser ? ' openInNewBrowser && openInNewBrowser(event.target.href);' : '')}"` +
-            '>' + contents + '</a>'
-        }
-
-        renderer.table = (header, body) => {
-            return `<div class="table-responsive"><table class="markdown__table"><thead>${header}</thead><tbody>${body}</tbody></table></div>`
-        }
-
+        const renderer = this.getMarkdownRenderer() 
         return this.htmlFromMarkdownWithRenderer(text, renderer)
     }
 
