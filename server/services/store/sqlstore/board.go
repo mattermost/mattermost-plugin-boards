@@ -637,6 +637,7 @@ func (s *SQLStore) getMemberForBoard(db sq.BaseRunner, boardID, userID string) (
 				Synthetic:       true,
 			}, nil
 		}
+		return nil, nil
 	}
 
 	return members[0], nil
