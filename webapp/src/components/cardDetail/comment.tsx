@@ -44,9 +44,8 @@ const Comment: FC<Props> = (props: Props) => {
     const formattedText = 
     <Provider store={(window as any).store}>
         {messageHtmlToComponent(formatText(comment.title, {
-            singleline: false,
+            renderer: Utils.getMarkdownRenderer(),
             atMentions: true,
-            mentionHighlight: false,
             team: selectedTeam,
             channelNamesMap,
         }), {
@@ -87,7 +86,9 @@ const Comment: FC<Props> = (props: Props) => {
                     </MenuWrapper>
                 )}
             </div>
-            {formattedText}
+            <div className='comment-markdown'>
+                {formattedText}
+            </div>
         </div>
     )
 }

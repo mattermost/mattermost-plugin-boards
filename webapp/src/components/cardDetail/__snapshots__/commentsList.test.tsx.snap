@@ -65,9 +65,13 @@ exports[`components/cardDetail/CommentsList comments show up 1`] = `
         </div>
       </div>
       <div
-        class="mocked-message-html"
+        class="comment-markdown"
       >
-        Test Comment
+        <div
+          class="mocked-message-html"
+        >
+          Test Comment
+        </div>
       </div>
     </div>
     <div
@@ -109,9 +113,13 @@ exports[`components/cardDetail/CommentsList comments show up 1`] = `
         </div>
       </div>
       <div
-        class="mocked-message-html"
+        class="comment-markdown"
       >
-        Test Comment
+        <div
+          class="mocked-message-html"
+        >
+          Test Comment
+        </div>
       </div>
     </div>
     <hr
@@ -151,9 +159,13 @@ exports[`components/cardDetail/CommentsList comments show up in readonly mode 1`
         </div>
       </div>
       <div
-        class="mocked-message-html"
+        class="comment-markdown"
       >
-        Test Comment
+        <div
+          class="mocked-message-html"
+        >
+          Test Comment
+        </div>
       </div>
     </div>
     <div
@@ -181,9 +193,13 @@ exports[`components/cardDetail/CommentsList comments show up in readonly mode 1`
         </div>
       </div>
       <div
-        class="mocked-message-html"
+        class="comment-markdown"
       >
-        Test Comment
+        <div
+          class="mocked-message-html"
+        >
+          Test Comment
+        </div>
       </div>
     </div>
     <hr

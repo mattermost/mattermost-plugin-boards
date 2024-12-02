@@ -289,7 +289,11 @@ class Utils {
     // Markdown
 
     static htmlFromMarkdown(text: string): string {
-        // HACKHACK: Somehow, marked doesn't encode angle brackets
+        const renderer = this.getMarkdownRenderer() 
+        return this.htmlFromMarkdownWithRenderer(text, renderer)
+    }
+
+    static getMarkdownRenderer(): marked.Renderer {
         const renderer = new marked.Renderer()
         renderer.link = (href, title, contents) => {
             return '<a ' +
@@ -303,9 +307,8 @@ class Utils {
 
         renderer.table = (header, body) => {
             return `<div class="table-responsive"><table class="markdown__table"><thead>${header}</thead><tbody>${body}</tbody></table></div>`
-        }
-
-        return this.htmlFromMarkdownWithRenderer(text, renderer)
+        } 
+        return renderer
     }
 
     static htmlFromMarkdownWithRenderer(text: string, renderer: marked.Renderer): string {
