@@ -4,7 +4,7 @@
 package boards
 
 import (
-	"path"
+	"path/filepath"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
@@ -54,13 +54,13 @@ func (b *BoardsApp) GenerateSupportData(_ *plugin.Context) ([]*model.FileData, e
 		TotalCards:   cardsCount,
 		ActiveCards:  usedCardsCount,
 	}
-	data, err := yaml.Marshal(diagnostics)
+	body, err := yaml.Marshal(diagnostics)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to marshal diagnostics")
 	}
 
 	return []*model.FileData{{
-		Filename: path.Join(b.manifest.Id, "diagnostics.yaml"),
-		Body:     data,
+		Filename: filepath.Join(b.manifest.Id, "diagnostics.yaml"),
+		Body:     body,
 	}}, result.ErrorOrNil()
 }
