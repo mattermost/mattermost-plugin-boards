@@ -31,20 +31,20 @@ func (b *BoardsApp) GenerateSupportData(_ *plugin.Context) ([]*model.FileData, e
 
 	boardCount, err := b.server.Store().GetBoardCount(true)
 	if err != nil {
-		result = multierror.Append(result, errors.Wrap(err, "Failed to get total board count"))
+		result = multierror.Append(result, errors.Wrap(err, "failed to get total board count"))
 	}
 	activeBoardCount, err := b.server.Store().GetBoardCount(false)
 	if err != nil {
-		result = multierror.Append(result, errors.Wrap(err, "Failed to get active board count"))
+		result = multierror.Append(result, errors.Wrap(err, "failed to get active board count"))
 	}
 
 	cardsCount, err := b.server.Store().GetUsedCardsCount()
 	if err != nil {
-		result = multierror.Append(result, errors.Wrap(err, "Failed to get total cards count"))
+		result = multierror.Append(result, errors.Wrap(err, "failed to get total cards count"))
 	}
 	usedCardsCount, err := b.server.Store().GetUsedCardsCount()
 	if err != nil {
-		result = multierror.Append(result, errors.Wrap(err, "Failed to get active cards count"))
+		result = multierror.Append(result, errors.Wrap(err, "failed to get active cards count"))
 	}
 
 	diagnostics := SupportPacket{
@@ -56,7 +56,7 @@ func (b *BoardsApp) GenerateSupportData(_ *plugin.Context) ([]*model.FileData, e
 	}
 	body, err := yaml.Marshal(diagnostics)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to marshal diagnostics")
+		return nil, errors.Wrap(err, "failed to marshal diagnostics")
 	}
 
 	return []*model.FileData{{
