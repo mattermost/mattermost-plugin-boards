@@ -42,7 +42,7 @@ func (p *Plugin) OnActivate() error {
 
 	adapter := newServiceAPIAdapter(p.API, client.Store, logger)
 
-	boardsApp, err := boards.NewBoardsApp(adapter)
+	boardsApp, err := boards.NewBoardsApp(adapter, manifest)
 	if err != nil {
 		return fmt.Errorf("cannot activate plugin: %w", err)
 	}
@@ -93,6 +93,10 @@ func (p *Plugin) MessageWillBeUpdated(ctx *plugin.Context, newPost, oldPost *mm_
 
 func (p *Plugin) RunDataRetention(nowTime, batchSize int64) (int64, error) {
 	return p.boardsApp.RunDataRetention(nowTime, batchSize)
+}
+
+func (p *Plugin) GenerateSupportData(ctx *plugin.Context) ([]*mm_model.FileData, error) {
+	return p.boardsApp.GenerateSupportData(ctx)
 }
 
 // ServeHTTP demonstrates a plugin that handles HTTP requests by greeting the world.

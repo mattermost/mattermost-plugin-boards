@@ -324,7 +324,7 @@ func (s *PluginTestStore) GetLicense() *mmModel.License {
 	complianceLicense := os.Getenv("FOCALBOARD_UNIT_TESTING_COMPLIANCE")
 	if complianceLicense != "" {
 		if val, err := strconv.ParseBool(complianceLicense); err == nil {
-			license.Features.Compliance = mmModel.NewBool(val)
+			license.Features.Compliance = mmModel.NewPointer(val)
 		}
 	}
 

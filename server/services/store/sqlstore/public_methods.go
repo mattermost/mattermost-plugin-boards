@@ -363,8 +363,8 @@ func (s *SQLStore) GetBoardAndCardByID(blockID string) (*model.Board, *model.Blo
 
 }
 
-func (s *SQLStore) GetBoardCount() (int64, error) {
-	return s.getBoardCount(s.db)
+func (s *SQLStore) GetBoardCount(includeDeleted bool) (int64, error) {
+	return s.getBoardCount(s.db, includeDeleted)
 
 }
 
@@ -400,6 +400,11 @@ func (s *SQLStore) GetBoardsInTeamByIds(boardIDs []string, teamID string) ([]*mo
 
 func (s *SQLStore) GetCardLimitTimestamp() (int64, error) {
 	return s.getCardLimitTimestamp(s.db)
+
+}
+
+func (s *SQLStore) GetCardsCount() (int64, error) {
+	return s.getCardsCount(s.db)
 
 }
 
@@ -513,7 +518,7 @@ func (s *SQLStore) GetTemplateBoards(teamID string, userID string) ([]*model.Boa
 
 }
 
-func (s *SQLStore) GetUsedCardsCount() (int, error) {
+func (s *SQLStore) GetUsedCardsCount() (int64, error) {
 	return s.getUsedCardsCount(s.db)
 
 }

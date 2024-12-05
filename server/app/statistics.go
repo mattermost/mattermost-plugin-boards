@@ -3,6 +3,6 @@
 
 package app
 
-func (a *App) GetUsedCardsCount() (int, error) {
+func (a *App) GetUsedCardsCount() (int64, error) {
 	return a.store.GetUsedCardsCount()
 }

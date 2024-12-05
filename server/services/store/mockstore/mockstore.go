@@ -570,18 +570,18 @@ func (mr *MockStoreMockRecorder) GetBoardAndCardByID(arg0 interface{}) *gomock.C
 }
 
 // GetBoardCount mocks base method.
-func (m *MockStore) GetBoardCount() (int64, error) {
+func (m *MockStore) GetBoardCount(arg0 bool) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBoardCount")
+	ret := m.ctrl.Call(m, "GetBoardCount", arg0)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetBoardCount indicates an expected call of GetBoardCount.
-func (mr *MockStoreMockRecorder) GetBoardCount() *gomock.Call {
+func (mr *MockStoreMockRecorder) GetBoardCount(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBoardCount", reflect.TypeOf((*MockStore)(nil).GetBoardCount))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBoardCount", reflect.TypeOf((*MockStore)(nil).GetBoardCount), arg0)
 }
 
 // GetBoardHistory mocks base method.
@@ -689,6 +689,21 @@ func (m *MockStore) GetCardLimitTimestamp() (int64, error) {
 func (mr *MockStoreMockRecorder) GetCardLimitTimestamp() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardLimitTimestamp", reflect.TypeOf((*MockStore)(nil).GetCardLimitTimestamp))
+}
+
+// GetCardsCount mocks base method.
+func (m *MockStore) GetCardsCount() (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCardsCount")
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCardsCount indicates an expected call of GetCardsCount.
+func (mr *MockStoreMockRecorder) GetCardsCount() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardsCount", reflect.TypeOf((*MockStore)(nil).GetCardsCount))
 }
 
 // GetCategory mocks base method.
@@ -1021,10 +1036,10 @@ func (mr *MockStoreMockRecorder) GetTemplateBoards(arg0, arg1 interface{}) *gomo
 }
 
 // GetUsedCardsCount mocks base method.
-func (m *MockStore) GetUsedCardsCount() (int, error) {
+func (m *MockStore) GetUsedCardsCount() (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUsedCardsCount")
-	ret0, _ := ret[0].(int)
+	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

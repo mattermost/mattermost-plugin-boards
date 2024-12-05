@@ -555,12 +555,15 @@ func (s *SQLStore) getBlockCountsByType(db sq.BaseRunner) (map[string]int64, err
 	return m, nil
 }
 
-func (s *SQLStore) getBoardCount(db sq.BaseRunner) (int64, error) {
+func (s *SQLStore) getBoardCount(db sq.BaseRunner, includeDeleted bool) (int64, error) {
 	query := s.getQueryBuilder(db).
 		Select("COUNT(*) AS count").
 		From(s.tablePrefix + "boards").
-		Where(sq.Eq{"delete_at": 0}).
 		Where(sq.Eq{"is_template": false})
+
+	if !includeDeleted {
+		query = query.Where(sq.Eq{"delete_at": 0})
+	}
 
 	row := query.QueryRow()
 

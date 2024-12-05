@@ -506,9 +506,17 @@ func TestGetBoardCount(t *testing.T) {
 
 	t.Run("base case", func(t *testing.T) {
 		boardCount := int64(100)
-		th.Store.EXPECT().GetBoardCount().Return(boardCount, nil)
+		th.Store.EXPECT().GetBoardCount(false).Return(boardCount, nil)
 
-		count, err := th.App.GetBoardCount()
+		count, err := th.App.GetBoardCount(false)
+		require.NoError(t, err)
+		require.Equal(t, boardCount, count)
+	})
+	t.Run("include deleted", func(t *testing.T) {
+		boardCount := int64(100)
+		th.Store.EXPECT().GetBoardCount(true).Return(boardCount, nil)
+
+		count, err := th.App.GetBoardCount(true)
 		require.NoError(t, err)
 		require.Equal(t, boardCount, count)
 	})

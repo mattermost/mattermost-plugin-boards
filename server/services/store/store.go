@@ -32,7 +32,7 @@ type Store interface {
 	// @withTransaction
 	UndeleteBoard(boardID string, modifiedBy string) error
 	GetBlockCountsByType() (map[string]int64, error)
-	GetBoardCount() (int64, error)
+	GetBoardCount(includeDeleted bool) (int64, error)
 	GetBlock(blockID string) (*model.Block, error)
 	// @withTransaction
 	PatchBlock(blockID string, blockPatch *model.BlockPatch, userID string) error
@@ -145,7 +145,8 @@ type Store interface {
 	// @withTransaction
 	RunDataRetention(globalRetentionDate int64, batchSize int64) (int64, error)
 
-	GetUsedCardsCount() (int, error)
+	GetCardsCount() (int64, error)
+	GetUsedCardsCount() (int64, error)
 	GetCardLimitTimestamp() (int64, error)
 	UpdateCardLimitTimestamp(cardLimit int) (int64, error)
 
