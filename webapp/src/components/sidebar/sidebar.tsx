@@ -75,6 +75,7 @@ const Sidebar = (props: Props) => {
     const me = useAppSelector<IUser|null>(getMe)
     const activeViewID = useAppSelector(getCurrentViewId)
     const currentBoard = useAppSelector(getCurrentBoard)
+    const [initialized, setInitialized] = useState(false)
 
     useEffect(() => {
         const categoryOnChangeHandler = (_: WSClient, categories: Category[]) => {
@@ -98,11 +99,14 @@ const Sidebar = (props: Props) => {
     const team = useAppSelector(getCurrentTeam)
 
     useEffect(() => {
+        setInitialized(false)
         if (team) {
-            dispatch(fetchSidebarCategories(team!.id))
+            dispatch(fetchSidebarCategories(team!.id)).then(() => {
+                setInitialized(true)
+            })
         }
         loadTheme()
-    }, [team?.id])
+    }, [team?.id, dispatch])
 
     useEffect(() => {
         function handleResize() {
@@ -125,7 +129,7 @@ const Sidebar = (props: Props) => {
     // because there is no good, explicit API call to add this logic to when opening
     // a board that you have implicit access to.
     useEffect(() => {
-        if (!sidebarCategories || sidebarCategories.length === 0 || !currentBoard || !team || currentBoard.isTemplate) {
+        if (!initialized || !sidebarCategories || sidebarCategories.length === 0 || !currentBoard || !team || currentBoard.isTemplate) {
             return
         }
 
@@ -147,7 +151,7 @@ const Sidebar = (props: Props) => {
         }
 
         octoClient.moveBoardToCategory(team.id, currentBoard.id, boardsCategory.id, '')
-    }, [sidebarCategories, currentBoard, team])
+    }, [sidebarCategories, currentBoard, team, initialized])
 
     useWebsockets(teamId, (websocketClient: WSClient) => {
         const onCategoryReorderHandler = (_: WSClient, newCategoryOrder: string[]): void => {
