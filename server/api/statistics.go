@@ -41,7 +41,7 @@ func (a *API) handleStatistics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	boardCount, err := a.app.GetBoardCount()
+	boardCount, err := a.app.GetBoardCount(false)
 	if err != nil {
 		a.errorResponse(w, r, err)
 		return
@@ -53,7 +53,7 @@ func (a *API) handleStatistics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	stats := model.BoardsStatistics{
-		Boards: int(boardCount),
+		Boards: boardCount,
 		Cards:  cardCount,
 	}
 	data, err := json.Marshal(stats)

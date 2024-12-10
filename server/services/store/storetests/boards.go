@@ -1179,7 +1179,7 @@ func testGetBoardCount(t *testing.T, store store.Store) {
 	userID := testUserID
 
 	t.Run("test GetBoardCount", func(t *testing.T) {
-		originalCount, err := store.GetBoardCount()
+		originalCount, err := store.GetBoardCount(false)
 		require.NoError(t, err)
 
 		title := "Board: original title"
@@ -1194,7 +1194,35 @@ func testGetBoardCount(t *testing.T, store store.Store) {
 		_, err = store.InsertBoard(board, userID)
 		require.NoError(t, err)
 
-		newCount, err := store.GetBoardCount()
+		newCount, err := store.GetBoardCount(false)
+		require.NoError(t, err)
+		require.Equal(t, originalCount+1, newCount)
+	})
+
+	t.Run("test GetBoardCount, include deleted", func(t *testing.T) {
+		originalCount, err := store.GetBoardCount(true)
+		require.NoError(t, err)
+
+		title := "Board: original title"
+		boardID := utils.NewID(utils.IDTypeBoard)
+		board := &model.Board{
+			ID:     boardID,
+			Title:  title,
+			TeamID: testTeamID,
+			Type:   model.BoardTypeOpen,
+		}
+
+		_, err = store.InsertBoard(board, userID)
+		require.NoError(t, err)
+
+		newCount, err := store.GetBoardCount(true)
+		require.NoError(t, err)
+		require.Equal(t, originalCount+1, newCount)
+
+		err = store.DeleteBoard(boardID, userID)
+		require.NoError(t, err)
+		// Count should stay the same
+		newCount, err = store.GetBoardCount(true)
 		require.NoError(t, err)
 		require.Equal(t, originalCount+1, newCount)
 	})

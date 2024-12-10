@@ -49,6 +49,8 @@ type BoardsApp struct {
 	// setConfiguration for usage.
 	configuration *configuration
 
+	manifest *mm_model.Manifest
+
 	server          *server.Server
 	wsPluginAdapter ws.PluginAdapterInterface
 
@@ -56,7 +58,7 @@ type BoardsApp struct {
 	logger      mlog.LoggerIFace
 }
 
-func NewBoardsApp(api model.ServicesAPI) (*BoardsApp, error) {
+func NewBoardsApp(api model.ServicesAPI, manifest *mm_model.Manifest) (*BoardsApp, error) {
 	mmconfig := api.GetConfig()
 	logger := api.GetLogger()
 
@@ -153,6 +155,7 @@ func NewBoardsApp(api model.ServicesAPI) (*BoardsApp, error) {
 	*/
 
 	return &BoardsApp{
+		manifest:        manifest,
 		server:          server,
 		wsPluginAdapter: wsPluginAdapter,
 		servicesAPI:     api,
