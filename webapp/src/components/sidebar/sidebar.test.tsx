@@ -7,12 +7,13 @@ import {createMemoryHistory} from 'history'
 import {Provider as ReduxProvider} from 'react-redux'
 import {Router} from 'react-router-dom'
 
-import {render} from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import {render, waitFor} from '@testing-library/react'
 
 import thunk from 'redux-thunk'
 
 import {mocked} from 'jest-mock'
+
+import userEvent from '@testing-library/user-event'
 
 import {mockMatchMedia, wrapIntl} from '../../testUtils'
 
@@ -306,7 +307,7 @@ describe('components/sidebarSidebar', () => {
         expect(sidebarCollapsedCategory.length).toBe(1)
     })
 
-    test('should assign default category if current board doesnt have a category', () => {
+    test('should assign default category if current board doesnt have a category', async () => {
         const board2 = TestBlockFactory.createBoard()
         board2.id = 'board2'
 
@@ -362,7 +363,9 @@ describe('components/sidebarSidebar', () => {
         const {container} = render(component)
         expect(container).toMatchSnapshot()
 
-        expect(mockedOctoClient.moveBoardToCategory).toBeCalledWith('team-id', 'board2', 'default_category', '')
+        await waitFor(() => 
+            expect(mockedOctoClient.moveBoardToCategory).toBeCalledWith('team-id', 'board2', 'default_category', '')
+        )
     })
 
     test('shouldnt do any category assignment is board is in a category', () => {
