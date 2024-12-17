@@ -5,8 +5,6 @@ import {NameMappedObjects} from "mattermost-redux/types/utilities"
 
 import {Channel} from "mattermost-redux/types/channels"
 
-import {Renderer} from "marked"
-
 import {Team} from "./store/teams"
 
 
@@ -14,7 +12,6 @@ type Options = {
     atMentions: boolean;
     team: Team | null;
     channelNamesMap: NameMappedObjects<Channel>;
-    renderer: Renderer;
 }
 
 type Props = {

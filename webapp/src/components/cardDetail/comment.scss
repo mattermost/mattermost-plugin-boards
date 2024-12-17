@@ -65,7 +65,7 @@
         user-select: text;
     }
 
-    .comment-markdown {
+    .comment-markdown > * {
         white-space: pre-wrap;
     }
 }
