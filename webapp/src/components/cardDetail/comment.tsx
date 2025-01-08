@@ -44,7 +44,6 @@ const Comment: FC<Props> = (props: Props) => {
     const formattedText = 
     <Provider store={(window as any).store}>
         {messageHtmlToComponent(formatText(comment.title, {
-            renderer: Utils.getMarkdownRenderer(),
             atMentions: true,
             team: selectedTeam,
             channelNamesMap,
