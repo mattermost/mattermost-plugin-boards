@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         path: "focalboard"
     - name: npm ci
@@ -25,14 +25,14 @@ jobs:
         cd focalboard/webapp && npm ci 
     
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # v5.2.0
       with:
-        go-version: 1.21
+        go-version-file: focalboard/go.mod
 
     - name: Setup Node
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
       with:
-        node-version: 20.11.0
+        node-version-file: focalboard/.nvmrc
 
     - name: Lint & test webapp
       run: cd focalboard; make webapp-ci
