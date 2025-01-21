@@ -308,42 +308,85 @@ func TestStampModificationMetadata(t *testing.T) {
 	})
 }
 func TestValidateBlockPatch(t *testing.T) {
-	validTitle := "Valid Title"
-	invalidTitle := "Invalid Title!@#$"
 
-	t.Run("Valid patch", func(t *testing.T) {
+	t.Run("Should return nil for block patch with valid updated fields", func(t *testing.T) {
 		patch := &BlockPatch{
-			Title: &validTitle,
+			ParentID: nil,
+			Schema:   nil,
+			Type:     nil,
+			Title:    nil,
 			UpdatedFields: map[string]interface{}{
 				"field1": "value1",
-				"field2": "value2",
+				"field2": 123,
 			},
+			DeletedFields: nil,
 		}
 
 		err := ValidateBlockPatch(patch)
+
 		require.NoError(t, err)
 	})
 
-	t.Run("Invalid title", func(t *testing.T) {
+	t.Run("Should return nil for block patch with valid file ID", func(t *testing.T) {
 		patch := &BlockPatch{
-			Title: &invalidTitle,
+			ParentID: nil,
+			Schema:   nil,
+			Type:     nil,
+			Title:    nil,
+			UpdatedFields: map[string]interface{}{
+				"fileId": "xhwgf5r15fr3dryfozf1dmy41r9.jpg",
+			},
+			DeletedFields: nil,
 		}
 
 		err := ValidateBlockPatch(patch)
-		require.Error(t, err)
-		require.EqualError(t, err, "invalid characters in block title for block ID=block_id on BoardID=board_id")
+
+		require.NoError(t, err)
 	})
 
-	t.Run("Invalid updated fields", func(t *testing.T) {
+	t.Run("Should return error for block patch with invalid file ID", func(t *testing.T) {
 		patch := &BlockPatch{
+			ParentID: nil,
+			Schema:   nil,
+			Type:     nil,
+			Title:    nil,
 			UpdatedFields: map[string]interface{}{
-				"field1": "value1",
-				"field2": "../path/to/file",
+				"fileId": "../../../.../../././././././././filePath",
 			},
+			DeletedFields: nil,
 		}
 
 		err := ValidateBlockPatch(patch)
+
 		require.Error(t, err)
-		require.EqualError(t, err, "invalid characters in block with value: field2 for block ID=block_id on BoardID=board_id")
+		require.EqualError(t, err, "Invalid Block ID")
+	})
+}
+func TestValidateFileId(t *testing.T) {
+	t.Run("Should return nil for valid file ID", func(t *testing.T) {
+		fileID := "xhwgf5r15fr3dryfozf1dmy41r9.jpg"
+		err := ValidateFileId(fileID)
+		require.NoError(t, err)
+	})
+
+	t.Run("Should return error for empty file ID", func(t *testing.T) {
+		fileID := ""
+		err := ValidateFileId(fileID)
+		require.Error(t, err)
+		require.EqualError(t, err, "Block ID cannot be empty")
+	})
+
+	t.Run("Should return error for invalid file ID length", func(t *testing.T) {
+		fileID := "xhwgf5r15fr3dryfozf1dmy41r9"
+		err := ValidateFileId(fileID)
+		require.Error(t, err)
+		require.EqualError(t, err, "Invalid Block ID")
+	})
+
+	t.Run("Should return error for file ID with invalid characters", func(t *testing.T) {
+		fileID := "../../../.../../././././././././filePath"
+		err := ValidateFileId(fileID)
+		require.Error(t, err)
+		require.EqualError(t, err, "Invalid Block ID")
 	})
 }

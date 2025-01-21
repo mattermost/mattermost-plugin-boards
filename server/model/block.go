@@ -7,19 +7,23 @@ import (
 	"io"
 	"regexp"
 	"strconv"
-	"strings"
 	"unicode/utf8"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/services/audit"
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 )
 
 const (
+	MinIdLength         = 27
 	BlockTitleMaxBytes  = 65535                  // Maximum size of a TEXT column in MySQL
 	BlockTitleMaxRunes  = BlockTitleMaxBytes / 4 // Assume a worst-case representation
 	BlockFieldsMaxRunes = 800000
+	FileId              = "fileId"
 )
 
 var (
+	errEmptyId                      = NewErrBadRequest("Block ID cannot be empty")
+	errInvalidId                    = NewErrBadRequest("Invalid Block ID")
 	ErrBlockEmptyBoardID            = errors.New("boardID is empty")
 	ErrBlockTitleSizeLimitExceeded  = errors.New("block title size limit exceeded")
 	ErrBlockFieldsSizeLimitExceeded = errors.New("block fields size limit exceeded")
@@ -166,19 +170,23 @@ func (b *Block) IsValid() error {
 
 var safeInputPattern = regexp.MustCompile(`^[a-zA-Z0-9 _-]+$`)
 
-func containsUnsafePath(input string) bool {
-	return strings.Contains(input, "..") || strings.Contains(input, "/") || strings.Contains(input, "%00")
+func ValidateFileId(id string) error {
+	if id == "" {
+		return errEmptyId
+	}
+
+	if len(id) < MinIdLength {
+		return errInvalidId
+	}
+
+	if !mmModel.IsValidId(id[1:28]) {
+		return errInvalidId
+	}
+
+	return nil
 }
 
 func ValidateBlockPatch(patch *BlockPatch) error {
-	// Validate Title
-	if patch.Title != nil {
-		if !safeInputPattern.MatchString(*patch.Title) {
-			message := fmt.Sprintf("invalid characters in block title: %s", *patch.Title)
-			return NewErrBadRequest(message)
-		}
-	}
-
 	// Validate UpdatedFields map
 	if patch.UpdatedFields != nil {
 		if err := validateUpdatedFields(patch.UpdatedFields); err != nil {
@@ -197,10 +205,11 @@ func validateUpdatedFields(fields map[string]interface{}) error {
 			return NewErrBadRequest(message)
 		}
 
-		if strVal, ok := value.(string); ok {
-			if containsUnsafePath(strVal) {
-				message := fmt.Sprintf("invalid characters in block with value: %s", key)
-				return NewErrBadRequest(message)
+		if key == FileId {
+			if strVal, ok := value.(string); ok {
+				if err := ValidateFileId(strVal); err != nil {
+					return err
+				}
 			}
 		}
 
