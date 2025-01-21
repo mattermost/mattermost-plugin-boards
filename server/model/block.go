@@ -189,10 +189,9 @@ func ValidateBlockPatch(patch *BlockPatch) error {
 	return nil
 }
 
-// validateUpdatedFields recursively checks keys and values for unsafe content
+// validateUpdatedFields recursively checks keys and values for unsafe content.
 func validateUpdatedFields(fields map[string]interface{}) error {
 	for key, value := range fields {
-
 		if !safeInputPattern.MatchString(key) {
 			message := fmt.Sprintf("invalid characters in block with key: %s", key)
 			return NewErrBadRequest(message)
