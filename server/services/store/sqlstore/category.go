@@ -218,7 +218,7 @@ func (s *SQLStore) reorderCategories(db sq.BaseRunner, userID, teamID string, ne
 
 	updateCase := sq.Case("id")
 	for i, categoryID := range newCategoryOrder {
-		updateCase = updateCase.When("'"+categoryID+"'", sq.Expr(fmt.Sprintf("%d", i*categorySortOrderGap)))
+		updateCase = updateCase.When(sq.Expr("?", categoryID), sq.Expr(fmt.Sprintf("%d", i*categorySortOrderGap)))
 	}
 	updateCase = updateCase.Else("sort_order")
 
