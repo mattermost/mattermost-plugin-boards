@@ -203,7 +203,7 @@ func (a *App) CopyAndUpdateCardFiles(boardID, userID string, blocks []*model.Blo
 	for _, block := range blocks {
 		if block.Type == model.TypeImage || block.Type == model.TypeAttachment {
 			if fileID, ok := block.Fields["fileId"].(string); ok {
-				if err = model.ValidateFileId(block.Fields["fileId"].(string)); err != nil {
+				if err = model.ValidateFileId(fileID); err != nil {
 					blockIDs = append(blockIDs, block.ID)
 					blockPatches = append(blockPatches, model.BlockPatch{
 						UpdatedFields: map[string]interface{}{
@@ -213,6 +213,21 @@ func (a *App) CopyAndUpdateCardFiles(boardID, userID string, blocks []*model.Blo
 					})
 				} else {
 					errMessage := fmt.Sprintf("invalid characters in block with key: %s, %s", block.Fields["fileId"], err)
+					return model.NewErrBadRequest(errMessage)
+				}
+			}
+
+			if attachmentID, ok := block.Fields["attachmentId"].(string); ok {
+				if err = model.ValidateFileId(attachmentID); err != nil {
+					blockIDs = append(blockIDs, block.ID)
+					blockPatches = append(blockPatches, model.BlockPatch{
+						UpdatedFields: map[string]interface{}{
+							"attachmentId": newFileNames[attachmentID],
+						},
+						DeletedFields: []string{"fileId"},
+					})
+				} else {
+					errMessage := fmt.Sprintf("invalid characters in block with key: %s, %s", block.Fields["attachmentId"], err)
 					return model.NewErrBadRequest(errMessage)
 				}
 			}

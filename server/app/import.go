@@ -82,6 +82,7 @@ func (a *App) ImportArchive(r io.Reader, opt model.ImportArchiveOptions) error {
 			boardMap[dir] = board
 		default:
 			// import file/image;  dir is the old board id
+
 			board, ok := boardMap[dir]
 			if !ok {
 				a.logger.Warn("skipping orphan image in archive",
@@ -210,6 +211,19 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 					}
 					block.ModifiedBy = userID
 					block.UpdateAt = now
+					if block.Type == model.TypeImage || block.Type == model.TypeAttachment {
+						if fileID, ok := block.Fields["fileId"].(string); ok {
+							if err := model.ValidateFileId(fileID); err != nil {
+								return nil, err
+							}
+						}
+
+						if attachmentId, ok := block.Fields["attachmentId"].(string); ok {
+							if err := model.ValidateFileId(attachmentId); err != nil {
+								return nil, err
+							}
+						}
+					}
 					board, err := a.blockToBoard(block, opt)
 					if err != nil {
 						return nil, fmt.Errorf("cannot convert archive line %d to block: %w", lineNum, err)
@@ -224,6 +238,19 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 					block.ModifiedBy = userID
 					block.UpdateAt = now
 					block.BoardID = boardID
+					if block.Type == model.TypeImage || block.Type == model.TypeAttachment {
+						if fileID, ok := block.Fields["fileId"].(string); ok {
+							if err := model.ValidateFileId(fileID); err != nil {
+								return nil, err
+							}
+						}
+
+						if attachmentId, ok := block.Fields["attachmentId"].(string); ok {
+							if err := model.ValidateFileId(attachmentId); err != nil {
+								return nil, err
+							}
+						}
+					}
 					boardsAndBlocks.Blocks = append(boardsAndBlocks.Blocks, block)
 				case "boardMember":
 					var boardMember *model.BoardMember
