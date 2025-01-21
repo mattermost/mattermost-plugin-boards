@@ -360,6 +360,45 @@ func TestValidateBlockPatch(t *testing.T) {
 		require.Error(t, err)
 		require.EqualError(t, err, "Invalid Block ID")
 	})
+
+	t.Run("Should return erro for blok patch with invalid attachment ID", func(t *testing.T) {
+		patch := &BlockPatch{
+			ParentID: nil,
+			Schema:   nil,
+			Type:     nil,
+			Title:    nil,
+			UpdatedFields: map[string]interface{}{
+				"attchmentId": "../../../.../../././././././././filePath",
+			},
+			DeletedFields: nil,
+		}
+
+		err := ValidateBlockPatch(patch)
+
+		require.Error(t, err)
+		require.EqualError(t, err, "Invalid Block ID")
+	})
+
+	t.Run("Should return error for block patch with nested UpdatedFields", func(t *testing.T) {
+		patch := &BlockPatch{
+			ParentID: nil,
+			Schema:   nil,
+			Type:     nil,
+			Title:    nil,
+			UpdatedFields: map[string]interface{}{
+				"0": "value1",
+				"1": map[string]interface{}{
+					"fileId": "../../../.../../././././././././filePath",
+				},
+			},
+			DeletedFields: nil,
+		}
+
+		err := ValidateBlockPatch(patch)
+
+		require.Error(t, err)
+		require.EqualError(t, err, "Invalid Block ID")
+	})
 }
 func TestValidateFileId(t *testing.T) {
 	t.Run("Should return nil for valid file ID", func(t *testing.T) {

@@ -14,11 +14,12 @@ import (
 )
 
 const (
-	MinIdLength         = 27
-	BlockTitleMaxBytes  = 65535                  // Maximum size of a TEXT column in MySQL
-	BlockTitleMaxRunes  = BlockTitleMaxBytes / 4 // Assume a worst-case representation
-	BlockFieldsMaxRunes = 800000
-	FileId              = "fileId"
+	MinIdLength            = 27
+	BlockTitleMaxBytes     = 65535                  // Maximum size of a TEXT column in MySQL
+	BlockTitleMaxRunes     = BlockTitleMaxBytes / 4 // Assume a worst-case representation
+	BlockFieldsMaxRunes    = 800000
+	BlockFieldFileId       = "fileId"
+	BlockFieldAttachmentId = "attachmentId"
 )
 
 var (
@@ -165,6 +166,18 @@ func (b *Block) IsValid() error {
 		return ErrBlockFieldsSizeLimitExceeded
 	}
 
+	if fileID, ok := b.Fields[BlockFieldFileId].(string); ok {
+		if err = ValidateFileId(fileID); err != nil {
+			return err
+		}
+	}
+
+	if attachmentId, ok := b.Fields[BlockFieldAttachmentId].(string); ok {
+		if err = ValidateFileId(attachmentId); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -205,7 +218,15 @@ func validateUpdatedFields(fields map[string]interface{}) error {
 			return NewErrBadRequest(message)
 		}
 
-		if key == FileId {
+		if key == BlockFieldFileId {
+			if strVal, ok := value.(string); ok {
+				if err := ValidateFileId(strVal); err != nil {
+					return err
+				}
+			}
+		}
+
+		if key == BlockFieldAttachmentId {
 			if strVal, ok := value.(string); ok {
 				if err := ValidateFileId(strVal); err != nil {
 					return err

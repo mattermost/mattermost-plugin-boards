@@ -209,7 +209,7 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 					if err2 := json.Unmarshal(archiveLine.Data, &block); err2 != nil {
 						return nil, fmt.Errorf("invalid board block in archive line %d: %w", lineNum, err2)
 					}
-					if err := validateAttachmentIfPresent(block); err != nil {
+					if err := block.IsValid(); err != nil {
 						return nil, err
 					}
 					block.ModifiedBy = userID
@@ -225,7 +225,7 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 					if err2 := json.Unmarshal(archiveLine.Data, &block); err2 != nil {
 						return nil, fmt.Errorf("invalid block in archive line %d: %w", lineNum, err2)
 					}
-					if err := validateAttachmentIfPresent(block); err != nil {
+					if err := block.IsValid(); err != nil {
 						return nil, err
 					}
 					block.ModifiedBy = userID
@@ -307,23 +307,6 @@ func (a *App) addUserToNewBoard(boardsAndBlocks *model.BoardsAndBlocks, opt mode
 			}
 			if _, err2 := a.AddMemberToBoard(bm); err2 != nil {
 				return fmt.Errorf("cannot add member to board: %w", err2)
-			}
-		}
-	}
-	return nil
-}
-
-func validateAttachmentIfPresent(block *model.Block) error {
-	if block.Type == model.TypeImage || block.Type == model.TypeAttachment {
-		if fileID, ok := block.Fields["fileId"].(string); ok {
-			if err := model.ValidateFileId(fileID); err != nil {
-				return err
-			}
-		}
-
-		if attachmentId, ok := block.Fields["attachmentId"].(string); ok {
-			if err := model.ValidateFileId(attachmentId); err != nil {
-				return err
 			}
 		}
 	}

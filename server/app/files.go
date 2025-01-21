@@ -202,32 +202,32 @@ func (a *App) CopyAndUpdateCardFiles(boardID, userID string, blocks []*model.Blo
 	blockPatches := make([]model.BlockPatch, 0)
 	for _, block := range blocks {
 		if block.Type == model.TypeImage || block.Type == model.TypeAttachment {
-			if fileID, ok := block.Fields["fileId"].(string); ok {
-				if err = model.ValidateFileId(fileID); err != nil {
+			if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok {
+				if err = model.ValidateFileId(fileID); err == nil {
 					blockIDs = append(blockIDs, block.ID)
 					blockPatches = append(blockPatches, model.BlockPatch{
 						UpdatedFields: map[string]interface{}{
-							"fileId": newFileNames[fileID],
+							model.BlockFieldFileId: newFileNames[fileID],
 						},
-						DeletedFields: []string{"attachmentId"},
+						DeletedFields: []string{model.BlockFieldAttachmentId},
 					})
 				} else {
-					errMessage := fmt.Sprintf("invalid characters in block with key: %s, %s", block.Fields["fileId"], err)
+					errMessage := fmt.Sprintf("invalid characters in block with key: %s, %s", block.Fields[model.BlockFieldFileId], err)
 					return model.NewErrBadRequest(errMessage)
 				}
 			}
 
-			if attachmentID, ok := block.Fields["attachmentId"].(string); ok {
-				if err = model.ValidateFileId(attachmentID); err != nil {
+			if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok {
+				if err = model.ValidateFileId(attachmentID); err == nil {
 					blockIDs = append(blockIDs, block.ID)
 					blockPatches = append(blockPatches, model.BlockPatch{
 						UpdatedFields: map[string]interface{}{
-							"attachmentId": newFileNames[attachmentID],
+							model.BlockFieldAttachmentId: newFileNames[attachmentID],
 						},
-						DeletedFields: []string{"fileId"},
+						DeletedFields: []string{model.BlockFieldFileId},
 					})
 				} else {
-					errMessage := fmt.Sprintf("invalid characters in block with key: %s, %s", block.Fields["attachmentId"], err)
+					errMessage := fmt.Sprintf("invalid characters in block with key: %s, %s", block.Fields[model.BlockFieldAttachmentId], err)
 					return model.NewErrBadRequest(errMessage)
 				}
 			}

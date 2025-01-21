@@ -250,20 +250,9 @@ func (a *API) handlePostBlocks(w http.ResponseWriter, r *http.Request) {
 			hasContents = true
 		}
 
-		if block.Type == model.TypeImage || block.Type == model.TypeAttachment {
-			if fileID, ok := block.Fields["fileId"].(string); ok {
-				if err = model.ValidateFileId(fileID); err != nil {
-					a.errorResponse(w, r, err)
-					return
-				}
-			}
-
-			if attachmentId, ok := block.Fields["attachmentId"].(string); ok {
-				if err = model.ValidateFileId(attachmentId); err != nil {
-					a.errorResponse(w, r, err)
-					return
-				}
-			}
+		if err = block.IsValid(); err != nil {
+			a.errorResponse(w, r, err)
+			return
 		}
 
 		if block.CreateAt < 1 {
