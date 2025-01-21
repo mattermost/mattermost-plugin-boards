@@ -251,9 +251,11 @@ func (a *API) handlePostBlocks(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if block.Type == model.TypeImage || block.Type == model.TypeAttachment {
-			if err := model.ValidateFileId(block.Fields["fileId"].(string)); err != nil {
-				a.errorResponse(w, r, err)
-				return
+			if fileID, ok := block.Fields["fileId"].(string); ok {
+				if err = model.ValidateFileId(fileID); err != nil {
+					a.errorResponse(w, r, err)
+					return
+				}
 			}
 		}
 
