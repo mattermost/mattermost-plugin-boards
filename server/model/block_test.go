@@ -308,7 +308,6 @@ func TestStampModificationMetadata(t *testing.T) {
 	})
 }
 func TestValidateBlockPatch(t *testing.T) {
-
 	t.Run("Should return nil for block patch with valid updated fields", func(t *testing.T) {
 		patch := &BlockPatch{
 			ParentID: nil,
