@@ -250,6 +250,13 @@ func (a *API) handlePostBlocks(w http.ResponseWriter, r *http.Request) {
 			hasContents = true
 		}
 
+		if block.Type == model.TypeImage || block.Type == model.TypeAttachment {
+			if err := model.ValidateFileId(block.Fields["fileId"].(string)); err != nil {
+				a.errorResponse(w, r, err)
+				return
+			}
+		}
+
 		if block.CreateAt < 1 {
 			message := fmt.Sprintf("invalid createAt for block id %s", block.ID)
 			a.errorResponse(w, r, model.NewErrBadRequest(message))
