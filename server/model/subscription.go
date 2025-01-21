@@ -56,9 +56,11 @@ func (s *Subscription) IsValid() error {
 	if s == nil {
 		return ErrInvalidSubscription{"cannot be nil"}
 	}
-	if s.BlockID == "" {
-		return ErrInvalidSubscription{"missing block id"}
+
+	if err := IsValidId(s.BlockID); err != nil {
+		return ErrInvalidSubscription{err.Error()}
 	}
+
 	if s.BlockType == "" {
 		return ErrInvalidSubscription{"missing block type"}
 	}

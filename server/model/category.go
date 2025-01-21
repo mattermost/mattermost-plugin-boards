@@ -84,9 +84,14 @@ func (c *Category) Hydrate() {
 	}
 }
 
+func (c *Category) PreCreate() {
+	c.ID = utils.NewID(utils.IDTypeNone)
+	c.CreateAt = utils.GetMillis()
+}
+
 func (c *Category) IsValid() error {
-	if strings.TrimSpace(c.ID) == "" {
-		return NewErrInvalidCategory("category ID cannot be empty")
+	if err := IsValidId(c.ID); err != nil {
+		return NewErrInvalidCategory(err.Error())
 	}
 
 	if strings.TrimSpace(c.Name) == "" {
