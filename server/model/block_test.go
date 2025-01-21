@@ -307,3 +307,43 @@ func TestStampModificationMetadata(t *testing.T) {
 		assert.NotEmpty(t, blocks[0].UpdateAt)
 	})
 }
+func TestValidateBlockPatch(t *testing.T) {
+	validTitle := "Valid Title"
+	invalidTitle := "Invalid Title!@#$"
+
+	t.Run("Valid patch", func(t *testing.T) {
+		patch := &BlockPatch{
+			Title: &validTitle,
+			UpdatedFields: map[string]interface{}{
+				"field1": "value1",
+				"field2": "value2",
+			},
+		}
+
+		err := ValidateBlockPatch(patch)
+		require.NoError(t, err)
+	})
+
+	t.Run("Invalid title", func(t *testing.T) {
+		patch := &BlockPatch{
+			Title: &invalidTitle,
+		}
+
+		err := ValidateBlockPatch(patch)
+		require.Error(t, err)
+		require.EqualError(t, err, "invalid characters in block title for block ID=block_id on BoardID=board_id")
+	})
+
+	t.Run("Invalid updated fields", func(t *testing.T) {
+		patch := &BlockPatch{
+			UpdatedFields: map[string]interface{}{
+				"field1": "value1",
+				"field2": "../path/to/file",
+			},
+		}
+
+		err := ValidateBlockPatch(patch)
+		require.Error(t, err)
+		require.EqualError(t, err, "invalid characters in block with value: field2 for block ID=block_id on BoardID=board_id")
+	})
+}
