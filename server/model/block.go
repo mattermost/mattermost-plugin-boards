@@ -141,8 +141,8 @@ func BlocksFromJSON(data io.Reader) []*Block {
 // IsValid checks the block for errors before inserting, and makes
 // sure it complies with the requirements of a valid block.
 func (b *Block) IsValid() error {
-	if b.BoardID == "" {
-		return ErrBlockEmptyBoardID
+	if err := IsValidId(b.BoardID); err != nil {
+		return err
 	}
 
 	if utf8.RuneCountInString(b.Title) > BlockTitleMaxRunes {

@@ -3,6 +3,8 @@ package model
 import (
 	"time"
 
+	mmModel "github.com/mattermost/mattermost/server/public/model"
+
 	"github.com/mattermost/mattermost/server/v8/channels/utils"
 )
 
@@ -34,13 +36,16 @@ func (s *NotificationHint) IsValid() error {
 	if s == nil {
 		return ErrInvalidNotificationHint{"cannot be nil"}
 	}
-	if s.BlockID == "" {
-		return ErrInvalidNotificationHint{"missing block id"}
+
+	if err := IsValidId(s.BlockID); err != nil {
+		return ErrInvalidNotificationHint{err.Error()}
 	}
+
 	if s.BlockType == "" {
 		return ErrInvalidNotificationHint{"missing block type"}
 	}
-	if s.ModifiedByID == "" {
+
+	if !mmModel.IsValidId(s.ModifiedByID) {
 		return ErrInvalidNotificationHint{"missing modified_by id"}
 	}
 	return nil
