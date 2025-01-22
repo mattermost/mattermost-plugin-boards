@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"io"
 	"time"
+
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 )
 
 type BoardType string
@@ -380,8 +382,8 @@ func (ibe InvalidBoardErr) Error() string {
 }
 
 func (b *Board) IsValid() error {
-	if b.TeamID == "" {
-		return InvalidBoardErr{"empty-team-id"}
+	if !mmModel.IsValidId(b.TeamID) {
+		return InvalidBoardErr{"invalid-team-id"}
 	}
 
 	if !IsBoardTypeValid(b.Type) {

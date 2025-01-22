@@ -18,6 +18,7 @@ func (a *App) GetCategory(categoryID string) (*model.Category, error) {
 }
 
 func (a *App) CreateCategory(category *model.Category) (*model.Category, error) {
+	category.PreCreate()
 	category.Hydrate()
 	if err := category.IsValid(); err != nil {
 		return nil, err

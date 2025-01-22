@@ -73,7 +73,7 @@ check-style: webapp/node_modules
 	@echo Checking for style guide compliance
 
 ifneq ($(HAS_WEBAPP),)
-	cd webapp && npm run check 
+	cd webapp && npm run check
 	cd webapp && npm run check-types
 endif
 
@@ -366,7 +366,7 @@ generate: ## Install and run code generators.
 	cd server; go install github.com/golang/mock/mockgen@v1.6.0
 	cd server; go generate ./...
 
-server-ci: server-lint 
+server-ci: server-lint
 
 server-lint: ## Run linters on server code.
 	@if ! [ -x "$$(command -v golangci-lint)" ]; then \
@@ -413,7 +413,7 @@ swagger: ## Generate swagger API spec and clients based on it.
 
 # ====================================================================================
 # Used for semver bumping
-PROTECTED_BRANCH := main 
+PROTECTED_BRANCH := main
 APP_NAME    := $(shell basename -s .git `git config --get remote.origin.url`)
 CURRENT_VERSION := $(shell git describe --abbrev=0 --tags)
 VERSION_PARTS := $(subst ., ,$(subst v,,$(subst -rc, ,$(CURRENT_VERSION))))

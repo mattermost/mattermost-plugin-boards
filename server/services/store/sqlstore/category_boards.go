@@ -141,7 +141,7 @@ func (s *SQLStore) reorderCategoryBoards(db sq.BaseRunner, categoryID string, ne
 
 	updateCase := sq.Case("board_id")
 	for i, boardID := range newBoardsOrder {
-		updateCase = updateCase.When("'"+boardID+"'", sq.Expr(fmt.Sprintf("%d", i+model.CategoryBoardsSortOrderGap)))
+		updateCase = updateCase.When(sq.Expr("?", boardID), sq.Expr(fmt.Sprintf("%d", i+model.CategoryBoardsSortOrderGap)))
 	}
 	updateCase.Else("sort_order")
 
