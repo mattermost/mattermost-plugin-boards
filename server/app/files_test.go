@@ -524,7 +524,52 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 		Schema:     1,
 		Type:       "image",
 		Title:      "",
-		Fields:     map[string]interface{}{"fileId": "7fileName.jpg"},
+		Fields:     map[string]interface{}{"fileId": "7fileName1234567890987654321.jpg"},
+		CreateAt:   1680725585250,
+		UpdateAt:   1680725585250,
+		DeleteAt:   0,
+		BoardID:    "boardID",
+	}
+
+	validImageBlock := &model.Block{
+		ID:         "validImageBlock",
+		ParentID:   "c3zqnh6fsu3f4mr6hzq9hizwske",
+		CreatedBy:  "6k6ynxdp47dujjhhojw9nqhmyh",
+		ModifiedBy: "6k6ynxdp47dujjhhojw9nqhmyh",
+		Schema:     1,
+		Type:       "image",
+		Title:      "",
+		Fields:     map[string]interface{}{"fileId": "7xhwgf5r15fr3dryfozf1dmy41r9.png"},
+		CreateAt:   1680725585250,
+		UpdateAt:   1680725585250,
+		DeleteAt:   0,
+		BoardID:    "boardID",
+	}
+
+	invalidShortFileIDBlock := &model.Block{
+		ID:         "invalidShortFileIDBlock",
+		ParentID:   "c3zqnh6fsu3f4mr6hzq9hizwske",
+		CreatedBy:  "6k6ynxdp47dujjhhojw9nqhmyh",
+		ModifiedBy: "6k6ynxdp47dujjhhojw9nqhmyh",
+		Schema:     1,
+		Type:       "image",
+		Title:      "",
+		Fields:     map[string]interface{}{"fileId": "7short.png"},
+		CreateAt:   1680725585250,
+		UpdateAt:   1680725585250,
+		DeleteAt:   0,
+		BoardID:    "boardID",
+	}
+
+	emptyFileBlock := &model.Block{
+		ID:         "emptyFileBlock",
+		ParentID:   "c3zqnh6fsu3f4mr6hzq9hizwske",
+		CreatedBy:  "6k6ynxdp47dujjhhojw9nqhmyh",
+		ModifiedBy: "6k6ynxdp47dujjhhojw9nqhmyh",
+		Schema:     1,
+		Type:       "image",
+		Title:      "",
+		Fields:     map[string]interface{}{"fileId": ""},
 		CreateAt:   1680725585250,
 		UpdateAt:   1680725585250,
 		DeleteAt:   0,
@@ -552,5 +597,71 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.NotEqual(t, testPath, imageBlock.Fields["fileId"])
+	})
+
+	t.Run("Valid file ID", func(t *testing.T) {
+		fileInfo := &mm_model.FileInfo{
+			Id:   "validImageBlock",
+			Path: testPath,
+		}
+		th.Store.EXPECT().GetBoard("boardID").Return(&model.Board{ID: "boardID", IsTemplate: false}, nil)
+		th.Store.EXPECT().GetFileInfo("xhwgf5r15fr3dryfozf1dmy41r9").Return(fileInfo, nil)
+		th.Store.EXPECT().SaveFileInfo(fileInfo).Return(nil)
+		th.Store.EXPECT().PatchBlocks(gomock.Any(), "userID").Return(nil)
+
+		mockedFileBackend := &mocks.FileBackend{}
+		th.App.filesBackend = mockedFileBackend
+		mockedFileBackend.On("CopyFile", mock.Anything, mock.Anything).Return(nil)
+
+		err := th.App.CopyAndUpdateCardFiles("boardID", "userID", []*model.Block{validImageBlock}, false)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Invalid file ID length", func(t *testing.T) {
+		th.Store.EXPECT().GetBoard("boardID").Return(&model.Board{ID: "boardID", IsTemplate: false}, nil)
+		err := th.App.CopyAndUpdateCardFiles("boardID", "userID", []*model.Block{invalidShortFileIDBlock}, false)
+		assert.ErrorIs(t, err, model.NewErrBadRequest("Invalid Block ID"))
+	})
+
+	t.Run("Empty file ID", func(t *testing.T) {
+		th.Store.EXPECT().GetBoard("boardID").Return(&model.Board{ID: "boardID", IsTemplate: false}, nil)
+		err := th.App.CopyAndUpdateCardFiles("boardID", "userID", []*model.Block{emptyFileBlock}, false)
+		assert.ErrorIs(t, err, model.NewErrBadRequest("Block ID cannot be empty"))
+	})
+}
+
+func TestCopyCardFiles(t *testing.T) {
+	app := &App{}
+
+	t.Run("ValidFileID", func(t *testing.T) {
+		sourceBoardID := "sourceBoardID"
+		copiedBlocks := []*model.Block{
+			{
+				Type:    model.TypeImage,
+				Fields:  map[string]interface{}{"fileId": "validFileID"},
+				BoardID: "destinationBoardID",
+			},
+		}
+
+		newFileNames, err := app.CopyCardFiles(sourceBoardID, copiedBlocks, false)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, newFileNames)
+	})
+
+	t.Run("InvalidFileID", func(t *testing.T) {
+		sourceBoardID := "sourceBoardID"
+		copiedBlocks := []*model.Block{
+			{
+				Type:    model.TypeImage,
+				Fields:  map[string]interface{}{"fileId": "../../../../../filePath"},
+				BoardID: "destinationBoardID",
+			},
+		}
+
+		newFileNames, err := app.CopyCardFiles(sourceBoardID, copiedBlocks, false)
+
+		assert.Error(t, err)
+		assert.Nil(t, newFileNames)
 	})
 }

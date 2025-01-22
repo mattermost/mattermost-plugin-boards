@@ -3,17 +3,23 @@ package model
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"regexp"
 	"strconv"
 	"unicode/utf8"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/services/audit"
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 )
 
 const (
-	BlockTitleMaxBytes  = 65535                  // Maximum size of a TEXT column in MySQL
-	BlockTitleMaxRunes  = BlockTitleMaxBytes / 4 // Assume a worst-case representation
-	BlockFieldsMaxRunes = 800000
+	MinIdLength            = 27
+	BlockTitleMaxBytes     = 65535                  // Maximum size of a TEXT column in MySQL
+	BlockTitleMaxRunes     = BlockTitleMaxBytes / 4 // Assume a worst-case representation
+	BlockFieldsMaxRunes    = 800000
+	BlockFieldFileId       = "fileId"
+	BlockFieldAttachmentId = "attachmentId"
 )
 
 var (
@@ -158,6 +164,80 @@ func (b *Block) IsValid() error {
 		return ErrBlockFieldsSizeLimitExceeded
 	}
 
+	if fileID, ok := b.Fields[BlockFieldFileId].(string); ok {
+		if err = ValidateFileId(fileID); err != nil {
+			return err
+		}
+	}
+
+	if attachmentId, ok := b.Fields[BlockFieldAttachmentId].(string); ok {
+		if err = ValidateFileId(attachmentId); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+var safeInputPattern = regexp.MustCompile(`^[a-zA-Z0-9 _-]+$`)
+
+func ValidateFileId(id string) error {
+	if id == "" {
+		return errEmptyId
+	}
+
+	if len(id) < MinIdLength {
+		return errInvalidId
+	}
+
+	if !mmModel.IsValidId(id[1:28]) {
+		return errInvalidId
+	}
+
+	return nil
+}
+
+func ValidateBlockPatch(patch *BlockPatch) error {
+	// Validate UpdatedFields map
+	if patch.UpdatedFields != nil {
+		if err := validateUpdatedFields(patch.UpdatedFields); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// validateUpdatedFields recursively checks keys and values for unsafe content.
+func validateUpdatedFields(fields map[string]interface{}) error {
+	for key, value := range fields {
+		if !safeInputPattern.MatchString(key) {
+			message := fmt.Sprintf("invalid characters in block with key: %s", key)
+			return NewErrBadRequest(message)
+		}
+
+		if key == BlockFieldFileId {
+			if strVal, ok := value.(string); ok {
+				if err := ValidateFileId(strVal); err != nil {
+					return err
+				}
+			}
+		}
+
+		if key == BlockFieldAttachmentId {
+			if strVal, ok := value.(string); ok {
+				if err := ValidateFileId(strVal); err != nil {
+					return err
+				}
+			}
+		}
+
+		if nestedMap, ok := value.(map[string]interface{}); ok {
+			if err := validateUpdatedFields(nestedMap); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 

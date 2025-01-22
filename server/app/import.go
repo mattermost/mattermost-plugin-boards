@@ -82,6 +82,7 @@ func (a *App) ImportArchive(r io.Reader, opt model.ImportArchiveOptions) error {
 			boardMap[dir] = board
 		default:
 			// import file/image;  dir is the old board id
+
 			board, ok := boardMap[dir]
 			if !ok {
 				a.logger.Warn("skipping orphan image in archive",
@@ -208,6 +209,9 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 					if err2 := json.Unmarshal(archiveLine.Data, &block); err2 != nil {
 						return nil, fmt.Errorf("invalid board block in archive line %d: %w", lineNum, err2)
 					}
+					if err := block.IsValid(); err != nil {
+						return nil, err
+					}
 					block.ModifiedBy = userID
 					block.UpdateAt = now
 					board, err := a.blockToBoard(block, opt)
@@ -220,6 +224,9 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 					var block *model.Block
 					if err2 := json.Unmarshal(archiveLine.Data, &block); err2 != nil {
 						return nil, fmt.Errorf("invalid block in archive line %d: %w", lineNum, err2)
+					}
+					if err := block.IsValid(); err != nil {
+						return nil, err
 					}
 					block.ModifiedBy = userID
 					block.UpdateAt = now
@@ -263,6 +270,18 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 		return nil, fmt.Errorf("error inserting archive blocks: %w", err)
 	}
 
+	if err := a.addUserToNewBoard(boardsAndBlocks, opt, boardMembers); err != nil {
+		return nil, err
+	}
+
+	// find new board id
+	for _, board := range boardsAndBlocks.Boards {
+		return board, nil
+	}
+	return nil, fmt.Errorf("missing board in archive: %w", model.ErrInvalidBoardBlock)
+}
+
+func (a *App) addUserToNewBoard(boardsAndBlocks *model.BoardsAndBlocks, opt model.ImportArchiveOptions, boardMembers []*model.BoardMember) error {
 	// add users to all the new boards (if not the fake system user).
 	for _, board := range boardsAndBlocks.Boards {
 		// make sure an admin user gets added
@@ -272,7 +291,7 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 			SchemeAdmin: true,
 		}
 		if _, err2 := a.AddMemberToBoard(adminMember); err2 != nil {
-			return nil, fmt.Errorf("cannot add adminMember to board: %w", err2)
+			return fmt.Errorf("cannot add adminMember to board: %w", err2)
 		}
 		for _, boardMember := range boardMembers {
 			bm := &model.BoardMember{
@@ -287,16 +306,11 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 				Synthetic:       boardMember.Synthetic,
 			}
 			if _, err2 := a.AddMemberToBoard(bm); err2 != nil {
-				return nil, fmt.Errorf("cannot add member to board: %w", err2)
+				return fmt.Errorf("cannot add member to board: %w", err2)
 			}
 		}
 	}
-
-	// find new board id
-	for _, board := range boardsAndBlocks.Boards {
-		return board, nil
-	}
-	return nil, fmt.Errorf("missing board in archive: %w", model.ErrInvalidBoardBlock)
+	return nil
 }
 
 // fixBoardsandBlocks allows the caller of `ImportArchive` to modify or filters boards and blocks being

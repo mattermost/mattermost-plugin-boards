@@ -202,14 +202,34 @@ func (a *App) CopyAndUpdateCardFiles(boardID, userID string, blocks []*model.Blo
 	blockPatches := make([]model.BlockPatch, 0)
 	for _, block := range blocks {
 		if block.Type == model.TypeImage || block.Type == model.TypeAttachment {
-			if fileID, ok := block.Fields["fileId"].(string); ok {
-				blockIDs = append(blockIDs, block.ID)
-				blockPatches = append(blockPatches, model.BlockPatch{
-					UpdatedFields: map[string]interface{}{
-						"fileId": newFileNames[fileID],
-					},
-					DeletedFields: []string{"attachmentId"},
-				})
+			if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok {
+				if err = model.ValidateFileId(fileID); err == nil {
+					blockIDs = append(blockIDs, block.ID)
+					blockPatches = append(blockPatches, model.BlockPatch{
+						UpdatedFields: map[string]interface{}{
+							model.BlockFieldFileId: newFileNames[fileID],
+						},
+						DeletedFields: []string{model.BlockFieldAttachmentId},
+					})
+				} else {
+					errMessage := fmt.Sprintf("invalid characters in block with key: %s, %s", block.Fields[model.BlockFieldFileId], err)
+					return model.NewErrBadRequest(errMessage)
+				}
+			}
+
+			if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok {
+				if err = model.ValidateFileId(attachmentID); err == nil {
+					blockIDs = append(blockIDs, block.ID)
+					blockPatches = append(blockPatches, model.BlockPatch{
+						UpdatedFields: map[string]interface{}{
+							model.BlockFieldAttachmentId: newFileNames[attachmentID],
+						},
+						DeletedFields: []string{model.BlockFieldFileId},
+					})
+				} else {
+					errMessage := fmt.Sprintf("invalid characters in block with key: %s, %s", block.Fields[model.BlockFieldAttachmentId], err)
+					return model.NewErrBadRequest(errMessage)
+				}
 			}
 		}
 	}
@@ -254,6 +274,11 @@ func (a *App) CopyCardFiles(sourceBoardID string, copiedBlocks []*model.Block, a
 			if !isOk {
 				continue
 			}
+		}
+
+		if err = model.ValidateFileId(fileID); err != nil {
+			errMessage := fmt.Sprintf("Could not validate file ID while duplicating board with fileId: %s", fileID)
+			return nil, model.NewErrBadRequest(errMessage)
 		}
 
 		// create unique filename
