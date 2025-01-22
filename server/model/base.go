@@ -1,8 +1,6 @@
 package model
 
 import (
-	"errors"
-
 	mmModel "github.com/mattermost/mattermost/server/public/model"
 )
 
@@ -11,8 +9,8 @@ const (
 )
 
 var (
-	errEmptyId   = errors.New("ID cannot be empty")
-	errInvalidId = errors.New("invalid ID")
+	errEmptyId   = NewErrBadRequest("Block ID cannot be empty")
+	errInvalidId = NewErrBadRequest("Invalid Block ID")
 )
 
 func IsValidId(id string) error {

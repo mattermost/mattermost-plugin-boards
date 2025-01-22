@@ -23,8 +23,6 @@ const (
 )
 
 var (
-	errEmptyId                      = NewErrBadRequest("Block ID cannot be empty")
-	errInvalidId                    = NewErrBadRequest("Invalid Block ID")
 	ErrBlockEmptyBoardID            = errors.New("boardID is empty")
 	ErrBlockTitleSizeLimitExceeded  = errors.New("block title size limit exceeded")
 	ErrBlockFieldsSizeLimitExceeded = errors.New("block fields size limit exceeded")
