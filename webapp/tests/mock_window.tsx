@@ -1,3 +1,6 @@
+// Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
+// See LICENSE.txt for license information.
+
 import {Channel} from 'mattermost-redux/types/channels'
 import configureStore from 'redux-mock-store'
 

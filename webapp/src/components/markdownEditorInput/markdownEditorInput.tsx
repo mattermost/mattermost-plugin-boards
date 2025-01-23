@@ -1,5 +1,6 @@
-// Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
+// Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
+
 import Editor from '@draft-js-plugins/editor'
 import createEmojiPlugin from '@draft-js-plugins/emoji'
 import '@draft-js-plugins/emoji/lib/plugin.css'

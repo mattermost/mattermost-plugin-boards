@@ -85,6 +85,8 @@ ifneq ($(HAS_SERVER),)
 
 	@echo Running golangci-lint
 	cd server && golangci-lint run ./...
+	$(GO) install github.com/mattermost/mattermost-govet/v2@3f08281c344327ac09364f196b15f9a81c7eff08
+	$(GO) vet -vettool=$(GOBIN)/mattermost-govet -license -license.year=2020 ./server/...
 endif
 
 templates-archive: ## Build templates archive file
