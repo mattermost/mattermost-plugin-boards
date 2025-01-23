@@ -82,6 +82,7 @@ ifneq ($(HAS_SERVER),)
 		echo "golangci-lint is not installed. Please see https://github.com/golangci/golangci-lint#install-golangci-lint for installation instructions."; \
 		exit 1; \
 	fi; \
+
 	@echo Running golangci-lint
 	cd server && golangci-lint run ./...
 endif
