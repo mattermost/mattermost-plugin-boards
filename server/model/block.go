@@ -194,7 +194,7 @@ func ValidateFileId(id string) error {
 	if mmModel.IsValidId(id[1:27]) {
 		return nil
 	} else if len(id) >= (legacyIDLength + 1) {
-		return legacyIdcCheck(id[1 : legacyIDLength+1])
+		return legacyIdCheck(id[1 : legacyIDLength+1])
 	} else {
 		return errInvalidId
 	}

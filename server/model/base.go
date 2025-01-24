@@ -29,7 +29,7 @@ func IsValidId(id string) error {
 		}
 	case legacyIDLength:
 		{
-			return legacyIdcCheck(id)
+			return legacyIdCheck(id)
 		}
 	default:
 		{
@@ -54,7 +54,7 @@ func newIdCheck(id string) error {
 	return nil
 }
 
-func legacyIdcCheck(id string) error {
+func legacyIdCheck(id string) error {
 	// Check if the ID is empty
 	if id == "" {
 		return errInvalidId
