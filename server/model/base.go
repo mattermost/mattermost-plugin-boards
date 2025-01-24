@@ -1,9 +1,10 @@
 package model
 
 import (
-	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"regexp"
 	"strings"
+
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 )
 
 const (

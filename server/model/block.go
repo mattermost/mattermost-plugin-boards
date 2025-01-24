@@ -190,6 +190,7 @@ func ValidateFileId(id string) error {
 		return errInvalidId
 	}
 
+	//nolint:gocritic
 	if mmModel.IsValidId(id[1:27]) {
 		return nil
 	} else if len(id) >= (legacyIDLength + 1) {
