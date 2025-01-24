@@ -7,11 +7,8 @@ import (
 )
 
 const (
-	IdLength = 27
-
-	legacyIDLength        = 36
-	legacyIdPartSeparator = "-"
-	legacyIdPartCount     = 5
+	IdLength       = 27
+	legacyIDLength = 36
 )
 
 var (
