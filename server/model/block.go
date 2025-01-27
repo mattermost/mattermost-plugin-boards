@@ -190,11 +190,14 @@ func ValidateFileId(id string) error {
 		return errInvalidId
 	}
 
-	if !mmModel.IsValidId(id[1:28]) {
+	//nolint:gocritic
+	if mmModel.IsValidId(id[1:27]) {
+		return nil
+	} else if len(id) >= (legacyIDLength + 1) {
+		return legacyIdCheck(id[1 : legacyIDLength+1])
+	} else {
 		return errInvalidId
 	}
-
-	return nil
 }
 
 func ValidateBlockPatch(patch *BlockPatch) error {
