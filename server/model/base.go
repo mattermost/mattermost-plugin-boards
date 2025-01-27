@@ -24,17 +24,11 @@ func IsValidId(id string) error {
 
 	switch len(id) {
 	case IdLength:
-		{
-			return newIdCheck(id)
-		}
+		return newIdCheck(id)
 	case legacyIDLength:
-		{
-			return legacyIdCheck(id)
-		}
+		return legacyIdCheck(id)
 	default:
-		{
-			return errInvalidId
-		}
+		return errInvalidId
 	}
 }
 
