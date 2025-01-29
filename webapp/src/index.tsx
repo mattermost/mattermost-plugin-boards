@@ -86,42 +86,56 @@ type Props = {
     webSocketClient: MMWebSocketClient
 }
 
+const doBrowserHistoryPush = (path: string) => {
+    if (windowAny.desktopAPI?.sendBrowserHistoryPush) {
+        windowAny.desktopAPI.sendBrowserHistoryPush(path);
+    } else {
+        window.postMessage(
+            {
+                type: 'browser-history-push',
+                message: { path },
+            },
+            window.location.origin,
+        );
+    }
+};
+
+const handleBrowserHistoryPush = (pathName: string, history: ReturnType<typeof createBrowserHistory>) => {
+    if (!pathName || !pathName.startsWith('/boards')) {
+        return;
+    }
+
+    Utils.log(`Navigating Boards to ${pathName}`);
+    history.replace(pathName.replace('/boards', ''));
+};
+
 function customHistory() {
-    const history = createBrowserHistory({basename: Utils.getFrontendBaseURL()})
+    const history = createBrowserHistory({ basename: Utils.getFrontendBaseURL() });
 
     if (Utils.isDesktop()) {
-        window.addEventListener('message', (event: MessageEvent) => {
-            if (event.origin !== windowAny.location.origin) {
-                return
-            }
+        if (windowAny.desktopAPI?.onBrowserHistoryPush) {
+            windowAny.desktopAPI.onBrowserHistoryPush((pathName) => handleBrowserHistoryPush(pathName, history));
+        } else {
+            window.addEventListener('message', (event: MessageEvent) => {
+                if (event.origin !== windowAny.location.origin) {
+                    return;
+                }
 
-            const pathName = event.data.message?.pathName
-            if (!pathName || !pathName.startsWith('/boards')) {
-                return
-            }
-
-            Utils.log(`Navigating Boards to ${pathName}`)
-            history.replace(pathName.replace('/boards', ''))
-        })
+                handleBrowserHistoryPush(event.data.message?.pathName, history);
+            });
+        }
     }
+
     return {
         ...history,
         push: (path: string, state?: unknown) => {
             if (Utils.isDesktop()) {
-                windowAny.postMessage(
-                    {
-                        type: 'browser-history-push',
-                        message: {
-                            path: `${windowAny.frontendBaseURL}${path}`,
-                        },
-                    },
-                    windowAny.location.origin,
-                )
+                doBrowserHistoryPush(`${windowAny.frontendBaseURL}${path}`);
             } else {
-                history.push(path, state as Record<string, never>)
+                history.push(path, state as Record<string, never>);
             }
         },
-    }
+    };
 }
 
 let browserHistory: History<unknown>
