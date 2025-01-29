@@ -1,6 +1,6 @@
-/* eslint-disable */
-// Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
+// Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
+
 import React, {useEffect} from 'react'
 import {createIntl, createIntlCache} from 'react-intl'
 import {Store, Action} from 'redux'
@@ -12,7 +12,7 @@ import {selectTeam} from 'mattermost-redux/actions/teams'
 
 import appBarIcon from '../static/app-bar-icon.png'
 
-import TelemetryClient, {TelemetryActions, TelemetryCategory} from './telemetry/telemetryClient'
+import TelemetryClient from './telemetry/telemetryClient'
 import {setMattermostTheme} from './theme'
 import FocalboardIcon from './widgets/icons/logo'
 import GlobalHeader from './components/globalHeader/globalHeader'
