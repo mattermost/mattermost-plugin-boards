@@ -21,31 +21,54 @@ func TestIsValidId(t *testing.T) {
 			name:      "Empty ID",
 			id:        "",
 			expectErr: true,
-			errMsg:    "ID cannot be empty",
+			errMsg:    "Block ID cannot be empty",
 		},
 		{
 			name:      "Invalid ID length (too short)",
 			id:        "A123",
 			expectErr: true,
-			errMsg:    "invalid ID",
+			errMsg:    "Invalid Block ID",
 		},
 		{
 			name:      "Invalid ID length (too long)",
 			id:        "A12345678901234567890123456789",
 			expectErr: true,
-			errMsg:    "invalid ID",
+			errMsg:    "Invalid Block ID",
 		},
 		{
 			name:      "Invalid ID format (contains special characters)",
 			id:        "A12345678901234567@#$%&*(!",
 			expectErr: true,
-			errMsg:    "invalid ID",
+			errMsg:    "Invalid Block ID",
 		},
 		{
 			name:      "Invalid ID format (empty middle section)",
 			id:        "A                        Z", // Block type + invalid middle
 			expectErr: true,
-			errMsg:    "invalid ID",
+			errMsg:    "Invalid Block ID",
+		},
+		{
+			name:      "Valid legacy ID",
+			id:        "c95fdfa9-4656-45d5-8865-4de6de626a72",
+			expectErr: false,
+		},
+		{
+			name:      "Invalid legacy ID",
+			id:        "fdfa9-4656-45d5-8865-4de6de626a72",
+			expectErr: true,
+			errMsg:    "Invalid Block ID",
+		},
+		{
+			name:      "Invalid legacy ID wth too few parts",
+			id:        "fdfa9-4656-45d5-8865",
+			expectErr: true,
+			errMsg:    "Invalid Block ID",
+		},
+		{
+			name:      "Invalid legacy ID wth non hexadecimal characters",
+			id:        "zdfa9-4656-45d5-8865-4de6de626a72",
+			expectErr: true,
+			errMsg:    "Invalid Block ID",
 		},
 	}
 

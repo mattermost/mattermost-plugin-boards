@@ -1,6 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
+import {DesktopAPI} from "@mattermost/desktop-api"
 
 type TelemetryProps = {
     trackingLocation: string
@@ -26,4 +27,5 @@ export type SuiteWindow = Window & {
     frontendBaseURL?: string
     isFocalboardPlugin?: boolean
     WebappUtils?: any
+    desktopAPI?: Partial<DesktopAPI>
 }

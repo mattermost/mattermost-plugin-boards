@@ -403,9 +403,10 @@ func TestValidateBlockPatch(t *testing.T) {
 		require.EqualError(t, err, "Invalid Block ID")
 	})
 }
+
 func TestValidateFileId(t *testing.T) {
 	t.Run("Should return nil for valid file ID", func(t *testing.T) {
-		fileID := "xhwgf5r15fr3dryfozf1dmy41r9.jpg"
+		fileID := "7xhwgf5r15fr3dryfozf1dmy41r.jpg"
 		err := ValidateFileId(fileID)
 		require.NoError(t, err)
 	})
@@ -418,7 +419,7 @@ func TestValidateFileId(t *testing.T) {
 	})
 
 	t.Run("Should return error for invalid file ID length", func(t *testing.T) {
-		fileID := "xhwgf5r15fr3dryfozf1dmy41r9"
+		fileID := "7xhwgf5r15fr3dryfozf1dy1r9"
 		err := ValidateFileId(fileID)
 		require.Error(t, err)
 		require.EqualError(t, err, "Invalid Block ID")
@@ -428,6 +429,30 @@ func TestValidateFileId(t *testing.T) {
 		fileID := "../../../.../../././././././././filePath"
 		err := ValidateFileId(fileID)
 		require.Error(t, err)
+		require.EqualError(t, err, "Invalid Block ID")
+	})
+
+	t.Run("Should return nil for valid legacy file ID", func(t *testing.T) {
+		fileID := "729928ad8-4f83-1d9b-fdf7-d641616ae47b.jpg"
+		err := ValidateFileId(fileID)
+		require.NoError(t, err)
+	})
+
+	t.Run("Should return nil for valid legacy file ID without extension", func(t *testing.T) {
+		fileID := "729928ad8-4f83-1d9b-fdf7-d641616ae47b"
+		err := ValidateFileId(fileID)
+		require.NoError(t, err)
+	})
+
+	t.Run("Should return nil for valid legacy file ID with arbitrary extension", func(t *testing.T) {
+		fileID := "729928ad8-4f83-1d9b-fdf7-d641616ae47bEXTENSION"
+		err := ValidateFileId(fileID)
+		require.NoError(t, err)
+	})
+
+	t.Run("Should return error for invalid legacy file ID with non-hexadecimal characters", func(t *testing.T) {
+		fileID := "7z9928ad8-4f83-1d9b-fdf7-d641616ae47b"
+		err := ValidateFileId(fileID)
 		require.EqualError(t, err, "Invalid Block ID")
 	})
 }
