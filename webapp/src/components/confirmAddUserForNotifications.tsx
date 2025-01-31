@@ -1,6 +1,7 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
+import {CSSObject} from '@emotion/serialize'
 import React, {useState, useRef} from 'react'
 import Select from 'react-select'
 import {useIntl, FormattedMessage} from 'react-intl'
@@ -19,6 +20,35 @@ type Props = {
     allowManageBoardRoles: boolean
     onConfirm: (userId: string, role: string) => void
     onClose: () => void
+}
+
+const selectStyles = {
+    menuPortal: (base: CSSObject) => ({
+        ...base,
+        zIndex: 9999
+    }),
+    control: (base: CSSObject) => ({
+        ...base,
+        background: 'rgb(var(--center-channel-bg-rgb))',
+        color: 'rgb(var(--center-channel-color-rgb))',
+    }),
+    option: (base: CSSObject, state: { isFocused: boolean }): CSSObject => ({
+        ...base,
+        background: state.isFocused ? 'rgba(var(--center-channel-color-rgb), 0.1) !important' : 'rgb(var(--center-channel-bg-rgb))',
+        color: state.isFocused ? 'rgb(var(--center-channel-color-rgb))' : 'rgb(var(--center-channel-color-rgb))',
+    }),
+    input: (base: CSSObject) => ({
+        ...base,
+        color: 'rgb(var(--center-channel-color-rgb))',
+    }),
+    singleValue: (base: CSSObject) => ({
+        ...base,
+        color: 'rgb(var(--center-channel-color-rgb))',
+    }),
+    menu: (base: CSSObject): CSSObject => ({
+        ...base,
+        background: 'rgb(var(--center-channel-bg-rgb))',
+    }),
 }
 
 const ConfirmAddUserForNotifications = (props: Props): JSX.Element => {
@@ -99,7 +129,7 @@ const ConfirmAddUserForNotifications = (props: Props): JSX.Element => {
                 className='select'
                 getOptionLabel={(o: {id: MemberRole, label: string}) => o.label}
                 getOptionValue={(o: {id: MemberRole, label: string}) => o.id}
-                styles={{menuPortal: (base) => ({...base, zIndex: 9999})}}
+                styles={selectStyles}
                 menuPortalTarget={document.body}
                 isDisabled={!allowManageBoardRoles}
                 options={roleOptions}

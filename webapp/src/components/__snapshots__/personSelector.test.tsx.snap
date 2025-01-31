@@ -22,7 +22,7 @@ exports[`properties/person not readOnly, show firstname 1`] = `
         class="react-select__value-container react-select__value-container--has-value css-1gbdvdc-ValueContainer"
       >
         <div
-          class="react-select__single-value css-qosd1h-singleValue"
+          class="react-select__single-value css-37w7ka-singleValue"
         >
           <div
             class="Person-item"
@@ -31,7 +31,7 @@ exports[`properties/person not readOnly, show firstname 1`] = `
           </div>
         </div>
         <div
-          class="react-select__input-container css-1p5v8kp-Input"
+          class="react-select__input-container css-189c2ni-Input"
           data-value=""
         >
           <input
@@ -135,7 +135,7 @@ exports[`properties/person not readOnly, show me 1`] = `
           Empty
         </div>
         <div
-          class="react-select__input-container css-1p5v8kp-Input"
+          class="react-select__input-container css-189c2ni-Input"
           data-value=""
         >
           <input
@@ -282,7 +282,7 @@ exports[`properties/person not readOnly, show me 2`] = `
           Empty
         </div>
         <div
-          class="react-select__input-container css-1p5v8kp-Input"
+          class="react-select__input-container css-189c2ni-Input"
           data-value=""
         >
           <input
@@ -420,7 +420,7 @@ exports[`properties/person not readOnly, show modal 1`] = `
           Empty
         </div>
         <div
-          class="react-select__input-container css-1p5v8kp-Input"
+          class="react-select__input-container css-189c2ni-Input"
           data-value=""
         >
           <input
@@ -508,7 +508,7 @@ exports[`properties/person not readOnly, show modal 2`] = `
           Empty
         </div>
         <div
-          class="react-select__input-container css-1p5v8kp-Input"
+          class="react-select__input-container css-189c2ni-Input"
           data-value=""
         >
           <input
@@ -628,7 +628,7 @@ exports[`properties/person not readOnly, show username 1`] = `
         class="react-select__value-container react-select__value-container--has-value css-1gbdvdc-ValueContainer"
       >
         <div
-          class="react-select__single-value css-qosd1h-singleValue"
+          class="react-select__single-value css-37w7ka-singleValue"
         >
           <div
             class="Person-item"
@@ -637,7 +637,7 @@ exports[`properties/person not readOnly, show username 1`] = `
           </div>
         </div>
         <div
-          class="react-select__input-container css-1p5v8kp-Input"
+          class="react-select__input-container css-189c2ni-Input"
           data-value=""
         >
           <input
@@ -802,7 +802,7 @@ exports[`properties/person show multiple 1`] = `
           </div>
         </div>
         <div
-          class="react-select__input-container css-1p5v8kp-Input"
+          class="react-select__input-container css-189c2ni-Input"
           data-value=""
         >
           <input
@@ -953,7 +953,7 @@ exports[`properties/person show multiple, display modal 1`] = `
           </div>
         </div>
         <div
-          class="react-select__input-container css-1p5v8kp-Input"
+          class="react-select__input-container css-189c2ni-Input"
           data-value=""
         >
           <input
@@ -1113,7 +1113,7 @@ exports[`properties/person show multiple, display modal 2`] = `
           </div>
         </div>
         <div
-          class="react-select__input-container css-1p5v8kp-Input"
+          class="react-select__input-container css-189c2ni-Input"
           data-value=""
         >
           <input
