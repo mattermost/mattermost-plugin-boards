@@ -19,7 +19,7 @@ pids
 *.code-workspace
 
 # golang
-go.work 
+go.work
 go.work.sum
 
 # Coverage directory used by tools like istanbul
@@ -30,7 +30,7 @@ coverage
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
 
-# Environment files 
+# Environment files
 .env
 
 # Dependency directory
@@ -53,3 +53,6 @@ server/vendor
 .idea
 server/**/*.coverage
 ./dist
+
+# notice
+.notice-work

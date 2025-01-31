@@ -10,7 +10,8 @@
     "import",
     "cypress",
     "jquery",
-    "no-only-tests"
+    "no-only-tests",
+    "header"
   ],
   "parser": "@typescript-eslint/parser",
   "env": {
@@ -59,7 +60,13 @@
     ],
     "react/no-string-refs": 2,
     "no-only-tests/no-only-tests": ["error", {"focus": ["only", "skip"]}],
-    "max-nested-callbacks": ["error", {"max": 5}]
+    "max-nested-callbacks": ["error", {"max": 5}],
+    "header/header": [
+      2,
+      "line",
+      " Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.\n See LICENSE.txt for license information.",
+      2
+    ]
   },
   "overrides": [
     {

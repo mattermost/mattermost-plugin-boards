@@ -54,9 +54,9 @@
 		"imagemin-svgo": "^10.0.1",
 		"imagemin-webp": "^7.0.0",
 		"immutable": "3.7.6",
-    	"mattermost-redux": "5.33.1",
 		"lodash": "^4.17.21",
 		"marked": "^4.0.12",
+		"mattermost-redux": "5.33.1",
 		"mini-create-react-context": "^0.4.1",
 		"moment": "^2.29.1",
 		"nanoevents": "^5.1.13",
@@ -99,7 +99,9 @@
 			"src/**/*.{ts,tsx,js,jsx}",
 			"!src/test/**"
 		],
-		"setupFiles": ["./tests/setupFile.ts"]
+		"setupFiles": [
+			"./tests/setupFile.ts"
+		]
 	},
 	"devDependencies": {
 		"@formatjs/cli": "^4.8.2",
@@ -107,11 +109,11 @@
 		"@swc/jest": "^0.2.20",
 		"@testing-library/cypress": "^8.0.2",
 		"@testing-library/dom": "^8.11.4",
-		"@types/draft-js": "0.11.9",
 		"@testing-library/jest-dom": "^5.16.3",
 		"@testing-library/react": "^11.2.5",
 		"@testing-library/user-event": "^13.5.0",
 		"@types/color": "^3.0.3",
+		"@types/draft-js": "0.11.9",
 		"@types/emoji-mart": "^3.0.9",
 		"@types/jest": "^27.4.1",
 		"@types/lodash": "4.14.182",
@@ -137,7 +139,7 @@
 		"eslint-import-resolver-webpack": "0.13.2",
 		"eslint-plugin-babel": "^5.3.1",
 		"eslint-plugin-cypress": "2.12.1",
-		"eslint-plugin-header": "3.1.1",
+		"eslint-plugin-header": "^3.1.1",
 		"eslint-plugin-import": "2.25.4",
 		"eslint-plugin-jquery": "1.5.1",
 		"eslint-plugin-mattermost": "github:mattermost/eslint-plugin-mattermost#23abcf9988f7fa00d26929f11841aab7ccb16b2b",

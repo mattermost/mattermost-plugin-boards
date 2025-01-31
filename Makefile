@@ -82,8 +82,11 @@ ifneq ($(HAS_SERVER),)
 		echo "golangci-lint is not installed. Please see https://github.com/golangci/golangci-lint#install-golangci-lint for installation instructions."; \
 		exit 1; \
 	fi; \
+
 	@echo Running golangci-lint
 	cd server && golangci-lint run ./...
+	$(GO) install github.com/mattermost/mattermost-govet/v2@3f08281c344327ac09364f196b15f9a81c7eff08
+	$(GO) vet -vettool=$(GOBIN)/mattermost-govet -license -license.year=2020 ./server/...
 endif
 
 templates-archive: ## Build templates archive file
@@ -137,6 +140,12 @@ bundle:
 	mkdir -p dist/$(PLUGIN_NAME)
 	cp $(MANIFEST_FILE) dist/$(PLUGIN_NAME)/
 	cp -r webapp/pack dist/$(PLUGIN_NAME)/
+ifneq ($(wildcard LICENSE.txt),)
+	cp -r LICENSE.txt dist/$(PLUGIN_ID)/
+endif
+ifneq ($(wildcard NOTICE.txt),)
+	cp -r NOTICE.txt dist/$(PLUGIN_ID)/
+endif
 ifneq ($(wildcard $(ASSETS_DIR)/.),)
 	cp -r $(ASSETS_DIR) dist/$(PLUGIN_NAME)/
 endif

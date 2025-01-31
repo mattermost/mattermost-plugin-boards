@@ -1,3 +1,6 @@
+// Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
+// See LICENSE.txt for license information.
+
 package sqlstore
 
 import (
@@ -19,12 +22,12 @@ func (s *SQLStore) getBoardsForCompliance(db sq.BaseRunner, opts model.QueryBoar
 	}
 
 	if opts.Page != 0 {
-		query = query.Offset(uint64(opts.Page * opts.PerPage))
+		query = query.Offset(offset(opts.Page, opts.PerPage))
 	}
 
 	if opts.PerPage > 0 {
 		// N+1 to check if there's a next page for pagination
-		query = query.Limit(uint64(opts.PerPage) + 1)
+		query = query.Limit(limit(opts.PerPage) + 1)
 	}
 
 	rows, err := query.Query()
@@ -97,12 +100,12 @@ func (s *SQLStore) getBoardsComplianceHistory(db sq.BaseRunner, opts model.Query
 	}
 
 	if opts.Page != 0 {
-		query = query.Offset(uint64(opts.Page * opts.PerPage))
+		query = query.Offset(offset(opts.Page, opts.PerPage))
 	}
 
 	if opts.PerPage > 0 {
 		// N+1 to check if there's a next page for pagination
-		query = query.Limit(uint64(opts.PerPage) + 1)
+		query = query.Limit(limit(opts.PerPage) + 1)
 	}
 
 	rows, err := query.Query()
@@ -160,12 +163,12 @@ func (s *SQLStore) getBlocksComplianceHistory(db sq.BaseRunner, opts model.Query
 	}
 
 	if opts.Page != 0 {
-		query = query.Offset(uint64(opts.Page * opts.PerPage))
+		query = query.Offset(offset(opts.Page, opts.PerPage))
 	}
 
 	if opts.PerPage > 0 {
 		// N+1 to check if there's a next page for pagination
-		query = query.Limit(uint64(opts.PerPage) + 1)
+		query = query.Limit(limit(opts.PerPage) + 1)
 	}
 
 	rows, err := query.Query()
