@@ -141,10 +141,10 @@ bundle:
 	cp $(MANIFEST_FILE) dist/$(PLUGIN_NAME)/
 	cp -r webapp/pack dist/$(PLUGIN_NAME)/
 ifneq ($(wildcard LICENSE.txt),)
-	cp -r LICENSE.txt dist/$(PLUGIN_ID)/
+	cp -r LICENSE.txt dist/$(PLUGIN_NAME)/
 endif
 ifneq ($(wildcard NOTICE.txt),)
-	cp -r NOTICE.txt dist/$(PLUGIN_ID)/
+	cp -r NOTICE.txt dist/$(PLUGIN_NAME)/
 endif
 ifneq ($(wildcard $(ASSETS_DIR)/.),)
 	cp -r $(ASSETS_DIR) dist/$(PLUGIN_NAME)/
