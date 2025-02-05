@@ -44,7 +44,7 @@ func TestApp_ImportArchive(t *testing.T) {
 	t.Run("import asana archive", func(t *testing.T) {
 		r := bytes.NewReader([]byte(asana))
 		opts := model.ImportArchiveOptions{
-			TeamID:     "test-team",
+			TeamID:     "y5tuzz9yb3y99gmobyc4hg5wnr",
 			ModifiedBy: "user",
 		}
 
