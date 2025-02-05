@@ -389,6 +389,18 @@ func (b *Board) IsValid() error {
 		return InvalidBoardErr{"invalid-team-id"}
 	}
 
+	return b.baseValidation()
+}
+
+func (b *Board) IsValidForImport() error {
+	if !mmModel.IsValidId(b.TeamID) && b.TeamID != GlobalTeamID {
+		return InvalidBoardErr{"invalid-team-id"}
+	}
+
+	return b.baseValidation()
+}
+
+func (b *Board) baseValidation() error {
 	if !IsBoardTypeValid(b.Type) {
 		return InvalidBoardErr{"invalid-board-type"}
 	}
