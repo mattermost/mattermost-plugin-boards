@@ -1,3 +1,6 @@
+// Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
+// See LICENSE.txt for license information.
+
 package sqlstore
 
 import (
@@ -162,4 +165,27 @@ func (s *SQLStore) GetSchemaName() (string, error) {
 	}
 
 	return result, nil
+}
+
+type Number interface {
+	int64 | int
+}
+
+// offset is a helper function to make golangci-lint happy.
+func offset[V Number](page V, perPage V) uint64 {
+	o := page * perPage
+	if o < 0 {
+		return 0
+	}
+
+	return uint64(o)
+}
+
+// limit is a helper function to make golangci-lint happy.
+func limit[V Number](perPage V) uint64 {
+	if perPage <= 0 {
+		return 0
+	}
+
+	return uint64(perPage)
 }

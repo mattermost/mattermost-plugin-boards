@@ -1,5 +1,6 @@
-// Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
+// Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
+
 
 import messages_ca from '../i18n/ca.json'
 import messages_de from '../i18n/de.json'

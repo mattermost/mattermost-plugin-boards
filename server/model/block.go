@@ -1,3 +1,6 @@
+// Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
+// See LICENSE.txt for license information.
+
 package model
 
 import (
@@ -151,6 +154,20 @@ func (b *Block) IsValid() error {
 		return err
 	}
 
+	return b.baseValidations()
+}
+
+func (b *Block) IsValidForImport() error {
+	if err := IsValidId(b.BoardID); err != nil {
+		if !errors.Is(err, errEmptyId) {
+			return err
+		}
+	}
+
+	return b.baseValidations()
+}
+
+func (b *Block) baseValidations() error {
 	if utf8.RuneCountInString(b.Title) > BlockTitleMaxRunes {
 		return ErrBlockTitleSizeLimitExceeded
 	}

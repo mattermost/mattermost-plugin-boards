@@ -1,5 +1,6 @@
-// Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
+// Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
+
 import React, {useEffect}  from 'react'
 import {FormattedMessage, IntlProvider, useIntl} from 'react-intl'
 

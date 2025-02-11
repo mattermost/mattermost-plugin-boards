@@ -1,3 +1,6 @@
+// Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
+// See LICENSE.txt for license information.
+
 package app
 
 import (
@@ -209,14 +212,14 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 					if err2 := json.Unmarshal(archiveLine.Data, &block); err2 != nil {
 						return nil, fmt.Errorf("invalid board block in archive line %d: %w", lineNum, err2)
 					}
-					if err := block.IsValid(); err != nil {
-						return nil, err
-					}
 					block.ModifiedBy = userID
 					block.UpdateAt = now
 					board, err := a.blockToBoard(block, opt)
 					if err != nil {
 						return nil, fmt.Errorf("cannot convert archive line %d to block: %w", lineNum, err)
+					}
+					if err := board.IsValidForImport(); err != nil {
+						return nil, err
 					}
 					boardsAndBlocks.Boards = append(boardsAndBlocks.Boards, board)
 					boardID = board.ID
@@ -225,7 +228,7 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 					if err2 := json.Unmarshal(archiveLine.Data, &block); err2 != nil {
 						return nil, fmt.Errorf("invalid block in archive line %d: %w", lineNum, err2)
 					}
-					if err := block.IsValid(); err != nil {
+					if err := block.IsValidForImport(); err != nil {
 						return nil, err
 					}
 					block.ModifiedBy = userID

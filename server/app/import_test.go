@@ -1,3 +1,6 @@
+// Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
+// See LICENSE.txt for license information.
+
 package app
 
 import (
@@ -41,7 +44,7 @@ func TestApp_ImportArchive(t *testing.T) {
 	t.Run("import asana archive", func(t *testing.T) {
 		r := bytes.NewReader([]byte(asana))
 		opts := model.ImportArchiveOptions{
-			TeamID:     "test-team",
+			TeamID:     "y5tuzz9yb3y99gmobyc4hg5wnr",
 			ModifiedBy: "user",
 		}
 

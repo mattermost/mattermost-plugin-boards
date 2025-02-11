@@ -1,4 +1,4 @@
-// Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
+// Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
 package sqlstore
@@ -33,9 +33,14 @@ func (s *SQLStore) activeCardsQuery(builder sq.StatementBuilderType, selectStr s
 	}
 
 	if cardLimit != 0 {
+		var cardLimitUint uint64
+		if cardLimit > 0 {
+			cardLimitUint = uint64(cardLimit)
+		}
+
 		query = query.
 			Limit(1).
-			Offset(uint64(cardLimit - 1))
+			Offset(cardLimitUint - 1)
 	}
 
 	return query
@@ -80,7 +85,7 @@ func (s *SQLStore) getCardLimitTimestamp(db sq.BaseRunner) (int64, error) {
 
 	var result string
 	err := scanner.Scan(&result)
-	if errors.Is(sql.ErrNoRows, err) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return 0, nil
 	}
 	if err != nil {

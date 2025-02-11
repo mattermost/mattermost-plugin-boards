@@ -1,3 +1,6 @@
+// Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
+// See LICENSE.txt for license information.
+
 package sqlstore
 
 import (
@@ -71,11 +74,11 @@ func (s *SQLStore) getBlocks(db sq.BaseRunner, opts model.QueryBlocksOptions) ([
 	}
 
 	if opts.Page != 0 {
-		query = query.Offset(uint64(opts.Page * opts.PerPage))
+		query = query.Offset(offset(opts.Page, opts.PerPage))
 	}
 
 	if opts.PerPage > 0 {
-		query = query.Limit(uint64(opts.PerPage))
+		query = query.Limit(limit(opts.PerPage))
 	}
 
 	rows, err := query.Query()
@@ -702,12 +705,12 @@ func (s *SQLStore) getBlockHistoryNewestChildren(db sq.BaseRunner, parentID stri
 		InnerJoin("("+subQuery+") AS sub ON bh.id=sub.id AND bh.insert_at=sub.max_insert_at", subArgs...)
 
 	if opts.Page != 0 {
-		query = query.Offset(uint64(opts.Page * opts.PerPage))
+		query = query.Offset(offset(opts.Page, opts.PerPage))
 	}
 
 	if opts.PerPage > 0 {
 		// limit+1 to detect if more records available
-		query = query.Limit(uint64(opts.PerPage + 1))
+		query = query.Limit(limit(opts.PerPage + 1))
 	}
 
 	sql, args, err := query.ToSql()

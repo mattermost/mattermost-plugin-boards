@@ -1,5 +1,6 @@
-// Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
+// Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
+
 
 import {TelemetryActions} from './telemetry/telemetryClient'
 
@@ -37,8 +38,7 @@ class Constants {
     static readonly titleColumnId = '__title'
     static readonly badgesColumnId = '__badges'
 
-    static readonly versionString = '9.0.5'
-    static readonly versionDisplayString = 'June 2024'
+    static readonly versionString = '9.1.1'
 
     static readonly archiveHelpPage = 'https://docs.mattermost.com/boards/migrate-to-boards.html'
     static readonly imports = [

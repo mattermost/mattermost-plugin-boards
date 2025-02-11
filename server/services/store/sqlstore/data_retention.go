@@ -1,4 +1,4 @@
-// Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
+// Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 package sqlstore
 
@@ -140,14 +140,14 @@ func (s *SQLStore) genericRetentionPoliciesDeletion(
 		Where(whereClause)
 
 	if batchSize > 0 {
-		deleteQuery.Limit(uint64(batchSize))
+		deleteQuery.Limit(limit(batchSize))
 		primaryKeysStr := "(" + strings.Join(info.PrimaryKeys, ",") + ")"
 		if s.dbType != model.MysqlDBType {
 			selectQuery := s.getQueryBuilder(db).
 				Select(primaryKeysStr).
 				From(s.tablePrefix + info.Table).
 				Where(whereClause).
-				Limit(uint64(batchSize))
+				Limit(limit(batchSize))
 
 			selectString, _, _ := selectQuery.ToSql()
 
