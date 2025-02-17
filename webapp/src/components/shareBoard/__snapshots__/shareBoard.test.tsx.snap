@@ -74,7 +74,7 @@ exports[`src/components/shareBoard/shareBoard confirm unlinking linked channel 1
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-1p5v8kp-Input"
+                    class=" css-189c2ni-Input"
                     data-value=""
                   >
                     <input
@@ -324,7 +324,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Copy l
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-1p5v8kp-Input"
+                    class=" css-189c2ni-Input"
                     data-value=""
                   >
                     <input
@@ -533,7 +533,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Copy l
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-1p5v8kp-Input"
+                    class=" css-189c2ni-Input"
                     data-value=""
                   >
                     <input
@@ -742,7 +742,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Regene
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-1p5v8kp-Input"
+                    class=" css-189c2ni-Input"
                     data-value=""
                   >
                     <input
@@ -974,7 +974,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-1p5v8kp-Input"
+                    class=" css-189c2ni-Input"
                     data-value=""
                   >
                     <input
@@ -1219,7 +1219,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-1p5v8kp-Input"
+                    class=" css-189c2ni-Input"
                     data-value=""
                   >
                     <input
@@ -1678,7 +1678,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-1p5v8kp-Input"
+                    class=" css-189c2ni-Input"
                     data-value=""
                   >
                     <input
@@ -1923,7 +1923,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-1p5v8kp-Input"
+                    class=" css-189c2ni-Input"
                     data-value=""
                   >
                     <input
@@ -2400,7 +2400,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard template and cli
                     Search for people
                   </div>
                   <div
-                    class=" css-1p5v8kp-Input"
+                    class=" css-189c2ni-Input"
                     data-value=""
                   >
                     <input
@@ -2594,7 +2594,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard template and cli
                     Search for people
                   </div>
                   <div
-                    class=" css-1p5v8kp-Input"
+                    class=" css-189c2ni-Input"
                     data-value=""
                   >
                     <input
@@ -2906,7 +2906,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard, and click switc
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-1p5v8kp-Input"
+                    class=" css-189c2ni-Input"
                     data-value=""
                   >
                     <input
@@ -3138,7 +3138,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoardComponent and cli
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-1p5v8kp-Input"
+                    class=" css-189c2ni-Input"
                     data-value=""
                   >
                     <input
@@ -3370,7 +3370,7 @@ exports[`src/components/shareBoard/shareBoard should match snapshot 1`] = `
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-1p5v8kp-Input"
+                    class=" css-189c2ni-Input"
                     data-value=""
                   >
                     <input
@@ -3579,7 +3579,7 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-1p5v8kp-Input"
+                    class=" css-189c2ni-Input"
                     data-value=""
                   >
                     <input
@@ -3788,7 +3788,7 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-1p5v8kp-Input"
+                    class=" css-189c2ni-Input"
                     data-value=""
                   >
                     <input
@@ -3997,7 +3997,7 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-1p5v8kp-Input"
+                    class=" css-189c2ni-Input"
                     data-value=""
                   >
                     <input
@@ -4206,7 +4206,7 @@ exports[`src/components/shareBoard/shareBoard should match snapshot, with templa
                     Search for people
                   </div>
                   <div
-                    class=" css-1p5v8kp-Input"
+                    class=" css-189c2ni-Input"
                     data-value=""
                   >
                     <input

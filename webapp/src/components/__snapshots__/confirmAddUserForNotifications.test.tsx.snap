@@ -80,18 +80,18 @@ exports[`/components/confirmAddUserForNotifications should match snapshot 1`] = 
                   class="css-1f43avz-a11yText-A11yText"
                 />
                 <div
-                  class=" css-13cymwt-control"
+                  class=" css-fik0sr-control"
                 >
                   <div
                     class=" css-1fdsijx-ValueContainer"
                   >
                     <div
-                      class=" css-1dimb5e-singleValue"
+                      class=" css-1sga6wl-singleValue"
                     >
                       Editor
                     </div>
                     <div
-                      class=" css-qbdosj-Input"
+                      class=" css-108tt89-Input"
                       data-value=""
                     >
                       <input
