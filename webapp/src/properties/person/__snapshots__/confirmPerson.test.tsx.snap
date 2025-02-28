@@ -22,7 +22,7 @@ exports[`properties/person select user - cancel 1`] = `
         class="react-select__value-container react-select__value-container--has-value css-1gbdvdc-ValueContainer"
       >
         <div
-          class="react-select__single-value css-qosd1h-singleValue"
+          class="react-select__single-value css-37w7ka-singleValue"
         >
           <div
             class="Person-item"
@@ -31,7 +31,7 @@ exports[`properties/person select user - cancel 1`] = `
           </div>
         </div>
         <div
-          class="react-select__input-container css-1p5v8kp-Input"
+          class="react-select__input-container css-189c2ni-Input"
           data-value=""
         >
           <input
@@ -129,7 +129,7 @@ exports[`properties/person select user - cancel 2`] = `
         class="react-select__value-container react-select__value-container--has-value css-1gbdvdc-ValueContainer"
       >
         <div
-          class="react-select__single-value css-qosd1h-singleValue"
+          class="react-select__single-value css-37w7ka-singleValue"
         >
           <div
             class="Person-item"
@@ -138,7 +138,7 @@ exports[`properties/person select user - cancel 2`] = `
           </div>
         </div>
         <div
-          class="react-select__input-container css-1p5v8kp-Input"
+          class="react-select__input-container css-189c2ni-Input"
           data-value=""
         >
           <input
@@ -274,7 +274,7 @@ exports[`properties/person select user - confirm 1`] = `
         class="react-select__value-container react-select__value-container--has-value css-1gbdvdc-ValueContainer"
       >
         <div
-          class="react-select__single-value css-qosd1h-singleValue"
+          class="react-select__single-value css-37w7ka-singleValue"
         >
           <div
             class="Person-item"
@@ -283,7 +283,7 @@ exports[`properties/person select user - confirm 1`] = `
           </div>
         </div>
         <div
-          class="react-select__input-container css-1p5v8kp-Input"
+          class="react-select__input-container css-189c2ni-Input"
           data-value=""
         >
           <input
@@ -381,7 +381,7 @@ exports[`properties/person select user - confirm 2`] = `
         class="react-select__value-container react-select__value-container--has-value css-1gbdvdc-ValueContainer"
       >
         <div
-          class="react-select__single-value css-qosd1h-singleValue"
+          class="react-select__single-value css-37w7ka-singleValue"
         >
           <div
             class="Person-item"
@@ -390,7 +390,7 @@ exports[`properties/person select user - confirm 2`] = `
           </div>
         </div>
         <div
-          class="react-select__input-container css-1p5v8kp-Input"
+          class="react-select__input-container css-189c2ni-Input"
           data-value=""
         >
           <input
