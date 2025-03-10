@@ -1,6 +1,6 @@
 # Mattermost Boards
 
-### A self-hosted plugin for managing boards withing a Mattermost installation
+### A self-hosted plugin for managing boards within a Mattermost installation
 
 Mattermost boards plugins is an open source, multilingual, self-hosted project management tool that's an alternative to Trello, Notion, and Asana.
 
