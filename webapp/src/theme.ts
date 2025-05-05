@@ -311,6 +311,7 @@ export function getSelectBaseStyle() {
             paddingTop: 0,
             marginBottom: 0,
             marginTop: 0,
+            color: 'rgb(var(--center-channel-color-rgb))',
         }),
         menuList: (provided: CSSObject): CSSObject => ({
             ...provided,
