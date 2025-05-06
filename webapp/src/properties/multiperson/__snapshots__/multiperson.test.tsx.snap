@@ -84,7 +84,7 @@ exports[`properties/multiperson not readonly 1`] = `
           </div>
         </div>
         <div
-          class="react-select__input-container css-1p5v8kp-Input"
+          class="react-select__input-container css-189c2ni-Input"
           data-value=""
         >
           <input
@@ -179,7 +179,7 @@ exports[`properties/multiperson not readonly not existing user 1`] = `
           Empty
         </div>
         <div
-          class="react-select__input-container css-1p5v8kp-Input"
+          class="react-select__input-container css-189c2ni-Input"
           data-value=""
         >
           <input
@@ -342,7 +342,7 @@ exports[`properties/multiperson user dropdown open 1`] = `
           </div>
         </div>
         <div
-          class="react-select__input-container css-1p5v8kp-Input"
+          class="react-select__input-container css-189c2ni-Input"
           data-value=""
         >
           <input

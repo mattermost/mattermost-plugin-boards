@@ -87,7 +87,12 @@ class CsvExporter {
                 if (property.type === 'updatedBy') {
                     propertyValue = card.modifiedBy
                 }
-                row.push(property.exportValue(propertyValue, card, template, intl))
+                if (property.type === 'number') {
+                    const rawValue = property.exportValue(propertyValue, card, template, intl)
+                    row.push(`"${this.encodeText(rawValue)}"`)
+                } else {
+                    row.push(property.exportValue(propertyValue, card, template, intl))
+                } 
             })
             rows.push(row)
         })
