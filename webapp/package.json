@@ -62,7 +62,7 @@
 		"react-hotkeys-hook": "^3.4.4",
 		"react-intl": "^5.20.0",
 		"react-redux": "7.2.4",
-		"react-router-dom": "^5.2.0",
+		"react-router-dom": "5.3.4",
 		"react-select": "^5.2.2"
 	},
 	"jest": {
