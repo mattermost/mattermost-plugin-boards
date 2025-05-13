@@ -6,6 +6,8 @@ package model
 import (
 	"testing"
 
+	mmModel "github.com/mattermost/mattermost/server/public/model"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
@@ -453,6 +455,239 @@ func TestValidateFileId(t *testing.T) {
 	t.Run("Should return error for invalid legacy file ID with non-hexadecimal characters", func(t *testing.T) {
 		fileID := "7z9928ad8-4f83-1d9b-fdf7-d641616ae47b"
 		err := ValidateFileId(fileID)
+		require.EqualError(t, err, "Invalid Block ID")
+	})
+}
+
+func TestBlockIsValid(t *testing.T) {
+	t.Run("Should return nil for valid block", func(t *testing.T) {
+		block := &Block{
+			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
+			BoardID:    string(utils.IDTypeNone) + mmModel.NewId(),
+			CreatedBy:  string(utils.IDTypeNone) + mmModel.NewId(),
+			ModifiedBy: string(utils.IDTypeNone) + mmModel.NewId(),
+			Schema:     1,
+			Type:       TypeCard,
+			Title:      "Valid Block",
+			Fields:     map[string]interface{}{},
+			CreateAt:   1234567890,
+			UpdateAt:   1234567890,
+		}
+		err := block.IsValid()
+		require.NoError(t, err)
+	})
+
+	t.Run("Should return error for block with empty BoardID", func(t *testing.T) {
+		block := &Block{
+			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
+			BoardID:    "",
+			CreatedBy:  string(utils.IDTypeNone) + mmModel.NewId(),
+			ModifiedBy: string(utils.IDTypeNone) + mmModel.NewId(),
+			Schema:     1,
+			Type:       TypeCard,
+			Title:      "Invalid Block",
+			Fields:     map[string]interface{}{},
+			CreateAt:   1234567890,
+			UpdateAt:   1234567890,
+		}
+		err := block.IsValid()
+		require.Error(t, err)
+		require.EqualError(t, err, "Block ID cannot be empty")
+	})
+
+	t.Run("Should return error for block with title exceeding max runes", func(t *testing.T) {
+		longTitle := make([]rune, BlockTitleMaxRunes+1)
+		for i := range longTitle {
+			longTitle[i] = 'a'
+		}
+		block := &Block{
+			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
+			BoardID:    string(utils.IDTypeNone) + mmModel.NewId(),
+			CreatedBy:  string(utils.IDTypeNone) + mmModel.NewId(),
+			ModifiedBy: string(utils.IDTypeNone) + mmModel.NewId(),
+			Schema:     1,
+			Type:       TypeCard,
+			Title:      string(longTitle),
+			Fields:     map[string]interface{}{},
+			CreateAt:   1234567890,
+			UpdateAt:   1234567890,
+		}
+		err := block.IsValid()
+		require.Error(t, err)
+		require.EqualError(t, err, "block title size limit exceeded")
+	})
+
+	t.Run("Should return error for block with fields exceeding max runes", func(t *testing.T) {
+		longField := make([]rune, BlockFieldsMaxRunes+1)
+		for i := range longField {
+			longField[i] = 'a'
+		}
+		block := &Block{
+			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
+			BoardID:    string(utils.IDTypeNone) + mmModel.NewId(),
+			CreatedBy:  string(utils.IDTypeNone) + mmModel.NewId(),
+			ModifiedBy: string(utils.IDTypeNone) + mmModel.NewId(),
+			Schema:     1,
+			Type:       TypeCard,
+			Title:      "Valid Block",
+			Fields:     map[string]interface{}{"field": string(longField)},
+			CreateAt:   1234567890,
+			UpdateAt:   1234567890,
+		}
+		err := block.IsValid()
+		require.Error(t, err)
+		require.EqualError(t, err, "block fields size limit exceeded")
+	})
+
+	t.Run("Should return error for block with invalid file ID in fields", func(t *testing.T) {
+		block := &Block{
+			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
+			BoardID:    string(utils.IDTypeNone) + mmModel.NewId(),
+			CreatedBy:  string(utils.IDTypeNone) + mmModel.NewId(),
+			ModifiedBy: string(utils.IDTypeNone) + mmModel.NewId(),
+			Schema:     1,
+			Type:       TypeCard,
+			Title:      "Valid Block",
+			Fields:     map[string]interface{}{BlockFieldFileId: "invalid-file-id"},
+			CreateAt:   1234567890,
+			UpdateAt:   1234567890,
+		}
+		err := block.IsValid()
+		require.Error(t, err)
+		require.EqualError(t, err, "Invalid Block ID")
+	})
+
+	t.Run("Should return error for block with invalid attachment ID in fields", func(t *testing.T) {
+		block := &Block{
+			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
+			BoardID:    string(utils.IDTypeNone) + mmModel.NewId(),
+			CreatedBy:  string(utils.IDTypeNone) + mmModel.NewId(),
+			ModifiedBy: string(utils.IDTypeNone) + mmModel.NewId(),
+			Schema:     1,
+			Type:       TypeCard,
+			Title:      "Valid Block",
+			Fields:     map[string]interface{}{BlockFieldAttachmentId: "invalid-attachment-id"},
+			CreateAt:   1234567890,
+			UpdateAt:   1234567890,
+		}
+		err := block.IsValid()
+		require.Error(t, err)
+		require.EqualError(t, err, "Invalid Block ID")
+	})
+}
+
+func TestBlock_IsValidForImport(t *testing.T) {
+	t.Run("Should return nil for valid block", func(t *testing.T) {
+		block := &Block{
+			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
+			BoardID:    string(utils.IDTypeNone) + mmModel.NewId(),
+			CreatedBy:  string(utils.IDTypeNone) + mmModel.NewId(),
+			ModifiedBy: string(utils.IDTypeNone) + mmModel.NewId(),
+			Schema:     1,
+			Type:       TypeCard,
+			Title:      "Valid Block",
+			Fields:     map[string]interface{}{},
+			CreateAt:   1234567890,
+			UpdateAt:   1234567890,
+		}
+		err := block.IsValidForImport()
+		require.NoError(t, err)
+	})
+
+	t.Run("Should not return error for block with empty BoardID", func(t *testing.T) {
+		block := &Block{
+			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
+			BoardID:    "",
+			CreatedBy:  string(utils.IDTypeNone) + mmModel.NewId(),
+			ModifiedBy: string(utils.IDTypeNone) + mmModel.NewId(),
+			Schema:     1,
+			Type:       TypeCard,
+			Title:      "Invalid Block",
+			Fields:     map[string]interface{}{},
+			CreateAt:   1234567890,
+			UpdateAt:   1234567890,
+		}
+		err := block.IsValidForImport()
+		require.NoError(t, err)
+	})
+
+	t.Run("Should return error for block with title exceeding max runes", func(t *testing.T) {
+		longTitle := make([]rune, BlockTitleMaxRunes+1)
+		for i := range longTitle {
+			longTitle[i] = 'a'
+		}
+		block := &Block{
+			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
+			BoardID:    string(utils.IDTypeNone) + mmModel.NewId(),
+			CreatedBy:  string(utils.IDTypeNone) + mmModel.NewId(),
+			ModifiedBy: string(utils.IDTypeNone) + mmModel.NewId(),
+			Schema:     1,
+			Type:       TypeCard,
+			Title:      string(longTitle),
+			Fields:     map[string]interface{}{},
+			CreateAt:   1234567890,
+			UpdateAt:   1234567890,
+		}
+		err := block.IsValidForImport()
+		require.Error(t, err)
+		require.EqualError(t, err, "block title size limit exceeded")
+	})
+
+	t.Run("Should return error for block with fields exceeding max runes", func(t *testing.T) {
+		longField := make([]rune, BlockFieldsMaxRunes+1)
+		for i := range longField {
+			longField[i] = 'a'
+		}
+		block := &Block{
+			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
+			BoardID:    string(utils.IDTypeNone) + mmModel.NewId(),
+			CreatedBy:  string(utils.IDTypeNone) + mmModel.NewId(),
+			ModifiedBy: string(utils.IDTypeNone) + mmModel.NewId(),
+			Schema:     1,
+			Type:       TypeCard,
+			Title:      "Valid Block",
+			Fields:     map[string]interface{}{"field": string(longField)},
+			CreateAt:   1234567890,
+			UpdateAt:   1234567890,
+		}
+		err := block.IsValidForImport()
+		require.Error(t, err)
+		require.EqualError(t, err, "block fields size limit exceeded")
+	})
+
+	t.Run("Should return error for block with invalid file ID in fields", func(t *testing.T) {
+		block := &Block{
+			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
+			BoardID:    string(utils.IDTypeNone) + mmModel.NewId(),
+			CreatedBy:  string(utils.IDTypeNone) + mmModel.NewId(),
+			ModifiedBy: string(utils.IDTypeNone) + mmModel.NewId(),
+			Schema:     1,
+			Type:       TypeCard,
+			Title:      "Valid Block",
+			Fields:     map[string]interface{}{BlockFieldFileId: "invalid-file-id"},
+			CreateAt:   1234567890,
+			UpdateAt:   1234567890,
+		}
+		err := block.IsValidForImport()
+		require.Error(t, err)
+		require.EqualError(t, err, "Invalid Block ID")
+	})
+
+	t.Run("Should return error for block with invalid attachment ID in fields", func(t *testing.T) {
+		block := &Block{
+			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
+			BoardID:    string(utils.IDTypeNone) + mmModel.NewId(),
+			CreatedBy:  string(utils.IDTypeNone) + mmModel.NewId(),
+			ModifiedBy: string(utils.IDTypeNone) + mmModel.NewId(),
+			Schema:     1,
+			Type:       TypeCard,
+			Title:      "Valid Block",
+			Fields:     map[string]interface{}{BlockFieldAttachmentId: "invalid-attachment-id"},
+			CreateAt:   1234567890,
+			UpdateAt:   1234567890,
+		}
+		err := block.IsValidForImport()
+		require.Error(t, err)
 		require.EqualError(t, err, "Invalid Block ID")
 	})
 }
