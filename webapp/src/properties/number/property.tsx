@@ -19,5 +19,5 @@ export default class NumberProperty extends PropertyType {
         Options.average, Options.median, Options.min, Options.max,
         Options.range]
 
-    exportValue = (value: string | string[] | undefined): string => (value ? Number(value).toString() : '')
+    exportValue = (value: string | string[] | undefined): string => (value ? value.toString() : '')
 }

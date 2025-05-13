@@ -17,7 +17,7 @@ jobs:
     permissions:
       security-events: write  # for github/codeql-action/autobuild to send a status report
     name: Analyze
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
@@ -30,7 +30,7 @@ jobs:
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3.27.6
+      uses: github/codeql-action/init@v3.28.9
       with:
         languages: ${{ matrix.language }}
         debug: false
@@ -38,8 +38,8 @@ jobs:
     
     # Autobuild attempts to build any compiled languages
     - name: Autobuild
-      uses: github/codeql-action/autobuild@v3.27.6
+      uses: github/codeql-action/autobuild@v3.28.9
 
     # Perform Analysis
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3.27.6
+      uses: github/codeql-action/analyze@v3.28.9
