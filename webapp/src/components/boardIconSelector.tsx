@@ -8,6 +8,8 @@ import {Board} from '../blocks/board'
 
 import mutator from '../mutator'
 
+import {getValidEmojiData} from '../utils/emojiUtils'
+
 import IconSelector from './iconSelector'
 
 type Props = {
@@ -30,11 +32,13 @@ const BoardIconSelector = React.memo((props: Props) => {
         return null
     }
 
+    const emojiData = getValidEmojiData(board.icon)
+
     let className = `octo-icon size-${size || 'm'}`
     if (props.readonly) {
         className += ' readonly'
     }
-    const iconElement = <div className={className}><span>{board.icon}</span></div>
+    const iconElement = <div className={className}><span>{emojiData?.native || board.icon}</span></div>
 
     return (
         <IconSelector

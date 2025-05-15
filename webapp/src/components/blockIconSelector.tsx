@@ -7,6 +7,8 @@ import {BlockIcons} from '../blockIcons'
 import {Card} from '../blocks/card'
 import mutator from '../mutator'
 
+import {getValidEmojiData} from '../utils/emojiUtils'
+
 import IconSelector from './iconSelector'
 
 type Props = {
@@ -29,11 +31,13 @@ const BlockIconSelector = (props: Props) => {
         return null
     }
 
+    const emojiData = getValidEmojiData(block.fields.icon)
+
     let className = `octo-icon size-${size || 'm'}`
     if (props.readonly) {
         className += ' readonly'
     }
-    const iconElement = <div className={className}><span>{block.fields.icon}</span></div>
+    const iconElement = <div className={className}><span>{emojiData?.native || block.fields.icon}</span></div>
 
     return (
         <IconSelector
