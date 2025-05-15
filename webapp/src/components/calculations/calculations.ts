@@ -143,39 +143,41 @@ function sum(cards: readonly Card[], property: IPropertyTemplate): string {
 
     cardsWithValue(cards, property).
         forEach((card) => {
-            result += parseFloat(getCardProperty(card, property) as string)
+            const value = parseFloat(getCardProperty(card, property) as string)
+            if (!isNaN(value)) {
+                result += value
+            }
         })
 
     return String(Utils.roundTo(result, ROUNDED_DECIMAL_PLACES))
 }
 
 function average(cards: readonly Card[], property: IPropertyTemplate): string {
-    const numCards = cardsWithValue(cards, property).length
-    if (numCards === 0) {
+    const validCards = cardsWithValue(cards, property).filter(card => {
+        const value = parseFloat(getCardProperty(card, property) as string)
+        return !isNaN(value)
+    })
+    
+    if (validCards.length === 0) {
         return '0'
     }
 
-    const result = parseFloat(sum(cards, property))
-    const avg = result / numCards
+    const result = parseFloat(sum(validCards, property))
+    const avg = result / validCards.length
     return String(Utils.roundTo(avg, ROUNDED_DECIMAL_PLACES))
 }
 
 function median(cards: readonly Card[], property: IPropertyTemplate): string {
-    const sorted = cardsWithValue(cards, property).
-        sort((a, b) => {
-            if (!getCardProperty(a, property)) {
-                return 1
-            }
+    const validCards = cardsWithValue(cards, property).filter(card => {
+        const value = parseFloat(getCardProperty(card, property) as string)
+        return !isNaN(value)
+    })
 
-            if (!getCardProperty(b, property)) {
-                return -1
-            }
-
-            const aValue = parseFloat(getCardProperty(a, property) as string || '0')
-            const bValue = parseFloat(getCardProperty(b, property) as string || '0')
-
-            return aValue - bValue
-        })
+    const sorted = validCards.sort((a, b) => {
+        const aValue = parseFloat(getCardProperty(a, property) as string)
+        const bValue = parseFloat(getCardProperty(b, property) as string)
+        return aValue - bValue
+    })
 
     if (sorted.length === 0) {
         return '0'
@@ -196,30 +198,32 @@ function median(cards: readonly Card[], property: IPropertyTemplate): string {
 
 function min(cards: readonly Card[], property: IPropertyTemplate): string {
     let result = Number.POSITIVE_INFINITY
-    cards.forEach((card) => {
-        if (!getCardProperty(card, property)) {
-            return
-        }
+    let hasValidValue = false
 
+    cards.forEach((card) => {
         const value = parseFloat(getCardProperty(card, property) as string)
-        result = Math.min(result, value)
+        if (!isNaN(value)) {
+            result = Math.min(result, value)
+            hasValidValue = true
+        }
     })
 
-    return String(result === Number.POSITIVE_INFINITY ? '0' : String(Utils.roundTo(result, ROUNDED_DECIMAL_PLACES)))
+    return String(!hasValidValue ? '0' : Utils.roundTo(result, ROUNDED_DECIMAL_PLACES))
 }
 
 function max(cards: readonly Card[], property: IPropertyTemplate): string {
     let result = Number.NEGATIVE_INFINITY
-    cards.forEach((card) => {
-        if (!getCardProperty(card, property)) {
-            return
-        }
+    let hasValidValue = false
 
+    cards.forEach((card) => {
         const value = parseFloat(getCardProperty(card, property) as string)
-        result = Math.max(result, value)
+        if (!isNaN(value)) {
+            result = Math.max(result, value)
+            hasValidValue = true
+        }
     })
 
-    return String(result === Number.NEGATIVE_INFINITY ? '0' : String(Utils.roundTo(result, ROUNDED_DECIMAL_PLACES)))
+    return String(!hasValidValue ? '0' : Utils.roundTo(result, ROUNDED_DECIMAL_PLACES))
 }
 
 function range(cards: readonly Card[], property: IPropertyTemplate): string {
