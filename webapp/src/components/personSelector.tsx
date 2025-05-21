@@ -145,7 +145,6 @@ const PersonSelector = (props: Props): JSX.Element => {
             }
             return returnUsers
         }
-        console.log({value})
         const excludeBots = true
         const allUsers = await client.searchTeamUsers(value.toLocaleLowerCase(), excludeBots)
         const usersInsideBoard: IUser[] = []
