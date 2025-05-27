@@ -320,10 +320,10 @@ func (s *SQLStore) searchUsersByTeam(db sq.BaseRunner, teamID string, searchQuer
 	query := s.baseUserQuery(showEmail, showName).
 		Where(sq.Eq{"u.deleteAt": 0}).
 		Where(sq.Or{
-			sq.Like{"u.username": "%" + searchQuery + "%"},
-			sq.Like{"u.nickname": "%" + searchQuery + "%"},
-			sq.Like{"u.firstname": "%" + searchQuery + "%"},
-			sq.Like{"u.lastname": "%" + searchQuery + "%"},
+			sq.ILike{"u.username": "%" + searchQuery + "%"},
+			sq.ILike{"u.nickname": "%" + searchQuery + "%"},
+			sq.ILike{"u.firstname": "%" + searchQuery + "%"},
+			sq.ILike{"u.lastname": "%" + searchQuery + "%"},
 		}).
 		OrderBy("u.username").
 		Limit(10)
