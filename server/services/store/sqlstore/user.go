@@ -6,6 +6,7 @@ package sqlstore
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
@@ -320,10 +321,10 @@ func (s *SQLStore) searchUsersByTeam(db sq.BaseRunner, teamID string, searchQuer
 	query := s.baseUserQuery(showEmail, showName).
 		Where(sq.Eq{"u.deleteAt": 0}).
 		Where(sq.Or{
-			sq.ILike{"u.username": "%" + searchQuery + "%"},
-			sq.ILike{"u.nickname": "%" + searchQuery + "%"},
-			sq.ILike{"u.firstname": "%" + searchQuery + "%"},
-			sq.ILike{"u.lastname": "%" + searchQuery + "%"},
+			sq.Like{"LOWER(u.username)": "%" + strings.ToLower(searchQuery) + "%"},
+			sq.Like{"LOWER(u.nickname)": "%" + strings.ToLower(searchQuery) + "%"},
+			sq.Like{"LOWER(u.firstname)": "%" + strings.ToLower(searchQuery) + "%"},
+			sq.Like{"LOWER(u.lastname)": "%" + strings.ToLower(searchQuery) + "%"},
 		}).
 		OrderBy("u.username").
 		Limit(10)
