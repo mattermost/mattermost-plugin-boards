@@ -67,5 +67,6 @@
 
     .comment-markdown > * {
         white-space: pre-wrap;
+        user-select: auto;
     }
 }
