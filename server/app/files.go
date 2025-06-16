@@ -23,6 +23,10 @@ const emptyString = "empty"
 
 var errEmptyFilename = errors.New("IsFileArchived: empty filename not allowed")
 var ErrFileNotFound = errors.New("file not found")
+var errEmptyPathComponent = errors.New("empty path component")
+var errInvalidPathComponent = errors.New("invalid path component")
+var errAbsolutePathNotAllowed = errors.New("absolute path not allowed")
+var errInvalidCharactersInPath = errors.New("invalid characters in path component")
 
 func (a *App) SaveFile(reader io.Reader, teamID, boardID, filename string, asTemplate bool) (string, error) {
 	// NOTE: File extension includes the dot
@@ -162,27 +166,24 @@ func getDestinationFilePath(isTemplate bool, teamID, boardID, filename string) (
 	return filepath.Join(utils.GetBaseFilePath(), filename), nil
 }
 
-// validatePathComponent ensures a path component contains only valid characters
+// validatePathComponent ensures a path component contains only valid characters.
 func validatePathComponent(component string) error {
 	if component == "" {
-		return errors.New("empty path component")
+		return errEmptyPathComponent
 	}
 
-	// Check for path traversal sequences
 	if strings.Contains(component, "..") {
-		return errors.New("invalid path component")
+		return errInvalidPathComponent
 	}
 
-	// Check for absolute paths
 	if strings.HasPrefix(component, "/") || strings.HasPrefix(component, "\\") {
-		return errors.New("absolute path not allowed")
+		return errAbsolutePathNotAllowed
 	}
 
-	// Additional validation - only allow safe characters
 	// This regex allows alphanumeric, hyphens, underscores, and dots (but not consecutive dots)
 	validComponent := regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 	if !validComponent.MatchString(component) {
-		return errors.New("invalid characters in path component")
+		return errInvalidCharactersInPath
 	}
 
 	return nil
