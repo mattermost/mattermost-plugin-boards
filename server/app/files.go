@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
@@ -35,7 +36,10 @@ func (a *App) SaveFile(reader io.Reader, teamID, boardID, filename string, asTem
 	if asTemplate {
 		newFileName = filename
 	}
-	filePath := getDestinationFilePath(asTemplate, teamID, boardID, newFileName)
+	filePath, pathErr := getDestinationFilePath(asTemplate, teamID, boardID, newFileName)
+	if pathErr != nil {
+		return "", fmt.Errorf("invalid file path parameters: %w", pathErr)
+	}
 
 	fileSize, appErr := a.filesBackend.WriteFile(reader, filePath)
 	if appErr != nil {
@@ -119,20 +123,69 @@ func (a *App) GetFilePath(teamID, rootID, fileName string) (*mm_model.FileInfo, 
 	if fileInfo != nil && fileInfo.Path != "" && fileInfo.Path != emptyString {
 		filePath = fileInfo.Path
 	} else {
+		// Validate path components to ensure proper file path handling
+		if err := validatePathComponent(teamID); err != nil {
+			return nil, "", fmt.Errorf("invalid teamID in GetFilePath: %w", err)
+		}
+		if err := validatePathComponent(rootID); err != nil {
+			return nil, "", fmt.Errorf("invalid rootID in GetFilePath: %w", err)
+		}
+		if err := validatePathComponent(fileName); err != nil {
+			return nil, "", fmt.Errorf("invalid fileName in GetFilePath: %w", err)
+		}
 		filePath = filepath.Join(teamID, rootID, fileName)
 	}
 
 	return fileInfo, filePath, nil
 }
 
-func getDestinationFilePath(isTemplate bool, teamID, boardID, filename string) string {
+func getDestinationFilePath(isTemplate bool, teamID, boardID, filename string) (string, error) {
+	// Validate inputs to ensure proper file path handling
+	if err := validatePathComponent(teamID); err != nil {
+		return "", fmt.Errorf("invalid teamID: %w", err)
+	}
+	if err := validatePathComponent(boardID); err != nil {
+		return "", fmt.Errorf("invalid boardID: %w", err)
+	}
+	if err := validatePathComponent(filename); err != nil {
+		return "", fmt.Errorf("invalid filename: %w", err)
+	}
+
 	// if saving a file for a template, save using the "old method" that is /teamID/boardID/fileName
 	// this will prevent template files from being deleted by DataRetention,
 	// which deletes all files inside the "date" subdirectory
 	if isTemplate {
-		return filepath.Join(teamID, boardID, filename)
+		// Use a safe base path for templates with proper validation
+		basePath := filepath.Join(utils.GetBaseFilePath(), "templates")
+		return filepath.Join(basePath, teamID, boardID, filename), nil
 	}
-	return filepath.Join(utils.GetBaseFilePath(), filename)
+	return filepath.Join(utils.GetBaseFilePath(), filename), nil
+}
+
+// validatePathComponent ensures a path component contains only valid characters
+func validatePathComponent(component string) error {
+	if component == "" {
+		return errors.New("empty path component")
+	}
+
+	// Check for path traversal sequences
+	if strings.Contains(component, "..") {
+		return errors.New("invalid path component")
+	}
+
+	// Check for absolute paths
+	if strings.HasPrefix(component, "/") || strings.HasPrefix(component, "\\") {
+		return errors.New("absolute path not allowed")
+	}
+
+	// Additional validation - only allow safe characters
+	// This regex allows alphanumeric, hyphens, underscores, and dots (but not consecutive dots)
+	validComponent := regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
+	if !validComponent.MatchString(component) {
+		return errors.New("invalid characters in path component")
+	}
+
+	return nil
 }
 
 func getFileInfoID(fileName string) string {
@@ -142,6 +195,17 @@ func getFileInfoID(fileName string) string {
 }
 
 func (a *App) GetFileReader(teamID, rootID, filename string) (filestore.ReadCloseSeeker, error) {
+	// Validate path components to ensure proper file path handling
+	if err := validatePathComponent(teamID); err != nil {
+		return nil, fmt.Errorf("invalid teamID in GetFileReader: %w", err)
+	}
+	if err := validatePathComponent(rootID); err != nil {
+		return nil, fmt.Errorf("invalid rootID in GetFileReader: %w", err)
+	}
+	if err := validatePathComponent(filename); err != nil {
+		return nil, fmt.Errorf("invalid filename in GetFileReader: %w", err)
+	}
+
 	filePath := filepath.Join(teamID, rootID, filename)
 	exists, err := a.filesBackend.FileExists(filePath)
 	if err != nil {
@@ -181,6 +245,20 @@ func (a *App) GetFileReader(teamID, rootID, filename string) (filestore.ReadClos
 }
 
 func (a *App) MoveFile(channelID, teamID, boardID, filename string) error {
+	// Validate path components to ensure proper file path handling
+	if err := validatePathComponent(channelID); err != nil {
+		return fmt.Errorf("invalid channelID in MoveFile: %w", err)
+	}
+	if err := validatePathComponent(teamID); err != nil {
+		return fmt.Errorf("invalid teamID in MoveFile: %w", err)
+	}
+	if err := validatePathComponent(boardID); err != nil {
+		return fmt.Errorf("invalid boardID in MoveFile: %w", err)
+	}
+	if err := validatePathComponent(filename); err != nil {
+		return fmt.Errorf("invalid filename in MoveFile: %w", err)
+	}
+
 	oldPath := filepath.Join(channelID, boardID, filename)
 	newPath := filepath.Join(teamID, boardID, filename)
 	err := a.filesBackend.MoveFile(oldPath, newPath)
@@ -305,7 +383,10 @@ func (a *App) CopyCardFiles(sourceBoardID string, copiedBlocks []*model.Block, a
 		if err != nil {
 			return nil, fmt.Errorf("cannot fetch destination board %s for CopyCardFiles: %w", sourceBoardID, err)
 		}
-		destinationFilePath := getDestinationFilePath(asTemplate, destBoard.TeamID, destBoard.ID, destFilename)
+		destinationFilePath, pathErr := getDestinationFilePath(asTemplate, destBoard.TeamID, destBoard.ID, destFilename)
+		if pathErr != nil {
+			return nil, fmt.Errorf("invalid destination file path: %w", pathErr)
+		}
 
 		if fileInfo == nil {
 			fileInfo = model.NewFileInfo(destFilename)

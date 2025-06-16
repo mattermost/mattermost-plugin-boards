@@ -668,3 +668,151 @@ func TestCopyCardFiles(t *testing.T) {
 		assert.Nil(t, newFileNames)
 	})
 }
+
+func TestGetDestinationFilePath(t *testing.T) {
+	t.Run("Should reject path traversal in template teamID", func(t *testing.T) {
+		result, err := getDestinationFilePath(true, "../../../etc", "boardID", "filename")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid teamID")
+		assert.Equal(t, "", result)
+	})
+
+	t.Run("Should reject path traversal in template boardID", func(t *testing.T) {
+		result, err := getDestinationFilePath(true, "teamID", "../../../etc", "filename")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid boardID")
+		assert.Equal(t, "", result)
+	})
+
+	t.Run("Should reject path traversal in template filename", func(t *testing.T) {
+		result, err := getDestinationFilePath(true, "teamID", "boardID", "../../../etc/passwd")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid filename")
+		assert.Equal(t, "", result)
+	})
+
+	t.Run("Should use secure base path for templates", func(t *testing.T) {
+		result, err := getDestinationFilePath(true, "validTeam", "validBoard", "validFile")
+		assert.NoError(t, err)
+		assert.Contains(t, result, "templates")
+		assert.Contains(t, result, "boards")
+	})
+
+	t.Run("Should allow valid template paths", func(t *testing.T) {
+		result, err := getDestinationFilePath(true, "team123", "board456", "file.jpg")
+		assert.NoError(t, err)
+		assert.Contains(t, result, "team123")
+		assert.Contains(t, result, "board456")
+		assert.Contains(t, result, "file.jpg")
+		assert.Contains(t, result, "templates")
+	})
+
+	t.Run("Should not affect non-template files", func(t *testing.T) {
+		result, err := getDestinationFilePath(false, "team123", "board456", "filename")
+		assert.NoError(t, err)
+		assert.NotContains(t, result, "templates")
+		assert.NotContains(t, result, "team123")
+		assert.NotContains(t, result, "board456")
+		assert.Contains(t, result, "filename")
+	})
+
+	t.Run("Should reject absolute paths in teamID", func(t *testing.T) {
+		// Test absolute path handling in teamID parameter
+		result, err := getDestinationFilePath(false, "/plugins/file.tar.gz", "boardID", "filename")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid teamID")
+		assert.Contains(t, err.Error(), "absolute path not allowed")
+		assert.Equal(t, "", result)
+	})
+
+	t.Run("Should reject absolute paths in boardID", func(t *testing.T) {
+		result, err := getDestinationFilePath(false, "teamID", "/usr/bin/executable", "filename")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid boardID")
+		assert.Contains(t, err.Error(), "absolute path not allowed")
+		assert.Equal(t, "", result)
+	})
+}
+
+func TestValidatePathComponent(t *testing.T) {
+	t.Run("Should allow valid components", func(t *testing.T) {
+		validComponents := []string{
+			"team123",
+			"board_456",
+			"file.jpg",
+			"valid-name",
+			"123abc",
+		}
+
+		for _, component := range validComponents {
+			err := validatePathComponent(component)
+			assert.NoError(t, err, "Component should be valid: %s", component)
+		}
+	})
+
+	t.Run("Should reject path traversal attempts", func(t *testing.T) {
+		invalidComponents := []string{
+			"../etc",
+			"../../passwd",
+			"../../../root",
+			"dir/../other",
+			"..\\windows",
+		}
+
+		for _, component := range invalidComponents {
+			err := validatePathComponent(component)
+			assert.Error(t, err, "Component should be invalid: %s", component)
+		}
+	})
+
+	t.Run("Should reject absolute paths", func(t *testing.T) {
+		invalidComponents := []string{
+			"/etc/passwd",
+			"\\windows\\system32",
+			"/root",
+		}
+
+		for _, component := range invalidComponents {
+			err := validatePathComponent(component)
+			assert.Error(t, err, "Component should be invalid: %s", component)
+		}
+	})
+
+	t.Run("Should reject empty components", func(t *testing.T) {
+		err := validatePathComponent("")
+		assert.Error(t, err)
+	})
+
+	t.Run("Should reject components with invalid characters", func(t *testing.T) {
+		invalidComponents := []string{
+			"file with spaces",
+			"file|pipe",
+			"file<redirect",
+			"file>redirect",
+			"file&command",
+			"file;command",
+		}
+
+		for _, component := range invalidComponents {
+			err := validatePathComponent(component)
+			assert.Error(t, err, "Component should be invalid: %s", component)
+		}
+	})
+
+	t.Run("Should reject absolute path components", func(t *testing.T) {
+		absolutePaths := []string{
+			"/plugins/file.tar.gz",
+			"/plugins/library.so",
+			"/etc/passwd",
+			"/usr/bin/executable",
+			"\\windows\\system32\\file.exe",
+			"/var/www/html/script.php",
+		}
+
+		for _, component := range absolutePaths {
+			err := validatePathComponent(component)
+			assert.Error(t, err, "Absolute path should be blocked: %s", component)
+			assert.Contains(t, err.Error(), "absolute path not allowed", "Should specifically mention absolute path rejection")
+		}
+	})
+}
