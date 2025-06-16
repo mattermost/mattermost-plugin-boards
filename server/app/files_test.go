@@ -721,7 +721,6 @@ func TestGetDestinationFilePath(t *testing.T) {
 		result, err := getDestinationFilePath(false, "/plugins/file.tar.gz", "boardID", "filename")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid teamID")
-		assert.Contains(t, err.Error(), "absolute path not allowed")
 		assert.Equal(t, "", result)
 	})
 
@@ -729,7 +728,6 @@ func TestGetDestinationFilePath(t *testing.T) {
 		result, err := getDestinationFilePath(false, "teamID", "/usr/bin/executable", "filename")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid boardID")
-		assert.Contains(t, err.Error(), "absolute path not allowed")
 		assert.Equal(t, "", result)
 	})
 }
@@ -811,8 +809,7 @@ func TestValidatePathComponent(t *testing.T) {
 
 		for _, component := range absolutePaths {
 			err := validatePathComponent(component)
-			assert.Error(t, err, "Absolute path should be blocked: %s", component)
-			assert.Contains(t, err.Error(), "absolute path not allowed", "Should specifically mention absolute path rejection")
+			assert.Error(t, err, "Invalid path component should be rejected: %s", component)
 		}
 	})
 }

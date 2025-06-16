@@ -25,7 +25,7 @@ var errEmptyFilename = errors.New("IsFileArchived: empty filename not allowed")
 var ErrFileNotFound = errors.New("file not found")
 var errEmptyPathComponent = errors.New("empty path component")
 var errInvalidPathComponent = errors.New("invalid path component")
-var errAbsolutePathNotAllowed = errors.New("absolute path not allowed")
+var errInvalidPathFormat = errors.New("invalid path format")
 var errInvalidCharactersInPath = errors.New("invalid characters in path component")
 
 func (a *App) SaveFile(reader io.Reader, teamID, boardID, filename string, asTemplate bool) (string, error) {
@@ -177,7 +177,7 @@ func validatePathComponent(component string) error {
 	}
 
 	if strings.HasPrefix(component, "/") || strings.HasPrefix(component, "\\") {
-		return errAbsolutePathNotAllowed
+		return errInvalidPathFormat
 	}
 
 	// This regex allows alphanumeric, hyphens, underscores, and dots (but not consecutive dots)
