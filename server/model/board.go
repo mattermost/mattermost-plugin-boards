@@ -373,6 +373,10 @@ func (p *BoardPatch) IsValid() error {
 		return InvalidBoardErr{"invalid-board-minimum-role"}
 	}
 
+	if p.ChannelID != nil && !mmModel.IsValidId(*p.ChannelID) {
+		return InvalidBoardErr{"invalid-channel-id"}
+	}
+
 	return nil
 }
 
@@ -387,6 +391,10 @@ func (ibe InvalidBoardErr) Error() string {
 func (b *Board) IsValid() error {
 	if !mmModel.IsValidId(b.TeamID) {
 		return InvalidBoardErr{"invalid-team-id"}
+	}
+
+	if !mmModel.IsValidId(b.ChannelID) {
+		return InvalidBoardErr{"invalid-channel-id"}
 	}
 
 	return b.baseValidation()

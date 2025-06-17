@@ -138,6 +138,11 @@ func (a *API) handleCreateBoard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := newBoard.IsValid(); err != nil {
+		a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
+		return
+	}
+
 	if newBoard.Type == model.BoardTypeOpen {
 		if !a.permissions.HasPermissionToTeam(userID, newBoard.TeamID, model.PermissionCreatePublicChannel) {
 			a.errorResponse(w, r, model.NewErrPermission("access denied to create public boards"))
