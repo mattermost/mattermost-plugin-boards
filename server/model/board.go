@@ -393,7 +393,8 @@ func (b *Board) IsValid() error {
 		return InvalidBoardErr{"invalid-team-id"}
 	}
 
-	if !mmModel.IsValidId(b.ChannelID) {
+	// Empty channel ID is fine as not every board is associated with a channel.
+	if b.ChannelID != "" && !mmModel.IsValidId(b.ChannelID) {
 		return InvalidBoardErr{"invalid-channel-id"}
 	}
 
