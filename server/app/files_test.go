@@ -35,7 +35,8 @@ type TestError struct{}
 func (err *TestError) Error() string { return "Mocked File backend error" }
 
 func TestGetFileReader(t *testing.T) {
-	testFilePath := filepath.Join("1", "test-board-id", "temp-file-name")
+	validTeamID := "abcdefghijklmnopqrstuvwxyz" // 26 chars - valid Mattermost ID
+	testFilePath := filepath.Join(validTeamID, "test-board-id", "temp-file-name")
 
 	th, _ := SetupTestHelper(t)
 	mockedReadCloseSeek := &mocks.ReadCloseSeeker{}
@@ -60,7 +61,7 @@ func TestGetFileReader(t *testing.T) {
 
 		mockedFileBackend.On("Reader", testFilePath).Return(readerFunc, readerErrorFunc)
 		mockedFileBackend.On("FileExists", testFilePath).Return(fileExistsFunc, fileExistsErrorFunc)
-		actual, _ := th.App.GetFileReader("1", testBoardID, testFileName)
+		actual, _ := th.App.GetFileReader(validTeamID, testBoardID, testFileName)
 		assert.Equal(t, mockedReadCloseSeek, actual)
 	})
 
@@ -86,7 +87,7 @@ func TestGetFileReader(t *testing.T) {
 
 		mockedFileBackend.On("Reader", testFilePath).Return(readerFunc, readerErrorFunc)
 		mockedFileBackend.On("FileExists", testFilePath).Return(fileExistsFunc, fileExistsErrorFunc)
-		actual, err := th.App.GetFileReader("1", testBoardID, testFileName)
+		actual, err := th.App.GetFileReader(validTeamID, testBoardID, testFileName)
 		assert.Error(t, err, mockedError)
 		assert.Nil(t, actual)
 	})
@@ -113,7 +114,7 @@ func TestGetFileReader(t *testing.T) {
 
 		mockedFileBackend.On("Reader", testFilePath).Return(readerFunc, readerErrorFunc)
 		mockedFileBackend.On("FileExists", testFilePath).Return(fileExistsFunc, fileExistsErrorFunc)
-		actual, err := th.App.GetFileReader("1", testBoardID, testFileName)
+		actual, err := th.App.GetFileReader(validTeamID, testBoardID, testFileName)
 		assert.Error(t, err, mockedError)
 		assert.Nil(t, actual)
 	})
@@ -313,6 +314,8 @@ func TestGetFileInfo(t *testing.T) {
 
 func TestGetFile(t *testing.T) {
 	th, _ := SetupTestHelper(t)
+	validTeamID := "abcdefghijklmnopqrstuvwxyz" // 26 chars (valid Mattermost ID)
+
 	t.Run("happy path, no errors", func(t *testing.T) {
 		th.Store.EXPECT().GetFileInfo("fileInfoID").Return(&mm_model.FileInfo{
 			Id:   "fileInfoID",
@@ -332,7 +335,7 @@ func TestGetFile(t *testing.T) {
 		mockedFileBackend.On("Reader", testPath).Return(readerFunc, readerErrorFunc)
 		mockedFileBackend.On("FileExists", testPath).Return(true, nil)
 
-		fileInfo, seeker, err := th.App.GetFile("teamID", "boardID", "7fileInfoID.txt")
+		fileInfo, seeker, err := th.App.GetFile(validTeamID, "boardID", "7fileInfoID.txt")
 		assert.NoError(t, err)
 		assert.NotNil(t, fileInfo)
 		assert.NotNil(t, seeker)
@@ -341,7 +344,7 @@ func TestGetFile(t *testing.T) {
 	t.Run("when GetFilePath() throws error", func(t *testing.T) {
 		th.Store.EXPECT().GetFileInfo("fileInfoID").Return(nil, errDummy)
 
-		fileInfo, seeker, err := th.App.GetFile("teamID", "boardID", "7fileInfoID.txt")
+		fileInfo, seeker, err := th.App.GetFile(validTeamID, "boardID", "7fileInfoID.txt")
 		assert.Error(t, err)
 		assert.Nil(t, fileInfo)
 		assert.Nil(t, seeker)
@@ -357,7 +360,7 @@ func TestGetFile(t *testing.T) {
 		th.App.filesBackend = mockedFileBackend
 		mockedFileBackend.On("FileExists", testPath).Return(false, nil)
 
-		fileInfo, seeker, err := th.App.GetFile("teamID", "boardID", "7fileInfoID.txt")
+		fileInfo, seeker, err := th.App.GetFile(validTeamID, "boardID", "7fileInfoID.txt")
 		assert.Error(t, err)
 		assert.Nil(t, fileInfo)
 		assert.Nil(t, seeker)
@@ -373,7 +376,7 @@ func TestGetFile(t *testing.T) {
 		mockedFileBackend.On("Reader", testPath).Return(nil, errDummy)
 		mockedFileBackend.On("FileExists", testPath).Return(true, nil)
 
-		fileInfo, seeker, err := th.App.GetFile("teamID", "boardID", "7fileInfoID.txt")
+		fileInfo, seeker, err := th.App.GetFile(validTeamID, "boardID", "7fileInfoID.txt")
 		assert.Error(t, err)
 		assert.Nil(t, fileInfo)
 		assert.Nil(t, seeker)
@@ -389,7 +392,8 @@ func TestGetFilePath(t *testing.T) {
 			Path: testPath,
 		}, nil)
 
-		fileInfo, filePath, err := th.App.GetFilePath("teamID", "boardID", "7fileInfoID.txt")
+		validTeamID := "abcdefghijklmnopqrstuvwxyz" // 26 chars - valid Mattermost ID
+		fileInfo, filePath, err := th.App.GetFilePath(validTeamID, "boardID", "7fileInfoID.txt")
 		assert.NoError(t, err)
 		assert.NotNil(t, fileInfo)
 		assert.Equal(t, testPath, filePath)
@@ -398,10 +402,11 @@ func TestGetFilePath(t *testing.T) {
 	t.Run("when FileInfo doesn't exist", func(t *testing.T) {
 		th.Store.EXPECT().GetFileInfo("fileInfoID").Return(nil, nil)
 
-		fileInfo, filePath, err := th.App.GetFilePath("teamID", "boardID", "7fileInfoID.txt")
+		validTeamID := "abcdefghijklmnopqrstuvwxyz" // 26 chars - valid Mattermost ID
+		fileInfo, filePath, err := th.App.GetFilePath(validTeamID, "boardID", "7fileInfoID.txt")
 		assert.NoError(t, err)
 		assert.Nil(t, fileInfo)
-		assert.Equal(t, "teamID/boardID/7fileInfoID.txt", filePath)
+		assert.Equal(t, validTeamID+"/boardID/7fileInfoID.txt", filePath)
 	})
 
 	t.Run("when FileInfo exists but FileInfo.Path is not set", func(t *testing.T) {
@@ -410,10 +415,11 @@ func TestGetFilePath(t *testing.T) {
 			Path: "",
 		}, nil)
 
-		fileInfo, filePath, err := th.App.GetFilePath("teamID", "boardID", "7fileInfoID.txt")
+		validTeamID := "abcdefghijklmnopqrstuvwxyz" // 26 chars - valid Mattermost ID
+		fileInfo, filePath, err := th.App.GetFilePath(validTeamID, "boardID", "7fileInfoID.txt")
 		assert.NoError(t, err)
 		assert.NotNil(t, fileInfo)
-		assert.Equal(t, "teamID/boardID/7fileInfoID.txt", filePath)
+		assert.Equal(t, validTeamID+"/boardID/7fileInfoID.txt", filePath)
 	})
 }
 
@@ -670,6 +676,8 @@ func TestCopyCardFiles(t *testing.T) {
 }
 
 func TestGetDestinationFilePath(t *testing.T) {
+	validTeamID := "abcdefghijklmnopqrstuvwxyz"
+
 	t.Run("Should reject path traversal in template teamID", func(t *testing.T) {
 		result, err := getDestinationFilePath(true, "../../../etc", "boardID", "filename")
 		assert.Error(t, err)
@@ -678,41 +686,43 @@ func TestGetDestinationFilePath(t *testing.T) {
 	})
 
 	t.Run("Should reject path traversal in template boardID", func(t *testing.T) {
-		result, err := getDestinationFilePath(true, "teamID", "../../../etc", "filename")
+		result, err := getDestinationFilePath(true, validTeamID, "../../../etc", "filename")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid boardID")
 		assert.Equal(t, "", result)
 	})
 
 	t.Run("Should reject path traversal in template filename", func(t *testing.T) {
-		result, err := getDestinationFilePath(true, "teamID", "boardID", "../../../etc/passwd")
+		result, err := getDestinationFilePath(true, validTeamID, "boardID", "../../../etc/passwd")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid filename")
 		assert.Equal(t, "", result)
 	})
 
-	t.Run("Should use secure base path for templates", func(t *testing.T) {
-		result, err := getDestinationFilePath(true, "validTeam", "validBoard", "validFile")
+	t.Run("Should use direct path for templates (to avoid data retention)", func(t *testing.T) {
+		result, err := getDestinationFilePath(true, validTeamID, "validBoard", "validFile")
 		assert.NoError(t, err)
-		assert.Contains(t, result, "templates")
-		assert.Contains(t, result, "boards")
+		assert.NotContains(t, result, "templates") // Templates should NOT use base path to avoid data retention
+		assert.Contains(t, result, validTeamID)
+		assert.Contains(t, result, "validBoard")
+		assert.Contains(t, result, "validFile")
 	})
 
 	t.Run("Should allow valid template paths", func(t *testing.T) {
-		result, err := getDestinationFilePath(true, "team123", "board456", "file.jpg")
+		result, err := getDestinationFilePath(true, validTeamID, "board456", "file.jpg")
 		assert.NoError(t, err)
-		assert.Contains(t, result, "team123")
+		assert.Contains(t, result, validTeamID)
 		assert.Contains(t, result, "board456")
 		assert.Contains(t, result, "file.jpg")
-		assert.Contains(t, result, "templates")
+		assert.NotContains(t, result, "templates") // Templates use direct path to avoid data retention
 	})
 
 	t.Run("Should not affect non-template files", func(t *testing.T) {
-		result, err := getDestinationFilePath(false, "team123", "board456", "filename")
+		result, err := getDestinationFilePath(false, validTeamID, "board456", "filename")
 		assert.NoError(t, err)
 		assert.NotContains(t, result, "templates")
-		assert.NotContains(t, result, "team123")
-		assert.NotContains(t, result, "board456")
+		assert.NotContains(t, result, validTeamID) // Non-templates don't include teamID in path
+		assert.NotContains(t, result, "board456")  // Non-templates don't include boardID in path
 		assert.Contains(t, result, "filename")
 	})
 
@@ -725,7 +735,7 @@ func TestGetDestinationFilePath(t *testing.T) {
 	})
 
 	t.Run("Should reject absolute paths in boardID", func(t *testing.T) {
-		result, err := getDestinationFilePath(false, "teamID", "/usr/bin/executable", "filename")
+		result, err := getDestinationFilePath(false, validTeamID, "/usr/bin/executable", "filename")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid boardID")
 		assert.Equal(t, "", result)
