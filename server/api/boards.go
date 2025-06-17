@@ -138,8 +138,8 @@ func (a *API) handleCreateBoard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := newBoard.IsValid(); err != nil {
-		a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
+	if validationErr := newBoard.IsValid(); validationErr != nil {
+		a.errorResponse(w, r, model.NewErrBadRequest(validationErr.Error()))
 		return
 	}
 

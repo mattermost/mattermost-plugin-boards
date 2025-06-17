@@ -72,8 +72,8 @@ func (a *API) handleCreateBoardsAndBlocks(w http.ResponseWriter, r *http.Request
 	teamID := ""
 	boardIDs := map[string]bool{}
 	for _, board := range newBab.Boards {
-		if err := board.IsValid(); err != nil {
-			a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
+		if validationErr := board.IsValid(); validationErr != nil {
+			a.errorResponse(w, r, model.NewErrBadRequest(validationErr.Error()))
 			return
 		}
 
