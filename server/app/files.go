@@ -125,7 +125,7 @@ func (a *App) GetFilePath(teamID, rootID, fileName string) (*mm_model.FileInfo, 
 	} else {
 		// Validate path components to ensure proper file path handling
 		if !mm_model.IsValidId(teamID) {
-			return nil, "", fmt.Errorf("invalid teamID in GetFilePath: %s", teamID)
+			return nil, "", fmt.Errorf("GetFilePath: invalid team ID for teamID %s", teamID) //nolint:err113
 		}
 		if err := validatePathComponent(rootID); err != nil {
 			return nil, "", fmt.Errorf("invalid rootID in GetFilePath: %w", err)
@@ -142,7 +142,7 @@ func (a *App) GetFilePath(teamID, rootID, fileName string) (*mm_model.FileInfo, 
 func getDestinationFilePath(isTemplate bool, teamID, boardID, filename string) (string, error) {
 	// Validate inputs to ensure proper file path handling
 	if !mm_model.IsValidId(teamID) {
-		return "", fmt.Errorf("invalid teamID: %s", teamID)
+		return "", fmt.Errorf("getDestinationFilePath: invalid team ID for teamID %s", teamID) //nolint:err113
 	}
 	if err := validatePathComponent(boardID); err != nil {
 		return "", fmt.Errorf("invalid boardID: %w", err)
@@ -166,7 +166,7 @@ func validatePathComponent(component string) error {
 	// Empty strings and invalid characters (including path separators) are rejected
 	validComponent := regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 	if !validComponent.MatchString(component) {
-		return errors.New("invalid path component")
+		return fmt.Errorf("invalid path component: %s", component) //nolint:err113
 	}
 
 	return nil
@@ -181,7 +181,7 @@ func getFileInfoID(fileName string) string {
 func (a *App) GetFileReader(teamID, rootID, filename string) (filestore.ReadCloseSeeker, error) {
 	// Validate path components to ensure proper file path handling
 	if !mm_model.IsValidId(teamID) {
-		return nil, fmt.Errorf("invalid teamID in GetFileReader: %s", teamID)
+		return nil, fmt.Errorf("GetFileReader: invalid team ID for teamID %s", teamID) //nolint:err113
 	}
 	if err := validatePathComponent(rootID); err != nil {
 		return nil, fmt.Errorf("invalid rootID in GetFileReader: %w", err)
@@ -231,10 +231,10 @@ func (a *App) GetFileReader(teamID, rootID, filename string) (filestore.ReadClos
 func (a *App) MoveFile(channelID, teamID, boardID, filename string) error {
 	// Validate path components to ensure proper file path handling
 	if !mm_model.IsValidId(channelID) {
-		return fmt.Errorf("invalid channelID in MoveFile: %s", channelID)
+		return fmt.Errorf("MoveFile: invalid channel ID for channelID %s", channelID) //nolint:err113
 	}
 	if !mm_model.IsValidId(teamID) {
-		return fmt.Errorf("invalid teamID in MoveFile: %s", teamID)
+		return fmt.Errorf("MoveFile: invalid team ID for teamID %s", teamID) //nolint:err113
 	}
 	if err := validatePathComponent(boardID); err != nil {
 		return fmt.Errorf("invalid boardID in MoveFile: %w", err)

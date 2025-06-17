@@ -681,7 +681,7 @@ func TestGetDestinationFilePath(t *testing.T) {
 	t.Run("Should reject path traversal in template teamID", func(t *testing.T) {
 		result, err := getDestinationFilePath(true, "../../../etc", "boardID", "filename")
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid teamID")
+		assert.Contains(t, err.Error(), "invalid team ID")
 		assert.Equal(t, "", result)
 	})
 
@@ -730,7 +730,7 @@ func TestGetDestinationFilePath(t *testing.T) {
 		// Test absolute path handling in teamID parameter
 		result, err := getDestinationFilePath(false, "/plugins/file.tar.gz", "boardID", "filename")
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid teamID")
+		assert.Contains(t, err.Error(), "invalid team ID")
 		assert.Equal(t, "", result)
 	})
 
