@@ -86,10 +86,10 @@ func (a *App) GetFileInfo(filename string) (*mm_model.FileInfo, error) {
 	return fileInfo, nil
 }
 
-func (a *App) GetFile(teamID, rootID, fileName string) (*mm_model.FileInfo, filestore.ReadCloseSeeker, error) {
-	fileInfo, filePath, err := a.GetFilePath(teamID, rootID, fileName)
+func (a *App) GetFile(teamID, boardID, fileName string) (*mm_model.FileInfo, filestore.ReadCloseSeeker, error) {
+	fileInfo, filePath, err := a.GetFilePath(teamID, boardID, fileName)
 	if err != nil {
-		a.logger.Error("GetFile: Failed to GetFilePath.", mlog.String("Team", teamID), mlog.String("board", rootID), mlog.String("filename", fileName), mlog.Err(err))
+		a.logger.Error("GetFile: Failed to GetFilePath.", mlog.String("Team", teamID), mlog.String("board", boardID), mlog.String("filename", fileName), mlog.Err(err))
 		return nil, nil, err
 	}
 
@@ -112,7 +112,7 @@ func (a *App) GetFile(teamID, rootID, fileName string) (*mm_model.FileInfo, file
 	return fileInfo, reader, nil
 }
 
-func (a *App) GetFilePath(teamID, rootID, fileName string) (*mm_model.FileInfo, string, error) {
+func (a *App) GetFilePath(teamID, boardID, fileName string) (*mm_model.FileInfo, string, error) {
 	fileInfo, err := a.GetFileInfo(fileName)
 	if err != nil && !model.IsErrNotFound(err) {
 		return nil, "", err
@@ -127,13 +127,13 @@ func (a *App) GetFilePath(teamID, rootID, fileName string) (*mm_model.FileInfo, 
 		if !mm_model.IsValidId(teamID) {
 			return nil, "", fmt.Errorf("GetFilePath: invalid team ID for teamID %s", teamID) //nolint:err113
 		}
-		if err := validatePathComponent(rootID); err != nil {
+		if err := model.IsValidId(boardID); err != nil {
 			return nil, "", fmt.Errorf("invalid rootID in GetFilePath: %w", err)
 		}
 		if err := validatePathComponent(fileName); err != nil {
 			return nil, "", fmt.Errorf("invalid fileName in GetFilePath: %w", err)
 		}
-		filePath = filepath.Join(teamID, rootID, fileName)
+		filePath = filepath.Join(teamID, boardID, fileName)
 	}
 
 	return fileInfo, filePath, nil
@@ -144,7 +144,7 @@ func getDestinationFilePath(isTemplate bool, teamID, boardID, filename string) (
 	if !mm_model.IsValidId(teamID) {
 		return "", fmt.Errorf("getDestinationFilePath: invalid team ID for teamID %s", teamID) //nolint:err113
 	}
-	if err := validatePathComponent(boardID); err != nil {
+	if err := model.IsValidId(boardID); err != nil {
 		return "", fmt.Errorf("invalid boardID: %w", err)
 	}
 	if err := validatePathComponent(filename); err != nil {
@@ -178,19 +178,19 @@ func getFileInfoID(fileName string) string {
 	return fileName[1:]
 }
 
-func (a *App) GetFileReader(teamID, rootID, filename string) (filestore.ReadCloseSeeker, error) {
+func (a *App) GetFileReader(teamID, boardID, filename string) (filestore.ReadCloseSeeker, error) {
 	// Validate path components to ensure proper file path handling
 	if !mm_model.IsValidId(teamID) {
 		return nil, fmt.Errorf("GetFileReader: invalid team ID for teamID %s", teamID) //nolint:err113
 	}
-	if err := validatePathComponent(rootID); err != nil {
+	if err := model.IsValidId(boardID); err != nil {
 		return nil, fmt.Errorf("invalid rootID in GetFileReader: %w", err)
 	}
 	if err := validatePathComponent(filename); err != nil {
 		return nil, fmt.Errorf("invalid filename in GetFileReader: %w", err)
 	}
 
-	filePath := filepath.Join(teamID, rootID, filename)
+	filePath := filepath.Join(teamID, boardID, filename)
 	exists, err := a.filesBackend.FileExists(filePath)
 	if err != nil {
 		return nil, err
@@ -236,7 +236,7 @@ func (a *App) MoveFile(channelID, teamID, boardID, filename string) error {
 	if !mm_model.IsValidId(teamID) {
 		return fmt.Errorf("MoveFile: invalid team ID for teamID %s", teamID) //nolint:err113
 	}
-	if err := validatePathComponent(boardID); err != nil {
+	if err := model.IsValidId(boardID); err != nil {
 		return fmt.Errorf("invalid boardID in MoveFile: %w", err)
 	}
 	if err := validatePathComponent(filename); err != nil {

@@ -24,7 +24,7 @@ import (
 
 const (
 	testFileName = "temp-file-name"
-	testBoardID  = "test-board-id"
+	testBoardID  = "btestboardid1234567890123456"
 	testPath     = "/path/to/file/fileName.txt"
 )
 
@@ -335,7 +335,8 @@ func TestGetFile(t *testing.T) {
 		mockedFileBackend.On("Reader", testPath).Return(readerFunc, readerErrorFunc)
 		mockedFileBackend.On("FileExists", testPath).Return(true, nil)
 
-		fileInfo, seeker, err := th.App.GetFile(validTeamID, "boardID", "7fileInfoID.txt")
+		validBoardID := "bvalidboard1234567890123456"
+		fileInfo, seeker, err := th.App.GetFile(validTeamID, validBoardID, "7fileInfoID.txt")
 		assert.NoError(t, err)
 		assert.NotNil(t, fileInfo)
 		assert.NotNil(t, seeker)
@@ -344,7 +345,8 @@ func TestGetFile(t *testing.T) {
 	t.Run("when GetFilePath() throws error", func(t *testing.T) {
 		th.Store.EXPECT().GetFileInfo("fileInfoID").Return(nil, errDummy)
 
-		fileInfo, seeker, err := th.App.GetFile(validTeamID, "boardID", "7fileInfoID.txt")
+		validBoardID := "bvalidboard1234567890123456"
+		fileInfo, seeker, err := th.App.GetFile(validTeamID, validBoardID, "7fileInfoID.txt")
 		assert.Error(t, err)
 		assert.Nil(t, fileInfo)
 		assert.Nil(t, seeker)
@@ -360,7 +362,8 @@ func TestGetFile(t *testing.T) {
 		th.App.filesBackend = mockedFileBackend
 		mockedFileBackend.On("FileExists", testPath).Return(false, nil)
 
-		fileInfo, seeker, err := th.App.GetFile(validTeamID, "boardID", "7fileInfoID.txt")
+		validBoardID := "bvalidboard1234567890123456"
+		fileInfo, seeker, err := th.App.GetFile(validTeamID, validBoardID, "7fileInfoID.txt")
 		assert.Error(t, err)
 		assert.Nil(t, fileInfo)
 		assert.Nil(t, seeker)
@@ -376,7 +379,8 @@ func TestGetFile(t *testing.T) {
 		mockedFileBackend.On("Reader", testPath).Return(nil, errDummy)
 		mockedFileBackend.On("FileExists", testPath).Return(true, nil)
 
-		fileInfo, seeker, err := th.App.GetFile(validTeamID, "boardID", "7fileInfoID.txt")
+		validBoardID := "bvalidboard1234567890123456"
+		fileInfo, seeker, err := th.App.GetFile(validTeamID, validBoardID, "7fileInfoID.txt")
 		assert.Error(t, err)
 		assert.Nil(t, fileInfo)
 		assert.Nil(t, seeker)
@@ -393,7 +397,8 @@ func TestGetFilePath(t *testing.T) {
 		}, nil)
 
 		validTeamID := "abcdefghijklmnopqrstuvwxyz" // 26 chars - valid Mattermost ID
-		fileInfo, filePath, err := th.App.GetFilePath(validTeamID, "boardID", "7fileInfoID.txt")
+		validBoardID := "bvalidboard1234567890123456"
+		fileInfo, filePath, err := th.App.GetFilePath(validTeamID, validBoardID, "7fileInfoID.txt")
 		assert.NoError(t, err)
 		assert.NotNil(t, fileInfo)
 		assert.Equal(t, testPath, filePath)
@@ -403,10 +408,11 @@ func TestGetFilePath(t *testing.T) {
 		th.Store.EXPECT().GetFileInfo("fileInfoID").Return(nil, nil)
 
 		validTeamID := "abcdefghijklmnopqrstuvwxyz" // 26 chars - valid Mattermost ID
-		fileInfo, filePath, err := th.App.GetFilePath(validTeamID, "boardID", "7fileInfoID.txt")
+		validBoardID := "bvalidboard1234567890123456"
+		fileInfo, filePath, err := th.App.GetFilePath(validTeamID, validBoardID, "7fileInfoID.txt")
 		assert.NoError(t, err)
 		assert.Nil(t, fileInfo)
-		assert.Equal(t, validTeamID+"/boardID/7fileInfoID.txt", filePath)
+		assert.Equal(t, validTeamID+"/"+validBoardID+"/7fileInfoID.txt", filePath)
 	})
 
 	t.Run("when FileInfo exists but FileInfo.Path is not set", func(t *testing.T) {
@@ -416,10 +422,11 @@ func TestGetFilePath(t *testing.T) {
 		}, nil)
 
 		validTeamID := "abcdefghijklmnopqrstuvwxyz" // 26 chars - valid Mattermost ID
-		fileInfo, filePath, err := th.App.GetFilePath(validTeamID, "boardID", "7fileInfoID.txt")
+		validBoardID := "bvalidboard1234567890123456"
+		fileInfo, filePath, err := th.App.GetFilePath(validTeamID, validBoardID, "7fileInfoID.txt")
 		assert.NoError(t, err)
 		assert.NotNil(t, fileInfo)
-		assert.Equal(t, validTeamID+"/boardID/7fileInfoID.txt", filePath)
+		assert.Equal(t, validTeamID+"/"+validBoardID+"/7fileInfoID.txt", filePath)
 	})
 }
 
@@ -437,11 +444,13 @@ func TestCopyCard(t *testing.T) {
 		CreateAt:   1680725585250,
 		UpdateAt:   1680725585250,
 		DeleteAt:   0,
-		BoardID:    "boardID",
+		BoardID:    "bvalidtestboard123456789012",
 	}
+	validTestBoardID := "bvalidtestboard123456789012" // 27-char valid board ID
+
 	t.Run("Board doesn't exist", func(t *testing.T) {
-		th.Store.EXPECT().GetBoard("boardID").Return(nil, errDummy)
-		_, err := th.App.CopyCardFiles("boardID", []*model.Block{}, false)
+		th.Store.EXPECT().GetBoard(validTestBoardID).Return(nil, errDummy)
+		_, err := th.App.CopyCardFiles(validTestBoardID, []*model.Block{}, false)
 		assert.Error(t, err)
 	})
 
@@ -450,8 +459,8 @@ func TestCopyCard(t *testing.T) {
 			Id:   "imageBlock",
 			Path: testPath,
 		}
-		th.Store.EXPECT().GetBoard("boardID").Return(&model.Board{
-			ID:         "boardID",
+		th.Store.EXPECT().GetBoard(validTestBoardID).Return(&model.Board{
+			ID:         validTestBoardID,
 			IsTemplate: false,
 		}, nil)
 		th.Store.EXPECT().GetFileInfo("fileName").Return(fileInfo, nil)
@@ -461,7 +470,7 @@ func TestCopyCard(t *testing.T) {
 		th.App.filesBackend = mockedFileBackend
 		mockedFileBackend.On("CopyFile", mock.Anything, mock.Anything).Return(nil)
 
-		updatedFileNames, err := th.App.CopyCardFiles("boardID", []*model.Block{imageBlock}, false)
+		updatedFileNames, err := th.App.CopyCardFiles(validTestBoardID, []*model.Block{imageBlock}, false)
 		assert.NoError(t, err)
 		assert.Equal(t, "7fileName.jpg", imageBlock.Fields["fileId"])
 		assert.NotNil(t, updatedFileNames["7fileName.jpg"])
@@ -481,15 +490,15 @@ func TestCopyCard(t *testing.T) {
 			CreateAt:   1680725585250,
 			UpdateAt:   1680725585250,
 			DeleteAt:   0,
-			BoardID:    "boardID",
+			BoardID:    validTestBoardID,
 		}
 
 		fileInfo := &mm_model.FileInfo{
 			Id:   "attachmentBlock",
 			Path: testPath,
 		}
-		th.Store.EXPECT().GetBoard("boardID").Return(&model.Board{
-			ID:         "boardID",
+		th.Store.EXPECT().GetBoard(validTestBoardID).Return(&model.Board{
+			ID:         validTestBoardID,
 			IsTemplate: false,
 		}, nil)
 		th.Store.EXPECT().GetFileInfo("fileName").Return(fileInfo, nil)
@@ -499,7 +508,7 @@ func TestCopyCard(t *testing.T) {
 		th.App.filesBackend = mockedFileBackend
 		mockedFileBackend.On("CopyFile", mock.Anything, mock.Anything).Return(nil)
 
-		updatedFileNames, err := th.App.CopyCardFiles("boardID", []*model.Block{attachmentBlock}, false)
+		updatedFileNames, err := th.App.CopyCardFiles(validTestBoardID, []*model.Block{attachmentBlock}, false)
 		assert.NoError(t, err)
 		assert.NotNil(t, updatedFileNames[imageBlock.Fields["fileId"].(string)])
 	})
@@ -537,8 +546,10 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 		CreateAt:   1680725585250,
 		UpdateAt:   1680725585250,
 		DeleteAt:   0,
-		BoardID:    "boardID",
+		BoardID:    "bvalidtestboard123456789012",
 	}
+
+	validTestBoardID2 := "bvalidtestboard123456789012" // 27-char valid board ID
 
 	validImageBlock := &model.Block{
 		ID:         "validImageBlock",
@@ -548,11 +559,11 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 		Schema:     1,
 		Type:       "image",
 		Title:      "",
-		Fields:     map[string]interface{}{"fileId": "7xhwgf5r15fr3dryfozf1dmy41r9.png"},
+		Fields:     map[string]interface{}{"fileId": "7xhwgf5r15fr3dryfozf1dmy41r.png"},
 		CreateAt:   1680725585250,
 		UpdateAt:   1680725585250,
 		DeleteAt:   0,
-		BoardID:    "boardID",
+		BoardID:    validTestBoardID2,
 	}
 
 	invalidShortFileIDBlock := &model.Block{
@@ -567,7 +578,7 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 		CreateAt:   1680725585250,
 		UpdateAt:   1680725585250,
 		DeleteAt:   0,
-		BoardID:    "boardID",
+		BoardID:    validTestBoardID2,
 	}
 
 	emptyFileBlock := &model.Block{
@@ -582,7 +593,7 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 		CreateAt:   1680725585250,
 		UpdateAt:   1680725585250,
 		DeleteAt:   0,
-		BoardID:    "boardID",
+		BoardID:    validTestBoardID2,
 	}
 
 	t.Run("Board exists, image block, with FileInfo", func(t *testing.T) {
@@ -590,8 +601,8 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 			Id:   "imageBlock",
 			Path: testPath,
 		}
-		th.Store.EXPECT().GetBoard("boardID").Return(&model.Board{
-			ID:         "boardID",
+		th.Store.EXPECT().GetBoard("bvalidtestboard123456789012").Return(&model.Board{
+			ID:         "bvalidtestboard123456789012",
 			IsTemplate: false,
 		}, nil)
 		th.Store.EXPECT().GetFileInfo("fileName").Return(fileInfo, nil)
@@ -602,7 +613,7 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 		th.App.filesBackend = mockedFileBackend
 		mockedFileBackend.On("CopyFile", mock.Anything, mock.Anything).Return(nil)
 
-		err := th.App.CopyAndUpdateCardFiles("boardID", "userID", []*model.Block{imageBlock}, false)
+		err := th.App.CopyAndUpdateCardFiles("bvalidtestboard123456789012", "userID", []*model.Block{imageBlock}, false)
 		assert.NoError(t, err)
 
 		assert.NotEqual(t, testPath, imageBlock.Fields["fileId"])
@@ -613,8 +624,8 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 			Id:   "validImageBlock",
 			Path: testPath,
 		}
-		th.Store.EXPECT().GetBoard("boardID").Return(&model.Board{ID: "boardID", IsTemplate: false}, nil)
-		th.Store.EXPECT().GetFileInfo("xhwgf5r15fr3dryfozf1dmy41r9").Return(fileInfo, nil)
+		th.Store.EXPECT().GetBoard(validTestBoardID2).Return(&model.Board{ID: validTestBoardID2, IsTemplate: false}, nil)
+		th.Store.EXPECT().GetFileInfo("xhwgf5r15fr3dryfozf1dmy41r").Return(fileInfo, nil)
 		th.Store.EXPECT().SaveFileInfo(fileInfo).Return(nil)
 		th.Store.EXPECT().PatchBlocks(gomock.Any(), "userID").Return(nil)
 
@@ -622,19 +633,19 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 		th.App.filesBackend = mockedFileBackend
 		mockedFileBackend.On("CopyFile", mock.Anything, mock.Anything).Return(nil)
 
-		err := th.App.CopyAndUpdateCardFiles("boardID", "userID", []*model.Block{validImageBlock}, false)
+		err := th.App.CopyAndUpdateCardFiles(validTestBoardID2, "userID", []*model.Block{validImageBlock}, false)
 		assert.NoError(t, err)
 	})
 
 	t.Run("Invalid file ID length", func(t *testing.T) {
-		th.Store.EXPECT().GetBoard("boardID").Return(&model.Board{ID: "boardID", IsTemplate: false}, nil)
-		err := th.App.CopyAndUpdateCardFiles("boardID", "userID", []*model.Block{invalidShortFileIDBlock}, false)
+		th.Store.EXPECT().GetBoard(validTestBoardID2).Return(&model.Board{ID: validTestBoardID2, IsTemplate: false}, nil)
+		err := th.App.CopyAndUpdateCardFiles(validTestBoardID2, "userID", []*model.Block{invalidShortFileIDBlock}, false)
 		assert.ErrorIs(t, err, model.NewErrBadRequest("Invalid Block ID"))
 	})
 
 	t.Run("Empty file ID", func(t *testing.T) {
-		th.Store.EXPECT().GetBoard("boardID").Return(&model.Board{ID: "boardID", IsTemplate: false}, nil)
-		err := th.App.CopyAndUpdateCardFiles("boardID", "userID", []*model.Block{emptyFileBlock}, false)
+		th.Store.EXPECT().GetBoard(validTestBoardID2).Return(&model.Board{ID: validTestBoardID2, IsTemplate: false}, nil)
+		err := th.App.CopyAndUpdateCardFiles(validTestBoardID2, "userID", []*model.Block{emptyFileBlock}, false)
 		assert.ErrorIs(t, err, model.NewErrBadRequest("Block ID cannot be empty"))
 	})
 }
@@ -643,12 +654,13 @@ func TestCopyCardFiles(t *testing.T) {
 	app := &App{}
 
 	t.Run("ValidFileID", func(t *testing.T) {
-		sourceBoardID := "sourceBoardID"
+		sourceBoardID := "bsourceboard123456789012345"
+		destBoardID := "bdestinationboard1234567890"
 		copiedBlocks := []*model.Block{
 			{
 				Type:    model.TypeImage,
 				Fields:  map[string]interface{}{"fileId": "validFileID"},
-				BoardID: "destinationBoardID",
+				BoardID: destBoardID,
 			},
 		}
 
@@ -659,12 +671,13 @@ func TestCopyCardFiles(t *testing.T) {
 	})
 
 	t.Run("InvalidFileID", func(t *testing.T) {
-		sourceBoardID := "sourceBoardID"
+		sourceBoardID := "bsourceboard123456789012345"
+		destBoardID := "bdestinationboard1234567890"
 		copiedBlocks := []*model.Block{
 			{
 				Type:    model.TypeImage,
 				Fields:  map[string]interface{}{"fileId": "../../../../../filePath"},
-				BoardID: "destinationBoardID",
+				BoardID: destBoardID,
 			},
 		}
 
@@ -677,9 +690,10 @@ func TestCopyCardFiles(t *testing.T) {
 
 func TestGetDestinationFilePath(t *testing.T) {
 	validTeamID := "abcdefghijklmnopqrstuvwxyz"
+	validBoardID := "babcdefghijklmnopqrstuvwxyz" // 27-char board ID starting with 'b'
 
 	t.Run("Should reject path traversal in template teamID", func(t *testing.T) {
-		result, err := getDestinationFilePath(true, "../../../etc", "boardID", "filename")
+		result, err := getDestinationFilePath(true, "../../../etc", validBoardID, "filename")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid team ID")
 		assert.Equal(t, "", result)
@@ -693,42 +707,44 @@ func TestGetDestinationFilePath(t *testing.T) {
 	})
 
 	t.Run("Should reject path traversal in template filename", func(t *testing.T) {
-		result, err := getDestinationFilePath(true, validTeamID, "boardID", "../../../etc/passwd")
+		result, err := getDestinationFilePath(true, validTeamID, validBoardID, "../../../etc/passwd")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid filename")
 		assert.Equal(t, "", result)
 	})
 
 	t.Run("Should use direct path for templates (to avoid data retention)", func(t *testing.T) {
-		result, err := getDestinationFilePath(true, validTeamID, "validBoard", "validFile")
+		result, err := getDestinationFilePath(true, validTeamID, validBoardID, "validFile")
 		assert.NoError(t, err)
 		assert.NotContains(t, result, "templates") // Templates should NOT use base path to avoid data retention
 		assert.Contains(t, result, validTeamID)
-		assert.Contains(t, result, "validBoard")
+		assert.Contains(t, result, validBoardID)
 		assert.Contains(t, result, "validFile")
 	})
 
 	t.Run("Should allow valid template paths", func(t *testing.T) {
-		result, err := getDestinationFilePath(true, validTeamID, "board456", "file.jpg")
+		validBoardID2 := "bxhwgf5r15fr3dryfozf1dmy41r" // Another valid 27-char board ID (fixed length)
+		result, err := getDestinationFilePath(true, validTeamID, validBoardID2, "file.jpg")
 		assert.NoError(t, err)
 		assert.Contains(t, result, validTeamID)
-		assert.Contains(t, result, "board456")
+		assert.Contains(t, result, validBoardID2)
 		assert.Contains(t, result, "file.jpg")
 		assert.NotContains(t, result, "templates") // Templates use direct path to avoid data retention
 	})
 
 	t.Run("Should not affect non-template files", func(t *testing.T) {
-		result, err := getDestinationFilePath(false, validTeamID, "board456", "filename")
+		validBoardID3 := "b12345678901234567890123456" // Another valid 27-char board ID
+		result, err := getDestinationFilePath(false, validTeamID, validBoardID3, "filename")
 		assert.NoError(t, err)
 		assert.NotContains(t, result, "templates")
-		assert.NotContains(t, result, validTeamID) // Non-templates don't include teamID in path
-		assert.NotContains(t, result, "board456")  // Non-templates don't include boardID in path
+		assert.NotContains(t, result, validTeamID)   // Non-templates don't include teamID in path
+		assert.NotContains(t, result, validBoardID3) // Non-templates don't include boardID in path
 		assert.Contains(t, result, "filename")
 	})
 
 	t.Run("Should reject absolute paths in teamID", func(t *testing.T) {
 		// Test absolute path handling in teamID parameter
-		result, err := getDestinationFilePath(false, "/plugins/file.tar.gz", "boardID", "filename")
+		result, err := getDestinationFilePath(false, "/plugins/file.tar.gz", validBoardID, "filename")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid team ID")
 		assert.Equal(t, "", result)
