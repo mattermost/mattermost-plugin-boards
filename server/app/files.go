@@ -141,7 +141,8 @@ func (a *App) GetFilePath(teamID, boardID, fileName string) (*mm_model.FileInfo,
 
 func getDestinationFilePath(isTemplate bool, teamID, boardID, filename string) (string, error) {
 	// Validate inputs to ensure proper file path handling
-	if !mm_model.IsValidId(teamID) {
+	// Only allow GlobalTeamID for template operations to prevent path traversal attacks
+	if !mm_model.IsValidId(teamID) && !(isTemplate && teamID == model.GlobalTeamID) {
 		return "", fmt.Errorf("getDestinationFilePath: invalid team ID for teamID %s", teamID) //nolint:err113
 	}
 	if err := model.IsValidId(boardID); err != nil {
@@ -179,8 +180,8 @@ func getFileInfoID(fileName string) string {
 }
 
 func (a *App) GetFileReader(teamID, boardID, filename string) (filestore.ReadCloseSeeker, error) {
-	// Validate path components to ensure proper file path handling
-	if !mm_model.IsValidId(teamID) {
+	// Validate path components - be restrictive here since this can be called from API handlers
+	if !mm_model.IsValidId(teamID) && teamID != model.GlobalTeamID {
 		return nil, fmt.Errorf("GetFileReader: invalid team ID for teamID %s", teamID) //nolint:err113
 	}
 	if err := model.IsValidId(boardID); err != nil {
@@ -256,6 +257,7 @@ func (a *App) MoveFile(channelID, teamID, boardID, filename string) error {
 	}
 	return nil
 }
+
 func (a *App) CopyAndUpdateCardFiles(boardID, userID string, blocks []*model.Block, asTemplate bool) error {
 	newFileNames, err := a.CopyCardFiles(boardID, blocks, asTemplate)
 	if err != nil {

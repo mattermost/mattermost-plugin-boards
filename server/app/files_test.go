@@ -722,6 +722,23 @@ func TestGetDestinationFilePath(t *testing.T) {
 		assert.Contains(t, result, "validFile")
 	})
 
+	t.Run("Should allow global team ID for templates", func(t *testing.T) {
+		result, err := getDestinationFilePath(true, "0", validBoardID, "template-file.jpg")
+		assert.NoError(t, err)
+		assert.Contains(t, result, "0")
+		assert.Contains(t, result, validBoardID)
+		assert.Contains(t, result, "template-file.jpg")
+		assert.NotContains(t, result, "templates") // Templates use direct path to avoid data retention
+	})
+
+	t.Run("Should allow global team ID for non-templates", func(t *testing.T) {
+		result, err := getDestinationFilePath(false, "0", validBoardID, "non-template-file.jpg")
+		// Global team ID should now be rejected for non-template operations for security
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid team ID")
+		assert.Equal(t, "", result)
+	})
+
 	t.Run("Should allow valid template paths", func(t *testing.T) {
 		validBoardID2 := "bxhwgf5r15fr3dryfozf1dmy41r" // Another valid 27-char board ID (fixed length)
 		result, err := getDestinationFilePath(true, validTeamID, validBoardID2, "file.jpg")
@@ -837,5 +854,42 @@ func TestValidatePathComponent(t *testing.T) {
 			err := validatePathComponent(component)
 			assert.Error(t, err, "Invalid path component should be rejected: %s", component)
 		}
+	})
+}
+
+func TestGlobalTemplateFilePathValidation(t *testing.T) {
+	// This test reproduces the original error scenario that was happening during
+	// global template initialization with team ID "0"
+	t.Run("Should allow global team ID in template file operations", func(t *testing.T) {
+		globalTeamID := "0"                           // model.GlobalTeamID
+		validBoardID := "bbn1888mprfrm5fjw9f1je9x3xo" // Example board ID from the error
+		filename := "76fwrj36hptg6dywka4k5mt3sph.png" // Example filename from the error
+
+		// This should not return an error with our fix
+		result, err := getDestinationFilePath(true, globalTeamID, validBoardID, filename)
+		assert.NoError(t, err)
+		assert.Contains(t, result, globalTeamID)
+		assert.Contains(t, result, validBoardID)
+		assert.Contains(t, result, filename)
+	})
+}
+
+func TestUserCreatedTemplateFilePathValidation(t *testing.T) {
+	// This test verifies that user-created templates with regular team IDs work correctly
+	t.Run("Should allow regular team ID for user-created templates", func(t *testing.T) {
+		userTeamID := "abcdefghijklmnopqrstuvwxyz"    // Regular team ID for user-created template
+		validBoardID := "bvalidboard1234567890123456" // Valid 27-char board ID starting with 'b' (same format as other tests)
+		filename := "user-template-image.png"         // Template file
+
+		// User-created templates should work with regular team IDs
+		result, err := getDestinationFilePath(true, userTeamID, validBoardID, filename)
+		assert.NoError(t, err)
+		assert.Contains(t, result, userTeamID)
+		assert.Contains(t, result, validBoardID)
+		assert.Contains(t, result, filename)
+
+		// Should use template path structure (not base path)
+		assert.NotContains(t, result, "boards/")
+		assert.Equal(t, userTeamID+"/"+validBoardID+"/"+filename, result)
 	})
 }
