@@ -86,7 +86,59 @@ func (a *App) GetFileInfo(filename string) (*mm_model.FileInfo, error) {
 	return fileInfo, nil
 }
 
+// ValidateFileOwnership checks if a file belongs to the specified board and team
+func (a *App) ValidateFileOwnership(teamID, boardID, filename string) error {
+	fileInfo, err := a.GetFileInfo(filename)
+	if err != nil {
+		return err
+	}
+	if fileInfo != nil && fileInfo.Path != "" && fileInfo.Path != emptyString {
+		expectedPath := filepath.Join(teamID, boardID, filename)
+		if fileInfo.Path == expectedPath {
+			return nil
+		}
+		if err := a.validateFileReferencedByBoard(boardID, filename); err != nil {
+			return model.NewErrPermission("file does not belong to the specified board")
+		}
+	} else {
+		if err := a.validateFileReferencedByBoard(boardID, filename); err != nil {
+			return model.NewErrPermission("file does not belong to the specified board")
+		}
+	}
+	return nil
+}
+
+// validateFileReferencedByBoard checks if a file is referenced by blocks in the specified board
+func (a *App) validateFileReferencedByBoard(boardID, filename string) error {
+	blocks, err := a.GetBlocksForBoard(boardID)
+	if err != nil {
+		return err
+	}
+
+	for _, block := range blocks {
+		if block.Type == model.TypeImage || block.Type == model.TypeAttachment {
+			if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID == filename {
+				return nil
+			}
+			if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok && attachmentID == filename {
+				return nil
+			}
+		}
+	}
+
+	return fmt.Errorf("file %s is not referenced by any block in board %s", filename, boardID)
+}
+
 func (a *App) GetFile(teamID, boardID, fileName string) (*mm_model.FileInfo, filestore.ReadCloseSeeker, error) {
+	if err := a.ValidateFileOwnership(teamID, boardID, fileName); err != nil {
+		a.logger.Error("GetFile: File ownership validation failed",
+			mlog.String("Team", teamID),
+			mlog.String("board", boardID),
+			mlog.String("filename", fileName),
+			mlog.Err(err))
+		return nil, nil, err
+	}
+
 	fileInfo, filePath, err := a.GetFilePath(teamID, boardID, fileName)
 	if err != nil {
 		a.logger.Error("GetFile: Failed to GetFilePath.", mlog.String("Team", teamID), mlog.String("board", boardID), mlog.String("filename", fileName), mlog.Err(err))
