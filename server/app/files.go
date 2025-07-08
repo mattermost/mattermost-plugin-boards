@@ -23,6 +23,7 @@ const emptyString = "empty"
 
 var errEmptyFilename = errors.New("IsFileArchived: empty filename not allowed")
 var ErrFileNotFound = errors.New("file not found")
+var ErrFileNotReferencedByBoard = errors.New("file not referenced by board")
 
 func (a *App) SaveFile(reader io.Reader, teamID, boardID, filename string, asTemplate bool) (string, error) {
 	// NOTE: File extension includes the dot
@@ -86,7 +87,7 @@ func (a *App) GetFileInfo(filename string) (*mm_model.FileInfo, error) {
 	return fileInfo, nil
 }
 
-// ValidateFileOwnership checks if a file belongs to the specified board and team
+// ValidateFileOwnership checks if a file belongs to the specified board and team.
 func (a *App) ValidateFileOwnership(teamID, boardID, filename string) error {
 	fileInfo, err := a.GetFileInfo(filename)
 	if err != nil {
@@ -108,7 +109,7 @@ func (a *App) ValidateFileOwnership(teamID, boardID, filename string) error {
 	return nil
 }
 
-// validateFileReferencedByBoard checks if a file is referenced by blocks in the specified board
+// validateFileReferencedByBoard checks if a file is referenced by blocks in the specified board.
 func (a *App) validateFileReferencedByBoard(boardID, filename string) error {
 	blocks, err := a.GetBlocksForBoard(boardID)
 	if err != nil {
@@ -126,7 +127,7 @@ func (a *App) validateFileReferencedByBoard(boardID, filename string) error {
 		}
 	}
 
-	return fmt.Errorf("file %s is not referenced by any block in board %s", filename, boardID)
+	return fmt.Errorf("%w: file %s is not referenced by any block in board %s", ErrFileNotReferencedByBoard, filename, boardID)
 }
 
 func (a *App) GetFile(teamID, boardID, fileName string) (*mm_model.FileInfo, filestore.ReadCloseSeeker, error) {
