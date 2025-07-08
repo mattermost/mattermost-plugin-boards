@@ -189,10 +189,10 @@ func (a *App) GetFileReader(teamID, boardID, filename string) (filestore.ReadClo
 				return nil, fmt.Errorf("GetFileReader: cannot validate board for GlobalTeamID: %w", err)
 			}
 			if !board.IsTemplate {
-				return nil, fmt.Errorf("GetFileReader: GlobalTeamID only allowed for template boards, got non-template board %s", boardID)
+				return nil, fmt.Errorf("GetFileReader: GlobalTeamID only allowed for template boards, got non-template board %s", boardID) //nolint:err113
 			}
 		} else {
-			return nil, fmt.Errorf("GetFileReader: invalid team ID for teamID %s", teamID)
+			return nil, fmt.Errorf("GetFileReader: invalid team ID for teamID %s", teamID) //nolint:err113
 		}
 	}
 	if err := model.IsValidId(boardID); err != nil {

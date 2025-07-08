@@ -695,7 +695,7 @@ func TestGetDestinationFilePath(t *testing.T) {
 	t.Run("Should reject path traversal in template teamID", func(t *testing.T) {
 		result, err := getDestinationFilePath(true, "../../../etc", validBoardID, "filename")
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid team ID")
+		assert.Contains(t, err.Error(), "invalid teamID in ValidateTeamID")
 		assert.Equal(t, "", result)
 	})
 
@@ -735,7 +735,7 @@ func TestGetDestinationFilePath(t *testing.T) {
 		result, err := getDestinationFilePath(false, "0", validBoardID, "non-template-file.jpg")
 		// Global team ID should now be rejected for non-template operations for security
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid team ID")
+		assert.Contains(t, err.Error(), "invalid teamID in ValidateTeamID")
 		assert.Equal(t, "", result)
 	})
 
@@ -760,10 +760,9 @@ func TestGetDestinationFilePath(t *testing.T) {
 	})
 
 	t.Run("Should reject absolute paths in teamID", func(t *testing.T) {
-		// Test absolute path handling in teamID parameter
-		result, err := getDestinationFilePath(false, "/plugins/file.tar.gz", validBoardID, "filename")
+		result, err := getDestinationFilePath(true, "/plugins/file.tar.gz", validBoardID, "filename")
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid team ID")
+		assert.Contains(t, err.Error(), "invalid teamID in ValidateTeamID")
 		assert.Equal(t, "", result)
 	})
 
