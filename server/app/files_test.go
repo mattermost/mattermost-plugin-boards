@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 	mm_model "github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin/plugintest/mock"
 	"github.com/mattermost/mattermost/server/v8/platform/shared/filestore"
@@ -24,9 +25,10 @@ import (
 
 const (
 	testFileName = "temp-file-name"
-	testBoardID  = "btestboardid1234567890123456"
 	testPath     = "/path/to/file/fileName.txt"
 )
+
+var testBoardID = utils.NewID(utils.IDTypeBoard)
 
 var errDummy = errors.New("hello")
 
@@ -36,7 +38,7 @@ func (err *TestError) Error() string { return "Mocked File backend error" }
 
 func TestGetFileReader(t *testing.T) {
 	validTeamID := "abcdefghijklmnopqrstuvwxyz" // 26 chars - valid Mattermost ID
-	testFilePath := filepath.Join(validTeamID, "test-board-id", "temp-file-name")
+	testFilePath := filepath.Join(validTeamID, testBoardID, testFileName)
 
 	th, _ := SetupTestHelper(t)
 	mockedReadCloseSeek := &mocks.ReadCloseSeeker{}
@@ -120,7 +122,7 @@ func TestGetFileReader(t *testing.T) {
 	})
 
 	t.Run("should move file from old filepath to new filepath, if file doesnot exists in new filepath and workspace id is 0", func(t *testing.T) {
-		filePath := filepath.Join("0", "test-board-id", "temp-file-name")
+		filePath := filepath.Join("0", testBoardID, testFileName)
 		workspaceid := "0"
 		mockedFileBackend := &mocks.FileBackend{}
 		th.App.filesBackend = mockedFileBackend
@@ -145,6 +147,12 @@ func TestGetFileReader(t *testing.T) {
 			return nil
 		}
 
+		// Add mock for GetBoard call since workspaceid is "0" (model.GlobalTeamID)
+		th.Store.EXPECT().GetBoard(testBoardID).Return(&model.Board{
+			ID:         testBoardID,
+			IsTemplate: true, // Set to true since it's using GlobalTeamID
+		}, nil)
+
 		mockedFileBackend.On("FileExists", filePath).Return(fileExistsFunc, fileExistsErrorFunc)
 		mockedFileBackend.On("FileExists", testFileName).Return(fileExistsFunc, fileExistsErrorFunc)
 		mockedFileBackend.On("MoveFile", testFileName, filePath).Return(moveFileFunc)
@@ -155,7 +163,7 @@ func TestGetFileReader(t *testing.T) {
 	})
 
 	t.Run("should return file reader, if file doesnot exists in new filepath and old file path", func(t *testing.T) {
-		filePath := filepath.Join("0", "test-board-id", "temp-file-name")
+		filePath := filepath.Join("0", testBoardID, testFileName)
 		fileName := testFileName
 		workspaceid := "0"
 		mockedFileBackend := &mocks.FileBackend{}
@@ -180,6 +188,12 @@ func TestGetFileReader(t *testing.T) {
 		moveFileFunc := func(oldFileName, newFileName string) error {
 			return nil
 		}
+
+		// Add mock for GetBoard call since workspaceid is "0" (model.GlobalTeamID)
+		th.Store.EXPECT().GetBoard(testBoardID).Return(&model.Board{
+			ID:         testBoardID,
+			IsTemplate: true, // Set to true since it's using GlobalTeamID
+		}, nil)
 
 		mockedFileBackend.On("FileExists", filePath).Return(fileExistsFunc, fileExistsErrorFunc)
 		mockedFileBackend.On("FileExists", testFileName).Return(fileExistsFunc, fileExistsErrorFunc)

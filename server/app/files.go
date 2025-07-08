@@ -180,20 +180,18 @@ func getFileInfoID(fileName string) string {
 
 func (a *App) GetFileReader(teamID, boardID, filename string) (filestore.ReadCloseSeeker, error) {
 	// Validate path components - be restrictive here since this can be called from API handlers
-	// For GlobalTeamID, verify that it's actually for a template board
-	if !mm_model.IsValidId(teamID) {
-		if teamID == model.GlobalTeamID {
-			// Only allow GlobalTeamID if this is actually a template board
-			board, err := a.GetBoard(boardID)
-			if err != nil {
-				return nil, fmt.Errorf("GetFileReader: cannot validate board for GlobalTeamID: %w", err)
-			}
-			if !board.IsTemplate {
-				return nil, fmt.Errorf("GetFileReader: GlobalTeamID only allowed for template boards, got non-template board %s", boardID) //nolint:err113
-			}
-		} else {
-			return nil, fmt.Errorf("GetFileReader: invalid team ID for teamID %s", teamID) //nolint:err113
+	// For GlobalTeamID, we need to check if the board is actually a template
+	isTemplate := false
+	if teamID == model.GlobalTeamID {
+		board, err := a.GetBoard(boardID)
+		if err != nil {
+			return nil, fmt.Errorf("GetFileReader: cannot validate board for GlobalTeamID: %w", err)
 		}
+		isTemplate = board.IsTemplate
+	}
+
+	if err := model.ValidateTeamID(teamID, isTemplate); err != nil {
+		return nil, fmt.Errorf("GetFileReader: %w", err)
 	}
 	if err := model.IsValidId(boardID); err != nil {
 		return nil, fmt.Errorf("invalid rootID in GetFileReader: %w", err)
