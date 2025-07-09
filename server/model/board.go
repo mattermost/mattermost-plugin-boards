@@ -373,7 +373,7 @@ func (p *BoardPatch) IsValid() error {
 		return InvalidBoardErr{"invalid-board-minimum-role"}
 	}
 
-	if p.ChannelID != nil && !mmModel.IsValidId(*p.ChannelID) {
+	if p.ChannelID != nil && *p.ChannelID != "" && !mmModel.IsValidId(*p.ChannelID) {
 		return InvalidBoardErr{"invalid-channel-id"}
 	}
 
