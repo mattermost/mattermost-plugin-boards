@@ -180,3 +180,41 @@ func TestBoardIsValidForImport(t *testing.T) {
 		require.EqualError(t, err, "invalid-board-minimum-role")
 	})
 }
+
+func TestBoardPatchIsValid(t *testing.T) {
+	t.Run("Should return nil for valid board patch with channel ID", func(t *testing.T) {
+		validChannelID := model.NewId()
+		patch := &BoardPatch{
+			ChannelID: &validChannelID,
+		}
+		err := patch.IsValid()
+		require.NoError(t, err)
+	})
+
+	t.Run("Should return nil for board patch with empty channel ID (unlinking)", func(t *testing.T) {
+		emptyChannelID := ""
+		patch := &BoardPatch{
+			ChannelID: &emptyChannelID,
+		}
+		err := patch.IsValid()
+		require.NoError(t, err)
+	})
+
+	t.Run("Should return error for board patch with invalid channel ID", func(t *testing.T) {
+		invalidChannelID := "invalid-channel-id"
+		patch := &BoardPatch{
+			ChannelID: &invalidChannelID,
+		}
+		err := patch.IsValid()
+		require.Error(t, err)
+		require.EqualError(t, err, "invalid-channel-id")
+	})
+
+	t.Run("Should return nil for board patch with nil channel ID", func(t *testing.T) {
+		patch := &BoardPatch{
+			ChannelID: nil,
+		}
+		err := patch.IsValid()
+		require.NoError(t, err)
+	})
+}
