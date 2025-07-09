@@ -124,8 +124,18 @@ func (a *App) GetFilePath(teamID, boardID, fileName string) (*mm_model.FileInfo,
 		filePath = fileInfo.Path
 	} else {
 		// Validate path components to ensure proper file path handling
-		if !mm_model.IsValidId(teamID) {
-			return nil, "", fmt.Errorf("GetFilePath: invalid team ID for teamID %s", teamID) //nolint:err113
+		// For GlobalTeamID, we need to check if the board is actually a template
+		isTemplate := false
+		if teamID == model.GlobalTeamID {
+			board, err := a.GetBoard(boardID)
+			if err != nil {
+				return nil, "", fmt.Errorf("GetFilePath: cannot validate board for GlobalTeamID: %w", err)
+			}
+			isTemplate = board.IsTemplate
+		}
+
+		if err := model.ValidateTeamID(teamID, isTemplate); err != nil {
+			return nil, "", fmt.Errorf("GetFilePath: %w", err)
 		}
 		if err := model.IsValidId(boardID); err != nil {
 			return nil, "", fmt.Errorf("invalid rootID in GetFilePath: %w", err)
