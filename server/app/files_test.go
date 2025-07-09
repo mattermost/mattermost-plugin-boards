@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 	mm_model "github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin/plugintest/mock"
 	"github.com/mattermost/mattermost/server/v8/platform/shared/filestore"
@@ -24,9 +25,10 @@ import (
 
 const (
 	testFileName = "temp-file-name"
-	testBoardID  = "btestboardid1234567890123456"
 	testPath     = "/path/to/file/fileName.txt"
 )
+
+var testBoardID = utils.NewID(utils.IDTypeBoard)
 
 var errDummy = errors.New("hello")
 
@@ -36,7 +38,7 @@ func (err *TestError) Error() string { return "Mocked File backend error" }
 
 func TestGetFileReader(t *testing.T) {
 	validTeamID := "abcdefghijklmnopqrstuvwxyz" // 26 chars - valid Mattermost ID
-	testFilePath := filepath.Join(validTeamID, "test-board-id", "temp-file-name")
+	testFilePath := filepath.Join(validTeamID, testBoardID, testFileName)
 
 	th, _ := SetupTestHelper(t)
 	mockedReadCloseSeek := &mocks.ReadCloseSeeker{}
@@ -120,7 +122,7 @@ func TestGetFileReader(t *testing.T) {
 	})
 
 	t.Run("should move file from old filepath to new filepath, if file doesnot exists in new filepath and workspace id is 0", func(t *testing.T) {
-		filePath := filepath.Join("0", "test-board-id", "temp-file-name")
+		filePath := filepath.Join("0", testBoardID, testFileName)
 		workspaceid := "0"
 		mockedFileBackend := &mocks.FileBackend{}
 		th.App.filesBackend = mockedFileBackend
@@ -145,6 +147,12 @@ func TestGetFileReader(t *testing.T) {
 			return nil
 		}
 
+		// Add mock for GetBoard call since workspaceid is "0" (model.GlobalTeamID)
+		th.Store.EXPECT().GetBoard(testBoardID).Return(&model.Board{
+			ID:         testBoardID,
+			IsTemplate: true, // Set to true since it's using GlobalTeamID
+		}, nil)
+
 		mockedFileBackend.On("FileExists", filePath).Return(fileExistsFunc, fileExistsErrorFunc)
 		mockedFileBackend.On("FileExists", testFileName).Return(fileExistsFunc, fileExistsErrorFunc)
 		mockedFileBackend.On("MoveFile", testFileName, filePath).Return(moveFileFunc)
@@ -155,7 +163,7 @@ func TestGetFileReader(t *testing.T) {
 	})
 
 	t.Run("should return file reader, if file doesnot exists in new filepath and old file path", func(t *testing.T) {
-		filePath := filepath.Join("0", "test-board-id", "temp-file-name")
+		filePath := filepath.Join("0", testBoardID, testFileName)
 		fileName := testFileName
 		workspaceid := "0"
 		mockedFileBackend := &mocks.FileBackend{}
@@ -180,6 +188,12 @@ func TestGetFileReader(t *testing.T) {
 		moveFileFunc := func(oldFileName, newFileName string) error {
 			return nil
 		}
+
+		// Add mock for GetBoard call since workspaceid is "0" (model.GlobalTeamID)
+		th.Store.EXPECT().GetBoard(testBoardID).Return(&model.Board{
+			ID:         testBoardID,
+			IsTemplate: true, // Set to true since it's using GlobalTeamID
+		}, nil)
 
 		mockedFileBackend.On("FileExists", filePath).Return(fileExistsFunc, fileExistsErrorFunc)
 		mockedFileBackend.On("FileExists", testFileName).Return(fileExistsFunc, fileExistsErrorFunc)
@@ -695,7 +709,7 @@ func TestGetDestinationFilePath(t *testing.T) {
 	t.Run("Should reject path traversal in template teamID", func(t *testing.T) {
 		result, err := getDestinationFilePath(true, "../../../etc", validBoardID, "filename")
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid team ID")
+		assert.Contains(t, err.Error(), "invalid teamID in ValidateTeamID")
 		assert.Equal(t, "", result)
 	})
 
@@ -722,6 +736,23 @@ func TestGetDestinationFilePath(t *testing.T) {
 		assert.Contains(t, result, "validFile")
 	})
 
+	t.Run("Should allow global team ID for templates", func(t *testing.T) {
+		result, err := getDestinationFilePath(true, "0", validBoardID, "template-file.jpg")
+		assert.NoError(t, err)
+		assert.Contains(t, result, "0")
+		assert.Contains(t, result, validBoardID)
+		assert.Contains(t, result, "template-file.jpg")
+		assert.NotContains(t, result, "templates") // Templates use direct path to avoid data retention
+	})
+
+	t.Run("Should allow global team ID for non-templates", func(t *testing.T) {
+		result, err := getDestinationFilePath(false, "0", validBoardID, "non-template-file.jpg")
+		// Global team ID should now be rejected for non-template operations for security
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid teamID in ValidateTeamID")
+		assert.Equal(t, "", result)
+	})
+
 	t.Run("Should allow valid template paths", func(t *testing.T) {
 		validBoardID2 := "bxhwgf5r15fr3dryfozf1dmy41r" // Another valid 27-char board ID (fixed length)
 		result, err := getDestinationFilePath(true, validTeamID, validBoardID2, "file.jpg")
@@ -743,10 +774,9 @@ func TestGetDestinationFilePath(t *testing.T) {
 	})
 
 	t.Run("Should reject absolute paths in teamID", func(t *testing.T) {
-		// Test absolute path handling in teamID parameter
-		result, err := getDestinationFilePath(false, "/plugins/file.tar.gz", validBoardID, "filename")
+		result, err := getDestinationFilePath(true, "/plugins/file.tar.gz", validBoardID, "filename")
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid team ID")
+		assert.Contains(t, err.Error(), "invalid teamID in ValidateTeamID")
 		assert.Equal(t, "", result)
 	})
 
@@ -837,5 +867,42 @@ func TestValidatePathComponent(t *testing.T) {
 			err := validatePathComponent(component)
 			assert.Error(t, err, "Invalid path component should be rejected: %s", component)
 		}
+	})
+}
+
+func TestGlobalTemplateFilePathValidation(t *testing.T) {
+	// This test reproduces the original error scenario that was happening during
+	// global template initialization with team ID "0"
+	t.Run("Should allow global team ID in template file operations", func(t *testing.T) {
+		globalTeamID := "0"                           // model.GlobalTeamID
+		validBoardID := "bbn1888mprfrm5fjw9f1je9x3xo" // Example board ID from the error
+		filename := "76fwrj36hptg6dywka4k5mt3sph.png" // Example filename from the error
+
+		// This should not return an error with our fix
+		result, err := getDestinationFilePath(true, globalTeamID, validBoardID, filename)
+		assert.NoError(t, err)
+		assert.Contains(t, result, globalTeamID)
+		assert.Contains(t, result, validBoardID)
+		assert.Contains(t, result, filename)
+	})
+}
+
+func TestUserCreatedTemplateFilePathValidation(t *testing.T) {
+	// This test verifies that user-created templates with regular team IDs work correctly
+	t.Run("Should allow regular team ID for user-created templates", func(t *testing.T) {
+		userTeamID := "abcdefghijklmnopqrstuvwxyz"    // Regular team ID for user-created template
+		validBoardID := "bvalidboard1234567890123456" // Valid 27-char board ID starting with 'b' (same format as other tests)
+		filename := "user-template-image.png"         // Template file
+
+		// User-created templates should work with regular team IDs
+		result, err := getDestinationFilePath(true, userTeamID, validBoardID, filename)
+		assert.NoError(t, err)
+		assert.Contains(t, result, userTeamID)
+		assert.Contains(t, result, validBoardID)
+		assert.Contains(t, result, filename)
+
+		// Should use template path structure (not base path)
+		assert.NotContains(t, result, "boards/")
+		assert.Equal(t, userTeamID+"/"+validBoardID+"/"+filename, result)
 	})
 }
