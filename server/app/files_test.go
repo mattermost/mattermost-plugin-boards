@@ -454,7 +454,7 @@ func TestCopyCard(t *testing.T) {
 		Schema:     1,
 		Type:       "image",
 		Title:      "",
-		Fields:     map[string]interface{}{"fileId": "7fileName.jpg"},
+		Fields:     map[string]interface{}{"fileId": "7fileName123456789012345678.jpg"},
 		CreateAt:   1680725585250,
 		UpdateAt:   1680725585250,
 		DeleteAt:   0,
@@ -475,9 +475,10 @@ func TestCopyCard(t *testing.T) {
 		}
 		th.Store.EXPECT().GetBoard(validTestBoardID).Return(&model.Board{
 			ID:         validTestBoardID,
+			TeamID:     "validteam12345678901234567",
 			IsTemplate: false,
 		}, nil)
-		th.Store.EXPECT().GetFileInfo("fileName").Return(fileInfo, nil)
+		th.Store.EXPECT().GetFileInfo("fileName123456789012345678").Return(fileInfo, nil)
 		th.Store.EXPECT().SaveFileInfo(fileInfo).Return(nil)
 
 		mockedFileBackend := &mocks.FileBackend{}
@@ -486,8 +487,8 @@ func TestCopyCard(t *testing.T) {
 
 		updatedFileNames, err := th.App.CopyCardFiles(validTestBoardID, []*model.Block{imageBlock}, false)
 		assert.NoError(t, err)
-		assert.Equal(t, "7fileName.jpg", imageBlock.Fields["fileId"])
-		assert.NotNil(t, updatedFileNames["7fileName.jpg"])
+		assert.Equal(t, "7fileName123456789012345678.jpg", imageBlock.Fields["fileId"])
+		assert.NotNil(t, updatedFileNames["7fileName123456789012345678.jpg"])
 		assert.NotNil(t, updatedFileNames[imageBlock.Fields["fileId"].(string)])
 	})
 
@@ -500,7 +501,7 @@ func TestCopyCard(t *testing.T) {
 			Schema:     1,
 			Type:       "attachment",
 			Title:      "",
-			Fields:     map[string]interface{}{"fileId": "7fileName.jpg"},
+			Fields:     map[string]interface{}{"fileId": "7fileName123456789012345678.jpg"},
 			CreateAt:   1680725585250,
 			UpdateAt:   1680725585250,
 			DeleteAt:   0,
@@ -513,9 +514,10 @@ func TestCopyCard(t *testing.T) {
 		}
 		th.Store.EXPECT().GetBoard(validTestBoardID).Return(&model.Board{
 			ID:         validTestBoardID,
+			TeamID:     "validteam12345678901234567",
 			IsTemplate: false,
 		}, nil)
-		th.Store.EXPECT().GetFileInfo("fileName").Return(fileInfo, nil)
+		th.Store.EXPECT().GetFileInfo("fileName123456789012345678").Return(fileInfo, nil)
 		th.Store.EXPECT().SaveFileInfo(fileInfo).Return(nil)
 
 		mockedFileBackend := &mocks.FileBackend{}
@@ -530,6 +532,7 @@ func TestCopyCard(t *testing.T) {
 	t.Run("Board exists, image block, without FileInfo", func(t *testing.T) {
 		th.Store.EXPECT().GetBoard("boardID").Return(&model.Board{
 			ID:         "boardID",
+			TeamID:     "validteam12345678901234567",
 			IsTemplate: false,
 		}, nil)
 		th.Store.EXPECT().GetFileInfo(gomock.Any()).Return(nil, nil)
@@ -556,7 +559,7 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 		Schema:     1,
 		Type:       "image",
 		Title:      "",
-		Fields:     map[string]interface{}{"fileId": "7fileName1234567890987654321.jpg"},
+		Fields:     map[string]interface{}{"fileId": "7fileName123456789012345678.jpg"},
 		CreateAt:   1680725585250,
 		UpdateAt:   1680725585250,
 		DeleteAt:   0,
@@ -617,9 +620,10 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 		}
 		th.Store.EXPECT().GetBoard("bvalidtestboard123456789012").Return(&model.Board{
 			ID:         "bvalidtestboard123456789012",
+			TeamID:     "validteam12345678901234567",
 			IsTemplate: false,
 		}, nil)
-		th.Store.EXPECT().GetFileInfo("fileName").Return(fileInfo, nil)
+		th.Store.EXPECT().GetFileInfo("fileName123456789012345678").Return(fileInfo, nil)
 		th.Store.EXPECT().SaveFileInfo(fileInfo).Return(nil)
 		th.Store.EXPECT().PatchBlocks(gomock.Any(), "userID").Return(nil)
 
@@ -638,7 +642,7 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 			Id:   "validImageBlock",
 			Path: testPath,
 		}
-		th.Store.EXPECT().GetBoard(validTestBoardID2).Return(&model.Board{ID: validTestBoardID2, IsTemplate: false}, nil)
+		th.Store.EXPECT().GetBoard(validTestBoardID2).Return(&model.Board{ID: validTestBoardID2, TeamID: "validteam12345678901234567", IsTemplate: false}, nil)
 		th.Store.EXPECT().GetFileInfo("xhwgf5r15fr3dryfozf1dmy41r").Return(fileInfo, nil)
 		th.Store.EXPECT().SaveFileInfo(fileInfo).Return(nil)
 		th.Store.EXPECT().PatchBlocks(gomock.Any(), "userID").Return(nil)
@@ -652,20 +656,20 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 	})
 
 	t.Run("Invalid file ID length", func(t *testing.T) {
-		th.Store.EXPECT().GetBoard(validTestBoardID2).Return(&model.Board{ID: validTestBoardID2, IsTemplate: false}, nil)
+		th.Store.EXPECT().GetBoard(validTestBoardID2).Return(&model.Board{ID: validTestBoardID2, TeamID: "validteam12345678901234567", IsTemplate: false}, nil)
 		err := th.App.CopyAndUpdateCardFiles(validTestBoardID2, "userID", []*model.Block{invalidShortFileIDBlock}, false)
 		assert.ErrorIs(t, err, model.NewErrBadRequest("Invalid Block ID"))
 	})
 
 	t.Run("Empty file ID", func(t *testing.T) {
-		th.Store.EXPECT().GetBoard(validTestBoardID2).Return(&model.Board{ID: validTestBoardID2, IsTemplate: false}, nil)
+		th.Store.EXPECT().GetBoard(validTestBoardID2).Return(&model.Board{ID: validTestBoardID2, TeamID: "validteam12345678901234567", IsTemplate: false}, nil)
 		err := th.App.CopyAndUpdateCardFiles(validTestBoardID2, "userID", []*model.Block{emptyFileBlock}, false)
 		assert.ErrorIs(t, err, model.NewErrBadRequest("Block ID cannot be empty"))
 	})
 }
 
 func TestCopyCardFiles(t *testing.T) {
-	app := &App{}
+	th, _ := SetupTestHelper(t)
 
 	t.Run("ValidFileID", func(t *testing.T) {
 		sourceBoardID := "bsourceboard123456789012345"
@@ -673,12 +677,24 @@ func TestCopyCardFiles(t *testing.T) {
 		copiedBlocks := []*model.Block{
 			{
 				Type:    model.TypeImage,
-				Fields:  map[string]interface{}{"fileId": "validFileID"},
+				Fields:  map[string]interface{}{"fileId": "7validFileID12345678901234.jpg"},
 				BoardID: destBoardID,
 			},
 		}
 
-		newFileNames, err := app.CopyCardFiles(sourceBoardID, copiedBlocks, false)
+		th.Store.EXPECT().GetBoard(sourceBoardID).Return(&model.Board{
+			ID:         sourceBoardID,
+			TeamID:     "validteam12345678901234567",
+			IsTemplate: false,
+		}, nil)
+		th.Store.EXPECT().GetFileInfo("validFileID12345678901234").Return(nil, nil)
+		th.Store.EXPECT().SaveFileInfo(gomock.Any()).Return(nil)
+
+		mockedFileBackend := &mocks.FileBackend{}
+		th.App.filesBackend = mockedFileBackend
+		mockedFileBackend.On("CopyFile", mock.Anything, mock.Anything).Return(nil)
+
+		newFileNames, err := th.App.CopyCardFiles(sourceBoardID, copiedBlocks, false)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, newFileNames)
@@ -695,7 +711,13 @@ func TestCopyCardFiles(t *testing.T) {
 			},
 		}
 
-		newFileNames, err := app.CopyCardFiles(sourceBoardID, copiedBlocks, false)
+		th.Store.EXPECT().GetBoard(sourceBoardID).Return(&model.Board{
+			ID:         sourceBoardID,
+			TeamID:     "validteam12345678901234567",
+			IsTemplate: false,
+		}, nil)
+
+		newFileNames, err := th.App.CopyCardFiles(sourceBoardID, copiedBlocks, false)
 
 		assert.Error(t, err)
 		assert.Nil(t, newFileNames)
@@ -904,5 +926,38 @@ func TestUserCreatedTemplateFilePathValidation(t *testing.T) {
 		// Should use template path structure (not base path)
 		assert.NotContains(t, result, "boards/")
 		assert.Equal(t, userTeamID+"/"+validBoardID+"/"+filename, result)
+	})
+}
+
+func TestGetFilePathWithGlobalTeamID(t *testing.T) {
+	th, _ := SetupTestHelper(t)
+
+	t.Run("when TeamID is GlobalTeamID and board is template", func(t *testing.T) {
+		th.Store.EXPECT().GetFileInfo("fileInfoID").Return(nil, nil)
+		th.Store.EXPECT().GetBoard("bvalidboard1234567890123456").Return(&model.Board{
+			ID:         "bvalidboard1234567890123456",
+			TeamID:     model.GlobalTeamID,
+			IsTemplate: true,
+		}, nil)
+
+		fileInfo, filePath, err := th.App.GetFilePath(model.GlobalTeamID, "bvalidboard1234567890123456", "7fileInfoID.txt")
+		assert.NoError(t, err)
+		assert.Nil(t, fileInfo)
+		assert.Equal(t, "0/bvalidboard1234567890123456/7fileInfoID.txt", filePath)
+	})
+
+	t.Run("when TeamID is GlobalTeamID and board is not template", func(t *testing.T) {
+		th.Store.EXPECT().GetFileInfo("fileInfoID").Return(nil, nil)
+		th.Store.EXPECT().GetBoard("bvalidboard1234567890123456").Return(&model.Board{
+			ID:         "bvalidboard1234567890123456",
+			TeamID:     model.GlobalTeamID,
+			IsTemplate: false,
+		}, nil)
+
+		fileInfo, filePath, err := th.App.GetFilePath(model.GlobalTeamID, "bvalidboard1234567890123456", "7fileInfoID.txt")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid teamID in ValidateTeamID")
+		assert.Nil(t, fileInfo)
+		assert.Equal(t, "", filePath)
 	})
 }
