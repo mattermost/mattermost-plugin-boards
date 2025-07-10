@@ -224,6 +224,7 @@ const SidebarBoardItem = (props: Props) => {
                         <div
                             className='octo-sidebar-title'
                             title={title}
+                            dir='auto'
                         >
                             {title}
                         </div>
@@ -310,6 +311,7 @@ const SidebarBoardItem = (props: Props) => {
                             <div
                                 className='octo-sidebar-title'
                                 title={view.title || intl.formatMessage({id: 'Sidebar.untitled-view', defaultMessage: '(Untitled View)'})}
+                                dir='auto'
                             >
                                 {view.title || intl.formatMessage({id: 'Sidebar.untitled-view', defaultMessage: '(Untitled View)'})}
                             </div>
