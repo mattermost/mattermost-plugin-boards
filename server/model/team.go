@@ -5,7 +5,10 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
+
+	mm_model "github.com/mattermost/mattermost/server/public/model"
 )
 
 // Team is information global to a team
@@ -46,4 +49,13 @@ func TeamsFromJSON(data io.Reader) []*Team {
 	var teams []*Team
 	_ = json.NewDecoder(data).Decode(&teams)
 	return teams
+}
+
+func ValidateTeamID(teamID string, isTemplate bool) error {
+	// Validate inputs to ensure proper file path handling
+	// Only allow GlobalTeamID for template operations to prevent path traversal attacks
+	if !mm_model.IsValidId(teamID) && !(isTemplate && teamID == GlobalTeamID) {
+		return fmt.Errorf("invalid teamID in ValidateTeamID: %s", teamID) //nolint:err113
+	}
+	return nil
 }
