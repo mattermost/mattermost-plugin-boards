@@ -1,7 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import {Channel} from 'mattermost-redux/types/channels'
+import {Channel} from '@mattermost/types/channels'
 import configureStore from 'redux-mock-store'
 
 function getChannelMock(override?: Partial<Channel>): Channel {
@@ -20,8 +20,7 @@ function getChannelMock(override?: Partial<Channel>): Channel {
         creator_id: 'id',
         scheme_id: 'id',
         group_constrained: false,
-        total_msg_count: 0,
-        extra_update_at: 0
+        last_root_post_at: 0,
     }
     return Object.assign({}, defaultChannel, override)
 }

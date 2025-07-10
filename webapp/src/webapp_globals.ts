@@ -2,9 +2,9 @@
 // See LICENSE.txt for license information.
 
 
-import {NameMappedObjects} from "mattermost-redux/types/utilities"
+import {NameMappedObjects} from '@mattermost/types/utilities'
 
-import {Channel} from "mattermost-redux/types/channels"
+import {Channel} from '@mattermost/types/channels'
 
 import {Team} from "./store/teams"
 
