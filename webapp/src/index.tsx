@@ -64,22 +64,6 @@ function getSubpath(siteURL: string): string {
     return url.pathname.replace(/\/+$/, '')
 }
 
-const TELEMETRY_RUDDER_KEY = 'placeholder_rudder_key'
-const TELEMETRY_RUDDER_DATAPLANE_URL = 'placeholder_rudder_dataplane_url'
-const TELEMETRY_OPTIONS = {
-    context: {
-        ip: '0.0.0.0',
-    },
-    page: {
-        path: '',
-        referrer: '',
-        search: '',
-        title: '',
-        url: '',
-    },
-    anonymousId: '00000000000000000000000000',
-}
-
 type Props = {
     webSocketClient: MMWebSocketClient
 }
