@@ -5,7 +5,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import React from 'react'
-import {Channel, ChannelMembership} from 'mattermost-redux/types/channels'
+import {Channel, ChannelMembership} from '@mattermost/types/channels'
 
 export interface PluginRegistry {
     registerPostTypeComponent(typeName: string, component: React.ElementType)
