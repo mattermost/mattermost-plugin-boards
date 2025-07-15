@@ -111,19 +111,33 @@ func (a *App) ValidateFileOwnership(teamID, boardID, filename string) error {
 
 // validateFileReferencedByBoard checks if a file is referenced by blocks in the specified board.
 func (a *App) validateFileReferencedByBoard(boardID, filename string) error {
-	blocks, err := a.GetBlocksForBoard(boardID)
+	imageBlocks, err := a.store.GetBlocksWithType(boardID, model.TypeImage)
 	if err != nil {
 		return err
 	}
 
-	for _, block := range blocks {
-		if block.Type == model.TypeImage || block.Type == model.TypeAttachment {
-			if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID == filename {
-				return nil
-			}
-			if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok && attachmentID == filename {
-				return nil
-			}
+	attachmentBlocks, err := a.store.GetBlocksWithType(boardID, model.TypeAttachment)
+	if err != nil {
+		return err
+	}
+
+	// Check image blocks
+	for _, block := range imageBlocks {
+		if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID == filename {
+			return nil
+		}
+		if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok && attachmentID == filename {
+			return nil
+		}
+	}
+
+	// Check attachment blocks
+	for _, block := range attachmentBlocks {
+		if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID == filename {
+			return nil
+		}
+		if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok && attachmentID == filename {
+			return nil
 		}
 	}
 
