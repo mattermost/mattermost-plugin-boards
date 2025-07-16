@@ -110,6 +110,8 @@ func (a *App) ValidateFileOwnership(teamID, boardID, filename string) error {
 }
 
 // validateFileReferencedByBoard checks if a file is referenced by blocks in the specified board.
+// Files use different storage patterns (teamID/boardID/filename for templates, boards/YYYYMMDD/filename for regular files).
+// Path mismatches don't indicate malicious files, just different storage patterns.
 func (a *App) validateFileReferencedByBoard(boardID, filename string) error {
 	imageBlocks, err := a.store.GetBlocksWithType(boardID, model.TypeImage)
 	if err != nil {
