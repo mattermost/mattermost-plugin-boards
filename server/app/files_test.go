@@ -1031,7 +1031,7 @@ func TestValidateFileOwnership(t *testing.T) {
 		err := th.App.ValidateFileOwnership(validTeamID, validBoardID, filename)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "file not found")
-  })
+	})
 }
 
 func TestGetFilePathWithGlobalTeamID(t *testing.T) {
