@@ -318,6 +318,9 @@ func (s *SQLStore) getUsersList(_ sq.BaseRunner, userIDs []string, showEmail, sh
 }
 
 func (s *SQLStore) searchUsersByTeam(db sq.BaseRunner, teamID string, searchQuery string, asGuestID string, excludeBots, showEmail, showName bool) ([]*model.User, error) {
+	// Trim whitespace from search query to avoid matching trailing/leading spaces
+	searchQuery = strings.TrimSpace(searchQuery)
+
 	var fullNameField string
 	switch s.dbType {
 	case model.MysqlDBType:
