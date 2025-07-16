@@ -318,6 +318,19 @@ func (s *SQLStore) getUsersList(_ sq.BaseRunner, userIDs []string, showEmail, sh
 }
 
 func (s *SQLStore) searchUsersByTeam(db sq.BaseRunner, teamID string, searchQuery string, asGuestID string, excludeBots, showEmail, showName bool) ([]*model.User, error) {
+	// Trim whitespace from search query to avoid matching trailing/leading spaces
+	searchQuery = strings.TrimSpace(searchQuery)
+
+	var fullNameField string
+	switch s.dbType {
+	case model.MysqlDBType:
+		fullNameField = "LOWER(CONCAT(u.firstname, ' ', u.lastname))"
+	case model.PostgresDBType, model.SqliteDBType:
+		fullNameField = "LOWER(u.firstname || ' ' || u.lastname)"
+	default:
+		fullNameField = "LOWER(u.firstname || ' ' || u.lastname)"
+	}
+
 	query := s.baseUserQuery(showEmail, showName).
 		Where(sq.Eq{"u.deleteAt": 0}).
 		Where(sq.Or{
@@ -325,6 +338,7 @@ func (s *SQLStore) searchUsersByTeam(db sq.BaseRunner, teamID string, searchQuer
 			sq.Like{"LOWER(u.nickname)": "%" + strings.ToLower(searchQuery) + "%"},
 			sq.Like{"LOWER(u.firstname)": "%" + strings.ToLower(searchQuery) + "%"},
 			sq.Like{"LOWER(u.lastname)": "%" + strings.ToLower(searchQuery) + "%"},
+			sq.Like{fullNameField: "%" + strings.ToLower(searchQuery) + "%"},
 		}).
 		OrderBy("u.username").
 		Limit(10)
