@@ -303,6 +303,12 @@ func (a *API) getFileInfo(w http.ResponseWriter, r *http.Request) {
 	auditRec.AddMeta("teamID", teamID)
 	auditRec.AddMeta("filename", filename)
 
+	// Validate that the file belongs to the specified board and team
+	if err := a.app.ValidateFileOwnership(teamID, boardID, filename); err != nil {
+		a.errorResponse(w, r, model.NewErrPermission("access denied to file"))
+		return
+	}
+
 	fileInfo, err := a.app.GetFileInfo(filename)
 	if err != nil && !model.IsErrNotFound(err) {
 		a.errorResponse(w, r, err)
@@ -316,6 +322,7 @@ func (a *API) getFileInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonBytesResponse(w, http.StatusOK, data)
+	auditRec.Success()
 }
 
 func (a *API) handleUploadFile(w http.ResponseWriter, r *http.Request) {

@@ -23,6 +23,7 @@ const emptyString = "empty"
 
 var errEmptyFilename = errors.New("IsFileArchived: empty filename not allowed")
 var ErrFileNotFound = errors.New("file not found")
+var ErrFileNotReferencedByBoard = errors.New("file not referenced by board")
 
 func (a *App) SaveFile(reader io.Reader, teamID, boardID, filename string, asTemplate bool) (string, error) {
 	// NOTE: File extension includes the dot
@@ -86,7 +87,75 @@ func (a *App) GetFileInfo(filename string) (*mm_model.FileInfo, error) {
 	return fileInfo, nil
 }
 
+// ValidateFileOwnership checks if a file belongs to the specified board and team.
+func (a *App) ValidateFileOwnership(teamID, boardID, filename string) error {
+	fileInfo, err := a.GetFileInfo(filename)
+	if err != nil {
+		return err
+	}
+	if fileInfo != nil && fileInfo.Path != "" && fileInfo.Path != emptyString {
+		expectedPath := filepath.Join(teamID, boardID, filename)
+		if fileInfo.Path == expectedPath {
+			return nil
+		}
+		if err := a.validateFileReferencedByBoard(boardID, filename); err != nil {
+			return model.NewErrPermission("file does not belong to the specified board")
+		}
+	} else {
+		if err := a.validateFileReferencedByBoard(boardID, filename); err != nil {
+			return model.NewErrPermission("file does not belong to the specified board")
+		}
+	}
+	return nil
+}
+
+// validateFileReferencedByBoard checks if a file is referenced by blocks in the specified board.
+// Files use different storage patterns (teamID/boardID/filename for templates, boards/YYYYMMDD/filename for regular files).
+// Path mismatches don't indicate malicious files, just different storage patterns.
+func (a *App) validateFileReferencedByBoard(boardID, filename string) error {
+	imageBlocks, err := a.store.GetBlocksWithType(boardID, model.TypeImage)
+	if err != nil {
+		return err
+	}
+
+	attachmentBlocks, err := a.store.GetBlocksWithType(boardID, model.TypeAttachment)
+	if err != nil {
+		return err
+	}
+
+	// Check image blocks
+	for _, block := range imageBlocks {
+		if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID == filename {
+			return nil
+		}
+		if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok && attachmentID == filename {
+			return nil
+		}
+	}
+
+	// Check attachment blocks
+	for _, block := range attachmentBlocks {
+		if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID == filename {
+			return nil
+		}
+		if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok && attachmentID == filename {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("%w: file %s is not referenced by any block in board %s", ErrFileNotReferencedByBoard, filename, boardID)
+}
+
 func (a *App) GetFile(teamID, boardID, fileName string) (*mm_model.FileInfo, filestore.ReadCloseSeeker, error) {
+	if err := a.ValidateFileOwnership(teamID, boardID, fileName); err != nil {
+		a.logger.Error("GetFile: File ownership validation failed",
+			mlog.String("Team", teamID),
+			mlog.String("board", boardID),
+			mlog.String("filename", fileName),
+			mlog.Err(err))
+		return nil, nil, err
+	}
+
 	fileInfo, filePath, err := a.GetFilePath(teamID, boardID, fileName)
 	if err != nil {
 		a.logger.Error("GetFile: Failed to GetFilePath.", mlog.String("Team", teamID), mlog.String("board", boardID), mlog.String("filename", fileName), mlog.Err(err))
