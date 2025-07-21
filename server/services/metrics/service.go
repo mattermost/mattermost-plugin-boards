@@ -31,10 +31,10 @@ func NewMetricsServer(address string, metricsService *Metrics, logger mlog.Logge
 
 // Run will start the prometheus server.
 func (h *Service) Run() error {
-	return errors.Wrap(h.ListenAndServe(), "prometheus ListenAndServe")
+	return errors.Wrap(h.Server.ListenAndServe(), "prometheus ListenAndServe")
 }
 
 // Shutdown will shutdown the prometheus server.
 func (h *Service) Shutdown() error {
-	return errors.Wrap(h.Close(), "prometheus Close")
+	return errors.Wrap(h.Server.Close(), "prometheus Close")
 }
