@@ -1,4 +1,4 @@
-.PHONY: prebuild clean cleanall ci server server-mac server-linux server-win server-linux-package generate watch-server webapp mac-app win-app-wpf linux-app modd-precheck templates-archive
+.PHONY: prebuild clean cleanall ci server server-mac server-linux server-win server-linux-package generate watch-server webapp mac-app win-app-wpf linux-app modd-precheck templates-archive dist-all
 
 PACKAGE_FOLDER = focalboard
 
@@ -40,6 +40,24 @@ PLUGIN_NAME=boards
 
 export GO111MODULE=on
 
+# FIPS Support - similar to mattermost server
+# To build FIPS-compliant plugin: make dist-fips
+# Requires Docker to be installed and running
+FIPS_ENABLED ?= false
+FIPS_IMAGE ?= cgr.dev/mattermost.com/glibc-openssl-fips:15.1@sha256:d4ae220f588b914bede8a46a151addba99c894a2fa54bcf0bd090503b01b9644
+
+# We need to export GOBIN to allow it to be set
+# for processes spawned from the Makefile
+ifeq ($(FIPS_ENABLED),true)
+	export GOBIN ?= /go/bin
+	GO_FIPS ?= docker run --rm -v $(PWD):/plugin -v $(HOME)/.cache:/root/.cache -w /plugin -e GOFLAGS -e GO111MODULE $(FIPS_IMAGE) go
+	GO_BUILD_TAGS_FIPS = fips
+else
+	export GOBIN ?= $(PWD)/bin
+	GO_FIPS ?= $(GO)
+	GO_BUILD_TAGS_FIPS =
+endif
+
 ASSETS_DIR ?= assets
 
 RACE = -race
@@ -51,7 +69,7 @@ default: all
 # Verify environment, and define PLUGIN_ID, PLUGIN_VERSION, HAS_SERVER and HAS_WEBAPP as needed.
 include build/setup.mk
 
-BUNDLE_NAME ?= $(PLUGIN_NAME)-$(PLUGIN_VERSION).tar.gz
+BUNDLE_NAME ?= $(PLUGIN_ID)-$(PLUGIN_VERSION).tar.gz
 
 # Include custom makefile, if present
 ifneq ($(wildcard build/custom.mk),)
@@ -114,6 +132,50 @@ else
 endif
 endif
 
+## Builds the server with FIPS compliance using Docker (requires Docker)
+.PHONY: server-fips
+server-fips: templates-archive
+ifneq ($(HAS_SERVER),)
+	@echo Building FIPS-compliant plugin server binaries
+	mkdir -p server/dist-fips
+	@echo "Setting up FIPS build environment..."
+	
+	# Login to Chainguard registry if credentials are available
+	@if [ -n "$(CHAINGUARD_DEV_USERNAME)" ] && [ -n "$(CHAINGUARD_DEV_TOKEN)" ]; then \
+		echo "Logging into Chainguard registry..."; \
+		echo "$(CHAINGUARD_DEV_TOKEN)" | docker login cgr.dev --username "$(CHAINGUARD_DEV_USERNAME)" --password-stdin; \
+	else \
+		echo "Warning: CHAINGUARD_DEV_USERNAME and CHAINGUARD_DEV_TOKEN not set. Using public image if available."; \
+	fi
+	
+	# Build directly in the FIPS container without external script
+	# Create local cache directory for CI/ACT compatibility
+	mkdir -p $(PWD)/.build-cache
+	docker run --rm \
+		--user root \
+		-v $(PWD):/plugin \
+		-v $(PWD)/.build-cache:/root/.cache \
+		-w /plugin \
+		-e GO_VERSION \
+		$(FIPS_IMAGE) \
+		/bin/sh -c "\
+			apk add --no-cache curl bash make nodejs npm git jq && \
+			if ! command -v go >/dev/null 2>&1; then \
+				echo 'Installing Go \$${GO_VERSION:-1.24.3}...' && \
+				curl -s https://dl.google.com/go/go\$${GO_VERSION:-1.24.3}.linux-amd64.tar.gz | tar -xz -C /usr/local && \
+				export PATH=\"/usr/local/go/bin:\$$PATH\"; \
+			else \
+				echo 'Go already available: ' && go version; \
+			fi && \
+			export GO111MODULE=on && \
+			export CGO_ENABLED=0 && \
+			cd /plugin/server && \
+			env GOOS=linux GOARCH=amd64 go build -tags fips -ldflags '$(LDFLAGS)' -trimpath -buildvcs=false -o dist-fips/plugin-linux-amd64-fips && \
+			echo 'FIPS plugin build completed successfully'"
+	
+	@echo "FIPS plugin server build completed: server/dist-fips/plugin-linux-amd64-fips"
+endif
+
 ## Ensures NPM dependencies are installed without having to run this all the time.
 webapp/node_modules: $(wildcard webapp/package.json)
 ifneq ($(HAS_WEBAPP),)
@@ -137,32 +199,72 @@ endif
 .PHONY: bundle
 bundle:
 	rm -rf dist/
-	mkdir -p dist/$(PLUGIN_NAME)
-	cp $(MANIFEST_FILE) dist/$(PLUGIN_NAME)/
-	cp -r webapp/pack dist/$(PLUGIN_NAME)/
+	mkdir -p dist/$(PLUGIN_ID)
+	cp $(MANIFEST_FILE) dist/$(PLUGIN_ID)/
+	cp -r webapp/pack dist/$(PLUGIN_ID)/
 ifneq ($(wildcard LICENSE.txt),)
-	cp -r LICENSE.txt dist/$(PLUGIN_NAME)/
+	cp -r LICENSE.txt dist/$(PLUGIN_ID)/
 endif
 ifneq ($(wildcard NOTICE.txt),)
-	cp -r NOTICE.txt dist/$(PLUGIN_NAME)/
+	cp -r NOTICE.txt dist/$(PLUGIN_ID)/
 endif
 ifneq ($(wildcard $(ASSETS_DIR)/.),)
-	cp -r $(ASSETS_DIR) dist/$(PLUGIN_NAME)/
+	cp -r $(ASSETS_DIR) dist/$(PLUGIN_ID)/
 endif
 ifneq ($(HAS_PUBLIC),)
-	cp -r public dist/$(PLUGIN_NAME)/public/
+	cp -r public dist/$(PLUGIN_ID)/public/
 endif
 ifneq ($(HAS_SERVER),)
-	mkdir -p dist/$(PLUGIN_NAME)/server
-	cp -r server/dist dist/$(PLUGIN_NAME)/server/
+	mkdir -p dist/$(PLUGIN_ID)/server
+	cp -r server/dist dist/$(PLUGIN_ID)/server/
 endif
 ifneq ($(HAS_WEBAPP),)
-	mkdir -p dist/$(PLUGIN_NAME)/webapp
-	cp -r webapp/dist dist/$(PLUGIN_NAME)/webapp/
+	mkdir -p dist/$(PLUGIN_ID)/webapp
+	cp -r webapp/dist dist/$(PLUGIN_ID)/webapp/
 endif
-	cd dist && tar -cvzf $(BUNDLE_NAME) $(PLUGIN_NAME)
+	cd dist && tar -cvzf $(BUNDLE_NAME) $(PLUGIN_ID)
 
-	@echo plugin built at: dist/$(BUNDLE_NAME)
+	@echo "==> Normal plugin built at: dist/$(BUNDLE_NAME)"
+
+## Generates a tar bundle of the FIPS plugin for install.
+.PHONY: bundle-fips
+bundle-fips:
+	rm -rf dist-fips/
+	mkdir -p dist-fips/$(PLUGIN_ID)
+	./build/bin/manifest dist-fips
+ifneq ($(wildcard LICENSE.txt),)
+	cp -r LICENSE.txt dist-fips/$(PLUGIN_ID)/
+endif
+ifneq ($(wildcard NOTICE.txt),)
+	cp -r NOTICE.txt dist-fips/$(PLUGIN_ID)/
+endif
+ifneq ($(wildcard $(ASSETS_DIR)/.),)
+	cp -r $(ASSETS_DIR) dist-fips/$(PLUGIN_ID)/
+endif
+ifneq ($(HAS_PUBLIC),)
+	cp -r public dist-fips/$(PLUGIN_ID)/public/
+endif
+ifneq ($(HAS_SERVER),)
+	mkdir -p dist-fips/$(PLUGIN_ID)/server
+	cp -r server/dist-fips dist-fips/$(PLUGIN_ID)/server/dist
+endif
+ifneq ($(HAS_WEBAPP),)
+	if [ -d webapp/dist ]; then \
+		mkdir -p dist-fips/$(PLUGIN_ID)/webapp && \
+		cp -r webapp/dist dist-fips/$(PLUGIN_ID)/webapp/; \
+	else \
+		echo "Warning: webapp/dist not found, skipping webapp in FIPS bundle"; \
+	fi
+endif
+	# Use webpack pack for webapp bundle
+	cp -r webapp/pack dist-fips/$(PLUGIN_ID)/
+ifeq ($(shell uname),Darwin)
+	cd dist-fips && tar --disable-copyfile -cvzf $(PLUGIN_ID)-$(PLUGIN_VERSION)-fips.tar.gz $(PLUGIN_ID)
+else
+	cd dist-fips && tar -cvzf $(PLUGIN_ID)-$(PLUGIN_VERSION)-fips.tar.gz $(PLUGIN_ID)
+endif
+
+	@echo "==> FIPS plugin built at: dist-fips/$(PLUGIN_ID)-$(PLUGIN_VERSION)-fips.tar.gz"
 
 info: ## Display build information
 	@echo "Build Number: $(BUILD_NUMBER)"
@@ -175,6 +277,19 @@ info: ## Display build information
 ## Builds and bundles the plugin.
 .PHONY: dist
 dist:	apply server webapp bundle
+
+## Builds and bundles the FIPS plugin.
+.PHONY: dist-fips
+dist-fips: apply server-fips webapp bundle-fips
+
+## Builds both normal and FIPS distributions.
+.PHONY: dist-all
+dist-all: clean
+	@echo "==> Building both normal and FIPS distributions in parallel..."
+	$(MAKE) dist & $(MAKE) dist-fips & wait
+	@echo "==> Both distributions built successfully:"
+	@echo "    Normal: dist/$$(./build/bin/manifest id)-$$(./build/bin/manifest version).tar.gz"
+	@echo "    FIPS:   dist-fips/$$(./build/bin/manifest id)-$$(./build/bin/manifest version)-fips.tar.gz"
 
 ## Builds and installs the plugin to a server.
 .PHONY: deploy
@@ -297,11 +412,13 @@ kill: detach
 .PHONY: clean
 clean:
 	rm -rf bin
-	rm -rf dist
+	rm -rf dist/
+	rm -rf dist-fips/
 	rm -rf webapp/pack
 ifneq ($(HAS_SERVER),)
 	rm -fr server/coverage.txt
 	rm -fr server/dist
+	rm -fr server/dist-fips
 endif
 ifneq ($(HAS_WEBAPP),)
 	rm -fr webapp/junit.xml

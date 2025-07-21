@@ -39,6 +39,8 @@ webapp/node_modules
 webapp/dist
 webapp/pack
 dist
+dist-fips
+.build-cache/
 package
 bin
 debug
