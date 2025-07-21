@@ -93,9 +93,9 @@ func Test_NewServer(t *testing.T) {
 			require.Equal(t, test.logger, ws.logger, "logger pointer does not match")
 
 			if test.localOnly == true {
-				require.Equal(t, test.expectedServerAddr, ws.Server.Addr, "localhost address not as matching!")
+				require.Equal(t, test.expectedServerAddr, ws.Addr, "localhost address not as matching!")
 			} else {
-				require.Equal(t, test.expectedServerAddr, ws.Server.Addr, "server address not matching!")
+				require.Equal(t, test.expectedServerAddr, ws.Addr, "server address not matching!")
 			}
 		})
 	}

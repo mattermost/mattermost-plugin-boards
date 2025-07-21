@@ -161,7 +161,7 @@ func (s *PluginTestStore) GetUserByUsername(username string) (*model.User, error
 
 func (s *PluginTestStore) GetUserPreferences(userID string) (mmModel.Preferences, error) {
 	if userID == userTeamMember {
-		return mmModel.Preferences{{
+		return mmModel.Preferences{mmModel.Preference{
 			UserId:   userTeamMember,
 			Category: "focalboard",
 			Name:     "test",
@@ -183,8 +183,8 @@ func (s *PluginTestStore) GetUsersByTeam(teamID string, asGuestID string, showEm
 		}, nil
 	}
 
-	switch {
-	case teamID == s.testTeam.ID:
+	switch teamID {
+	case s.testTeam.ID:
 		return []*model.User{
 			s.users["team-member"],
 			s.users["viewer"],
@@ -193,7 +193,7 @@ func (s *PluginTestStore) GetUsersByTeam(teamID string, asGuestID string, showEm
 			s.users["admin"],
 			s.users["guest"],
 		}, nil
-	case teamID == s.otherTeam.ID:
+	case s.otherTeam.ID:
 		return []*model.User{
 			s.users["team-member"],
 			s.users["viewer"],
@@ -201,7 +201,7 @@ func (s *PluginTestStore) GetUsersByTeam(teamID string, asGuestID string, showEm
 			s.users["editor"],
 			s.users["admin"],
 		}, nil
-	case teamID == s.emptyTeam.ID:
+	case s.emptyTeam.ID:
 		return []*model.User{}, nil
 	}
 	return nil, errTestStore
@@ -269,14 +269,15 @@ func (s *PluginTestStore) SearchUserChannels(teamID, userID, query string) ([]*m
 }
 
 func (s *PluginTestStore) GetChannel(teamID, channel string) (*mmModel.Channel, error) {
-	if channel == "valid-channel-id" {
+	switch channel {
+	case "valid-channel-id":
 		return &mmModel.Channel{
 			TeamId:      teamID,
 			Id:          "valid-channel-id",
 			DisplayName: "Valid Channel",
 			Name:        "valid-channel",
 		}, nil
-	} else if channel == "valid-channel-id-2" {
+	case "valid-channel-id-2":
 		return &mmModel.Channel{
 			TeamId:      teamID,
 			Id:          "valid-channel-id-2",
@@ -332,4 +333,9 @@ func (s *PluginTestStore) GetLicense() *mmModel.License {
 	}
 
 	return license
+}
+
+func (s *PluginTestStore) GetMembersForUser(userID string) ([]*model.BoardMember, error) {
+	// Return empty slice for test purposes
+	return []*model.BoardMember{}, nil
 }
