@@ -44,7 +44,7 @@ export GO111MODULE=on
 # To build FIPS-compliant plugin: make dist-fips
 # Requires Docker to be installed and running
 FIPS_ENABLED ?= false
-FIPS_IMAGE ?= cgr.dev/mattermost.com/glibc-openssl-fips:15.1@sha256:d4ae220f588b914bede8a46a151addba99c894a2fa54bcf0bd090503b01b9644
+FIPS_IMAGE ?= cgr.dev/mattermost.com/go-msft-fips:1.24
 
 # We need to export GOBIN to allow it to be set
 # for processes spawned from the Makefile
@@ -168,7 +168,6 @@ ifneq ($(HAS_SERVER),)
 				echo 'Go already available: ' && go version; \
 			fi && \
 			export GO111MODULE=on && \
-			export CGO_ENABLED=0 && \
 			cd /plugin/server && \
 			env GOOS=linux GOARCH=amd64 go build -tags fips -ldflags '$(LDFLAGS)' -trimpath -buildvcs=false -o dist-fips/plugin-linux-amd64-fips && \
 			echo 'FIPS plugin build completed successfully'"

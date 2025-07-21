@@ -211,7 +211,7 @@ func stringResponse(w http.ResponseWriter, message string) {
 func jsonStringResponse(w http.ResponseWriter, code int, message string) { //nolint:unparam
 	setResponseHeader(w, "Content-Type", "application/json")
 	w.WriteHeader(code)
-	fmt.Fprint(w, message)
+			_, _ = fmt.Fprint(w, message)
 }
 
 func jsonBytesResponse(w http.ResponseWriter, code int, json []byte) { //nolint:unparam
