@@ -44,7 +44,7 @@ export GO111MODULE=on
 # To build FIPS-compliant plugin: make dist-fips
 # Requires Docker to be installed and running
 FIPS_ENABLED ?= false
-FIPS_IMAGE ?= cgr.dev/mattermost.com/go-msft-fips:1.24
+FIPS_IMAGE ?= cgr.dev/mattermost.com/go-msft-fips:1.24.4@sha256:8ab847d56930279a3ea36763277080106406354ec31c5f57f9d7fa787ecadcb2
 
 # We need to export GOBIN to allow it to be set
 # for processes spawned from the Makefile
@@ -148,29 +148,15 @@ ifneq ($(HAS_SERVER),)
 		echo "Warning: CHAINGUARD_DEV_USERNAME and CHAINGUARD_DEV_TOKEN not set. Using public image if available."; \
 	fi
 	
-	# Build directly in the FIPS container without external script
 	# Create local cache directory for CI/ACT compatibility
 	mkdir -p $(PWD)/.build-cache
 	docker run --rm \
-		--user root \
+		--entrypoint="" \
 		-v $(PWD):/plugin \
 		-v $(PWD)/.build-cache:/root/.cache \
-		-w /plugin \
-		-e GO_VERSION \
+		-w /plugin/server \
 		$(FIPS_IMAGE) \
-		/bin/sh -c "\
-			apk add --no-cache curl bash make nodejs npm git jq && \
-			if ! command -v go >/dev/null 2>&1; then \
-				echo 'Installing Go \$${GO_VERSION:-1.24.3}...' && \
-				curl -s https://dl.google.com/go/go\$${GO_VERSION:-1.24.3}.linux-amd64.tar.gz | tar -xz -C /usr/local && \
-				export PATH=\"/usr/local/go/bin:\$$PATH\"; \
-			else \
-				echo 'Go already available: ' && go version; \
-			fi && \
-			export GO111MODULE=on && \
-			cd /plugin/server && \
-			env GOOS=linux GOARCH=amd64 go build -tags fips -ldflags '$(LDFLAGS)' -trimpath -buildvcs=false -o dist-fips/plugin-linux-amd64-fips && \
-			echo 'FIPS plugin build completed successfully'"
+		sh -c "CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -tags fips -ldflags '$(LDFLAGS)' -trimpath -buildvcs=false -o dist-fips/plugin-linux-amd64-fips"
 	
 	@echo "FIPS plugin server build completed: server/dist-fips/plugin-linux-amd64-fips"
 endif
