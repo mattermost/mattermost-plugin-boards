@@ -79,7 +79,7 @@ func NewServer(rootPath string, serverRoot string, port int, ssl, localOnly bool
 }
 
 func (ws *Server) Router() *mux.Router {
-	return ws.Handler.(*mux.Router)
+	return ws.Server.Handler.(*mux.Router)
 }
 
 // AddRoutes allows services to register themself in the webserver router and provide new endpoints.

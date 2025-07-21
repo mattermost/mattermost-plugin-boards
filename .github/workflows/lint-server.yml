@@ -33,9 +33,26 @@ jobs:
           path: "focalboard"
       - uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # v5.2.0
         with:
-          go-version-file: focalboard/go.mod
+          go-version: "1.24.0"
+      - name: Clear Go module cache to fix version mismatch
+        run: |
+          go clean -modcache
+          go env GOCACHE
+          go env GOMODCACHE
+      - name: Download and verify Go modules
+        run: |
+          cd focalboard/server
+          go mod download
+          go mod verify
+          go mod tidy
       - name: set up golangci-lint
         run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.59.0
+      - name: Verify Go version and environment
+        run: |
+          go version
+          echo "GOROOT: $(go env GOROOT)"
+          echo "GOPATH: $(go env GOPATH)"
+          echo "GOPROXY: $(go env GOPROXY)"
       - name: lint
         run: |
           cd focalboard
