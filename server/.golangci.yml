@@ -9,6 +9,10 @@ linters-settings:
       - shadow
     disable:
       - fieldalignment
+  staticcheck:
+    checks:
+      - all
+      - "-QF1008"
 
 linters:
   disable-all: true
@@ -34,3 +38,6 @@ issues:
     - path: _test\.go
       linters:
         - bodyclose
+    - linters:
+        - staticcheck
+      source: QF1008
