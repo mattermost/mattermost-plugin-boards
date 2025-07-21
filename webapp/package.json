@@ -40,7 +40,6 @@
 		"@mattermost/compass-icons": "^0.1.39",
 		"@mattermost/desktop-api": "5.10.0-2",
 		"@reduxjs/toolkit": "^1.8.0",
-		"@swc/core": "^1.13.1",
 		"@tippyjs/react": "4.2.6",
 		"color": "^4.2.1",
 		"draft-js": "^0.11.7",
@@ -97,7 +96,7 @@
 	},
 	"devDependencies": {
 		"@formatjs/cli": "^4.8.2",
-		"@formatjs/ts-transformer": "3.9.4",
+		"@formatjs/ts-transformer": "^3.9.2",
 		"@swc/jest": "^0.2.20",
 		"@testing-library/cypress": "^8.0.2",
 		"@testing-library/dom": "^8.11.4",
