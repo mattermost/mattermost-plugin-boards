@@ -145,20 +145,28 @@ ifneq ($(HAS_SERVER),)
 		echo "Logging into Chainguard registry..."; \
 		echo "$(CHAINGUARD_DEV_TOKEN)" | docker login cgr.dev --username "$(CHAINGUARD_DEV_USERNAME)" --password-stdin; \
 	else \
-		echo "Warning: CHAINGUARD_DEV_USERNAME and CHAINGUARD_DEV_TOKEN not set. Using public image if available."; \
+		echo "Warning: CHAINGUARD_DEV_USERNAME and CHAINGUARD_DEV_TOKEN not set."; \
+		echo "Attempting to use public access to FIPS image..."; \
 	fi
 	
 	# Create local cache directory for CI/ACT compatibility
 	mkdir -p $(PWD)/.build-cache
-	docker run --rm \
+	
+	# Try FIPS build with error handling
+	@if docker run --rm \
 		--entrypoint="" \
 		-v $(PWD):/plugin \
 		-v $(PWD)/.build-cache:/root/.cache \
 		-w /plugin/server \
 		$(FIPS_IMAGE) \
-		sh -c "CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -tags fips -ldflags '$(LDFLAGS)' -trimpath -buildvcs=false -o dist-fips/plugin-linux-amd64-fips"
-	
-	@echo "FIPS plugin server build completed: server/dist-fips/plugin-linux-amd64-fips"
+		sh -c "CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -tags fips -ldflags '$(LDFLAGS)' -trimpath -buildvcs=false -o dist-fips/plugin-linux-amd64-fips"; then \
+		echo "FIPS plugin server build completed: server/dist-fips/plugin-linux-amd64-fips"; \
+	else \
+		echo "FIPS build failed - likely authentication issue with $(FIPS_IMAGE)"; \
+		echo "Creating placeholder to indicate FIPS build was attempted but failed"; \
+		echo "FIPS_BUILD_FAILED" > server/dist-fips/FIPS_BUILD_FAILED.txt; \
+		exit 1; \
+	fi
 endif
 
 ## Ensures NPM dependencies are installed without having to run this all the time.
@@ -183,7 +191,7 @@ endif
 ## Generates a tar bundle of the plugin for install.
 .PHONY: bundle
 bundle:
-	rm -rf dist/
+	rm -rf dist/$(PLUGIN_ID)
 	mkdir -p dist/$(PLUGIN_ID)
 	cp $(MANIFEST_FILE) dist/$(PLUGIN_ID)/
 	cp -r webapp/pack dist/$(PLUGIN_ID)/
@@ -271,10 +279,16 @@ dist-fips: apply server-fips webapp bundle-fips
 .PHONY: dist-all
 dist-all: clean
 	@echo "==> Building both normal and FIPS distributions in parallel..."
-	$(MAKE) dist & $(MAKE) dist-fips & wait
-	@echo "==> Both distributions built successfully:"
-	@echo "    Normal: dist/$$(./build/bin/manifest id)-$$(./build/bin/manifest version).tar.gz"
-	@echo "    FIPS:   dist-fips/$$(./build/bin/manifest id)-$$(./build/bin/manifest version)-fips.tar.gz"
+	$(MAKE) dist
+	@if $(MAKE) dist-fips; then \
+		echo "==> Both distributions built successfully:"; \
+		echo "    Normal: dist/$$(./build/bin/manifest id)-$$(./build/bin/manifest version).tar.gz"; \
+		echo "    FIPS:   dist-fips/$$(./build/bin/manifest id)-$$(./build/bin/manifest version)-fips.tar.gz"; \
+	else \
+		echo "==> FIPS build failed, continuing with normal distribution only:"; \
+		echo "    Normal: dist/$$(./build/bin/manifest id)-$$(./build/bin/manifest version).tar.gz"; \
+		echo "    FIPS:   Build failed - check Docker/credentials"; \
+	fi
 
 ## Builds and installs the plugin to a server.
 .PHONY: deploy
