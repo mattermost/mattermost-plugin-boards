@@ -1019,9 +1019,23 @@ func (s *SQLStore) undeleteBlockChildren(db sq.BaseRunner, boardID string, paren
 		return model.ErrBlockEmptyBoardID
 	}
 
-	where := fmt.Sprintf("board_id='%s'", boardID)
+	// Build the subquery using squirrel with proper parameterization
+	// similar to getBlockHistoryNewestChildren function
+	builder := s.getQueryBuilder(db).PlaceholderFormat(sq.Question)
+
+	subQuery := builder.
+		Select("id", "max(insert_at) AS max_insert_at").
+		From(s.tablePrefix + "blocks_history").
+		Where(sq.Eq{"board_id": boardID}).
+		GroupBy("id")
+
 	if parentID != "" {
-		where += fmt.Sprintf(" AND parent_id='%s'", parentID)
+		subQuery = subQuery.Where(sq.Eq{"parent_id": parentID})
+	}
+
+	subQuerySQL, subQueryArgs, err := subQuery.ToSql()
+	if err != nil {
+		return fmt.Errorf("undeleteBlockChildren unable to generate subquery: %w", err)
 	}
 
 	selectQuery := s.getQueryBuilder(db).
@@ -1034,18 +1048,14 @@ func (s *SQLStore) undeleteBlockChildren(db sq.BaseRunner, boardID string, paren
 			"bh.type",
 			"bh.title",
 			"bh.fields",
-			"'"+modifiedBy+"' AS modified_by",
+			"? AS modified_by",
 			"bh.create_at",
 			s.castInt(utils.GetMillis(), "update_at"),
 			s.castInt(0, "delete_at"),
 			"bh.created_by",
 		).
-		From(fmt.Sprintf(`
-				%sblocks_history AS bh,
-				(SELECT id, max(insert_at) AS max_insert_at FROM %sblocks_history WHERE %s GROUP BY id) AS sub`,
-			s.tablePrefix, s.tablePrefix, where)).
-		Where("bh.id=sub.id").
-		Where("bh.insert_at=sub.max_insert_at").
+		From(s.tablePrefix+"blocks_history AS bh").
+		InnerJoin("("+subQuerySQL+") AS sub ON bh.id=sub.id AND bh.insert_at=sub.max_insert_at", append(subQueryArgs, modifiedBy)...).
 		Where(sq.NotEq{"bh.delete_at": 0})
 
 	columns := []string{
@@ -1073,29 +1083,59 @@ func (s *SQLStore) undeleteBlockChildren(db sq.BaseRunner, boardID string, paren
 		Select(selectQuery)
 
 	sql, args, err := insertQuery.ToSql()
+	if err != nil {
+		return fmt.Errorf("undeleteBlockChildren unable to generate insertQuery sql: %w", err)
+	}
+
+	// if we're using postgres or sqlite, we need to replace the
+	// question mark placeholder with the numbered dollar one, now
+	// that the full query is built
+	if s.dbType == model.PostgresDBType || s.dbType == model.SqliteDBType {
+		var rErr error
+		sql, rErr = sq.Dollar.ReplacePlaceholders(sql)
+		if rErr != nil {
+			return fmt.Errorf("undeleteBlockChildren unable to replace sql placeholders: %w", rErr)
+		}
+	}
+
 	s.logger.Trace("undeleteBlockChildren - insertQuery",
 		mlog.String("sql", sql),
 		mlog.Array("args", args),
 		mlog.Err(err),
 	)
 
-	sql, args, err = insertHistoryQuery.ToSql()
+	historySQL, historyArgs, err := insertHistoryQuery.ToSql()
+	if err != nil {
+		return fmt.Errorf("undeleteBlockChildren unable to generate insertHistoryQuery sql: %w", err)
+	}
+
+	// if we're using postgres or sqlite, we need to replace the
+	// question mark placeholder with the numbered dollar one, now
+	// that the full query is built
+	if s.dbType == model.PostgresDBType || s.dbType == model.SqliteDBType {
+		var rErr error
+		historySQL, rErr = sq.Dollar.ReplacePlaceholders(historySQL)
+		if rErr != nil {
+			return fmt.Errorf("undeleteBlockChildren unable to replace history sql placeholders: %w", rErr)
+		}
+	}
+
 	s.logger.Trace("undeleteBlockChildren - insertHistoryQuery",
-		mlog.String("sql", sql),
-		mlog.Array("args", args),
+		mlog.String("sql", historySQL),
+		mlog.Array("args", historyArgs),
 		mlog.Err(err),
 	)
 
 	// insert into blocks table must happen before history table, otherwise the history
 	// table will be changed and the second query will fail to find the same records.
-	result, err := insertQuery.Exec()
+	result, err := db.Exec(sql, args...)
 	if err != nil {
 		return err
 	}
 	rowsAffected, _ := result.RowsAffected()
 	s.logger.Debug("undeleteBlockChildren - insertQuery", mlog.Int("rows_affected", rowsAffected))
 
-	result, err = insertHistoryQuery.Exec()
+	result, err = db.Exec(historySQL, historyArgs...)
 	if err != nil {
 		return err
 	}
