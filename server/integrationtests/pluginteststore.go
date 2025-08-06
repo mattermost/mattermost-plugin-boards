@@ -269,22 +269,24 @@ func (s *PluginTestStore) SearchUserChannels(teamID, userID, query string) ([]*m
 }
 
 func (s *PluginTestStore) GetChannel(teamID, channel string) (*mmModel.Channel, error) {
-	if channel == "valid-channel-id" {
+	switch channel {
+	case "valid-channel-id":
 		return &mmModel.Channel{
 			TeamId:      teamID,
 			Id:          "valid-channel-id",
 			DisplayName: "Valid Channel",
 			Name:        "valid-channel",
 		}, nil
-	} else if channel == "valid-channel-id-2" {
+	case "valid-channel-id-2":
 		return &mmModel.Channel{
 			TeamId:      teamID,
 			Id:          "valid-channel-id-2",
 			DisplayName: "Valid Channel 2",
 			Name:        "valid-channel-2",
 		}, nil
+	default:
+		return nil, errTestStore
 	}
-	return nil, errTestStore
 }
 
 func (s *PluginTestStore) SearchBoardsForUser(term string, field model.BoardSearchField, userID string, includePublicBoards bool) ([]*model.Board, error) {
