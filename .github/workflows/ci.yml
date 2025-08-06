@@ -48,6 +48,8 @@ jobs:
     runs-on: ubuntu-22.04
     needs:
       - webapp-test
+    permissions:
+      id-token: write
     steps:
     - name: Checkout
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -84,17 +86,18 @@ jobs:
         cd focalboard/webapp
         npm install --ignore-scripts --no-save
 
-    - name: Docker login Chainguard
-      env:
-        CHAINGUARD_DEV_USERNAME: ${{ secrets.CHAINGUARD_DEV_USERNAME }}
-        CHAINGUARD_DEV_TOKEN: ${{ secrets.CHAINGUARD_DEV_TOKEN }}
+    - name: ci/setup-chainctl
+      uses: chainguard-dev/setup-chainctl@v0.3.2
+      with:
+        identity: ${{ secrets.CHAINGUARD_IDENTITY }}
+
+    - name: ci/setup-build-tools
       run: |
-        if [ -n "$CHAINGUARD_DEV_USERNAME" ] && [ -n "$CHAINGUARD_DEV_TOKEN" ]; then
-          echo "Logging into Chainguard registry..."
-          echo "$CHAINGUARD_DEV_TOKEN" | docker login cgr.dev --username "$CHAINGUARD_DEV_USERNAME" --password-stdin
-        else
-          echo "Warning: CHAINGUARD credentials not available, FIPS build may fail"
-        fi
+        echo "Setting up build tools..."
+        cd focalboard
+        mkdir -p build/bin
+        cd build/manifest && go build -o ../bin/manifest
+        cd ../pluginctl && go build -o ../bin/pluginctl
 
     - name: Build both distributions
       env:
