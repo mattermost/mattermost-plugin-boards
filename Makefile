@@ -35,28 +35,17 @@ GO_BUILD_FLAGS ?= -ldflags '$(LDFLAGS)'
 MM_UTILITIES_DIR ?= ../mattermost-utilities
 DLV_DEBUG_PORT := 2346
 MATTERMOST_PLUGINS_PATH=$(MM_SERVER_PATH)/plugins
-BOARD_PLUGIN_PATH=$(MATTERMOST_PLUGINS_PATH)/boards
-PLUGIN_NAME=boards
-
-export GO111MODULE=on
+BOARD_PLUGIN_PATH=$(MATTERMOST_PLUGINS_PATH)/focalboard
+PLUGIN_NAME=focalboard
 
 # FIPS Support - similar to mattermost server
 # To build FIPS-compliant plugin: make dist-fips
 # Requires Docker to be installed and running
-FIPS_ENABLED ?= false
 FIPS_IMAGE ?= cgr.dev/mattermost.com/go-msft-fips:1.24.4@sha256:8ab847d56930279a3ea36763277080106406354ec31c5f57f9d7fa787ecadcb2
 
 # We need to export GOBIN to allow it to be set
 # for processes spawned from the Makefile
-ifeq ($(FIPS_ENABLED),true)
-	export GOBIN ?= /go/bin
-	GO_FIPS ?= docker run --rm -v $(PWD):/plugin -v $(HOME)/.cache:/root/.cache -w /plugin -e GOFLAGS -e GO111MODULE $(FIPS_IMAGE) go
-	GO_BUILD_TAGS_FIPS = fips
-else
-	export GOBIN ?= $(PWD)/bin
-	GO_FIPS ?= $(GO)
-	GO_BUILD_TAGS_FIPS =
-endif
+export GOBIN ?= $(PWD)/bin
 
 ASSETS_DIR ?= assets
 
@@ -70,6 +59,14 @@ default: all
 include build/setup.mk
 
 BUNDLE_NAME ?= $(PLUGIN_ID)-$(PLUGIN_VERSION).tar.gz
+
+# Helper function to copy common bundle files
+define copy_bundle_files
+	$(if $(wildcard LICENSE.txt),cp -r LICENSE.txt $(1)/$(PLUGIN_ID)/)
+	$(if $(wildcard NOTICE.txt),cp -r NOTICE.txt $(1)/$(PLUGIN_ID)/)
+	$(if $(wildcard $(ASSETS_DIR)/.),cp -r $(ASSETS_DIR) $(1)/$(PLUGIN_ID)/)
+	$(if $(HAS_PUBLIC),cp -r public $(1)/$(PLUGIN_ID)/public/)
+endef
 
 # Include custom makefile, if present
 ifneq ($(wildcard build/custom.mk),)
@@ -140,13 +137,18 @@ ifneq ($(HAS_SERVER),)
 	mkdir -p server/dist-fips
 	@echo "Setting up FIPS build environment..."
 	
-	# Login to Chainguard registry if credentials are available
-	@if [ -n "$(CHAINGUARD_DEV_USERNAME)" ] && [ -n "$(CHAINGUARD_DEV_TOKEN)" ]; then \
-		echo "Logging into Chainguard registry..."; \
-		echo "$(CHAINGUARD_DEV_TOKEN)" | docker login cgr.dev --username "$(CHAINGUARD_DEV_USERNAME)" --password-stdin; \
+	# Docker authentication is handled by CI (setup-chainctl)
+	@if ! docker manifest inspect $(FIPS_IMAGE) >/dev/null 2>&1; then \
+		echo "Docker authentication failed. Ensure setup-chainctl configured Docker authentication."; \
+		echo "Trying fallback authentication if credentials are available..."; \
+		if [ -n "$(CHAINGUARD_DEV_USERNAME)" ] && [ -n "$(CHAINGUARD_DEV_TOKEN)" ]; then \
+			echo "Using username/token authentication..."; \
+			echo "$(CHAINGUARD_DEV_TOKEN)" | docker login cgr.dev --username "$(CHAINGUARD_DEV_USERNAME)" --password-stdin; \
+		else \
+			echo "Warning: No authentication available. FIPS build may fail."; \
+		fi; \
 	else \
-		echo "Warning: CHAINGUARD_DEV_USERNAME and CHAINGUARD_DEV_TOKEN not set."; \
-		echo "Attempting to use public access to FIPS image..."; \
+		echo "✅ Docker authentication is working"; \
 	fi
 	
 	# Create local cache directory for CI/ACT compatibility
@@ -195,18 +197,7 @@ bundle:
 	mkdir -p dist/$(PLUGIN_ID)
 	cp $(MANIFEST_FILE) dist/$(PLUGIN_ID)/
 	cp -r webapp/pack dist/$(PLUGIN_ID)/
-ifneq ($(wildcard LICENSE.txt),)
-	cp -r LICENSE.txt dist/$(PLUGIN_ID)/
-endif
-ifneq ($(wildcard NOTICE.txt),)
-	cp -r NOTICE.txt dist/$(PLUGIN_ID)/
-endif
-ifneq ($(wildcard $(ASSETS_DIR)/.),)
-	cp -r $(ASSETS_DIR) dist/$(PLUGIN_ID)/
-endif
-ifneq ($(HAS_PUBLIC),)
-	cp -r public dist/$(PLUGIN_ID)/public/
-endif
+	$(call copy_bundle_files,dist)
 ifneq ($(HAS_SERVER),)
 	mkdir -p dist/$(PLUGIN_ID)/server
 	cp -r server/dist dist/$(PLUGIN_ID)/server/
@@ -225,18 +216,7 @@ bundle-fips:
 	rm -rf dist-fips/
 	mkdir -p dist-fips/$(PLUGIN_ID)
 	./build/bin/manifest dist-fips
-ifneq ($(wildcard LICENSE.txt),)
-	cp -r LICENSE.txt dist-fips/$(PLUGIN_ID)/
-endif
-ifneq ($(wildcard NOTICE.txt),)
-	cp -r NOTICE.txt dist-fips/$(PLUGIN_ID)/
-endif
-ifneq ($(wildcard $(ASSETS_DIR)/.),)
-	cp -r $(ASSETS_DIR) dist-fips/$(PLUGIN_ID)/
-endif
-ifneq ($(HAS_PUBLIC),)
-	cp -r public dist-fips/$(PLUGIN_ID)/public/
-endif
+	$(call copy_bundle_files,dist-fips)
 ifneq ($(HAS_SERVER),)
 	mkdir -p dist-fips/$(PLUGIN_ID)/server
 	cp -r server/dist-fips dist-fips/$(PLUGIN_ID)/server/dist
@@ -246,7 +226,8 @@ ifneq ($(HAS_WEBAPP),)
 		mkdir -p dist-fips/$(PLUGIN_ID)/webapp && \
 		cp -r webapp/dist dist-fips/$(PLUGIN_ID)/webapp/; \
 	else \
-		echo "Warning: webapp/dist not found, skipping webapp in FIPS bundle"; \
+		echo "Error: webapp/dist not found, but HAS_WEBAPP is set. Run 'make webapp' first."; \
+		exit 1; \
 	fi
 endif
 	# Use webpack pack for webapp bundle

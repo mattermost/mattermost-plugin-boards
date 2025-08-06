@@ -269,15 +269,14 @@ func (s *PluginTestStore) SearchUserChannels(teamID, userID, query string) ([]*m
 }
 
 func (s *PluginTestStore) GetChannel(teamID, channel string) (*mmModel.Channel, error) {
-	switch channel {
-	case "valid-channel-id":
+	if channel == "valid-channel-id" {
 		return &mmModel.Channel{
 			TeamId:      teamID,
 			Id:          "valid-channel-id",
 			DisplayName: "Valid Channel",
 			Name:        "valid-channel",
 		}, nil
-	case "valid-channel-id-2":
+	} else if channel == "valid-channel-id-2" {
 		return &mmModel.Channel{
 			TeamId:      teamID,
 			Id:          "valid-channel-id-2",
