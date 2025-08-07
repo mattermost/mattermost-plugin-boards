@@ -31,10 +31,12 @@ func NewMetricsServer(address string, metricsService *Metrics, logger mlog.Logge
 
 // Run will start the prometheus server.
 func (h *Service) Run() error {
+	//nolint:staticcheck // QF1008: prefer to keep explicit Server qualifier
 	return errors.Wrap(h.Server.ListenAndServe(), "prometheus ListenAndServe")
 }
 
 // Shutdown will shutdown the prometheus server.
 func (h *Service) Shutdown() error {
+	//nolint:staticcheck // QF1008: prefer to keep explicit Server qualifier
 	return errors.Wrap(h.Server.Close(), "prometheus Close")
 }
