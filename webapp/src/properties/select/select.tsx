@@ -53,7 +53,7 @@ const SelectProperty = (props: PropertyProps) => {
                 onClick={() => setOpen(true)}
             >
                 <Label color={displayValue ? propertyColorCssClassName : 'empty'}>
-                    <span className='Label-text'>{finalDisplayValue}</span>
+                    <span className='Label-text' dir='auto'>{finalDisplayValue}</span>
                 </Label>
             </div>
         )
