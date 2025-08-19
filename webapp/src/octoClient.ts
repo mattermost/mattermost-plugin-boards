@@ -1,6 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
+import { Client4 } from "mattermost-redux/client";
 import {Block, BlockPatch, FileInfo} from './blocks/block'
 import {Board, BoardsAndBlocks, BoardsAndBlocksPatch, BoardPatch, BoardMember} from './blocks/board'
 import {ISharing} from './blocks/sharing'
@@ -238,11 +239,11 @@ class OctoClient {
     async patchUserConfig(userID: string, patch: UserConfigPatch): Promise<UserPreference[] | undefined> {
         const path = `/api/v2/users/${encodeURIComponent(userID)}/config`
         const body = JSON.stringify(patch)
-        const response = await fetch(this.getBaseURL() + path, {
+        const response = await fetch(this.getBaseURL() + path, Client4.getOptions({
             headers: this.headers(),
             method: 'PUT',
             body,
-        })
+        }))
 
         if (response.status !== 200) {
             return undefined
