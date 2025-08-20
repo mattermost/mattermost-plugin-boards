@@ -618,12 +618,15 @@ class OctoClient {
         const xhr = new XMLHttpRequest()
 
         xhr.open('POST', this.getBaseURL() + this.teamPath() + '/' + rootID + '/files', true)
-        const headers = this.headers() as Record<string, string>
+        const options = Client4.getOptions({method: 'POST', headers: this.headers()})
+        const headers = options.headers as Record<string, string>
         delete headers['Content-Type']
 
-        xhr.setRequestHeader('Accept', 'application/json')
+        for (const headerName in headers) {
+            xhr.setRequestHeader(headerName, headers[headerName])
+        }
+        
         xhr.setRequestHeader('Authorization', this.token ? 'Bearer ' + this.token : '')
-        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest')
 
         if (xhr.upload) {
             xhr.upload.onprogress = () => {}
