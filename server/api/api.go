@@ -140,9 +140,6 @@ func (a *API) requireCSRFToken(next http.Handler) http.Handler {
 
 func (a *API) checkCSRFToken(r *http.Request) bool {
 	token := r.Header.Get(HeaderRequestedWith)
-
-	fmt.Println(fmt.Sprintf("############################## token: %s", token))
-
 	return token == HeaderRequestedWithXML
 }
 
