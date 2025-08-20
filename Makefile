@@ -35,13 +35,13 @@ GO_BUILD_FLAGS ?= -ldflags '$(LDFLAGS)'
 MM_UTILITIES_DIR ?= ../mattermost-utilities
 DLV_DEBUG_PORT := 2346
 MATTERMOST_PLUGINS_PATH=$(MM_SERVER_PATH)/plugins
-BOARD_PLUGIN_PATH=$(MATTERMOST_PLUGINS_PATH)/focalboard
-PLUGIN_NAME=focalboard
+BOARD_PLUGIN_PATH=$(MATTERMOST_PLUGINS_PATH)/boards
+PLUGIN_NAME=boards
 
 # FIPS Support - similar to mattermost server
 # To build FIPS-compliant plugin: make dist-fips
 # Requires Docker to be installed and running
-FIPS_IMAGE ?= cgr.dev/mattermost.com/go-msft-fips:1.24.4@sha256:8ab847d56930279a3ea36763277080106406354ec31c5f57f9d7fa787ecadcb2
+FIPS_IMAGE ?= cgr.dev/mattermost.com/go-msft-fips:1.24.6@sha256:b94d424ab26b590163634001b22242ceac6f5d76bfbbaa77b6f0dda97220c717
 
 # We need to export GOBIN to allow it to be set
 # for processes spawned from the Makefile

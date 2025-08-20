@@ -11,7 +11,7 @@ on:
 env:
  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
  EXCLUDE_ENTERPRISE: true
- GO_VERSION: 1.24.0
+ GO_VERSION: 1.24.6
 
 jobs:
   webapp-test:
