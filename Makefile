@@ -218,8 +218,18 @@ bundle-fips:
 	./build/bin/manifest dist-fips
 	$(call copy_bundle_files,dist-fips)
 ifneq ($(HAS_SERVER),)
-	mkdir -p dist-fips/$(PLUGIN_ID)/server
-	cp -r server/dist-fips dist-fips/$(PLUGIN_ID)/server/dist
+	mkdir -p dist-fips/$(PLUGIN_ID)/server/dist
+	# Copy FIPS binaries but rename them to standard names for server compatibility
+	if [ -f server/dist-fips/plugin-linux-amd64-fips ]; then \
+		cp server/dist-fips/plugin-linux-amd64-fips dist-fips/$(PLUGIN_ID)/server/dist/plugin-linux-amd64; \
+	fi
+	# Copy any other FIPS binaries and rename them
+	for file in server/dist-fips/plugin-*-fips*; do \
+		if [ -f "$$file" ]; then \
+			target=$$(basename "$$file" | sed 's/-fips//g'); \
+			cp "$$file" "dist-fips/$(PLUGIN_ID)/server/dist/$$target"; \
+		fi; \
+	done
 endif
 ifneq ($(HAS_WEBAPP),)
 	if [ -d webapp/dist ]; then \
@@ -434,17 +444,17 @@ live-watch-webapp: apply
 .PHONY: deploy-to-mattermost-directory
 deploy-to-mattermost-directory:
 	./build/bin/pluginctl disable $(PLUGIN_ID)
-	mkdir -p $(FOCALBOARD_PLUGIN_PATH)
-	cp $(MANIFEST_FILE) $(FOCALBOARD_PLUGIN_PATH)/
-	cp -r webapp/pack $(FOCALBOARD_PLUGIN_PATH)/
-	cp -r $(ASSETS_DIR) $(FOCALBOARD_PLUGIN_PATH)/
-	cp -r public $(FOCALBOARD_PLUGIN_PATH)/
-	mkdir -p $(FOCALBOARD_PLUGIN_PATH)/server
-	cp -r server/dist $(FOCALBOARD_PLUGIN_PATH)/server/
-	mkdir -p $(FOCALBOARD_PLUGIN_PATH)/webapp
-	cp -r webapp/dist $(FOCALBOARD_PLUGIN_PATH)/webapp/
+	mkdir -p $(BOARD_PLUGIN_PATH)
+	cp $(MANIFEST_FILE) $(BOARD_PLUGIN_PATH)/
+	cp -r webapp/pack $(BOARD_PLUGIN_PATH)/
+	cp -r $(ASSETS_DIR) $(BOARD_PLUGIN_PATH)/
+	cp -r public $(BOARD_PLUGIN_PATH)/
+	mkdir -p $(BOARD_PLUGIN_PATH)/server
+	cp -r server/dist $(BOARD_PLUGIN_PATH)/server/
+	mkdir -p $(BOARD_PLUGIN_PATH)/webapp
+	cp -r webapp/dist $(BOARD_PLUGIN_PATH)/webapp/
 	./build/bin/pluginctl enable $(PLUGIN_ID)
-	@echo plugin built at: $(FOCALBOARD_PLUGIN_PATH)
+	@echo plugin built at: $(BOARD_PLUGIN_PATH)
 
 # Help documentation à la https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help:
