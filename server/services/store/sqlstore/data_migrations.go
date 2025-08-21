@@ -468,7 +468,8 @@ func (s *SQLStore) getBestTeamForBoard(tx sq.BaseRunner, board *model.Board) (st
 		teamID = commonTeams[0].(string)
 	} else {
 		// no common teams found. Let's try finding the best suitable team
-		if board.Type == "D" {
+		switch board.Type {
+		case "D":
 			// get DM's creator and pick one of their team
 			channel, err := (s.servicesAPI).GetChannelByID(board.ChannelID)
 			if err != nil {
@@ -491,7 +492,7 @@ func (s *SQLStore) getBestTeamForBoard(tx sq.BaseRunner, board *model.Board) (st
 			}
 
 			teamID = userTeams[channel.CreatorId][0]
-		} else if board.Type == "G" {
+		case "G":
 			// pick the team that has the most users as members
 			teamFrequency := map[string]int{}
 			highestFrequencyTeam := ""
@@ -533,7 +534,7 @@ func (s *SQLStore) getBoardUserTeams(tx sq.BaseRunner, board *model.Board) (map[
 		return nil, err
 	}
 
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	userTeams := map[string][]string{}
 
@@ -727,7 +728,7 @@ func (s *SQLStore) getFocalBoardTableNames() ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error fetching FocalBoard table names: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	names := make([]string, 0)
 
@@ -826,10 +827,13 @@ func (s *SQLStore) RunDeDuplicateCategoryBoardsMigration(currentMigration int) e
 		}
 	}
 
-	if s.dbType == model.MysqlDBType {
+	switch s.dbType {
+	case model.MysqlDBType:
 		return s.runMySQLDeDuplicateCategoryBoardsMigration()
-	} else if s.dbType == model.PostgresDBType {
+	case model.PostgresDBType:
 		return s.runPostgresDeDuplicateCategoryBoardsMigration()
+	default:
+		// No specific migration needed for other database types
 	}
 
 	if mErr := s.setSystemSetting(s.db, DeDuplicateCategoryBoardTableMigrationKey, strconv.FormatBool(true)); mErr != nil {
