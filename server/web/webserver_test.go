@@ -93,8 +93,10 @@ func Test_NewServer(t *testing.T) {
 			require.Equal(t, test.logger, ws.logger, "logger pointer does not match")
 
 			if test.localOnly == true {
+				//nolint:staticcheck // QF1008: prefer to keep explicit Server qualifier
 				require.Equal(t, test.expectedServerAddr, ws.Server.Addr, "localhost address not as matching!")
 			} else {
+				//nolint:staticcheck // QF1008: prefer to keep explicit Server qualifier
 				require.Equal(t, test.expectedServerAddr, ws.Server.Addr, "server address not matching!")
 			}
 		})
