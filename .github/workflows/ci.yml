@@ -111,8 +111,8 @@ jobs:
         echo "📦 Plugin Artifact Signing Parameters"
         echo "===================================="
         
-        # Extract plugin version from plugin.json
-        PLUGIN_VERSION=$(jq -r '.version' plugin.json)
+        # Extract plugin version using manifest tool (handles git versioning)
+        PLUGIN_VERSION=$(build/bin/manifest version)
         SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
         
         echo ""
