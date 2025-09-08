@@ -12,7 +12,6 @@ env:
  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
  EXCLUDE_ENTERPRISE: true
  GO_VERSION: 1.24.6
- COSIGN_VERSION: 2.2.2
 
 jobs:
   webapp-test:
@@ -105,75 +104,43 @@ jobs:
         GO_VERSION: ${{ env.GO_VERSION }}
       run: cd focalboard; make dist-all
 
-    - name: ci/setup-cosign
-      uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
-      with:
-        cosign-release: v${{ env.COSIGN_VERSION }}
-
-    - name: ci/sign-plugin-artifacts
-      env:
-        COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
-        COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+    - name: ci/display-signing-parameters
+      if: github.event_name == 'pull_request'
       run: |
         cd focalboard
-        echo "Signing plugin artifacts with cosign..."
+        echo "📦 Plugin Artifact Signing Parameters"
+        echo "===================================="
         
-        # Sign normal distribution
-        if [ -f dist/*.tar.gz ]; then
-          for package in dist/*.tar.gz; do
-            echo "Signing ${package}..."
-            if [ -n "$COSIGN_PRIVATE_KEY" ]; then
-              # Use private key signing if available
-              cosign sign-blob --yes --key env://COSIGN_PRIVATE_KEY --output-signature "${package}.sig" "${package}"
-            else
-              echo "Warning: COSIGN_PRIVATE_KEY not available, skipping signing for ${package}"
-            fi
-          done
-        fi
+        # Extract plugin version from plugin.json
+        PLUGIN_VERSION=$(jq -r '.version' plugin.json)
+        SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
         
-        # Sign FIPS distribution
-        if [ -f dist-fips/*.tar.gz ]; then
-          for package in dist-fips/*.tar.gz; do
-            echo "Signing ${package}..."
-            if [ -n "$COSIGN_PRIVATE_KEY" ]; then
-              # Use private key signing if available
-              cosign sign-blob --yes --key env://COSIGN_PRIVATE_KEY --output-signature "${package}.sig" "${package}"
-            else
-              echo "Warning: COSIGN_PRIVATE_KEY not available, skipping signing for ${package}"
-            fi
-          done
-        fi
-        
-        echo "Artifact signing completed"
-
-    - name: ci/verify-signatures
-      env:
-        COSIGN_PUBLIC_KEY: ${{ secrets.COSIGN_PUBLIC_KEY }}
-      run: |
-        cd focalboard
-        echo "Verifying artifact signatures..."
-        
-        # Verify normal distribution signatures
-        if [ -f dist/*.tar.gz ]; then
-          for package in dist/*.tar.gz; do
-            if [ -f "${package}.sig" ] && [ -n "$COSIGN_PUBLIC_KEY" ]; then
-              echo "Verifying ${package}..."
-              cosign verify-blob --key env://COSIGN_PUBLIC_KEY --signature "${package}.sig" "${package}"
-            fi
-          done
-        fi
-        
-        # Verify FIPS distribution signatures
-        if [ -f dist-fips/*.tar.gz ]; then
-          for package in dist-fips/*.tar.gz; do
-            if [ -f "${package}.sig" ] && [ -n "$COSIGN_PUBLIC_KEY" ]; then
-              echo "Verifying ${package}..."
-              cosign verify-blob --key env://COSIGN_PUBLIC_KEY --signature "${package}.sig" "${package}"
-            fi
-          done
-        fi
-        
-        echo "Signature verification completed"
+        echo ""
+        echo "To sign artifacts from this PR, run the following command:"
+        echo ""
+        echo "gh workflow run sign-plugin-pr-artifacts.yaml \\"
+        echo "  --repo mattermost/delivery-platform \\"
+        echo "  --field repository_full_name=\"${{ github.repository }}\" \\"
+        echo "  --field pr_number=\"${{ github.event.number }}\" \\"
+        echo "  --field commit_sha=\"${{ github.sha }}\" \\"
+        echo "  --field run_id=\"${{ github.run_id }}\" \\"
+        echo "  --field plugin_version=\"${PLUGIN_VERSION}\" \\"
+        echo "  --field include_fips=true"
+        echo ""
+        echo "Or use the GitHub web interface with these values:"
+        echo "- Repository Full Name: ${{ github.repository }}"
+        echo "- PR Number: ${{ github.event.number }}"
+        echo "- Commit SHA: ${{ github.sha }}"
+        echo "- Run ID: ${{ github.run_id }}"
+        echo "- Plugin Version: ${PLUGIN_VERSION}"
+        echo "- Include FIPS: true"
+        echo ""
+        echo "Expected artifact naming:"
+        echo "- mattermost-plugin-boards-${PLUGIN_VERSION}+${SHORT_SHA}-linux-amd64.tar.gz"
+        echo "- mattermost-plugin-boards-${PLUGIN_VERSION}+${SHORT_SHA}-fips-linux-amd64.tar.gz"
+        echo ""
+        echo "Artifacts will be available at:"
+        echo "https://plugins.releases.mattermost.com/pr/mattermost-plugin-boards/pr-${{ github.event.number }}-${SHORT_SHA}/"
 
     - name: Upload all artifacts
       uses: actions/upload-artifact@1746f4ab65b179e0ea60a494b83293b640dd5bba # v4.5.0
@@ -181,7 +148,5 @@ jobs:
         name: all-plugin-artifacts
         path: |
           focalboard/dist/*.tar.gz
-          focalboard/dist/*.tar.gz.sig
           focalboard/dist-fips/*.tar.gz
-          focalboard/dist-fips/*.tar.gz.sig
         retention-days: 7
