@@ -1,8 +1,6 @@
 module github.com/mattermost/mattermost-plugin-boards
 
-go 1.22.0
-
-toolchain go1.22.8
+go 1.24.0
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
