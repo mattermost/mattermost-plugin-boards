@@ -123,6 +123,7 @@ func (a *API) handleServeFile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	boardID := vars["boardID"]
 	filename := vars["filename"]
+	teamID := vars["teamID"]
 	userID := getUserID(r)
 
 	hasValidReadToken := a.hasValidReadTokenForBoard(r, boardID)
@@ -147,6 +148,12 @@ func (a *API) handleServeFile(w http.ResponseWriter, r *http.Request) {
 	auditRec.AddMeta("boardID", boardID)
 	auditRec.AddMeta("teamID", board.TeamID)
 	auditRec.AddMeta("filename", filename)
+
+	// Ensure the requested file belongs to the specified board and team
+	if valErr := a.app.ValidateFileOwnership(teamID, boardID, filename); valErr != nil {
+		a.errorResponse(w, r, model.NewErrPermission(fmt.Sprintf("access denied to file, error: %s", valErr)))
+		return
+	}
 
 	fileInfo, fileReader, err := a.app.GetFile(board.TeamID, boardID, filename)
 	if err != nil && !model.IsErrNotFound(err) {

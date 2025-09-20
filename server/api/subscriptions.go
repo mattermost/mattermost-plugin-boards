@@ -84,11 +84,16 @@ func (a *API) handleCreateSubscription(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// check for valid block
-	_, bErr := a.app.GetBlockByID(sub.BlockID)
+	// check for valid block and permissions to view its board
+	block, bErr := a.app.GetBlockByID(sub.BlockID)
 	if bErr != nil {
 		message := fmt.Sprintf("invalid blockID: %s", bErr)
 		a.errorResponse(w, r, model.NewErrBadRequest(message))
+		return
+	}
+
+	if !a.permissions.HasPermissionToBoard(sub.SubscriberID, block.BoardID, model.PermissionViewBoard) {
+		a.errorResponse(w, r, model.NewErrPermission("access denied to block"))
 		return
 	}
 
