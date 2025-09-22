@@ -44,7 +44,7 @@ import octoClient from '../../octoClient'
 
 import {useWebsockets} from '../../hooks/websockets'
 
-import mutator from '../../mutator'
+// import mutator from '../../mutator'
 
 import {Board} from '../../blocks/board'
 
@@ -214,31 +214,33 @@ const Sidebar = (props: Props) => {
         const toCategoryID = destination.droppableId
         const boardID = draggableId
 
-        if (fromCategoryID === toCategoryID) {
-            // board re-arranged withing the same category
-            const toSidebarCategory = sidebarCategories.find((category) => category.id === toCategoryID)
-            if (!toSidebarCategory) {
-                Utils.logError(`toCategoryID not found in list of sidebar categories. toCategoryID: ${toCategoryID}`)
-                return
-            }
+        const toSidebarCategory = sidebarCategories.find((category) => category.id === toCategoryID)
+        if (!toSidebarCategory) {
+            Utils.logError(`toCategoryID not found in list of sidebar categories. toCategoryID: ${toCategoryID}`)
+            return
+        }
+        const previousToBoardsMetadata = [...toSidebarCategory.boardMetadata]
 
+        if (fromCategoryID === toCategoryID) {
             const categoryBoardMetadata = [...toSidebarCategory.boardMetadata]
             categoryBoardMetadata.splice(source.index, 1)
             categoryBoardMetadata.splice(destination.index, 0, toSidebarCategory.boardMetadata[source.index])
 
             dispatch(updateCategoryBoardsOrder({categoryID: toCategoryID, boardsMetadata: categoryBoardMetadata}))
 
-            const reorderedBoardIDs = categoryBoardMetadata.map((m) => m.boardID)
-            await octoClient.reorderSidebarCategoryBoards(team.id, toCategoryID, reorderedBoardIDs)
+            try {
+                const reorderedBoardIDs = categoryBoardMetadata.map((m) => m.boardID)
+                const updatedOrder = await octoClient.reorderSidebarCategoryBoards(team.id, toCategoryID, reorderedBoardIDs)
+                if (reorderedBoardIDs.length > 0 && updatedOrder.length === 0) {
+                    throw new Error('reorderSidebarCategoryBoards failed')
+                }
+            } catch (err) {
+                Utils.logError(`Failed to persist boards reorder for category ${toCategoryID}: ${err}`)
+                dispatch(updateCategoryBoardsOrder({categoryID: toCategoryID, boardsMetadata: previousToBoardsMetadata}))
+            }
         } else {
             // board moved to a different category
-            const toSidebarCategory = sidebarCategories.find((category) => category.id === toCategoryID)
             const fromSidebarCategory = sidebarCategories.find((category) => category.id === fromCategoryID)
-
-            if (!toSidebarCategory) {
-                Utils.logError(`toCategoryID not found in list of sidebar categories. toCategoryID: ${toCategoryID}`)
-                return
-            }
 
             if (!fromSidebarCategory) {
                 Utils.logError(`fromCategoryID not found in list of sidebar categories. fromCategoryID: ${fromCategoryID}`)
@@ -249,14 +251,31 @@ const Sidebar = (props: Props) => {
             const fromCategoryBoardMetadata = fromSidebarCategory.boardMetadata[source.index]
             categoryBoardMetadata.splice(destination.index, 0, fromCategoryBoardMetadata)
 
-            // optimistically updating the store to create a lag-free UI.
             await dispatch(updateCategoryBoardsOrder({categoryID: toCategoryID, boardsMetadata: categoryBoardMetadata}))
             dispatch(updateBoardCategories([{...fromCategoryBoardMetadata, categoryID: toCategoryID}]))
 
-            await mutator.moveBoardToCategory(team.id, boardID, toCategoryID, fromCategoryID)
+            try {
+                const moveResp = await octoClient.moveBoardToCategory(team.id, boardID, toCategoryID, fromCategoryID)
+                if (!moveResp || !moveResp.ok) {
+                    throw new Error('moveBoardToCategory failed')
+                }
+            } catch (err) {
+                Utils.logError(`Failed to move board ${boardID} from ${fromCategoryID} to ${toCategoryID}: ${err}`)
+                dispatch(updateCategoryBoardsOrder({categoryID: toCategoryID, boardsMetadata: previousToBoardsMetadata}))
+                dispatch(updateBoardCategories([{...fromCategoryBoardMetadata, categoryID: fromCategoryID}]))
+                return
+            }
 
-            const reorderedBoardIDs = categoryBoardMetadata.map((m) => m.boardID)
-            await octoClient.reorderSidebarCategoryBoards(team.id, toCategoryID, reorderedBoardIDs)
+            try {
+                const reorderedBoardIDs = categoryBoardMetadata.map((m) => m.boardID)
+                const updatedOrder = await octoClient.reorderSidebarCategoryBoards(team.id, toCategoryID, reorderedBoardIDs)
+                if (reorderedBoardIDs.length > 0 && updatedOrder.length === 0) {
+                    throw new Error('reorderSidebarCategoryBoards failed after move')
+                }
+            } catch (err) {
+                Utils.logError(`Failed to persist boards reorder for destination category ${toCategoryID}: ${err}`)
+                dispatch(updateCategoryBoardsOrder({categoryID: toCategoryID, boardsMetadata: previousToBoardsMetadata}))
+            }
         }
     }, [team, sidebarCategories])
 
