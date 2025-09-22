@@ -53,7 +53,7 @@ import TelemetryClient, {TelemetryActions, TelemetryCategory} from '../../teleme
 
 import {Constants} from '../../constants'
 
-import {getCategoryOfBoard, getHiddenBoardIDs} from '../../store/sidebar'
+import {getCategoryOfBoard, getHiddenBoardIDs, removeBoardsFromAllCategories} from '../../store/sidebar'
 
 import SetWindowTitleAndIcon from './setWindowTitleAndIcon'
 import TeamToBoardAndViewRedirect from './teamToBoardAndViewRedirect'
@@ -138,6 +138,12 @@ const BoardPage = (props: Props): JSX.Element => {
                     teamId,
                     boardId: activeBoardId,
                 }))
+            }
+
+            // remove boards from all categories if they are deleted
+            const deletedBoardIds = teamBoards.filter((b: Board) => b.deleteAt && b.deleteAt !== 0).map((b) => b.id)
+            if (deletedBoardIds.length > 0) {
+                dispatch(removeBoardsFromAllCategories(deletedBoardIds))
             }
         }
 
