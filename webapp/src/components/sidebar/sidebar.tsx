@@ -44,8 +44,6 @@ import octoClient from '../../octoClient'
 
 import {useWebsockets} from '../../hooks/websockets'
 
-// import mutator from '../../mutator'
-
 import {Board} from '../../blocks/board'
 
 import SidebarCategory from './sidebarCategory'
