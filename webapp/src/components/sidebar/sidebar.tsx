@@ -226,15 +226,10 @@ const Sidebar = (props: Props) => {
 
             dispatch(updateCategoryBoardsOrder({categoryID: toCategoryID, boardsMetadata: categoryBoardMetadata}))
 
-            try {
-                const reorderedBoardIDs = categoryBoardMetadata.map((m) => m.boardID)
-                const updatedOrder = await octoClient.reorderSidebarCategoryBoards(team.id, toCategoryID, reorderedBoardIDs)
-                if (reorderedBoardIDs.length > 0 && updatedOrder.length === 0) {
-                    throw new Error('reorderSidebarCategoryBoards failed')
-                }
-            } catch (err) {
-                Utils.logError(`Failed to persist boards reorder for category ${toCategoryID}: ${err}`)
-                dispatch(updateCategoryBoardsOrder({categoryID: toCategoryID, boardsMetadata: previousToBoardsMetadata}))
+            const reorderedBoardIDs = categoryBoardMetadata.map((m) => m.boardID)
+            const updatedOrder = await octoClient.reorderSidebarCategoryBoards(team.id, toCategoryID, reorderedBoardIDs)
+            if (reorderedBoardIDs.length > 0 && updatedOrder.length === 0) {
+                dispatch(updateCategoryBoardsOrder({categoryID: toCategoryID, boardsMetadata: previousToBoardsMetadata}))                
             }
         } else {
             // board moved to a different category
@@ -252,13 +247,12 @@ const Sidebar = (props: Props) => {
             await dispatch(updateCategoryBoardsOrder({categoryID: toCategoryID, boardsMetadata: categoryBoardMetadata}))
             dispatch(updateBoardCategories([{...fromCategoryBoardMetadata, categoryID: toCategoryID}]))
 
-            try {
-                const moveResp = await octoClient.moveBoardToCategory(team.id, boardID, toCategoryID, fromCategoryID)
-                if (!moveResp || !moveResp.ok) {
-                    throw new Error('moveBoardToCategory failed')
-                }
-            } catch (err) {
-                Utils.logError(`Failed to move board ${boardID} from ${fromCategoryID} to ${toCategoryID}: ${err}`)
+            // Persist the move; if request fails or server rejects, rollback silently
+            const moveResp = await octoClient
+                .moveBoardToCategory(team.id, boardID, toCategoryID, fromCategoryID)
+                .catch(() => undefined)
+
+            if (!moveResp || !moveResp.ok) {
                 dispatch(updateCategoryBoardsOrder({categoryID: toCategoryID, boardsMetadata: previousToBoardsMetadata}))
                 dispatch(updateBoardCategories([{...fromCategoryBoardMetadata, categoryID: fromCategoryID}]))
                 return

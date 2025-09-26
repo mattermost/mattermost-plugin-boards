@@ -190,12 +190,9 @@ const sidebarSlice = createSlice({
             })
 
             // Recompute hiddenBoardIDs after pruning
-            state.hiddenBoardIDs = state.categoryAttributes.flatMap((ca) => ca.boardMetadata.reduce((collector, m) => {
-                if (m.hidden) {
-                    collector.push(m.boardID)
-                }
-                return collector
-            }, [] as string[]))
+            state.hiddenBoardIDs = state.categoryAttributes.flatMap((ca) =>
+                ca.boardMetadata.filter((m) => m.hidden).map((m) => m.boardID),
+            )
         },
     },
     extraReducers: (builder) => {
