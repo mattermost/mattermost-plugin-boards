@@ -261,7 +261,6 @@ const Sidebar = (props: Props) => {
             const reorderedBoardIDs = categoryBoardMetadata.map((m) => m.boardID)
             const updatedOrder = await octoClient
                 .reorderSidebarCategoryBoards(team.id, toCategoryID, reorderedBoardIDs)
-                .catch(() => [])
             if (reorderedBoardIDs.length > 0 && updatedOrder.length === 0) {
                 dispatch(updateCategoryBoardsOrder({categoryID: toCategoryID, boardsMetadata: previousToBoardsMetadata}))
             }
