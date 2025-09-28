@@ -258,14 +258,11 @@ const Sidebar = (props: Props) => {
                 return
             }
 
-            try {
-                const reorderedBoardIDs = categoryBoardMetadata.map((m) => m.boardID)
-                const updatedOrder = await octoClient.reorderSidebarCategoryBoards(team.id, toCategoryID, reorderedBoardIDs)
-                if (reorderedBoardIDs.length > 0 && updatedOrder.length === 0) {
-                    throw new Error('reorderSidebarCategoryBoards failed after move')
-                }
-            } catch (err) {
-                Utils.logError(`Failed to persist boards reorder for destination category ${toCategoryID}: ${err}`)
+            const reorderedBoardIDs = categoryBoardMetadata.map((m) => m.boardID)
+            const updatedOrder = await octoClient
+                .reorderSidebarCategoryBoards(team.id, toCategoryID, reorderedBoardIDs)
+                .catch(() => [])
+            if (reorderedBoardIDs.length > 0 && updatedOrder.length === 0) {
                 dispatch(updateCategoryBoardsOrder({categoryID: toCategoryID, boardsMetadata: previousToBoardsMetadata}))
             }
         }
