@@ -325,7 +325,7 @@ func (a *App) GetBlocksForBoard(boardID string) ([]*model.Block, error) {
 	return a.filterValidBlocksWithDeletedFiles(blocks), nil
 }
 
-// func restore soft-deleted files and filters out blocks with truly missing files
+// filterValidBlocksWithDeletedFiles restores soft-deleted files and filters out blocks with truly missing files.
 func (a *App) filterValidBlocksWithDeletedFiles(blocks []*model.Block) []*model.Block {
 	filtered := make([]*model.Block, 0, len(blocks))
 
