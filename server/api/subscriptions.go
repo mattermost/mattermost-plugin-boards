@@ -73,11 +73,6 @@ func (a *API) handleCreateSubscription(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	session := ctx.Value(sessionContextKey).(*model.Session)
 
-	auditRec := a.makeAuditRecord(r, "createSubscription", audit.Fail)
-	defer a.audit.LogRecord(audit.LevelModify, auditRec)
-	auditRec.AddMeta("subscriber_id", sub.SubscriberID)
-	auditRec.AddMeta("block_id", sub.BlockID)
-
 	// User can only create subscriptions for themselves (for now)
 	if session.UserID != sub.SubscriberID {
 		a.errorResponse(w, r, model.NewErrBadRequest("userID and subscriberID mismatch"))
@@ -96,6 +91,11 @@ func (a *API) handleCreateSubscription(w http.ResponseWriter, r *http.Request) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to block"))
 		return
 	}
+
+	auditRec := a.makeAuditRecord(r, "createSubscription", audit.Fail)
+	defer a.audit.LogRecord(audit.LevelModify, auditRec)
+	auditRec.AddMeta("subscriber_id", sub.SubscriberID)
+	auditRec.AddMeta("block_id", sub.BlockID)
 
 	subNew, err := a.app.CreateSubscription(&sub)
 	if err != nil {
