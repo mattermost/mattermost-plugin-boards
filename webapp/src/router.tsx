@@ -51,7 +51,7 @@ function HomeToCurrentTeam(props: {path: string, exact: boolean}) {
 
                 if (UserSettings.lastBoardId) {
                     const lastBoardID = UserSettings.lastBoardId[teamID]
-                    const lastViewID = lastBoardID ? UserSettings.lastViewId[lastBoardID] : undefined
+                    const lastViewID = UserSettings.lastViewId[lastBoardID]
 
                     if (lastBoardID) {
                         const categories = useAppSelector<CategoryBoards[]>(getSidebarCategories)
