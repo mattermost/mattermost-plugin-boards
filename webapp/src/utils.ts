@@ -20,6 +20,7 @@ import {IAppWindow} from './types'
 import {ChangeHandlerType, WSMessage} from './wsclient'
 import {BoardCategoryWebsocketData, Category} from './store/sidebar'
 import {UserSettings} from './userSettings'
+import {Constants} from './constants'
 
 declare let window: IAppWindow
 
@@ -575,7 +576,8 @@ class Utils {
     }
 
     static getFrontendBaseURL(absolute?: boolean): string {
-        let frontendBaseURL = window.frontendBaseURL || Utils.getBaseURL()
+        // Always use /boards as the frontend base URL, never fall back to baseURL
+        let frontendBaseURL = window.frontendBaseURL || '/boards'
         frontendBaseURL = frontendBaseURL.replace(/\/+$/, '')
         if (frontendBaseURL.indexOf('/') === 0) {
             frontendBaseURL = frontendBaseURL.slice(1)
@@ -785,6 +787,10 @@ class Utils {
         match: routerMatch<{boardId: string, viewId?: string, cardId?: string, teamId?: string}>,
         history: History,
     ) {
+        // Set the board as last viewed board in localStorage
+        const teamId = match.params.teamId || UserSettings.lastTeamId || Constants.globalTeamId
+        UserSettings.setLastBoardID(teamId, boardId)
+        
         // if the same board, reuse the match params
         // otherwise remove viewId and cardId, results in first view being selected
         const params = {...match.params, boardId: boardId || ''}
