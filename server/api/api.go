@@ -234,13 +234,13 @@ func setResponseHeader(w http.ResponseWriter, key string, value string) { //noli
 	header.Set(key, value)
 }
 
-// registerKeepaliveRoute registers the keepalive endpoint for session management
+// registerKeepaliveRoute registers the keepalive endpoint for session management.
 func (a *API) registerKeepaliveRoute(r *mux.Router) {
 	r.HandleFunc("/keepalive", a.handleKeepalive).Methods("GET")
 }
 
-// handleKeepalive handles the keepalive request to maintain session
-// The main purpose is to keep the session alive and prevent WebSocket staleness
+// handleKeepalive handles the keepalive request to maintain session.
+// The main purpose is to keep the session alive and prevent WebSocket staleness.
 func (a *API) handleKeepalive(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 	if userID == "" {
