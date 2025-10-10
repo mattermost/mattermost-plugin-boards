@@ -6,7 +6,6 @@ package app
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/notify"
@@ -317,74 +316,7 @@ func (a *App) GetBlockCountsByType() (map[string]int64, error) {
 }
 
 func (a *App) GetBlocksForBoard(boardID string) ([]*model.Block, error) {
-	blocks, err := a.store.GetBlocksForBoard(boardID)
-	if err != nil {
-		return nil, err
-	}
-
-	return a.filterValidBlocksWithDeletedFiles(blocks), nil
-}
-
-// filterValidBlocksWithDeletedFiles restores soft-deleted files and filters out blocks with truly missing files.
-func (a *App) filterValidBlocksWithDeletedFiles(blocks []*model.Block) []*model.Block {
-	filtered := make([]*model.Block, 0, len(blocks))
-
-	for _, block := range blocks {
-		if block.Type != model.TypeImage && block.Type != model.TypeAttachment && block.Type != "video" {
-			filtered = append(filtered, block)
-			continue
-		}
-
-		var fileID string
-		if fileIDWithExt, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileIDWithExt != "" {
-			parts := strings.Split(fileIDWithExt, ".")
-			if len(parts) >= 1 && len(parts[0]) > 1 {
-				fileID = getFileInfoID(parts[0])
-			}
-		} else if attachmentIDWithExt, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok && attachmentIDWithExt != "" {
-			parts := strings.Split(attachmentIDWithExt, ".")
-			if len(parts) >= 1 && len(parts[0]) > 1 {
-				fileID = getFileInfoID(parts[0])
-			}
-		}
-
-		if fileID == "" {
-			a.logger.Warn("Skipping block with missing file ID",
-				mlog.String("blockID", block.ID),
-				mlog.String("blockType", string(block.Type)))
-			continue
-		}
-
-		// Check if file exists
-		fileInfo, err := a.store.GetFileInfo(fileID)
-		if err != nil || fileInfo == nil {
-			// File truly doesn't exist (deleted from the database)- skip the block
-			a.logger.Warn("Skipping block with non-existent file",
-				mlog.String("blockID", block.ID),
-				mlog.String("fileID", fileID),
-				mlog.Err(err))
-			continue
-		}
-
-		// If file is soft-deleted, restore it automatically
-		if fileInfo.DeleteAt > 0 {
-			a.logger.Info("Auto-restoring soft-deleted file for existing block",
-				mlog.String("blockID", block.ID),
-				mlog.String("fileID", fileID))
-
-			if restoreErr := a.store.RestoreFiles([]string{fileID}); restoreErr != nil {
-				a.logger.Error("Failed to auto-restore file",
-					mlog.String("blockID", block.ID),
-					mlog.String("fileID", fileID),
-					mlog.Err(restoreErr))
-				continue
-			}
-		}
-
-		filtered = append(filtered, block)
-	}
-
-	return filtered
+	return a.store.GetBlocksForBoard(boardID)
 }
 
 func (a *App) notifyBlockChanged(action notify.Action, block *model.Block, oldBlock *model.Block, modifiedByID string) {
