@@ -167,6 +167,7 @@ export default class Plugin {
     rhsId?: string
     boardSelectorId?: string
     registry?: PluginRegistry
+    activityFunc?: () => void
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
     async initialize(registry: PluginRegistry, mmStore: Store<GlobalState, Action<Record<string, unknown>>>): Promise<void> {
@@ -221,6 +222,16 @@ export default class Plugin {
                 }
             }
         })
+
+        // Register reconnection handler for graceful recovery
+        if (this.registry?.registerReconnectHandler) {
+            this.registry.registerReconnectHandler(() => {
+                Utils.log('Boards plugin: WebSocket reconnected, refreshing data')
+                store.dispatch(initialLoad())
+            })
+        }
+
+        this.userActivityWatch()
 
         let lastViewedChannel = mmStore.getState().entities.channels.currentChannelId
         let prevTeamID: string
@@ -383,6 +394,36 @@ export default class Plugin {
         }
     }
 
+    userActivityWatch(): void {
+        let lastActivityTime = Number.MAX_SAFE_INTEGER
+        const activityTimeout = 60 * 60 * 1000 // 1 hour
+
+        this.activityFunc = () => {
+            const now = new Date().getTime()
+            if (now - lastActivityTime > activityTimeout) {
+                this.notifyConnect()
+            }
+            lastActivityTime = now
+        }
+        document.addEventListener('click', this.activityFunc)
+    }
+
+    async notifyConnect(): Promise<void> {
+        try {
+            const response = await fetch(`${windowAny.baseURL}/api/v1/keepalive`, {
+                method: 'GET',
+                headers: {
+                    'X-Timezone-Offset': (-new Date().getTimezoneOffset() / 60).toString(),
+                },
+            })
+            if (!response.ok) {
+                Utils.logError(`Keep-alive request failed: ${response.status}`)
+            }
+        } catch (error) {
+            Utils.logError(`Keep-alive request error: ${error}`)
+        }
+    }
+
     uninitialize(): void {
         if (this.channelHeaderButtonId) {
             this.registry?.unregisterComponent(this.channelHeaderButtonId)
@@ -392,6 +433,11 @@ export default class Plugin {
         }
         if (this.boardSelectorId) {
             this.registry?.unregisterComponent(this.boardSelectorId)
+        }
+
+        // Clean up activity watch
+        if (this.activityFunc) {
+            document.removeEventListener('click', this.activityFunc)
         }
 
         // unregister websocket handlers
