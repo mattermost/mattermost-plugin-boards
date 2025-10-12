@@ -62,12 +62,6 @@ func NewAPI(
 }
 
 func (a *API) RegisterRoutes(r *mux.Router) {
-	// V1 routes for simple endpoints
-	apiv1 := r.PathPrefix("/api/v1").Subrouter()
-	apiv1.Use(a.panicHandler)
-	apiv1.Use(a.requireCSRFToken)
-	a.registerKeepaliveRoute(apiv1)
-
 	apiv2 := r.PathPrefix("/api/v2").Subrouter()
 	apiv2.Use(a.panicHandler)
 	apiv2.Use(a.requireCSRFToken)
@@ -232,21 +226,4 @@ func setResponseHeader(w http.ResponseWriter, key string, value string) { //noli
 		return
 	}
 	header.Set(key, value)
-}
-
-// registerKeepaliveRoute registers the keepalive endpoint for session management.
-func (a *API) registerKeepaliveRoute(r *mux.Router) {
-	r.HandleFunc("/keepalive", a.handleKeepalive).Methods("GET")
-}
-
-// handleKeepalive handles the keepalive request to maintain session.
-// The main purpose is to keep the session alive and prevent WebSocket staleness.
-func (a *API) handleKeepalive(w http.ResponseWriter, r *http.Request) {
-	userID := getUserID(r)
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("unauthorized"))
-		return
-	}
-	a.logger.Debug("Keepalive request received", mlog.String("userID", userID))
-	jsonStringResponse(w, http.StatusOK, `{"status":"ok"}`)
 }
