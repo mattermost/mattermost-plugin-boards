@@ -1038,6 +1038,8 @@ func (s *SQLStore) undeleteBlockChildren(db sq.BaseRunner, boardID string, paren
 		return fmt.Errorf("undeleteBlockChildren unable to generate subquery: %w", err)
 	}
 
+	joinArgs := append([]interface{}{modifiedBy}, subQueryArgs...)
+
 	selectQuery := s.getQueryBuilder(db).
 		Select(
 			"bh.board_id",
@@ -1055,7 +1057,7 @@ func (s *SQLStore) undeleteBlockChildren(db sq.BaseRunner, boardID string, paren
 			"bh.created_by",
 		).
 		From(s.tablePrefix+"blocks_history AS bh").
-		InnerJoin("("+subQuerySQL+") AS sub ON bh.id=sub.id AND bh.insert_at=sub.max_insert_at", append(subQueryArgs, modifiedBy)...).
+		InnerJoin("("+subQuerySQL+") AS sub ON bh.id=sub.id AND bh.insert_at=sub.max_insert_at", joinArgs...).
 		Where(sq.NotEq{"bh.delete_at": 0})
 
 	columns := []string{

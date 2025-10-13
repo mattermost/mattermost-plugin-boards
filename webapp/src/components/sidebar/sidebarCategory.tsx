@@ -179,6 +179,10 @@ const SidebarCategory = (props: Props) => {
             return
         }
         telemetryClient.trackEvent(TelemetryCategory, TelemetryActions.DeleteBoard, {board: deleteBoard.id})
+        
+        // Capture the category ID before deletion
+        const deletedFromCategoryID = props.categoryBoards.id
+        
         mutator.deleteBoard(
             deleteBoard,
             intl.formatMessage({id: 'Sidebar.delete-board', defaultMessage: 'Delete board'}),
@@ -197,10 +201,12 @@ const SidebarCategory = (props: Props) => {
                 }
             },
             async () => {
+                // Restore the board to the category it was deleted from
+                await mutator.moveBoardToCategory(teamID, deleteBoard.id, deletedFromCategoryID, '')
                 showBoard(deleteBoard.id)
             },
         )
-    }, [showBoard, deleteBoard, props.boards])
+    }, [showBoard, deleteBoard, props.boards, props.categoryBoards.id, teamID])
 
     const updateCategory = useCallback(async (value: boolean) => {
         const updatedCategory: Category = {
