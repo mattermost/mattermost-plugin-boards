@@ -387,6 +387,14 @@ func (a *API) handleDeleteBlock(w http.ResponseWriter, r *http.Request) {
 		a.errorResponse(w, r, err)
 		return
 	}
+
+	if block.Type == model.TypeComment {
+		if block.CreatedBy != userID && !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionDeleteOthersComments) {
+			a.errorResponse(w, r, model.NewErrPermission("access denied to delete other users' comments"))
+			return
+		}
+	}
+
 	if block.BoardID != boardID {
 		message := fmt.Sprintf("block ID=%s on BoardID=%s", block.ID, boardID)
 		a.errorResponse(w, r, model.NewErrNotFound(message))
