@@ -86,6 +86,7 @@ const BoardPage = (props: Props): JSX.Element => {
     const allTeams = useAppSelector(getAllTeams)
     const allBoards = useAppSelector(getBoards)
     const boardViews = useAppSelector(getCurrentBoardViews)
+    const [loadedBoardId, setLoadedBoardId] = useState<string>('')
 
     // if we're in a legacy route and not showing a shared board,
     // redirect to the new URL schema equivalent
@@ -256,36 +257,49 @@ const BoardPage = (props: Props): JSX.Element => {
     }, [])
 
     useEffect(() => {
-        dispatch(loadAction(match.params.boardId))
-
-        if (match.params.boardId) {
-            // set the active board
-            dispatch(setCurrentBoard(match.params.boardId))
-
-            if (viewId !== Constants.globalTeamId) {
-                // reset current, even if empty string
-                dispatch(setCurrentView(viewId))
-                if (viewId) {
-                    // don't reset per board if empty string
-                    UserSettings.setLastViewId(match.params.boardId, viewId)
-                }
-            }
-        }
-    }, [teamId, match.params.boardId, viewId, me?.id])
-
-    useEffect(() => {
-        if (Object.keys(allBoards).length === 0) {
+        if (!match.params.boardId) {
             return
         }
-        if (match.params.boardId && !props.readonly && me) {
-            const board = allBoards[match.params.boardId]
-            if (board && board.teamId !== teamId && board.teamId !== Constants.globalTeamId) {
-                dispatch(setGlobalError('board-not-found'))
-                return
+        dispatch(setCurrentBoard(match.params.boardId))
+
+        if (viewId !== Constants.globalTeamId) {
+            dispatch(setCurrentView(viewId))
+            if (viewId) {
+                UserSettings.setLastViewId(match.params.boardId, viewId)
             }
-            loadOrJoinBoard(me, teamId, match.params.boardId)
         }
-    }, [teamId, match.params.boardId, me?.id, allBoards])
+
+        dispatch(loadAction(match.params.boardId))
+    }, [teamId, match.params.boardId, viewId, me?.id, dispatch, loadAction])
+
+
+    useEffect(() => {
+        setLoadedBoardId('')
+    }, [teamId])
+
+    useEffect(() => {
+        if (!match.params.boardId || !me || props.readonly) {
+            return
+        }
+
+        if (loadedBoardId === match.params.boardId) {
+            return
+        }
+
+        const boardsLoaded = Object.keys(allBoards).length > 0
+        if (!boardsLoaded) {
+            return
+        }
+
+        const board = allBoards[match.params.boardId]
+        if (board && board.teamId !== teamId && board.teamId !== Constants.globalTeamId) {
+            dispatch(setGlobalError('board-not-found'))
+            return
+        }
+
+        setLoadedBoardId(match.params.boardId)
+        loadOrJoinBoard(me, teamId, match.params.boardId)
+    }, [teamId, match.params.boardId, me, props.readonly, allBoards, loadOrJoinBoard, dispatch, loadedBoardId])
 
     // Validate that the viewId exists in the board's views
     useEffect(() => {
