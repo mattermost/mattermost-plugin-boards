@@ -1062,7 +1062,7 @@ func (s *SQLStore) undeleteBlockChildren(db sq.BaseRunner, boardID string, paren
 		return fmt.Errorf("undeleteBlockChildren unable to generate subquery: %w", err)
 	}
 
-	joinArgs := append([]interface{}{modifiedBy}, subQueryArgs...)
+	joinArgs := append([]any{modifiedBy}, subQueryArgs...)
 
 	selectQuery := s.getQueryBuilder(db).
 		Select(
