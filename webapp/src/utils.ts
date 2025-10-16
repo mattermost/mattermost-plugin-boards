@@ -577,7 +577,7 @@ class Utils {
 
     static getFrontendBaseURL(absolute?: boolean): string {
         // Always use /boards as the frontend base URL, never fall back to baseURL
-        let frontendBaseURL = window.frontendBaseURL || '/boards'
+        let frontendBaseURL = window.frontendBaseURL ? window.frontendBaseURL : '/boards'
         frontendBaseURL = frontendBaseURL.replace(/\/+$/, '')
         if (frontendBaseURL.indexOf('/') === 0) {
             frontendBaseURL = frontendBaseURL.slice(1)
