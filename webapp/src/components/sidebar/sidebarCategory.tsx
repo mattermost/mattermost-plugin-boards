@@ -39,6 +39,7 @@ import {TOUR_SIDEBAR, SidebarTourSteps, TOUR_BOARD, FINISHED} from '../../compon
 import telemetryClient, {TelemetryActions, TelemetryCategory} from '../../telemetry/telemetryClient'
 
 import {getCurrentTeam} from '../../store/teams'
+import {UserSettings} from '../../userSettings'
 
 import ConfirmationDialogBox, {ConfirmationDialogBoxProps} from '../confirmationDialogBox'
 
@@ -182,6 +183,10 @@ const SidebarCategory = (props: Props) => {
         
         // Capture the category ID before deletion
         const deletedFromCategoryID = props.categoryBoards.id
+        
+        // Clear localStorage entries for the deleted board
+        UserSettings.setLastBoardID(teamID, null)
+        UserSettings.setLastViewId(deleteBoard.id, null)
         
         mutator.deleteBoard(
             deleteBoard,
