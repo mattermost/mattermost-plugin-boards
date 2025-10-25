@@ -6,13 +6,11 @@ import {createIntl, createIntlCache} from 'react-intl'
 import {Store, Action} from 'redux'
 import {Provider as ReduxProvider} from 'react-redux'
 import {createBrowserHistory, History} from 'history'
-import {rudderAnalytics, RudderTelemetryHandler} from 'mattermost-redux/client/rudder'
-import {GlobalState} from 'mattermost-redux/types/store'
+import {GlobalState} from '@mattermost/types/store'
 import {selectTeam} from 'mattermost-redux/actions/teams'
 
 import appBarIcon from '../static/app-bar-icon.png'
 
-import TelemetryClient from './telemetry/telemetryClient'
 import {setMattermostTheme} from './theme'
 import FocalboardIcon from './widgets/icons/logo'
 import GlobalHeader from './components/globalHeader/globalHeader'
@@ -64,22 +62,6 @@ function getSubpath(siteURL: string): string {
 
     // remove trailing slashes
     return url.pathname.replace(/\/+$/, '')
-}
-
-const TELEMETRY_RUDDER_KEY = 'placeholder_rudder_key'
-const TELEMETRY_RUDDER_DATAPLANE_URL = 'placeholder_rudder_dataplane_url'
-const TELEMETRY_OPTIONS = {
-    context: {
-        ip: '0.0.0.0',
-    },
-    page: {
-        path: '',
-        referrer: '',
-        search: '',
-        title: '',
-        url: '',
-    },
-    anonymousId: '00000000000000000000000000',
 }
 
 type Props = {
@@ -240,6 +222,14 @@ export default class Plugin {
             }
         })
 
+        // Register reconnection handler for graceful recovery
+        if (this.registry?.registerReconnectHandler) {
+            this.registry.registerReconnectHandler(() => {
+                Utils.log('Boards plugin: WebSocket reconnected, refreshing data')
+                store.dispatch(initialLoad())
+            })
+        }
+
         let lastViewedChannel = mmStore.getState().entities.channels.currentChannelId
         let prevTeamID: string
 
@@ -393,41 +383,6 @@ export default class Plugin {
                 </WithWebSockets>
             </ReduxProvider>
         ))
-
-        const config = await octoClient.getClientConfig()
-        if (config?.telemetry) {
-            let rudderKey = TELEMETRY_RUDDER_KEY
-            let rudderUrl = TELEMETRY_RUDDER_DATAPLANE_URL
-
-            if (rudderKey.startsWith('placeholder') && rudderUrl.startsWith('placeholder')) {
-                rudderKey = process.env.RUDDER_KEY as string //eslint-disable-line no-process-env
-                rudderUrl = process.env.RUDDER_DATAPLANE_URL as string //eslint-disable-line no-process-env
-            }
-
-            if (rudderKey !== '') {
-                const rudderCfg = {} as {setCookieDomain: string}
-                if (siteURL && siteURL !== '') {
-                    try {
-                        rudderCfg.setCookieDomain = new URL(siteURL).hostname
-                        // eslint-disable-next-line no-empty
-                    } catch (_) { }
-                }
-                rudderAnalytics.load(rudderKey, rudderUrl, rudderCfg)
-
-                rudderAnalytics.identify(config?.telemetryid, {}, TELEMETRY_OPTIONS)
-
-                rudderAnalytics.page('BoardsLoaded', '',
-                    TELEMETRY_OPTIONS.page,
-                    {
-                        context: TELEMETRY_OPTIONS.context,
-                        anonymousId: TELEMETRY_OPTIONS.anonymousId,
-                    })
-
-                rudderAnalytics.ready(() => {
-                    TelemetryClient.setTelemetryHandler(new RudderTelemetryHandler())
-                })
-            }
-        }
 
         windowAny.getCurrentTeamId = (): string => {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment

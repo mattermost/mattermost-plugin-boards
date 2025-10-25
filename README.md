@@ -20,6 +20,13 @@ you are building on.
 In your Mattermost configuration file, ensure that `PluginSettings.EnableUploads` is set to `true`, and `FileSettings.MaxFileSize` is
 set to a large enough value to accept the plugin bundle (eg `256000000`).
 
+### Installing Dependencies 
+
+```sh
+cd ./webapp
+npm install
+```
+
 ### Building the plugin
 
 Run the following command in the plugin repository to prepare a compiled, distributable plugin ZIP file:

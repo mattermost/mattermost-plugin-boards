@@ -73,24 +73,29 @@ func (a *API) handleCreateSubscription(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	session := ctx.Value(sessionContextKey).(*model.Session)
 
-	auditRec := a.makeAuditRecord(r, "createSubscription", audit.Fail)
-	defer a.audit.LogRecord(audit.LevelModify, auditRec)
-	auditRec.AddMeta("subscriber_id", sub.SubscriberID)
-	auditRec.AddMeta("block_id", sub.BlockID)
-
 	// User can only create subscriptions for themselves (for now)
 	if session.UserID != sub.SubscriberID {
 		a.errorResponse(w, r, model.NewErrBadRequest("userID and subscriberID mismatch"))
 		return
 	}
 
-	// check for valid block
-	_, bErr := a.app.GetBlockByID(sub.BlockID)
+	// check for valid block and permissions to view its board
+	block, bErr := a.app.GetBlockByID(sub.BlockID)
 	if bErr != nil {
 		message := fmt.Sprintf("invalid blockID: %s", bErr)
 		a.errorResponse(w, r, model.NewErrBadRequest(message))
 		return
 	}
+
+	if !a.permissions.HasPermissionToBoard(sub.SubscriberID, block.BoardID, model.PermissionViewBoard) {
+		a.errorResponse(w, r, model.NewErrPermission("access denied to block"))
+		return
+	}
+
+	auditRec := a.makeAuditRecord(r, "createSubscription", audit.Fail)
+	defer a.audit.LogRecord(audit.LevelModify, auditRec)
+	auditRec.AddMeta("subscriber_id", sub.SubscriberID)
+	auditRec.AddMeta("block_id", sub.BlockID)
 
 	subNew, err := a.app.CreateSubscription(&sub)
 	if err != nil {

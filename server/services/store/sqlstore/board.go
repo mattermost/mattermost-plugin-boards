@@ -4,8 +4,7 @@
 package sqlstore
 
 import (
-	//nolint:gosec
-	"crypto/md5"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -273,9 +272,8 @@ func (s *SQLStore) getBoardsInTeamByIds(db sq.BaseRunner, boardIDs []string, tea
 func (s *SQLStore) insertBoard(db sq.BaseRunner, board *model.Board, userID string) (*model.Board, error) {
 	// Generate tracking IDs for in-built templates
 	if board.IsTemplate && board.TeamID == model.GlobalTeamID {
-		//nolint:gosec
-		// we don't need cryptographically secure hash, so MD5 is fine
-		board.Properties["trackingTemplateId"] = fmt.Sprintf("%x", md5.Sum([]byte(board.Title)))
+		// Use SHA256 for FIPS compliance
+		board.Properties["trackingTemplateId"] = fmt.Sprintf("%x", sha256.Sum256([]byte(board.Title)))
 	}
 
 	propertiesBytes, err := s.MarshalJSONB(board.Properties)

@@ -795,6 +795,11 @@ func (s *SQLStore) SaveFileInfo(fileInfo *mmModel.FileInfo) error {
 
 }
 
+func (s *SQLStore) RestoreFiles(fileIDs []string) error {
+	return s.restoreFiles(s.db, fileIDs)
+
+}
+
 func (s *SQLStore) SaveMember(bm *model.BoardMember) (*model.BoardMember, error) {
 	return s.saveMember(s.db, bm)
 

@@ -5,7 +5,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import React from 'react'
-import {Channel, ChannelMembership} from 'mattermost-redux/types/channels'
+import {Channel, ChannelMembership} from '@mattermost/types/channels'
 
 export interface PluginRegistry {
     registerPostTypeComponent(typeName: string, component: React.ElementType)
@@ -24,6 +24,7 @@ export interface PluginRegistry {
     registerInsightsHandler(handler: (timeRange: string, page: number, perPage: number, teamId: string, insightType: string) => void)
     registerSiteStatisticsHandler(handler: () => void)
     registerActionAfterChannelCreation(component: React.Element)
+    registerReconnectHandler?(handler: () => void)
 
     // Add more if needed from https://developers.mattermost.com/extend/plugins/webapp/reference
 }
