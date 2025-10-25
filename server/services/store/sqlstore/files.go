@@ -96,3 +96,25 @@ func (s *SQLStore) saveFileInfo(db sq.BaseRunner, fileInfo *mmModel.FileInfo) er
 
 	return nil
 }
+
+func (s *SQLStore) restoreFiles(db sq.BaseRunner, fileIDs []string) error {
+	if len(fileIDs) == 0 {
+		return nil
+	}
+
+	query := s.getQueryBuilder(db).
+		Update("FileInfo").
+		Set("DeleteAt", 0).
+		Where(sq.Eq{"Id": fileIDs})
+
+	if _, err := query.Exec(); err != nil {
+		s.logger.Error(
+			"failed to restore files",
+			mlog.Int("file_count", len(fileIDs)),
+			mlog.Err(err),
+		)
+		return err
+	}
+
+	return nil
+}

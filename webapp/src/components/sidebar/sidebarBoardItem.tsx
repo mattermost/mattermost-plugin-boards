@@ -23,6 +23,7 @@ import {CategoryBoards, updateBoardCategories} from '../../store/sidebar'
 import CreateNewFolder from '../../widgets/icons/newFolder'
 import {useAppDispatch, useAppSelector} from '../../store/hooks'
 import {getCurrentBoardViews, getCurrentViewId} from '../../store/views'
+import {getMySortedBoards} from '../../store/boards'
 import Folder from '../../widgets/icons/folder'
 import Check from '../../widgets/icons/checkIcon'
 import CompassIcon from '../../widgets/icons/compassIcon'
@@ -83,6 +84,7 @@ const SidebarBoardItem = (props: Props) => {
     const history = useHistory()
     const dispatch = useAppDispatch()
     const currentBoardID = useAppSelector(getCurrentBoardId)
+    const allBoards = useAppSelector(getMySortedBoards)
 
     const generateMoveToCategoryOptions = (boardID: string) => {
         return props.allCategories.map((category) => (
@@ -175,21 +177,24 @@ const SidebarBoardItem = (props: Props) => {
             // Empty board ID navigates to template picker, which is
             // fine if there are no more visible boards to switch to.
 
-            // find the first visible board
-            let visibleBoardID: string | null = null
+            const validBoardIDs = new Set(allBoards.filter((b) => !b.deleteAt).map((b) => b.id))
+            let nextValidBoardID: string | null = null
             for (const iterCategory of props.allCategories) {
                 const visibleBoardMetadata = iterCategory.boardMetadata.find((categoryBoardMetadata) => !categoryBoardMetadata.hidden && categoryBoardMetadata.boardID !== props.board.id)
-                if (visibleBoardMetadata) {
-                    visibleBoardID = visibleBoardMetadata.boardID
+                if (!visibleBoardMetadata) {
+                    continue
+                }
+                if (validBoardIDs.has(visibleBoardMetadata.boardID)) {
+                    nextValidBoardID = visibleBoardMetadata.boardID
                     break
                 }
             }
 
-            if (visibleBoardID === null) {
+            if (nextValidBoardID === null) {
                 UserSettings.setLastBoardID(match.params.teamId!, null)
                 showTemplatePicker()
             } else {
-                props.showBoard(visibleBoardID)
+                props.showBoard(nextValidBoardID)
             }
         }
     }

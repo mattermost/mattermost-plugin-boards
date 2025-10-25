@@ -132,7 +132,6 @@ class WSClient {
     private reopenMaxRetries = 10
     private updatedData: UpdatedData = {Blocks: [], Categories: [], BoardCategories: [], Boards: [], BoardMembers: [], CategoryOrder: []}
     private updateTimeout?: NodeJS.Timeout
-    private errorPollId?: NodeJS.Timeout
     private subscriptions: Subscriptions = {Teams: {}}
 
     private logged = false
@@ -361,20 +360,8 @@ class WSClient {
                 }
                 this.state = 'close'
 
-                // there is no way to react to a reconnection with the
-                // reliable websockets schema, so we poll the raw
-                // websockets client for its state directly until it
-                // reconnects
-                if (!this.errorPollId) {
-                    this.errorPollId = setInterval(() => {
-                        Utils.logWarn(`Polling websockets connection for state: ${this.client?.conn?.readyState}`)
-                        if (this.client?.conn?.readyState === 1) {
-                            onReconnect()
-                            clearInterval(this.errorPollId!)
-                            this.errorPollId = undefined
-                        }
-                    }, 500)
-                }
+                // Note: Reconnection is now handled by Mattermost's registry-based
+                // reconnection handler instead of polling
             }
 
             const onError = (event: Event) => {

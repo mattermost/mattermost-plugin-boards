@@ -123,6 +123,7 @@ type Store interface {
 
 	GetFileInfo(id string) (*mmModel.FileInfo, error)
 	SaveFileInfo(fileInfo *mmModel.FileInfo) error
+	RestoreFiles(fileIDs []string) error
 
 	// @withTransaction
 	AddUpdateCategoryBoard(userID, categoryID string, boardIDs []string) error

@@ -35,6 +35,6 @@ func (a *API) attachSession(handler func(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		a.errorResponse(w, r, model.NewErrUnauthorized("Unauthorized"))
+		handler(w, r)
 	}
 }
