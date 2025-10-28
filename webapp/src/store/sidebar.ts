@@ -175,6 +175,25 @@ const sidebarSlice = createSlice({
             // creating a new reference of array so redux knows it changed
             state.categoryAttributes = state.categoryAttributes.map((original, i) => (i === categoryIndex ? updatedCategory : original))
         },
+        removeBoardsFromAllCategories: (state, action: PayloadAction<string[]>) => {
+            if (!action.payload || action.payload.length === 0) {
+                return
+            }
+
+            const toRemove = new Set(action.payload)
+            state.categoryAttributes = state.categoryAttributes.map((categoryBoards: CategoryBoards) => {
+                const filtered = categoryBoards.boardMetadata.filter((m) => !toRemove.has(m.boardID))
+                return {
+                    ...categoryBoards,
+                    boardMetadata: filtered,
+                }
+            })
+
+            // Recompute hiddenBoardIDs after pruning
+            state.hiddenBoardIDs = state.categoryAttributes.flatMap((ca) =>
+                ca.boardMetadata.filter((m) => m.hidden).map((m) => m.boardID),
+            )
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchSidebarCategories.fulfilled, (state, action) => {
@@ -210,7 +229,7 @@ export function getCategoryOfBoard(boardID: string): (state: RootState) => Categ
 
 export const {reducer} = sidebarSlice
 
-export const {updateCategories, updateBoardCategories, updateCategoryOrder, updateCategoryBoardsOrder} = sidebarSlice.actions
+export const {updateCategories, updateBoardCategories, updateCategoryOrder, updateCategoryBoardsOrder, removeBoardsFromAllCategories} = sidebarSlice.actions
 
 export {Category, CategoryBoards, BoardCategoryWebsocketData, CategoryBoardsReorderData, CategoryBoardMetadata}
 

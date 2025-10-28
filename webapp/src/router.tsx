@@ -22,6 +22,8 @@ import octoClient from './octoClient'
 import {setGlobalError, getGlobalError} from './store/globalError'
 import {useAppSelector, useAppDispatch} from './store/hooks'
 import {getFirstTeam, fetchTeams, Team} from './store/teams'
+import {getSidebarCategories, CategoryBoards} from './store/sidebar'
+import {getMySortedBoards} from './store/boards'
 import {UserSettings} from './userSettings'
 import FBRoute from './route'
 
@@ -50,6 +52,31 @@ function HomeToCurrentTeam(props: {path: string, exact: boolean}) {
                 if (UserSettings.lastBoardId) {
                     const lastBoardID = UserSettings.lastBoardId[teamID]
                     const lastViewID = UserSettings.lastViewId[lastBoardID]
+
+                    if (lastBoardID) {
+                        const categories = useAppSelector<CategoryBoards[]>(getSidebarCategories)
+                        const myBoards = useAppSelector(getMySortedBoards)
+                        const validBoardIds = new Set(myBoards.filter((b) => !b.deleteAt).map((b) => b.id))
+
+                        if (!validBoardIds.has(lastBoardID)) {
+                            let fallbackBoardId: string | null = null
+                            for (const category of categories) {
+                                const visible = category.boardMetadata.find((m) => !m.hidden && validBoardIds.has(m.boardID))
+                                if (visible) {
+                                    fallbackBoardId = visible.boardID
+                                    break
+                                }
+                            }
+
+                            if (fallbackBoardId) {
+                                UserSettings.setLastBoardID(teamID, fallbackBoardId)
+                                return <Redirect to={`/team/${teamID}/${fallbackBoardId}`}/>
+                            }
+
+                            UserSettings.setLastBoardID(teamID, null)
+                            return <Redirect to={`/team/${teamID}`}/>
+                        }
+                    }
 
                     if (lastBoardID && lastViewID) {
                         return <Redirect to={`/team/${teamID}/${lastBoardID}/${lastViewID}`}/>

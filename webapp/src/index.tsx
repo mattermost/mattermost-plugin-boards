@@ -222,6 +222,14 @@ export default class Plugin {
             }
         })
 
+        // Register reconnection handler for graceful recovery
+        if (this.registry?.registerReconnectHandler) {
+            this.registry.registerReconnectHandler(() => {
+                Utils.log('Boards plugin: WebSocket reconnected, refreshing data')
+                store.dispatch(initialLoad())
+            })
+        }
+
         let lastViewedChannel = mmStore.getState().entities.channels.currentChannelId
         let prevTeamID: string
 
