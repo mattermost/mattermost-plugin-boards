@@ -24,6 +24,7 @@ const emptyString = "empty"
 var errEmptyFilename = errors.New("IsFileArchived: empty filename not allowed")
 var ErrFileNotFound = errors.New("file not found")
 var ErrFileNotReferencedByBoard = errors.New("file not referenced by board")
+var ErrNilFileMapping = errors.New("CopyCardFiles returned nil file mapping")
 
 func (a *App) SaveFile(reader io.Reader, teamID, boardID, filename string, asTemplate bool) (string, error) {
 	// NOTE: File extension includes the dot
@@ -350,6 +351,10 @@ func (a *App) CopyAndUpdateCardFiles(boardID, userID string, blocks []*model.Blo
 	newFileNames, err := a.CopyCardFiles(boardID, blocks, asTemplate)
 	if err != nil {
 		a.logger.Error("Could not copy files while duplicating board", mlog.String("BoardID", boardID), mlog.Err(err))
+		return err
+	}
+	if newFileNames == nil {
+		return ErrNilFileMapping
 	}
 
 	// blocks now has updated file ids for any blocks containing files.  We need to update the database for them.

@@ -1,9 +1,6 @@
 run:
   timeout: 5m
   modules-download-mode: readonly
-  skip-files:
-    - product/boards_product.go
-    - services/store/sqlstore/migrations
 
 linters-settings:
   gofmt:
@@ -13,7 +10,6 @@ linters-settings:
   golint:
     min-confidence: 0
   govet:
-    check-shadowing: true
     enable-all: true
     disable:
       - fieldalignment
@@ -39,7 +35,7 @@ linters:
     - durationcheck
     - errorlint
     - exhaustive
-    - exportloopref
+    - copyloopvar
     - gosec
     - makezero
     - staticcheck
@@ -64,6 +60,9 @@ linters:
     - gocyclo
 
 issues:
+  exclude-files:
+    - product/boards_product.go
+    - services/store/sqlstore/migrations
   exclude-rules:
     - path: server/manifest.go
       linters:
