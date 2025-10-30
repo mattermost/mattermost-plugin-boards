@@ -27,7 +27,7 @@ type Plugin struct {
 }
 
 func (p *Plugin) OnActivate() error {
-	client := pluginapi.NewClient(p.API, p.Driver)
+	client := pluginapi.NewClient(p.MattermostPlugin.API, p.MattermostPlugin.Driver)
 
 	logger, _ := mlog.NewLogger()
 	pluginTargetFactory := newPluginTargetFactory(&client.Log)
@@ -40,7 +40,7 @@ func (p *Plugin) OnActivate() error {
 		return err
 	}
 
-	adapter := newServiceAPIAdapter(p.API, client.Store, logger)
+	adapter := newServiceAPIAdapter(p.MattermostPlugin.API, client.Store, logger)
 
 	boardsApp, err := boards.NewBoardsApp(adapter, manifest)
 	if err != nil {
