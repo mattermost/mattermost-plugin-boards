@@ -245,6 +245,37 @@ func (s *SQLStore) insertBlock(db sq.BaseRunner, block *model.Block, userID stri
 		return err
 	}
 
+	if existingBlock == nil && (block.Type == "image" || block.Type == "attachment") {
+		fileIDsToRestore := make([]string, 0, 2)
+
+		if fileIDVal, exists := block.Fields["fileId"]; exists {
+			if fileIDStr, ok := fileIDVal.(string); ok && fileIDStr != "" {
+				fileID := retrieveFileIDFromBlockFieldStorage(fileIDStr)
+				if fileID != "" {
+					fileIDsToRestore = append(fileIDsToRestore, fileID)
+				}
+			}
+		}
+
+		if attachmentIDVal, exists := block.Fields["attachmentId"]; exists {
+			if attachmentIDStr, ok := attachmentIDVal.(string); ok && attachmentIDStr != "" {
+				fileID := retrieveFileIDFromBlockFieldStorage(attachmentIDStr)
+				if fileID != "" {
+					fileIDsToRestore = append(fileIDsToRestore, fileID)
+				}
+			}
+		}
+
+		if len(fileIDsToRestore) > 0 {
+			if err := s.restoreFiles(db, fileIDsToRestore); err != nil {
+				s.logger.Error(
+					"insertBlock: failed to restore files",
+					mlog.Err(err),
+				)
+			}
+		}
+	}
+
 	block.UpdateAt = utils.GetMillis()
 	block.ModifiedBy = userID
 
