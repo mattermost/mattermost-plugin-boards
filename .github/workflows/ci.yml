@@ -42,10 +42,10 @@ jobs:
     
     - name: Lint & test server 
       run: cd focalboard; make server-ci
-
+      
   dist:
     uses: mattermost/actions-workflows/.github/workflows/plugin-dist-pr.yml@main
     secrets: inherit
     with:
-      dist-target: "dist-linux
+      dist-target: "dist-linux"
       s3-prefix: "mattermost-plugin-boards"
