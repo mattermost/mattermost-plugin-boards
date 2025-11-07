@@ -9,6 +9,7 @@ import (
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/notify"
+	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )
@@ -193,13 +194,36 @@ func (a *App) InsertBlocksAndNotify(blocks []*model.Block, modifiedByID string, 
 
 	needsNotify := make([]*model.Block, 0, len(blocks))
 	for i := range blocks {
-		err := a.store.InsertBlock(blocks[i], modifiedByID)
+		block := blocks[i]
+
+		// Check if this is a REDO operation for image or attachment blocks
+		// If the block doesn't exist yet and it's an image/attachment, restore associated files
+		existingBlock, checkErr := a.store.GetBlock(block.ID)
+		if checkErr != nil && !model.IsErrNotFound(checkErr) {
+			return nil, checkErr
+		}
+
+		if existingBlock == nil && (block.Type == "image" || block.Type == "attachment") {
+			fileIDsToRestore := extractFileIDsFromBlock(block)
+			if len(fileIDsToRestore) > 0 {
+				if restoreErr := a.store.RestoreFiles(fileIDsToRestore); restoreErr != nil {
+					a.logger.Error(
+						"Failed to restore files for block",
+						mlog.String("block_id", block.ID),
+						mlog.String("block_type", string(block.Type)),
+						mlog.Err(restoreErr),
+					)
+				}
+			}
+		}
+
+		err := a.store.InsertBlock(block, modifiedByID)
 		if err != nil {
 			return nil, err
 		}
-		needsNotify = append(needsNotify, blocks[i])
+		needsNotify = append(needsNotify, block)
 
-		a.wsAdapter.BroadcastBlockChange(board.TeamID, blocks[i])
+		a.wsAdapter.BroadcastBlockChange(board.TeamID, block)
 		a.metrics.IncrementBlocksInserted(1)
 	}
 
@@ -386,4 +410,29 @@ func (a *App) getBoardAndCard(block *model.Block) (board *model.Board, card *mod
 		}
 	}
 	return board, card, nil
+}
+
+// extractFileIDsFromBlock extracts file IDs from image and attachment blocks
+func extractFileIDsFromBlock(block *model.Block) []string {
+	fileIDsToRestore := make([]string, 0, 2)
+
+	if fileIDVal, exists := block.Fields["fileId"]; exists {
+		if fileIDStr, ok := fileIDVal.(string); ok && fileIDStr != "" {
+			fileID := utils.RetrieveFileIDFromBlockFieldStorage(fileIDStr)
+			if fileID != "" {
+				fileIDsToRestore = append(fileIDsToRestore, fileID)
+			}
+		}
+	}
+
+	if attachmentIDVal, exists := block.Fields["attachmentId"]; exists {
+		if attachmentIDStr, ok := attachmentIDVal.(string); ok && attachmentIDStr != "" {
+			fileID := utils.RetrieveFileIDFromBlockFieldStorage(attachmentIDStr)
+			if fileID != "" {
+				fileIDsToRestore = append(fileIDsToRestore, fileID)
+			}
+		}
+	}
+
+	return fileIDsToRestore
 }

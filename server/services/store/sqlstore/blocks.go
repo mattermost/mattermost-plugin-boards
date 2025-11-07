@@ -245,37 +245,6 @@ func (s *SQLStore) insertBlock(db sq.BaseRunner, block *model.Block, userID stri
 		return err
 	}
 
-	if existingBlock == nil && (block.Type == "image" || block.Type == "attachment") {
-		fileIDsToRestore := make([]string, 0, 2)
-
-		if fileIDVal, exists := block.Fields["fileId"]; exists {
-			if fileIDStr, ok := fileIDVal.(string); ok && fileIDStr != "" {
-				fileID := retrieveFileIDFromBlockFieldStorage(fileIDStr)
-				if fileID != "" {
-					fileIDsToRestore = append(fileIDsToRestore, fileID)
-				}
-			}
-		}
-
-		if attachmentIDVal, exists := block.Fields["attachmentId"]; exists {
-			if attachmentIDStr, ok := attachmentIDVal.(string); ok && attachmentIDStr != "" {
-				fileID := retrieveFileIDFromBlockFieldStorage(attachmentIDStr)
-				if fileID != "" {
-					fileIDsToRestore = append(fileIDsToRestore, fileID)
-				}
-			}
-		}
-
-		if len(fileIDsToRestore) > 0 {
-			if err := s.restoreFiles(db, fileIDsToRestore); err != nil {
-				s.logger.Error(
-					"insertBlock: failed to restore files",
-					mlog.Err(err),
-				)
-			}
-		}
-	}
-
 	block.UpdateAt = utils.GetMillis()
 	block.ModifiedBy = userID
 
@@ -387,14 +356,6 @@ func (s *SQLStore) deleteBlock(db sq.BaseRunner, blockID string, modifiedBy stri
 	return s.deleteBlockAndChildren(db, blockID, modifiedBy, false)
 }
 
-func retrieveFileIDFromBlockFieldStorage(id string) string {
-	parts := strings.Split(id, ".")
-	if len(parts) < 1 || len(parts[0]) <= 1 {
-		return ""
-	}
-	return parts[0][1:]
-}
-
 func (s *SQLStore) deleteBlockAndChildren(db sq.BaseRunner, blockID string, modifiedBy string, keepChildren bool) error {
 	block, err := s.getBlock(db, blockID)
 	if model.IsErrNotFound(err) {
@@ -449,14 +410,14 @@ func (s *SQLStore) deleteBlockAndChildren(db sq.BaseRunner, blockID string, modi
 
 	fileIDWithExtention, fileIDExists := block.Fields["fileId"]
 	if fileIDExists {
-		if fileID := retrieveFileIDFromBlockFieldStorage(fileIDWithExtention.(string)); fileID != "" {
+		if fileID := utils.RetrieveFileIDFromBlockFieldStorage(fileIDWithExtention.(string)); fileID != "" {
 			fileIDs = append(fileIDs, fileID)
 		}
 	}
 
 	attachmentIDWithExtention, attachmentIDExists := block.Fields["attachmentId"]
 	if attachmentIDExists {
-		if fileID := retrieveFileIDFromBlockFieldStorage(attachmentIDWithExtention.(string)); fileID != "" {
+		if fileID := utils.RetrieveFileIDFromBlockFieldStorage(attachmentIDWithExtention.(string)); fileID != "" {
 			fileIDs = append(fileIDs, fileID)
 		}
 	}
@@ -559,14 +520,14 @@ func (s *SQLStore) undeleteBlock(db sq.BaseRunner, blockID string, modifiedBy st
 
 	fileIDWithExtention, fileIDExists := block.Fields["fileId"]
 	if fileIDExists {
-		if fileID := retrieveFileIDFromBlockFieldStorage(fileIDWithExtention.(string)); fileID != "" {
+		if fileID := utils.RetrieveFileIDFromBlockFieldStorage(fileIDWithExtention.(string)); fileID != "" {
 			fileIDs = append(fileIDs, fileID)
 		}
 	}
 
 	attachmentIDWithExtention, attachmentIDExists := block.Fields["attachmentId"]
 	if attachmentIDExists {
-		if fileID := retrieveFileIDFromBlockFieldStorage(attachmentIDWithExtention.(string)); fileID != "" {
+		if fileID := utils.RetrieveFileIDFromBlockFieldStorage(attachmentIDWithExtention.(string)); fileID != "" {
 			fileIDs = append(fileIDs, fileID)
 		}
 	}
@@ -1035,11 +996,11 @@ func (s *SQLStore) deleteBlockChildren(db sq.BaseRunner, boardID string, parentI
 	for _, block := range blocks {
 		fileIDWithExtention, fileIDExists := block.Fields["fileId"]
 		if fileIDExists {
-			fileIDs = append(fileIDs, retrieveFileIDFromBlockFieldStorage(fileIDWithExtention.(string)))
+			fileIDs = append(fileIDs, utils.RetrieveFileIDFromBlockFieldStorage(fileIDWithExtention.(string)))
 		}
 		attachmentIDWithExtention, attachmentIDExists := block.Fields["attachmentId"]
 		if attachmentIDExists {
-			fileIDs = append(fileIDs, retrieveFileIDFromBlockFieldStorage(attachmentIDWithExtention.(string)))
+			fileIDs = append(fileIDs, utils.RetrieveFileIDFromBlockFieldStorage(attachmentIDWithExtention.(string)))
 		}
 	}
 
@@ -1223,13 +1184,13 @@ func (s *SQLStore) undeleteBlockChildren(db sq.BaseRunner, boardID string, paren
 	for _, block := range restoredBlocks {
 		fileIDWithExtention, fileIDExists := block.Fields["fileId"]
 		if fileIDExists {
-			if fileID := retrieveFileIDFromBlockFieldStorage(fileIDWithExtention.(string)); fileID != "" {
+			if fileID := utils.RetrieveFileIDFromBlockFieldStorage(fileIDWithExtention.(string)); fileID != "" {
 				fileIDs = append(fileIDs, fileID)
 			}
 		}
 		attachmentIDWithExtention, attachmentIDExists := block.Fields["attachmentId"]
 		if attachmentIDExists {
-			if fileID := retrieveFileIDFromBlockFieldStorage(attachmentIDWithExtention.(string)); fileID != "" {
+			if fileID := utils.RetrieveFileIDFromBlockFieldStorage(attachmentIDWithExtention.(string)); fileID != "" {
 				fileIDs = append(fileIDs, fileID)
 			}
 		}

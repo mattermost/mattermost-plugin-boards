@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"path"
 	"reflect"
+	"strings"
 	"time"
 
 	mmModel "github.com/mattermost/mattermost/server/public/model"
@@ -127,4 +128,14 @@ func DedupeStringArr(arr []string) []string {
 
 func GetBaseFilePath() string {
 	return path.Join("boards", time.Now().Format("20060102"))
+}
+
+// RetrieveFileIDFromBlockFieldStorage extracts the file ID from the stored format.
+// The stored format is typically "{fileID}.{extension}", so we split by "." and extract the fileID.
+func RetrieveFileIDFromBlockFieldStorage(id string) string {
+	parts := strings.Split(id, ".")
+	if len(parts) < 1 || len(parts[0]) <= 1 {
+		return ""
+	}
+	return parts[0][1:]
 }
