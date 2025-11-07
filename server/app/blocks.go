@@ -196,8 +196,6 @@ func (a *App) InsertBlocksAndNotify(blocks []*model.Block, modifiedByID string, 
 	for i := range blocks {
 		block := blocks[i]
 
-		// Check if this is a REDO operation for image or attachment blocks
-		// If the block doesn't exist yet and it's an image/attachment, restore associated files
 		existingBlock, checkErr := a.store.GetBlock(block.ID)
 		if checkErr != nil && !model.IsErrNotFound(checkErr) {
 			return nil, checkErr
