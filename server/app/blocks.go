@@ -410,7 +410,7 @@ func (a *App) getBoardAndCard(block *model.Block) (board *model.Board, card *mod
 	return board, card, nil
 }
 
-// extractFileIDsFromBlock extracts file IDs from image and attachment blocks
+// extractFileIDsFromBlock extracts file IDs from image and attachment blocks.
 func extractFileIDsFromBlock(block *model.Block) []string {
 	fileIDsToRestore := make([]string, 0, 2)
 
