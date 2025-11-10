@@ -131,7 +131,7 @@ func GetBaseFilePath() string {
 }
 
 // RetrieveFileIDFromBlockFieldStorage extracts the file ID from the stored format.
-// The stored format is typically "{fileID}.{extension}", so we split by "." and extract the fileID.
+// The stored format is "{fileID}.{extension}", so we split by "." and extract the fileID.
 func RetrieveFileIDFromBlockFieldStorage(id string) string {
 	parts := strings.Split(id, ".")
 	if len(parts) < 1 || len(parts[0]) <= 1 {

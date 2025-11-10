@@ -196,6 +196,7 @@ func TestInsertBlocks(t *testing.T) {
 		block := &model.Block{BoardID: boardID}
 		board := &model.Board{ID: boardID}
 		th.Store.EXPECT().GetBoard(boardID).Return(board, nil)
+		th.Store.EXPECT().GetBlock(gomock.Any()).Return(nil, model.NewErrNotFound("block not found"))
 		th.Store.EXPECT().InsertBlock(block, "user-id-1").Return(nil)
 		th.Store.EXPECT().GetMembersForBoard(boardID).Return([]*model.BoardMember{}, nil)
 		_, err := th.App.InsertBlocks([]*model.Block{block}, "user-id-1")
@@ -207,6 +208,7 @@ func TestInsertBlocks(t *testing.T) {
 		block := &model.Block{BoardID: boardID}
 		board := &model.Board{ID: boardID}
 		th.Store.EXPECT().GetBoard(boardID).Return(board, nil)
+		th.Store.EXPECT().GetBlock(gomock.Any()).Return(nil, model.NewErrNotFound("block not found"))
 		th.Store.EXPECT().InsertBlock(block, "user-id-1").Return(blockError{"error"})
 		_, err := th.App.InsertBlocks([]*model.Block{block}, "user-id-1")
 		require.Error(t, err, "error")
@@ -223,6 +225,7 @@ func TestInsertBlocks(t *testing.T) {
 		}
 		board := &model.Board{ID: boardID}
 		th.Store.EXPECT().GetBoard(boardID).Return(board, nil)
+		th.Store.EXPECT().GetBlock(gomock.Any()).Return(nil, model.NewErrNotFound("block not found"))
 		th.Store.EXPECT().InsertBlock(block, "user-id-1").Return(nil)
 		th.Store.EXPECT().GetMembersForBoard(boardID).Return([]*model.BoardMember{}, nil)
 
@@ -251,6 +254,7 @@ func TestInsertBlocks(t *testing.T) {
 		}
 		board := &model.Board{ID: boardID}
 		th.Store.EXPECT().GetBoard(boardID).Return(board, nil)
+		th.Store.EXPECT().GetBlock(gomock.Any()).Return(nil, model.NewErrNotFound("block not found"))
 
 		// setting up mocks for limits
 		fakeLicense := &mmModel.License{
@@ -284,6 +288,7 @@ func TestInsertBlocks(t *testing.T) {
 
 		board := &model.Board{ID: boardID}
 		th.Store.EXPECT().GetBoard(boardID).Return(board, nil)
+		th.Store.EXPECT().GetBlock(gomock.Any()).Return(nil, model.NewErrNotFound("block not found")).Times(2)
 		th.Store.EXPECT().InsertBlock(view1, "user-id-1").Return(nil).Times(2)
 		th.Store.EXPECT().GetMembersForBoard(boardID).Return([]*model.BoardMember{}, nil).Times(2)
 
@@ -299,5 +304,99 @@ func TestInsertBlocks(t *testing.T) {
 
 		_, err := th.App.InsertBlocks([]*model.Block{view1, view2}, "user-id-1")
 		require.Error(t, err)
+	})
+}
+
+func TestFilterAuthorizedFilesForBoard(t *testing.T) {
+	th, tearDown := SetupTestHelper(t)
+	defer tearDown()
+
+	t.Run("should allow files referenced by blocks in history", func(t *testing.T) {
+		boardID := "board-1"
+		fileID := "file-123"
+		storedFileID := "7" + fileID + ".png" // Format: {prefix}{fileID}.{extension}
+
+		// Mock: Block history shows this fileId was used on this board
+		historicalBlock := &model.Block{
+			ID:      "block-1",
+			BoardID: boardID,
+			Type:    model.TypeImage,
+			Fields: map[string]interface{}{
+				model.BlockFieldFileId: storedFileID,
+			},
+		}
+
+		th.Store.EXPECT().GetBlockHistoryDescendants(boardID, gomock.Any()).Return([]*model.Block{historicalBlock}, nil)
+
+		authorized, err := th.App.filterAuthorizedFilesForBoard(boardID, []string{fileID})
+		require.NoError(t, err)
+		require.Len(t, authorized, 1)
+		require.Equal(t, fileID, authorized[0])
+	})
+
+	t.Run("should block files from a different board", func(t *testing.T) {
+		boardID := "board-1"
+		fileID := "file-from-other-board"
+
+		// Mock: No blocks in history reference this file (file belongs to different board)
+		th.Store.EXPECT().GetBlockHistoryDescendants(boardID, gomock.Any()).Return([]*model.Block{}, nil)
+
+		authorized, err := th.App.filterAuthorizedFilesForBoard(boardID, []string{fileID})
+		require.NoError(t, err)
+		require.Len(t, authorized, 0) // File should be blocked
+	})
+
+	t.Run("should allow files from attachment blocks via history", func(t *testing.T) {
+		boardID := "board-1"
+		fileID := "file-456"
+		storedFileID := "7" + fileID + ".pdf"
+
+		// Mock: Block history shows this file was used as attachment on this board
+		historicalBlock := &model.Block{
+			ID:      "deleted-block-1",
+			BoardID: boardID,
+			Type:    model.TypeAttachment,
+			Fields: map[string]interface{}{
+				model.BlockFieldFileId: storedFileID,
+			},
+		}
+		th.Store.EXPECT().GetBlockHistoryDescendants(boardID, gomock.Any()).Return([]*model.Block{historicalBlock}, nil)
+
+		authorized, err := th.App.filterAuthorizedFilesForBoard(boardID, []string{fileID})
+		require.NoError(t, err)
+		require.Len(t, authorized, 1)
+		require.Equal(t, fileID, authorized[0])
+	})
+
+	t.Run("should handle empty file list", func(t *testing.T) {
+		boardID := "board-1"
+
+		authorized, err := th.App.filterAuthorizedFilesForBoard(boardID, []string{})
+		require.NoError(t, err)
+		require.Len(t, authorized, 0)
+	})
+
+	t.Run("should filter mixed authorized and unauthorized files", func(t *testing.T) {
+		boardID := "board-1"
+		authorizedFile := "authorized-file"
+		unauthorizedFile := "unauthorized-file"
+		storedAuthorizedFile := "7" + authorizedFile + ".png"
+
+		// Mock: History has authorizedFile but not unauthorizedFile
+		imageBlock := &model.Block{
+			ID:      "block-1",
+			BoardID: boardID,
+			Type:    model.TypeImage,
+			Fields: map[string]interface{}{
+				model.BlockFieldFileId: storedAuthorizedFile,
+			},
+		}
+
+		th.Store.EXPECT().GetBlockHistoryDescendants(boardID, gomock.Any()).Return([]*model.Block{imageBlock}, nil)
+
+		authorized, err := th.App.filterAuthorizedFilesForBoard(boardID, []string{authorizedFile, unauthorizedFile})
+		require.NoError(t, err)
+		require.Len(t, authorized, 1)
+		require.Equal(t, authorizedFile, authorized[0])
 	})
 }

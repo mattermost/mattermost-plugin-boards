@@ -204,12 +204,34 @@ func (a *App) InsertBlocksAndNotify(blocks []*model.Block, modifiedByID string, 
 		if existingBlock == nil && (block.Type == "image" || block.Type == "attachment") {
 			fileIDsToRestore := extractFileIDsFromBlock(block)
 			if len(fileIDsToRestore) > 0 {
-				if restoreErr := a.store.RestoreFiles(fileIDsToRestore); restoreErr != nil {
+				// Only restore files that were previously associated with this board
+				// to prevent unauthorized restoration of files from other boards
+				authorizedFileIDs, authErr := a.filterAuthorizedFilesForBoard(block.BoardID, fileIDsToRestore)
+				if authErr != nil {
 					a.logger.Error(
-						"Failed to restore files for block",
+						"Failed to validate file authorization for block",
 						mlog.String("block_id", block.ID),
-						mlog.String("block_type", string(block.Type)),
-						mlog.Err(restoreErr),
+						mlog.String("board_id", block.BoardID),
+						mlog.Err(authErr),
+					)
+					authorizedFileIDs = []string{}
+				}
+
+				if len(authorizedFileIDs) > 0 {
+					if restoreErr := a.store.RestoreFiles(authorizedFileIDs); restoreErr != nil {
+						a.logger.Error(
+							"Failed to restore files for block",
+							mlog.String("block_id", block.ID),
+							mlog.String("block_type", string(block.Type)),
+							mlog.Err(restoreErr),
+						)
+					}
+				} else if len(fileIDsToRestore) > 0 {
+					a.logger.Warn(
+						"File restoration blocked: files do not belong to this board",
+						mlog.String("block_id", block.ID),
+						mlog.String("board_id", block.BoardID),
+						mlog.Int("file_count", len(fileIDsToRestore)),
 					)
 				}
 			}
@@ -423,14 +445,43 @@ func extractFileIDsFromBlock(block *model.Block) []string {
 		}
 	}
 
-	if attachmentIDVal, exists := block.Fields["attachmentId"]; exists {
-		if attachmentIDStr, ok := attachmentIDVal.(string); ok && attachmentIDStr != "" {
-			fileID := utils.RetrieveFileIDFromBlockFieldStorage(attachmentIDStr)
-			if fileID != "" {
-				fileIDsToRestore = append(fileIDsToRestore, fileID)
+	return fileIDsToRestore
+}
+
+// filterAuthorizedFilesForBoard filters the provided file IDs to only include files
+// that were previously associated with blocks on the specified board. This prevents
+// unauthorized restoration of files from other boards that the user doesn't have access to.
+func (a *App) filterAuthorizedFilesForBoard(boardID string, fileIDs []string) ([]string, error) {
+	if len(fileIDs) == 0 {
+		return []string{}, nil
+	}
+
+	boardFileIDs := make(map[string]bool)
+
+	historyBlocks, err := a.store.GetBlockHistoryDescendants(boardID, model.QueryBlockHistoryOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query block history for board %s: %w", boardID, err)
+	}
+
+	for _, block := range historyBlocks {
+		if block.Type != model.TypeImage && block.Type != model.TypeAttachment {
+			continue
+		}
+
+		if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID != "" {
+			cleanFileID := utils.RetrieveFileIDFromBlockFieldStorage(fileID)
+			if cleanFileID != "" {
+				boardFileIDs[cleanFileID] = true
 			}
 		}
 	}
 
-	return fileIDsToRestore
+	authorizedFileIDs := make([]string, 0, len(fileIDs))
+	for _, fileID := range fileIDs {
+		if boardFileIDs[fileID] {
+			authorizedFileIDs = append(authorizedFileIDs, fileID)
+		}
+	}
+
+	return authorizedFileIDs, nil
 }
