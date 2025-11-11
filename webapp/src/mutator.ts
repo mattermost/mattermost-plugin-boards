@@ -1050,8 +1050,9 @@ class Mutator {
                 }
                 return [blocks, newRootBlock.id]
             },
-            async (newBlocks: Block[]) => {
+            async (result: [Block[], string]) => {
                 await beforeUndo?.()
+                const [newBlocks] = result
                 const newRootBlock = newBlocks && newBlocks[0]
                 if (newRootBlock) {
                     await octoClient.deleteBlock(newRootBlock.boardId, newRootBlock.id)
