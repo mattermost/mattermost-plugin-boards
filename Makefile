@@ -169,6 +169,19 @@ ifneq ($(HAS_SERVER),)
 		echo "FIPS_BUILD_FAILED" > server/dist-fips/FIPS_BUILD_FAILED.txt; \
 		exit 1; \
 	fi
+
+## Builds the server, if it exists, for Linux architectures only.
+.PHONY: server-linux
+server-linux: templates-archive
+ifneq ($(HAS_SERVER),)
+	mkdir -p server/dist;
+ifeq ($(MM_DEBUG),)
+	cd server && env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build $(GO_BUILD_FLAGS) -trimpath -o dist/plugin-linux-amd64;
+else
+	$(info DEBUG mode is on; to disable, unset MM_DEBUG)
+
+	cd server && env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build $(GO_BUILD_FLAGS) -gcflags "all=-N -l" -trimpath -o dist/plugin-linux-amd64;
+endif
 endif
 
 ## Ensures NPM dependencies are installed without having to run this all the time.
@@ -280,6 +293,10 @@ dist-all: clean
 		echo "    Normal: dist/$$(./build/bin/manifest id)-$$(./build/bin/manifest version).tar.gz"; \
 		echo "    FIPS:   Build failed - check Docker/credentials"; \
 	fi
+
+## Builds and bundles the plugin for Linux only.
+.PHONY: dist-linux
+dist-linux:	apply server-linux webapp bundle
 
 ## Builds and installs the plugin to a server.
 .PHONY: deploy

@@ -1,8 +1,8 @@
 module github.com/mattermost/mattermost-plugin-starter-template/build
 
-go 1.21
+go 1.23.0
 
-toolchain go1.21.8
+toolchain go1.23.9
 
 require (
 	github.com/go-git/go-git/v5 v5.1.0

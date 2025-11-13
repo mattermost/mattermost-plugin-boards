@@ -9,6 +9,7 @@ import (
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/notify"
+	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )
@@ -193,13 +194,56 @@ func (a *App) InsertBlocksAndNotify(blocks []*model.Block, modifiedByID string, 
 
 	needsNotify := make([]*model.Block, 0, len(blocks))
 	for i := range blocks {
-		err := a.store.InsertBlock(blocks[i], modifiedByID)
+		block := blocks[i]
+
+		existingBlock, checkErr := a.store.GetBlock(block.ID)
+		if checkErr != nil && !model.IsErrNotFound(checkErr) {
+			return nil, checkErr
+		}
+
+		if existingBlock == nil && (block.Type == "image" || block.Type == "attachment") {
+			fileIDsToRestore := extractFileIDsFromBlock(block)
+			if len(fileIDsToRestore) > 0 {
+				// Only restore files that were previously associated with this board
+				// to prevent unauthorized restoration of files from other boards
+				authorizedFileIDs, authErr := a.filterAuthorizedFilesForBoard(block.BoardID, fileIDsToRestore)
+				if authErr != nil {
+					a.logger.Error(
+						"Failed to validate file authorization for block",
+						mlog.String("block_id", block.ID),
+						mlog.String("board_id", block.BoardID),
+						mlog.Err(authErr),
+					)
+					authorizedFileIDs = []string{}
+				}
+
+				if len(authorizedFileIDs) > 0 {
+					if restoreErr := a.store.RestoreFiles(authorizedFileIDs); restoreErr != nil {
+						a.logger.Error(
+							"Failed to restore files for block",
+							mlog.String("block_id", block.ID),
+							mlog.String("block_type", string(block.Type)),
+							mlog.Err(restoreErr),
+						)
+					}
+				} else if len(fileIDsToRestore) > 0 {
+					a.logger.Warn(
+						"File restoration blocked: files do not belong to this board",
+						mlog.String("block_id", block.ID),
+						mlog.String("board_id", block.BoardID),
+						mlog.Int("file_count", len(fileIDsToRestore)),
+					)
+				}
+			}
+		}
+
+		err := a.store.InsertBlock(block, modifiedByID)
 		if err != nil {
 			return nil, err
 		}
-		needsNotify = append(needsNotify, blocks[i])
+		needsNotify = append(needsNotify, block)
 
-		a.wsAdapter.BroadcastBlockChange(board.TeamID, blocks[i])
+		a.wsAdapter.BroadcastBlockChange(board.TeamID, block)
 		a.metrics.IncrementBlocksInserted(1)
 	}
 
@@ -386,4 +430,58 @@ func (a *App) getBoardAndCard(block *model.Block) (board *model.Board, card *mod
 		}
 	}
 	return board, card, nil
+}
+
+// extractFileIDsFromBlock extracts file IDs from image and attachment blocks.
+func extractFileIDsFromBlock(block *model.Block) []string {
+	fileIDsToRestore := make([]string, 0, 2)
+
+	if fileIDVal, exists := block.Fields["fileId"]; exists {
+		if fileIDStr, ok := fileIDVal.(string); ok && fileIDStr != "" {
+			fileID := utils.RetrieveFileIDFromBlockFieldStorage(fileIDStr)
+			if fileID != "" {
+				fileIDsToRestore = append(fileIDsToRestore, fileID)
+			}
+		}
+	}
+
+	return fileIDsToRestore
+}
+
+// filterAuthorizedFilesForBoard filters the provided file IDs to only include files
+// that were previously associated with blocks on the specified board. This prevents
+// unauthorized restoration of files from other boards that the user doesn't have access to.
+func (a *App) filterAuthorizedFilesForBoard(boardID string, fileIDs []string) ([]string, error) {
+	if len(fileIDs) == 0 {
+		return []string{}, nil
+	}
+
+	boardFileIDs := make(map[string]bool)
+
+	historyBlocks, err := a.store.GetBlockHistoryDescendants(boardID, model.QueryBlockHistoryOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query block history for board %s: %w", boardID, err)
+	}
+
+	for _, block := range historyBlocks {
+		if block.Type != model.TypeImage && block.Type != model.TypeAttachment {
+			continue
+		}
+
+		if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID != "" {
+			cleanFileID := utils.RetrieveFileIDFromBlockFieldStorage(fileID)
+			if cleanFileID != "" {
+				boardFileIDs[cleanFileID] = true
+			}
+		}
+	}
+
+	authorizedFileIDs := make([]string, 0, len(fileIDs))
+	for _, fileID := range fileIDs {
+		if boardFileIDs[fileID] {
+			authorizedFileIDs = append(authorizedFileIDs, fileID)
+		}
+	}
+
+	return authorizedFileIDs, nil
 }

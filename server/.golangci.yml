@@ -16,6 +16,10 @@ linters-settings:
 
 linters:
   disable-all: true
+  settings:
+    govet:
+      enable:
+        - shadow
   enable:
     - errcheck
     - govet

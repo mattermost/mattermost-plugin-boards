@@ -161,12 +161,14 @@ func (s *PluginTestStore) GetUserByUsername(username string) (*model.User, error
 
 func (s *PluginTestStore) GetUserPreferences(userID string) (mmModel.Preferences, error) {
 	if userID == userTeamMember {
-		return mmModel.Preferences{mmModel.Preference{
-			UserId:   userTeamMember,
-			Category: "focalboard",
-			Name:     "test",
-			Value:    "test",
-		}}, nil
+		return mmModel.Preferences{
+			mmModel.Preference{
+				UserId:   userTeamMember,
+				Category: "focalboard",
+				Name:     "test",
+				Value:    "test",
+			},
+		}, nil
 	}
 
 	return nil, errTestStore
@@ -223,6 +225,10 @@ func (s *PluginTestStore) SearchUsersByTeam(teamID string, searchQuery string, a
 		}
 	}
 	return users, nil
+}
+
+func (s *PluginTestStore) GetMembersForUser(userID string) ([]*model.BoardMember, error) {
+	return s.Store.GetMembersForUser(userID)
 }
 
 func (s *PluginTestStore) CanSeeUser(seerID string, seenID string) (bool, error) {
