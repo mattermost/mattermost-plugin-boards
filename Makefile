@@ -169,6 +169,7 @@ ifneq ($(HAS_SERVER),)
 		echo "FIPS_BUILD_FAILED" > server/dist-fips/FIPS_BUILD_FAILED.txt; \
 		exit 1; \
 	fi
+endif
 
 ## Builds the server, if it exists, for Linux architectures only.
 .PHONY: server-linux
