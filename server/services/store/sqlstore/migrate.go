@@ -121,7 +121,7 @@ func (s *SQLStore) Migrate() error {
 
 		defer func() {
 			s.logger.Debug("Closing migrations connection")
-			if err := db.Close(); err != nil {
+			if err = db.Close(); err != nil {
 				s.logger.Error("Error closing migrations connection", mlog.Err(err))
 			}
 		}()

@@ -341,8 +341,3 @@ func (s *PluginTestStore) GetLicense() *mmModel.License {
 
 	return license
 }
-
-func (s *PluginTestStore) GetMembersForUser(userID string) ([]*model.BoardMember, error) {
-	// Return empty slice for test purposes
-	return []*model.BoardMember{}, nil
-}
