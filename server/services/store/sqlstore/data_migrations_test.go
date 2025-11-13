@@ -252,7 +252,7 @@ func TestCheckForMismatchedCollation(t *testing.T) {
 	sqlCollation := "SELECT table_collation FROM information_schema.tables WHERE table_name=? and table_schema=(SELECT DATABASE())"
 	stmtCollation, err := sqlStore.db.Prepare(sqlCollation)
 	require.NoError(t, err)
-	defer stmtCollation.Close()
+	defer func() { _ = stmtCollation.Close() }()
 
 	var collation string
 

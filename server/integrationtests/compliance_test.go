@@ -21,7 +21,7 @@ var (
 )
 
 func setupTestHelperForCompliance(t *testing.T, complianceLicense bool) (*TestHelper, Clients) {
-	os.Setenv("FOCALBOARD_UNIT_TESTING_COMPLIANCE", strconv.FormatBool(complianceLicense))
+	_ = os.Setenv("FOCALBOARD_UNIT_TESTING_COMPLIANCE", strconv.FormatBool(complianceLicense))
 
 	th := SetupTestHelperPluginMode(t)
 	clients := setupClients(th)
