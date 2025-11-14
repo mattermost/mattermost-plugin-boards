@@ -27,12 +27,13 @@ import {
     setCurrent as setCurrentBoard,
     fetchBoardMembers,
     addMyBoardMemberships,
+    getBoards,
 } from '../../store/boards'
-import {getCurrentViewId, setCurrent as setCurrentView, updateViews} from '../../store/views'
+import {getCurrentViewId, getCurrentBoardViews, setCurrent as setCurrentView, updateViews} from '../../store/views'
 import ConfirmationDialog from '../../components/confirmationDialogBox'
 import {initialLoad, initialReadOnlyLoad, loadBoardData} from '../../store/initialLoad'
 import {useAppSelector, useAppDispatch} from '../../store/hooks'
-import {setTeam} from '../../store/teams'
+import {getAllTeams, setTeam} from '../../store/teams'
 import {updateCards} from '../../store/cards'
 import {updateComments} from '../../store/comments'
 import {updateAttachments} from '../../store/attachments'
@@ -82,6 +83,10 @@ const BoardPage = (props: Props): JSX.Element => {
     const category = useAppSelector(getCategoryOfBoard(activeBoardId))
     const [showJoinBoardDialog, setShowJoinBoardDialog] = useState<boolean>(false)
     const history = useHistory()
+    const allTeams = useAppSelector(getAllTeams)
+    const allBoards = useAppSelector(getBoards)
+    const boardViews = useAppSelector(getCurrentBoardViews)
+    const [loadedBoardId, setLoadedBoardId] = useState<string>('')
 
     // if we're in a legacy route and not showing a shared board,
     // redirect to the new URL schema equivalent
@@ -102,10 +107,18 @@ const BoardPage = (props: Props): JSX.Element => {
 
     // TODO: Make this less brittle. This only works because this is the root render function
     useEffect(() => {
-        UserSettings.lastTeamId = teamId
-        octoClient.teamId = teamId
-        dispatch(setTeam(teamId))
-    }, [teamId])
+        if (allTeams.length === 0) {
+            return
+        }
+        const isValidTeam = allTeams.some((team) => team.id === match.params.teamId) || match.params.teamId === Constants.globalTeamId
+        if (isValidTeam) {
+            UserSettings.lastTeamId = teamId
+            octoClient.teamId = teamId
+            dispatch(setTeam(teamId))
+        } else {
+            dispatch(setGlobalError('team-undefined'))
+        }
+    }, [teamId, allTeams])
 
     const loadAction: (boardId: string) => any = useMemo(() => {
         if (props.readonly) {
@@ -194,6 +207,21 @@ const BoardPage = (props: Props): JSX.Element => {
     }
 
     const joinBoard = async (myUser: IUser, boardTeamId: string, boardId: string, allowAdmin: boolean) => {
+        const boardExists = await octoClient.getBoard(boardId)
+        if (!boardExists) {
+            UserSettings.setLastBoardID(boardTeamId, null)
+            UserSettings.setLastViewId(boardId, null)
+            dispatch(setGlobalError('board-not-found'))
+            return
+        }
+
+        if (boardExists.teamId !== boardTeamId && boardExists.teamId !== Constants.globalTeamId) {
+            UserSettings.setLastBoardID(boardTeamId, null)
+            UserSettings.setLastViewId(boardId, null)
+            dispatch(setGlobalError('board-not-found'))
+            return
+        }
+
         const member = await octoClient.joinBoard(boardId, allowAdmin)
         if (!member) {
             if (myUser.permissions?.find((s) => s === 'manage_system' || s === 'manage_team')) {
@@ -229,28 +257,62 @@ const BoardPage = (props: Props): JSX.Element => {
     }, [])
 
     useEffect(() => {
-        dispatch(loadAction(match.params.boardId))
+        if (!match.params.boardId) {
+            return
+        }
+        dispatch(setCurrentBoard(match.params.boardId))
 
-        if (match.params.boardId) {
-            // set the active board
-            dispatch(setCurrentBoard(match.params.boardId))
-
-            if (viewId !== Constants.globalTeamId) {
-                // reset current, even if empty string
-                dispatch(setCurrentView(viewId))
-                if (viewId) {
-                    // don't reset per board if empty string
-                    UserSettings.setLastViewId(match.params.boardId, viewId)
-                }
+        if (viewId !== Constants.globalTeamId) {
+            dispatch(setCurrentView(viewId))
+            if (viewId) {
+                UserSettings.setLastViewId(match.params.boardId, viewId)
             }
         }
-    }, [teamId, match.params.boardId, viewId, me?.id])
+
+        dispatch(loadAction(match.params.boardId))
+    }, [teamId, match.params.boardId, viewId, me?.id, dispatch, loadAction])
+
 
     useEffect(() => {
-        if (match.params.boardId && !props.readonly && me) {
-            loadOrJoinBoard(me, teamId, match.params.boardId)
+        setLoadedBoardId('')
+    }, [teamId])
+
+    useEffect(() => {
+        if (!match.params.boardId || !me || props.readonly) {
+            return
         }
-    }, [teamId, match.params.boardId, me?.id])
+
+        if (loadedBoardId === match.params.boardId) {
+            return
+        }
+
+        const boardsLoaded = Object.keys(allBoards).length > 0
+        if (!boardsLoaded) {
+            return
+        }
+
+        const board = allBoards[match.params.boardId]
+        if (board && board.teamId !== teamId && board.teamId !== Constants.globalTeamId) {
+            dispatch(setGlobalError('board-not-found'))
+            return
+        }
+
+        setLoadedBoardId(match.params.boardId)
+        loadOrJoinBoard(me, teamId, match.params.boardId)
+    }, [teamId, match.params.boardId, me, props.readonly, allBoards, loadOrJoinBoard, dispatch, loadedBoardId])
+
+    // Validate that the viewId exists in the board's views
+    useEffect(() => {
+        if (!match.params.viewId || props.readonly || props.new || !activeBoardId || boardViews.length === 0) {
+            return
+        }
+
+        const viewExists = boardViews.some((view) => view.id === match.params.viewId)
+        if (!viewExists) {
+            UserSettings.setLastViewId(activeBoardId, null)
+            dispatch(setGlobalError('view-not-found'))
+        }
+    }, [match.params.viewId, activeBoardId, boardViews, props.readonly, props.new])
 
     const handleUnhideBoard = async (boardID: string) => {
         if (!me || !category) {

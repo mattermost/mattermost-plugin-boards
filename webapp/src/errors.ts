@@ -11,6 +11,7 @@ enum ErrorId {
     NotLoggedIn = 'not-logged-in',
     InvalidReadOnlyBoard = 'invalid-read-only-board',
     BoardNotFound = 'board-not-found',
+    ViewNotFound = 'view-not-found',
 }
 
 type ErrorDef = {
@@ -62,6 +63,14 @@ function errorDefFromId(id: ErrorId | null): ErrorDef {
         errDef.title = intl.formatMessage({id: 'error.board-not-found', defaultMessage: 'Board not found.'})
         errDef.button1Enabled = true
         errDef.button1Text = intl.formatMessage({id: 'error.back-to-team', defaultMessage: 'Back to team'})
+        errDef.button1Redirect = '/'
+        errDef.button1Fill = true
+        break
+    }
+    case ErrorId.ViewNotFound: {
+        errDef.title = intl.formatMessage({id: 'error.view-not-found', defaultMessage: 'View not found.'})
+        errDef.button1Enabled = true
+        errDef.button1Text = intl.formatMessage({id: 'error.back-to-board', defaultMessage: 'Back to board'})
         errDef.button1Redirect = '/'
         errDef.button1Fill = true
         break

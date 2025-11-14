@@ -1,7 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import {useEffect} from 'react'
+import {useEffect, useMemo} from 'react'
 import {generatePath, useHistory, useRouteMatch} from 'react-router-dom'
 
 import {getBoards, getCurrentBoardId} from '../../store/boards'
@@ -22,66 +22,80 @@ const TeamToBoardAndViewRedirect = (): null => {
     const boards = useAppSelector(getBoards)
     const teamId = match.params.teamId || UserSettings.lastTeamId || Constants.globalTeamId
 
+    const boardCount = useMemo(() => Object.keys(boards).length, [boards])
+    const categoryCount = useMemo(() => categories.length, [categories])
+
     useEffect(() => {
-        let boardID = match.params.boardId
-        if (!match.params.boardId) {
-            // first preference is for last visited board
-            boardID = UserSettings.lastBoardId[teamId]
+        if (match.params.boardId) {
+            return
+        }
 
-            // if last visited board is unavailable, use the first board in categories list
-            if (!boardID && categories.length > 0) {
-                let goToBoardID: string | null = null
+        if (boardCount === 0 && categoryCount === 0) {
+            return
+        }
 
-                for (const category of categories) {
-                    for (const boardMetadata of category.boardMetadata) {
-                        // pick the first category board that exists and is not hidden
-                        if (!boardMetadata.hidden && boards[boardMetadata.boardID]) {
-                            goToBoardID = boardMetadata.boardID
-                            break
-                        }
-                    }
-                }
-
-                // there may even be no boards at all
-                if (goToBoardID) {
-                    boardID = goToBoardID
-                }
-            }
-
-            if (boardID) {
-                const newPath = generatePath(Utils.getBoardPagePath(match.path), {...match.params, boardId: boardID, viewID: undefined})
-                history.replace(newPath)
-
-                // return from here because the loadBoardData() call
-                // will fetch the data to be used below. We'll
-                // use it in the next render cycle.
-                return
+        let boardID: string | undefined = undefined
+        
+        const lastBoardId = UserSettings.lastBoardId[teamId]
+        if (lastBoardId) {
+            const board = boards[lastBoardId]
+            if (board && (board.teamId === teamId || board.teamId === Constants.globalTeamId)) {
+                boardID = lastBoardId
+            } else {
+                UserSettings.setLastBoardID(teamId, null)
             }
         }
 
-        let viewID = match.params.viewId
+        if (!boardID && categoryCount > 0) {
+            for (const category of categories) {
+                for (const boardMetadata of category.boardMetadata) {
+                    const board = boards[boardMetadata.boardID]
+                    // Pick the first category board that exists, is not hidden, and belongs to this team
+                    if (!boardMetadata.hidden && board && (board.teamId === teamId || board.teamId === Constants.globalTeamId)) {
+                        boardID = boardMetadata.boardID
+                        break
+                    }
+                }
+                if (boardID) {
+                    break
+                }
+            }
+        }
+
+        if (boardID) {
+            const newPath = generatePath(Utils.getBoardPagePath(match.path), {...match.params, boardId: boardID, viewID: undefined})
+            history.replace(newPath)
+            return
+        }
+
+    }, [teamId, match.params.boardId, boardCount, categoryCount, boards, categories, history, match.path, match.params])
+
+    const viewCount = useMemo(() => boardViews.length, [boardViews])
+
+    useEffect(() => {
+        const viewID = match.params.viewId
 
         // when a view isn't open,
         // but the data is available, try opening a view
-        if ((!viewID || viewID === '0') && boardId && boardId === match.params.boardId && boardViews && boardViews.length > 0) {
+        if ((!viewID || viewID === '0') && boardId && boardId === match.params.boardId && viewCount > 0) {
             // most recent view gets the first preference
-            viewID = UserSettings.lastViewId[boardID]
-            if (viewID) {
-                UserSettings.setLastViewId(boardID, viewID)
-                dispatch(setCurrentView(viewID))
+            let selectedViewID = UserSettings.lastViewId[boardId]
+            if (selectedViewID) {
+                UserSettings.setLastViewId(boardId, selectedViewID)
+                dispatch(setCurrentView(selectedViewID))
             } else if (boardViews.length > 0) {
                 // if most recent view is unavailable, pick the first view
-                viewID = boardViews[0].id
-                UserSettings.setLastViewId(boardID, viewID)
-                dispatch(setCurrentView(viewID))
+                selectedViewID = boardViews[0].id
+                UserSettings.setLastViewId(boardId, selectedViewID)
+                dispatch(setCurrentView(selectedViewID))
             }
 
-            if (viewID) {
-                const newPath = generatePath(Utils.getBoardPagePath(match.path), {...match.params, viewId: viewID})
+            if (selectedViewID) {
+                const newPath = generatePath(Utils.getBoardPagePath(match.path), {...match.params, viewId: selectedViewID})
                 history.replace(newPath)
             }
         }
-    }, [teamId, match.params.boardId, match.params.viewId, categories.length, boardViews.length, boardId])
+    }, [match.params.boardId, match.params.viewId, viewCount, boardId, boardViews, dispatch, history, match.path, match.params])
 
     return null
 }
