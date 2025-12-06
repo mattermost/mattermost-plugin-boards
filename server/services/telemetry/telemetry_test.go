@@ -52,8 +52,7 @@ func mockServer() (chan []byte, *httptest.Server) {
 func TestTelemetry(t *testing.T) {
 	receiveChan, server := mockServer()
 
-	os.Setenv("RUDDER_KEY", "mock-test-rudder-key")
-	os.Setenv("RUDDER_DATAPLANE_URL", server.URL)
+	_ = os.Setenv("RUDDER_DATAPLANE_URL", server.URL)
 
 	checkMockRudderServer := func(t *testing.T) {
 		// check mock rudder server got

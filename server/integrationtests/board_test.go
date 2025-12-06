@@ -2065,7 +2065,7 @@ func TestDuplicateBoard(t *testing.T) {
 		for _, categoryBoard := range userCategoryBoards {
 			for _, boardMetadata := range categoryBoard.BoardMetadata {
 				if boardMetadata.BoardID == duplicateBoard.ID {
-					duplicateBoardCategoryID = categoryBoard.Category.ID
+					duplicateBoardCategoryID = categoryBoard.ID
 				}
 			}
 		}

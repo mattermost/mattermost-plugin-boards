@@ -222,7 +222,7 @@ func (a *App) verifyNewCategoryBoardsMatchExisting(userID, teamID, categoryID st
 
 	var targetCategoryBoards *model.CategoryBoards
 	for i := range existingCategoryBoards {
-		if existingCategoryBoards[i].Category.ID == categoryID {
+		if existingCategoryBoards[i].ID == categoryID {
 			targetCategoryBoards = &existingCategoryBoards[i]
 			break
 		}
