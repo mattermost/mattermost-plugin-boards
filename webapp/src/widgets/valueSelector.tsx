@@ -59,7 +59,7 @@ const ValueSelectorLabel = (props: LabelProps): JSX.Element => {
                 color={option.color}
                 className={className}
             >
-                <span className='Label-text'>{option.value}</span>
+                <span className='Label-text' dir='auto'>{option.value}</span>
                 {onDeleteValue &&
                     <IconButton
                         onClick={() => onDeleteValue(option)}
