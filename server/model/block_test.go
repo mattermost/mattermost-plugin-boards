@@ -366,14 +366,14 @@ func TestValidateBlockPatch(t *testing.T) {
 		require.EqualError(t, err, "Invalid Block ID")
 	})
 
-	t.Run("Should return erro for blok patch with invalid attachment ID", func(t *testing.T) {
+	t.Run("Should return error for block patch with invalid attachment ID", func(t *testing.T) {
 		patch := &BlockPatch{
 			ParentID: nil,
 			Schema:   nil,
 			Type:     nil,
 			Title:    nil,
 			UpdatedFields: map[string]interface{}{
-				"attchmentId": "../../../.../../././././././././filePath",
+				BlockFieldAttachmentId: "../../../.../../././././././././filePath",
 			},
 			DeletedFields: nil,
 		}

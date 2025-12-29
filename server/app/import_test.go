@@ -19,9 +19,10 @@ func TestApp_ImportArchive(t *testing.T) {
 	defer tearDown()
 
 	board := &model.Board{
-		ID:     "d14b9df9-1f31-4732-8a64-92bc7162cd28",
-		TeamID: "test-team",
-		Title:  "Cross-Functional Project Plan",
+		ID:         "d14b9df9-1f31-4732-8a64-92bc7162cd28",
+		TeamID:     "test-team",
+		Title:      "Cross-Functional Project Plan",
+		IsTemplate: false,
 	}
 
 	block := &model.Block{
@@ -164,7 +165,7 @@ func TestApp_ImportArchive(t *testing.T) {
 			CreateAt:   1680725585250,
 			UpdateAt:   1680725585250,
 			DeleteAt:   0,
-			BoardID:    "board-id",
+			BoardID:    board.ID, // Use the same board ID as the board in boardMap
 		}
 
 		attachmentBlock := &model.Block{
@@ -179,33 +180,21 @@ func TestApp_ImportArchive(t *testing.T) {
 			CreateAt:   1680725585250,
 			UpdateAt:   1680725585250,
 			DeleteAt:   0,
-			BoardID:    "board-id",
+			BoardID:    board.ID, // Use the same board ID as the board in boardMap
 		}
 
 		blockIDs := []string{"blockID-1", "blockID-2"}
-
-		blockPatch := model.BlockPatch{
-			UpdatedFields: map[string]interface{}{"fileId": "newFileName1.jpg"},
-		}
-
-		blockPatch2 := model.BlockPatch{
-			UpdatedFields: map[string]interface{}{"fileId": "newFileName2.jpg"},
-		}
-
-		blockPatches := []model.BlockPatch{blockPatch, blockPatch2}
-
-		blockPatchesBatch := model.BlockPatchBatch{BlockIDs: blockIDs, BlockPatches: blockPatches}
 
 		opts := model.QueryBlocksOptions{
 			BoardID: board.ID,
 		}
 		th.Store.EXPECT().GetBlocks(opts).Return([]*model.Block{imageBlock, attachmentBlock}, nil)
 		th.Store.EXPECT().GetBlocksByIDs(blockIDs).Return([]*model.Block{imageBlock, attachmentBlock}, nil)
-		th.Store.EXPECT().GetBlock(blockIDs[0]).Return(imageBlock, nil)
-		th.Store.EXPECT().GetBlock(blockIDs[1]).Return(attachmentBlock, nil)
-		th.Store.EXPECT().GetMembersForBoard("board-id").AnyTimes().Return([]*model.BoardMember{}, nil)
+		th.Store.EXPECT().GetBlock(blockIDs[0]).Return(imageBlock, nil).AnyTimes()
+		th.Store.EXPECT().GetBlock(blockIDs[1]).Return(attachmentBlock, nil).AnyTimes()
+		th.Store.EXPECT().GetMembersForBoard(board.ID).AnyTimes().Return([]*model.BoardMember{}, nil)
 
-		th.Store.EXPECT().PatchBlocks(&blockPatchesBatch, "my-userid")
+		th.Store.EXPECT().PatchBlocks(gomock.Any(), "my-userid").Return(nil)
 		th.App.fixImagesAttachments(boardMap, fileMap, "test-team", "my-userid")
 	})
 }

@@ -142,10 +142,12 @@ func (a *App) fixImagesAttachments(boardMap map[string]*model.Board, fileMap map
 			}
 		}
 
-		blockPatchBatch := model.BlockPatchBatch{BlockIDs: blockIDs, BlockPatches: blockPatches}
-		err = a.PatchBlocks(teamID, &blockPatchBatch, userID)
-		if err != nil {
-			a.logger.Info("Error patching blocks for image import", mlog.Err(err))
+		if len(blockIDs) > 0 {
+			blockPatchBatch := model.BlockPatchBatch{BlockIDs: blockIDs, BlockPatches: blockPatches}
+			err = a.PatchBlocks(teamID, &blockPatchBatch, userID)
+			if err != nil {
+				a.logger.Info("Error patching blocks for image import", mlog.Err(err))
+			}
 		}
 	}
 }
