@@ -14,13 +14,11 @@ import (
 	"github.com/mattermost/mattermost/server/public/pluginapi/cluster"
 	"github.com/mattermost/morph"
 	"github.com/mattermost/morph/drivers"
-	"github.com/mattermost/morph/drivers/mysql"
 	"github.com/mattermost/morph/drivers/postgres"
 	"github.com/mattermost/morph/drivers/sqlite"
 	embedded "github.com/mattermost/morph/sources/embedded"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
-	mmSqlStore "github.com/mattermost/mattermost/server/public/utils/sql"
 	"github.com/mattermost/mattermost/server/v8/channels/db"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
@@ -94,11 +92,6 @@ func (bm *BoardsMigrator) getDriver() (drivers.Driver, error) {
 		if err != nil {
 			return nil, err
 		}
-	case model.MysqlDBType:
-		driver, err = mysql.WithInstance(bm.db)
-		if err != nil {
-			return nil, err
-		}
 	case model.SqliteDBType:
 		driver, err = sqlite.WithInstance(bm.db)
 		if err != nil {
@@ -128,7 +121,6 @@ func (bm *BoardsMigrator) getMorphConnection() (*morph.Morph, drivers.Driver, er
 		"prefix":     tablePrefix,
 		"postgres":   bm.driverName == model.PostgresDBType,
 		"sqlite":     bm.driverName == model.SqliteDBType,
-		"mysql":      bm.driverName == model.MysqlDBType,
 		"plugin":     bm.withMattermostMigrations,
 		"singleUser": false,
 	}
@@ -174,18 +166,6 @@ func (bm *BoardsMigrator) Setup() error {
 	bm.driverName, bm.connString, err = sqlstore.PrepareNewTestDatabase()
 	if err != nil {
 		return err
-	}
-
-	if bm.driverName == model.MysqlDBType {
-		bm.connString, err = mmSqlStore.ResetReadTimeout(bm.connString)
-		if err != nil {
-			return err
-		}
-
-		bm.connString, err = mmSqlStore.AppendMultipleStatementsFlag(bm.connString)
-		if err != nil {
-			return err
-		}
 	}
 
 	var dbErr error
