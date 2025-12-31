@@ -4,6 +4,7 @@
 package integrationtests
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -15,14 +16,14 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/server"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/config"
-	"github.com/mattermost/mattermost-plugin-boards/server/services/permissions/localpermissions"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/permissions/mmpermissions"
-	"github.com/mattermost/mattermost-plugin-boards/server/services/store"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/store/sqlstore"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 
 	mmModel "github.com/mattermost/mattermost/server/public/model"
+	"github.com/mattermost/mattermost/server/public/pluginapi/cluster"
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
+	"github.com/mattermost/mattermost/server/v8/channels/store/storetest"
 
 	"github.com/stretchr/testify/require"
 )
@@ -96,11 +97,28 @@ func (*FakePermissionPluginAPI) HasPermissionToChannel(userID string, channelID 
 	return channelID == "valid-channel-id" || channelID == "valid-channel-id-2"
 }
 
-func getTestConfig() (*config.Configuration, error) {
-	dbType, connectionString, err := sqlstore.PrepareNewTestDatabase()
-	if err != nil {
-		return nil, err
+// testMutexAPI provides a no-op mutex for tests
+type testMutexAPI struct{}
+
+func (f *testMutexAPI) KVSetWithOptions(key string, value []byte, options mmModel.PluginKVSetOptions) (bool, *mmModel.AppError) {
+	// Return true to simulate successful set (mutex acquired)
+	return true, nil
+}
+
+func (f *testMutexAPI) LogError(msg string, keyValuePairs ...interface{}) {
+	// No-op for tests
+}
+
+func getEnvWithDefault(name, defaultValue string) string {
+	if value := os.Getenv(name); value != "" {
+		return value
 	}
+	return defaultValue
+}
+
+func getTestConfig() (*config.Configuration, error) {
+	driverName := getEnvWithDefault("TEST_DATABASE_DRIVERNAME", "postgres")
+	sqlSettings := storetest.MakeSqlSettings(driverName, false)
 
 	logging := `
 	{
@@ -127,66 +145,16 @@ func getTestConfig() (*config.Configuration, error) {
 	return &config.Configuration{
 		ServerRoot:        "http://localhost:8888",
 		Port:              8888,
-		DBType:            dbType,
-		DBConfigString:    connectionString,
+		DBType:            *sqlSettings.DriverName,
+		DBConfigString:    *sqlSettings.DataSource,
 		DBTablePrefix:     "test_",
 		WebPath:           "./pack",
 		FilesDriver:       "local",
 		FilesPath:         "./files",
 		LoggingCfgJSON:    logging,
 		SessionExpireTime: int64(30 * time.Second),
-		AuthMode:          "native",
+		AuthMode:          "mattermost",
 	}, nil
-}
-
-func newTestServer(singleUserToken string) *server.Server {
-	return newTestServerWithLicense(singleUserToken, LicenseNone)
-}
-
-func newTestServerWithLicense(singleUserToken string, licenseType LicenseType) *server.Server {
-	cfg, err := getTestConfig()
-	if err != nil {
-		panic(err)
-	}
-
-	logger, _ := mlog.NewLogger()
-	if err = logger.Configure("", cfg.LoggingCfgJSON, nil); err != nil {
-		panic(err)
-	}
-	innerStore, err := server.NewStore(cfg, logger)
-	if err != nil {
-		panic(err)
-	}
-
-	var db store.Store
-
-	switch licenseType {
-	case LicenseProfessional:
-		db = NewTestProfessionalStore(innerStore)
-	case LicenseEnterprise:
-		db = NewTestEnterpriseStore(innerStore)
-	case LicenseNone:
-		fallthrough
-	default:
-		db = innerStore
-	}
-
-	permissionsService := localpermissions.New(db, logger)
-
-	params := server.Params{
-		Cfg:                cfg,
-		SingleUserToken:    singleUserToken,
-		DBStore:            db,
-		Logger:             logger,
-		PermissionsService: permissionsService,
-	}
-
-	srv, err := server.New(params)
-	if err != nil {
-		panic(err)
-	}
-
-	return srv
 }
 
 func NewTestServerPluginMode() *server.Server {
@@ -194,14 +162,38 @@ func NewTestServerPluginMode() *server.Server {
 	if err != nil {
 		panic(err)
 	}
-	cfg.AuthMode = "mattermost"
 	cfg.EnablePublicSharedBoards = true
 
 	logger, _ := mlog.NewLogger()
 	if err = logger.Configure("", cfg.LoggingCfgJSON, nil); err != nil {
 		panic(err)
 	}
-	innerStore, err := server.NewStore(cfg, logger)
+
+	sqlDB, err := sql.Open(cfg.DBType, cfg.DBConfigString)
+	if err != nil {
+		panic(fmt.Errorf("connectDatabase failed: %w", err))
+	}
+
+	err = sqlDB.Ping()
+	if err != nil {
+		panic(fmt.Errorf("Database Ping failed: %w", err))
+	}
+
+	storeParams := sqlstore.Params{
+		DBType:           cfg.DBType,
+		DBPingAttempts:   cfg.DBPingAttempts,
+		ConnectionString: cfg.DBConfigString,
+		TablePrefix:      cfg.DBTablePrefix,
+		Logger:           logger,
+		DB:               sqlDB,
+		NewMutexFn: func(name string) (*cluster.Mutex, error) {
+			// Create a mutex using a test API that does nothing
+			// This allows migrations to run without actual cluster coordination
+			return cluster.NewMutex(&testMutexAPI{}, name)
+		},
+	}
+
+	innerStore, err := sqlstore.New(storeParams)
 	if err != nil {
 		panic(err)
 	}
@@ -225,59 +217,8 @@ func NewTestServerPluginMode() *server.Server {
 	return srv
 }
 
-func newTestServerLocalMode() *server.Server {
-	cfg, err := getTestConfig()
-	if err != nil {
-		panic(err)
-	}
-	cfg.EnablePublicSharedBoards = true
-
-	logger, _ := mlog.NewLogger()
-	if err = logger.Configure("", cfg.LoggingCfgJSON, nil); err != nil {
-		panic(err)
-	}
-
-	db, err := server.NewStore(cfg, logger)
-	if err != nil {
-		panic(err)
-	}
-
-	permissionsService := localpermissions.New(db, logger)
-
-	params := server.Params{
-		Cfg:                cfg,
-		DBStore:            db,
-		Logger:             logger,
-		PermissionsService: permissionsService,
-	}
-
-	srv, err := server.New(params)
-	if err != nil {
-		panic(err)
-	}
-
-	return srv
-}
-
-func SetupTestHelperWithToken(t *testing.T) *TestHelper {
-	origUnitTesting := os.Getenv("FOCALBOARD_UNIT_TESTING")
-	os.Setenv("FOCALBOARD_UNIT_TESTING", "1")
-
-	sessionToken := "TESTTOKEN"
-
-	th := &TestHelper{
-		T:                  t,
-		origEnvUnitTesting: origUnitTesting,
-	}
-
-	th.Server = newTestServer(sessionToken)
-	th.Client = client.NewClient(th.Server.Config().ServerRoot, sessionToken)
-	th.Client2 = client.NewClient(th.Server.Config().ServerRoot, sessionToken)
-	return th
-}
-
 func SetupTestHelper(t *testing.T) *TestHelper {
-	return SetupTestHelperWithLicense(t, LicenseNone)
+	return SetupTestHelperPluginMode(t)
 }
 
 func SetupTestHelperPluginMode(t *testing.T) *TestHelper {
@@ -291,35 +232,6 @@ func SetupTestHelperPluginMode(t *testing.T) *TestHelper {
 
 	th.Server = NewTestServerPluginMode()
 	th.Start()
-	return th
-}
-
-func SetupTestHelperLocalMode(t *testing.T) *TestHelper {
-	origUnitTesting := os.Getenv("FOCALBOARD_UNIT_TESTING")
-	os.Setenv("FOCALBOARD_UNIT_TESTING", "1")
-
-	th := &TestHelper{
-		T:                  t,
-		origEnvUnitTesting: origUnitTesting,
-	}
-
-	th.Server = newTestServerLocalMode()
-	th.Start()
-	return th
-}
-
-func SetupTestHelperWithLicense(t *testing.T, licenseType LicenseType) *TestHelper {
-	origUnitTesting := os.Getenv("FOCALBOARD_UNIT_TESTING")
-	os.Setenv("FOCALBOARD_UNIT_TESTING", "1")
-
-	th := &TestHelper{
-		T:                  t,
-		origEnvUnitTesting: origUnitTesting,
-	}
-
-	th.Server = newTestServerWithLicense("", licenseType)
-	th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
-	th.Client2 = client.NewClient(th.Server.Config().ServerRoot, "")
 	return th
 }
 

@@ -14,7 +14,7 @@ import (
 )
 
 func TestGetBlocks(t *testing.T) {
-	th := SetupTestHelperWithToken(t).Start()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
 	board := th.CreateBoard("team-id", model.BoardTypeOpen)
@@ -56,7 +56,7 @@ func TestGetBlocks(t *testing.T) {
 }
 
 func TestPostBlock(t *testing.T) {
-	th := SetupTestHelperWithToken(t).Start()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
 	board := th.CreateBoard("team-id", model.BoardTypeOpen)
@@ -165,7 +165,7 @@ func TestPostBlock(t *testing.T) {
 }
 
 func TestPatchBlock(t *testing.T) {
-	th := SetupTestHelperWithToken(t).Start()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
 	initialID := utils.NewID(utils.IDTypeBlock)
@@ -263,7 +263,7 @@ func TestPatchBlock(t *testing.T) {
 }
 
 func TestDeleteBlock(t *testing.T) {
-	th := SetupTestHelperWithToken(t).Start()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
 	board := th.CreateBoard("team-id", model.BoardTypeOpen)

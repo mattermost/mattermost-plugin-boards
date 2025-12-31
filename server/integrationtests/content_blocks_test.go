@@ -14,7 +14,7 @@ import (
 )
 
 func TestMoveContentBlock(t *testing.T) {
-	th := SetupTestHelperWithToken(t).Start()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
 	board := th.CreateBoard("team-id", model.BoardTypeOpen)
