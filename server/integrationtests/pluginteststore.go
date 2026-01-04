@@ -99,6 +99,10 @@ func (s *PluginTestStore) GetTeam(id string) (*model.Team, error) {
 	case "empty-team":
 		return s.emptyTeam, nil
 	}
+	// For any valid Mattermost ID (26 characters), return a mock team
+	if mmModel.IsValidId(id) {
+		return &model.Team{ID: id, Title: "Test Team"}, nil
+	}
 	return nil, errTestStore
 }
 

@@ -13,13 +13,16 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetBoards(t *testing.T) {
 	t.Run("a non authenticated client should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+		// Create a client with no authentication headers
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 
 		teamID := "0"
 		newBoard := &model.Board{
@@ -27,18 +30,22 @@ func TestGetBoards(t *testing.T) {
 			Type:   model.BoardTypeOpen,
 		}
 
-		board, err := th.Server.App().CreateBoard(newBoard, "user-id", false)
+		// Use a valid user ID that exists in the test setup
+		board, err := th.Server.App().CreateBoard(newBoard, "team-member", false)
 		require.NoError(t, err)
 		require.NotNil(t, board)
 
 		boards, resp := th.Client.GetBoardsForTeam(teamID)
-		th.CheckUnauthorized(resp)
+		th.CheckForbidden(resp)
 		require.Nil(t, boards)
 	})
 
 	t.Run("should only return the boards that the user is a member of", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
 
 		teamID := "0"
 		otherTeamID := "other-team-id"
@@ -117,27 +124,33 @@ func TestGetBoards(t *testing.T) {
 
 func TestCreateBoard(t *testing.T) {
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  "board title",
 			Type:   model.BoardTypeOpen,
-			TeamID: testTeamID,
+			TeamID: teamID,
 		}
 		board, resp := th.Client.CreateBoard(newBoard)
-		th.CheckUnauthorized(resp)
+		th.CheckForbidden(resp)
 		require.Nil(t, board)
 	})
 
 	t.Run("create public board", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
 
 		me := th.GetUser1()
 
 		title := "board title 1"
-		teamID := testTeamID
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  title,
 			Type:   model.BoardTypeOpen,
@@ -187,13 +200,17 @@ func TestCreateBoard(t *testing.T) {
 	})
 
 	t.Run("create private board", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
 
 		me := th.GetUser1()
 
 		title := "private board title"
-		teamID := testTeamID
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  title,
 			Type:   model.BoardTypePrivate,
@@ -241,18 +258,21 @@ func TestCreateBoard(t *testing.T) {
 	})
 
 	t.Run("create invalid board", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+
 		title := "invalid board title"
-		teamID := testTeamID
+		teamID := mmModel.NewId()
 		user1 := th.GetUser1()
 
 		t.Run("invalid board type", func(t *testing.T) {
 			var invalidBoardType model.BoardType = "invalid"
 			newBoard := &model.Board{
 				Title:  title,
-				TeamID: testTeamID,
+				TeamID: teamID,
 				Type:   invalidBoardType,
 			}
 
@@ -284,9 +304,7 @@ func TestCreateBoard(t *testing.T) {
 				Title: title,
 			}
 			board, resp := th.Client.CreateBoard(newBoard)
-			// the request is unauthorized because the permission
-			// check fails on an empty teamID
-			th.CheckForbidden(resp)
+			th.CheckBadRequest(resp)
 			require.Nil(t, board)
 
 			boards, err := th.Server.App().GetBoardsForUserAndTeam(user1.ID, teamID, true)
@@ -298,13 +316,17 @@ func TestCreateBoard(t *testing.T) {
 
 func TestCreateBoardTemplate(t *testing.T) {
 	t.Run("create public board template", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
 
 		me := th.GetUser1()
 
 		title := "board template 1"
-		teamID := testTeamID
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:      title,
 			Type:       model.BoardTypeOpen,
@@ -355,13 +377,17 @@ func TestCreateBoardTemplate(t *testing.T) {
 	})
 
 	t.Run("create private board template", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
 
 		me := th.GetUser1()
 
 		title := "private board template title"
-		teamID := testTeamID
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:      title,
 			Type:       model.BoardTypePrivate,
@@ -474,19 +500,25 @@ func TestGetAllBlocksForBoard(t *testing.T) {
 
 func TestSearchBoards(t *testing.T) {
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 
-		boards, resp := th.Client.SearchBoardsForTeam(testTeamID, "term")
+		teamID := mmModel.NewId()
+		boards, resp := th.Client.SearchBoardsForTeam(teamID, "term")
 		th.CheckUnauthorized(resp)
 		require.Nil(t, boards)
 	})
 
 	t.Run("all the matching private boards that the user is a member of and all matching public boards should be returned", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
-		teamID := testTeamID
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
+
+		teamID := mmModel.NewId()
 		user1 := th.GetUser1()
 
 		board1 := &model.Board{
@@ -585,8 +617,9 @@ func TestSearchBoards(t *testing.T) {
 
 func TestGetBoard(t *testing.T) {
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 
 		board, resp := th.Client.GetBoard("boar-id", "")
 		th.CheckUnauthorized(resp)
@@ -594,11 +627,14 @@ func TestGetBoard(t *testing.T) {
 	})
 
 	t.Run("valid read token should be enough to get the board", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 		th.Server.Config().EnablePublicSharedBoards = true
 
-		teamID := testTeamID
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+
+		teamID := mmModel.NewId()
 		sharingToken := utils.NewID(utils.IDTypeToken)
 
 		board := &model.Board{
@@ -633,8 +669,11 @@ func TestGetBoard(t *testing.T) {
 	})
 
 	t.Run("nonexisting board", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
 
 		board, resp := th.Client.GetBoard("nonexistent board", "")
 		th.CheckNotFound(resp)
@@ -642,10 +681,13 @@ func TestGetBoard(t *testing.T) {
 	})
 
 	t.Run("a user that doesn't have permissions to a private board cannot retrieve it", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
-		teamID := testTeamID
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Type:   model.BoardTypePrivate,
 			TeamID: teamID,
@@ -659,10 +701,13 @@ func TestGetBoard(t *testing.T) {
 	})
 
 	t.Run("a user that has permissions to a private board can retrieve it", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
-		teamID := testTeamID
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Type:   model.BoardTypePrivate,
 			TeamID: teamID,
@@ -676,10 +721,13 @@ func TestGetBoard(t *testing.T) {
 	})
 
 	t.Run("a user that doesn't have permissions to a public board but have them to its team can retrieve it", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
-		teamID := testTeamID
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypeOpen,
@@ -870,21 +918,25 @@ func TestGetBoardMetadata(t *testing.T) {
 }
 
 func TestPatchBoard(t *testing.T) {
-	teamID := testTeamID
-
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		// Create board with authenticated client first
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
 		initialTitle := "title 1"
 		newBoard := &model.Board{
 			Title:  initialTitle,
 			Type:   model.BoardTypeOpen,
 			TeamID: teamID,
 		}
-		board, err := th.Server.App().CreateBoard(newBoard, "user-id", false)
+		board, err := th.Server.App().CreateBoard(newBoard, th.GetUser1().ID, false)
 		require.NoError(t, err)
 
+		// Now use unauthenticated client
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 		newTitle := "a new title 1"
 		patch := &model.BoardPatch{Title: &newTitle}
 
@@ -898,8 +950,11 @@ func TestPatchBoard(t *testing.T) {
 	})
 
 	t.Run("non existing board", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
 
 		newTitle := "a new title 2"
 		patch := &model.BoardPatch{Title: &newTitle}
@@ -910,9 +965,13 @@ func TestPatchBoard(t *testing.T) {
 	})
 
 	t.Run("invalid patch on a board with permissions", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+
+		teamID := mmModel.NewId()
 		user1 := th.GetUser1()
 
 		newBoard := &model.Board{
@@ -932,9 +991,13 @@ func TestPatchBoard(t *testing.T) {
 	})
 
 	t.Run("valid patch on a board with permissions", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+
+		teamID := mmModel.NewId()
 		user1 := th.GetUser1()
 
 		initialTitle := "title"
@@ -956,9 +1019,14 @@ func TestPatchBoard(t *testing.T) {
 	})
 
 	t.Run("valid patch on a board without permissions", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
+
+		teamID := mmModel.NewId()
 		user1 := th.GetUser1()
 
 		initialTitle := "title"
@@ -984,20 +1052,24 @@ func TestPatchBoard(t *testing.T) {
 }
 
 func TestDeleteBoard(t *testing.T) {
-	teamID := testTeamID
-
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		// Create board with authenticated client first
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypeOpen,
 			TeamID: teamID,
 		}
-		board, err := th.Server.App().CreateBoard(newBoard, "user-id", false)
+		board, err := th.Server.App().CreateBoard(newBoard, th.GetUser1().ID, false)
 		require.NoError(t, err)
 
+		// Now use unauthenticated client
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 		success, resp := th.Client.DeleteBoard(board.ID)
 		th.CheckUnauthorized(resp)
 		require.False(t, success)
@@ -1008,9 +1080,13 @@ func TestDeleteBoard(t *testing.T) {
 	})
 
 	t.Run("a user without permissions should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypeOpen,
@@ -1029,8 +1105,11 @@ func TestDeleteBoard(t *testing.T) {
 	})
 
 	t.Run("non existing board", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
 
 		success, resp := th.Client.DeleteBoard("non-existing-board")
 		th.CheckNotFound(resp)
@@ -1038,9 +1117,13 @@ func TestDeleteBoard(t *testing.T) {
 	})
 
 	t.Run("an existing board should be correctly deleted", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypeOpen,
@@ -1061,24 +1144,29 @@ func TestDeleteBoard(t *testing.T) {
 }
 
 func TestUndeleteBoard(t *testing.T) {
-	teamID := testTeamID
-
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		// Create board with authenticated client first
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
+		userID := th.GetUser1().ID
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypeOpen,
 			TeamID: teamID,
 		}
-		board, err := th.Server.App().CreateBoard(newBoard, "user-id", false)
+		board, err := th.Server.App().CreateBoard(newBoard, userID, false)
 		require.NoError(t, err)
 
 		time.Sleep(1 * time.Millisecond)
-		err = th.Server.App().DeleteBoard(newBoard.ID, "user-id")
+		err = th.Server.App().DeleteBoard(newBoard.ID, userID)
 		require.NoError(t, err)
 
+		// Now use unauthenticated client
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 		success, resp := th.Client.UndeleteBoard(board.ID)
 		th.CheckUnauthorized(resp)
 		require.False(t, success)
@@ -1090,19 +1178,23 @@ func TestUndeleteBoard(t *testing.T) {
 	})
 
 	t.Run("a user without membership should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
+		userID := "some-user-id" // User not in test setup
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypeOpen,
 			TeamID: teamID,
 		}
-		board, err := th.Server.App().CreateBoard(newBoard, "some-user-id", false)
+		board, err := th.Server.App().CreateBoard(newBoard, userID, false)
 		require.NoError(t, err)
 
 		time.Sleep(1 * time.Millisecond)
-		err = th.Server.App().DeleteBoard(newBoard.ID, "some-user-id")
+		err = th.Server.App().DeleteBoard(newBoard.ID, userID)
 		require.NoError(t, err)
 
 		success, resp := th.Client.UndeleteBoard(board.ID)
@@ -1116,19 +1208,23 @@ func TestUndeleteBoard(t *testing.T) {
 	})
 
 	t.Run("a user with membership but without permissions should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.Viewer // Viewer doesn't have admin permissions
+		teamID := mmModel.NewId()
+		creatorID := "some-user-id" // User not in test setup
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypeOpen,
 			TeamID: teamID,
 		}
-		board, err := th.Server.App().CreateBoard(newBoard, "some-user-id", false)
+		board, err := th.Server.App().CreateBoard(newBoard, creatorID, false)
 		require.NoError(t, err)
 
 		newUser2Member := &model.BoardMember{
-			UserID:       "user-id",
+			UserID:       th.GetUser1().ID, // Add viewer as member
 			BoardID:      board.ID,
 			SchemeEditor: true,
 		}
@@ -1136,7 +1232,7 @@ func TestUndeleteBoard(t *testing.T) {
 		require.NoError(t, err)
 
 		time.Sleep(1 * time.Millisecond)
-		err = th.Server.App().DeleteBoard(newBoard.ID, "some-user-id")
+		err = th.Server.App().DeleteBoard(newBoard.ID, creatorID)
 		require.NoError(t, err)
 
 		success, resp := th.Client.UndeleteBoard(board.ID)
@@ -1150,8 +1246,11 @@ func TestUndeleteBoard(t *testing.T) {
 	})
 
 	t.Run("non existing board", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
 
 		success, resp := th.Client.UndeleteBoard("non-existing-board")
 		th.CheckForbidden(resp)
@@ -1159,19 +1258,24 @@ func TestUndeleteBoard(t *testing.T) {
 	})
 
 	t.Run("an existing deleted board should be correctly undeleted", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+
+		teamID := mmModel.NewId()
+		userID := th.GetUser1().ID
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypeOpen,
 			TeamID: teamID,
 		}
-		board, err := th.Server.App().CreateBoard(newBoard, th.GetUser1().ID, true)
+		board, err := th.Server.App().CreateBoard(newBoard, userID, true)
 		require.NoError(t, err)
 
 		time.Sleep(1 * time.Millisecond)
-		err = th.Server.App().DeleteBoard(newBoard.ID, "user-id")
+		err = th.Server.App().DeleteBoard(newBoard.ID, userID)
 		require.NoError(t, err)
 
 		success, resp := th.Client.UndeleteBoard(board.ID)
@@ -1185,9 +1289,7 @@ func TestUndeleteBoard(t *testing.T) {
 }
 
 func TestGetMembersForBoard(t *testing.T) {
-	teamID := testTeamID
-
-	createBoardWithUsers := func(th *TestHelper) *model.Board {
+	createBoardWithUsers := func(th *TestHelper, teamID string) *model.Board {
 		user1 := th.GetUser1()
 
 		newBoard := &model.Board{
@@ -1211,19 +1313,32 @@ func TestGetMembersForBoard(t *testing.T) {
 	}
 
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
-		board := createBoardWithUsers(th)
 
+		// Create board with authenticated client first
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
+		teamID := mmModel.NewId()
+		board := createBoardWithUsers(th, teamID)
+
+		// Now use unauthenticated client
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 		members, resp := th.Client.GetMembersForBoard(board.ID)
 		th.CheckUnauthorized(resp)
 		require.Empty(t, members)
 	})
 
 	t.Run("a user without permissions should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
-		board := createBoardWithUsers(th)
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
+		teamID := mmModel.NewId()
+		board := createBoardWithUsers(th, teamID)
 
 		_ = th.Server.App().DeleteBoardMember(board.ID, th.GetUser2().ID)
 
@@ -1233,8 +1348,11 @@ func TestGetMembersForBoard(t *testing.T) {
 	})
 
 	t.Run("non existing board", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
 
 		members, resp := th.Client.GetMembersForBoard("non-existing-board")
 		th.CheckForbidden(resp)
@@ -1242,9 +1360,14 @@ func TestGetMembersForBoard(t *testing.T) {
 	})
 
 	t.Run("should correctly return board members for a valid board", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
-		board := createBoardWithUsers(th)
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
+		teamID := mmModel.NewId()
+		board := createBoardWithUsers(th, teamID)
 
 		members, resp := th.Client.GetMembersForBoard(board.ID)
 		th.CheckOK(resp)
@@ -1253,20 +1376,25 @@ func TestGetMembersForBoard(t *testing.T) {
 }
 
 func TestAddMember(t *testing.T) {
-	teamID := testTeamID
-
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		// Create board with authenticated client first
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
+		userID := th.GetUser1().ID
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypeOpen,
 			TeamID: teamID,
 		}
-		board, err := th.Server.App().CreateBoard(newBoard, "user-id", false)
+		board, err := th.Server.App().CreateBoard(newBoard, userID, false)
 		require.NoError(t, err)
 
+		// Now use unauthenticated client
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 		newMember := &model.BoardMember{
 			UserID:       "user1",
 			BoardID:      board.ID,
@@ -1279,15 +1407,19 @@ func TestAddMember(t *testing.T) {
 	})
 
 	t.Run("a user without permissions should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
+		userID := "some-user-id" // User not in test setup
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypePrivate,
 			TeamID: teamID,
 		}
-		board, err := th.Server.App().CreateBoard(newBoard, "user-id", false)
+		board, err := th.Server.App().CreateBoard(newBoard, userID, false)
 		require.NoError(t, err)
 
 		newMember := &model.BoardMember{
@@ -1302,8 +1434,11 @@ func TestAddMember(t *testing.T) {
 	})
 
 	t.Run("non existing board", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
 
 		newMember := &model.BoardMember{
 			UserID:       "user1",
@@ -1318,9 +1453,13 @@ func TestAddMember(t *testing.T) {
 
 	t.Run("should correctly add a new member for a valid board", func(t *testing.T) {
 		t.Run("a private board through an admin user", func(t *testing.T) {
-			th := SetupTestHelper(t).InitBasic()
+			th := SetupTestHelperPluginMode(t)
 			defer th.TearDown()
 
+			clients := setupClients(th)
+			th.Client = clients.TeamMember
+			th.Client2 = clients.Viewer
+			teamID := mmModel.NewId()
 			newBoard := &model.Board{
 				Title:  "title",
 				Type:   model.BoardTypePrivate,
@@ -1346,9 +1485,13 @@ func TestAddMember(t *testing.T) {
 		})
 
 		t.Run("a public board through a user that is not yet a member", func(t *testing.T) {
-			th := SetupTestHelper(t).InitBasic()
+			th := SetupTestHelperPluginMode(t)
 			defer th.TearDown()
 
+			clients := setupClients(th)
+			th.Client = clients.TeamMember
+			th.Client2 = clients.Viewer
+			teamID := mmModel.NewId()
 			newBoard := &model.Board{
 				Title:  "title",
 				Type:   model.BoardTypeOpen,
@@ -1389,9 +1532,13 @@ func TestAddMember(t *testing.T) {
 		})
 
 		t.Run("should always add a new member as given board role", func(t *testing.T) {
-			th := SetupTestHelper(t).InitBasic()
+			th := SetupTestHelperPluginMode(t)
 			defer th.TearDown()
 
+			clients := setupClients(th)
+			th.Client = clients.TeamMember
+			th.Client2 = clients.Viewer
+			teamID := mmModel.NewId()
 			newBoard := &model.Board{
 				Title:  "title",
 				Type:   model.BoardTypePrivate,
@@ -1419,9 +1566,12 @@ func TestAddMember(t *testing.T) {
 	})
 
 	t.Run("should do nothing if the member already exists", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypePrivate,
@@ -1457,12 +1607,14 @@ func TestAddMember(t *testing.T) {
 }
 
 func TestUpdateMember(t *testing.T) {
-	teamID := testTeamID
-
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		// Create board with authenticated client first
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypeOpen,
@@ -1471,6 +1623,8 @@ func TestUpdateMember(t *testing.T) {
 		board, err := th.Server.App().CreateBoard(newBoard, th.GetUser1().ID, true)
 		require.NoError(t, err)
 
+		// Now use unauthenticated client
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 		updatedMember := &model.BoardMember{
 			UserID:       th.GetUser1().ID,
 			BoardID:      board.ID,
@@ -1483,9 +1637,13 @@ func TestUpdateMember(t *testing.T) {
 	})
 
 	t.Run("a user without permissions should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypeOpen,
@@ -1506,8 +1664,11 @@ func TestUpdateMember(t *testing.T) {
 	})
 
 	t.Run("non existing board", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
 
 		updatedMember := &model.BoardMember{
 			UserID:       th.GetUser1().ID,
@@ -1521,9 +1682,13 @@ func TestUpdateMember(t *testing.T) {
 	})
 
 	t.Run("should correctly update a member for a valid board", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypeOpen,
@@ -1557,9 +1722,12 @@ func TestUpdateMember(t *testing.T) {
 	})
 
 	t.Run("should not update a member if that means that a board will not have any admin", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypeOpen,
@@ -1588,7 +1756,9 @@ func TestUpdateMember(t *testing.T) {
 		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 		clients := setupClients(th)
+		th.Client = clients.Admin
 
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypeOpen,
@@ -1632,12 +1802,14 @@ func TestUpdateMember(t *testing.T) {
 }
 
 func TestDeleteMember(t *testing.T) {
-	teamID := testTeamID
-
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		// Create board with authenticated client first
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypeOpen,
@@ -1645,6 +1817,9 @@ func TestDeleteMember(t *testing.T) {
 		}
 		board, err := th.Server.App().CreateBoard(newBoard, th.GetUser1().ID, true)
 		require.NoError(t, err)
+
+		// Now use unauthenticated client
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 
 		member := &model.BoardMember{
 			UserID:  th.GetUser1().ID,
@@ -1657,9 +1832,13 @@ func TestDeleteMember(t *testing.T) {
 	})
 
 	t.Run("a user without permissions should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypeOpen,
@@ -1679,8 +1858,11 @@ func TestDeleteMember(t *testing.T) {
 	})
 
 	t.Run("non existing board", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
 
 		updatedMember := &model.BoardMember{
 			UserID:  th.GetUser1().ID,
@@ -1695,9 +1877,13 @@ func TestDeleteMember(t *testing.T) {
 	t.Run("should correctly delete a member for a valid board", func(t *testing.T) {
 		//nolint:dupl
 		t.Run("admin removing a user", func(t *testing.T) {
-			th := SetupTestHelper(t).InitBasic()
+			th := SetupTestHelperPluginMode(t)
 			defer th.TearDown()
 
+			clients := setupClients(th)
+			th.Client = clients.TeamMember
+			th.Client2 = clients.Viewer
+			teamID := mmModel.NewId()
 			newBoard := &model.Board{
 				Title:  "title",
 				Type:   model.BoardTypePrivate,
@@ -1737,9 +1923,13 @@ func TestDeleteMember(t *testing.T) {
 
 		//nolint:dupl
 		t.Run("user removing themselves", func(t *testing.T) {
-			th := SetupTestHelper(t).InitBasic()
+			th := SetupTestHelperPluginMode(t)
 			defer th.TearDown()
 
+			clients := setupClients(th)
+			th.Client = clients.TeamMember
+			th.Client2 = clients.Viewer
+			teamID := mmModel.NewId()
 			newBoard := &model.Board{
 				Title:  "title",
 				Type:   model.BoardTypePrivate,
@@ -1780,9 +1970,13 @@ func TestDeleteMember(t *testing.T) {
 
 		//nolint:dupl
 		t.Run("a non admin user should not be able to remove another user", func(t *testing.T) {
-			th := SetupTestHelper(t).InitBasic()
+			th := SetupTestHelperPluginMode(t)
 			defer th.TearDown()
 
+			clients := setupClients(th)
+			th.Client = clients.TeamMember
+			th.Client2 = clients.Viewer
+			teamID := mmModel.NewId()
 			newBoard := &model.Board{
 				Title:  "title",
 				Type:   model.BoardTypePrivate,
@@ -1822,9 +2016,12 @@ func TestDeleteMember(t *testing.T) {
 	})
 
 	t.Run("should not delete a member if that means that a board will not have any admin", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypePrivate,
@@ -1851,8 +2048,11 @@ func TestDeleteMember(t *testing.T) {
 
 func TestGetTemplates(t *testing.T) {
 	t.Run("should be able to retrieve built-in templates", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
 
 		err := th.Server.App().InitTemplates()
 		require.NoError(t, err, "InitTemplates should not fail")
@@ -1904,13 +2104,17 @@ func TestGetTemplates(t *testing.T) {
 
 func TestDuplicateBoard(t *testing.T) {
 	t.Run("create and duplicate public board", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
 
 		me := th.GetUser1()
 
 		title := "Public board"
-		teamID := testTeamID
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  title,
 			Type:   model.BoardTypeOpen,
@@ -1971,11 +2175,15 @@ func TestDuplicateBoard(t *testing.T) {
 	})
 
 	t.Run("create and duplicate public board from a custom category", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
+
 		me := th.GetUser1()
-		teamID := testTeamID
+		teamID := mmModel.NewId()
 
 		category := model.Category{
 			Name:   "My Category",
@@ -2075,13 +2283,17 @@ func TestDuplicateBoard(t *testing.T) {
 
 func TestJoinBoard(t *testing.T) {
 	t.Run("create and join public board", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
 
 		me := th.GetUser1()
 
 		title := "Test Public board"
-		teamID := testTeamID
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  title,
 			Type:   model.BoardTypeOpen,
@@ -2111,13 +2323,17 @@ func TestJoinBoard(t *testing.T) {
 	})
 
 	t.Run("create and join public board should match the minimumRole in the membership", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
 
 		me := th.GetUser1()
 
 		title := "Public board for commenters"
-		teamID := testTeamID
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:       title,
 			Type:        model.BoardTypeOpen,
@@ -2151,13 +2367,17 @@ func TestJoinBoard(t *testing.T) {
 	})
 
 	t.Run("create and join public board should match editor role in the membership when MinimumRole is empty", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
 
 		me := th.GetUser1()
 
 		title := "Public board for editors"
-		teamID := testTeamID
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  title,
 			Type:   model.BoardTypeOpen,
@@ -2190,13 +2410,17 @@ func TestJoinBoard(t *testing.T) {
 	})
 
 	t.Run("create and join private board (should not succeed)", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
 
 		me := th.GetUser1()
 
 		title := "Private board"
-		teamID := testTeamID
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Title:  title,
 			Type:   model.BoardTypePrivate,
@@ -2219,8 +2443,11 @@ func TestJoinBoard(t *testing.T) {
 	})
 
 	t.Run("join invalid board", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client2 = clients.Viewer
 
 		member, resp := th.Client2.JoinBoard("nonexistent-board-ID")
 		th.CheckNotFound(resp)

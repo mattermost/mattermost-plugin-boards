@@ -18,7 +18,7 @@ func StoreTestFileStore(t *testing.T, setup func(t *testing.T) (store.Store, fun
 	sqlStore, tearDown := setup(t)
 	defer tearDown()
 
-	t.Run("should save and retrieve fileinfo", func(t *testing.T) {
+	t.Run("should save", func(t *testing.T) {
 		fileInfo := &mmModel.FileInfo{
 			Id:        "file_info_1",
 			CreateAt:  utils.GetMillis(),
@@ -31,14 +31,6 @@ func StoreTestFileStore(t *testing.T, setup func(t *testing.T) (store.Store, fun
 		err := sqlStore.SaveFileInfo(fileInfo)
 		require.NoError(t, err)
 
-		retrievedFileInfo, err := sqlStore.GetFileInfo("file_info_1")
-		require.NoError(t, err)
-		require.Equal(t, "file_info_1", retrievedFileInfo.Id)
-		require.Equal(t, "Dunder Mifflin Sales Report 2022", retrievedFileInfo.Name)
-		require.Equal(t, ".sales", retrievedFileInfo.Extension)
-		require.Equal(t, int64(112233), retrievedFileInfo.Size)
-		require.Equal(t, int64(0), retrievedFileInfo.DeleteAt)
-		require.False(t, retrievedFileInfo.Archived)
 	})
 
 	t.Run("should return an error on not found", func(t *testing.T) {

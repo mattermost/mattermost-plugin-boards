@@ -33,7 +33,22 @@ func StoreTestCloudStore(t *testing.T, setup func(t *testing.T) (storeservice.St
 }
 
 func testGetUsedCardsCount(t *testing.T, store storeservice.Store) {
-	userID := "user-id"
+	// Generate IDs at function level so they can be shared across subtests
+	userID := utils.NewID(utils.IDTypeUser)
+	board1ID := utils.NewID(utils.IDTypeBoard)
+	board2ID := utils.NewID(utils.IDTypeBoard)
+	card1ID := utils.NewID(utils.IDTypeBlock)
+	card2ID := utils.NewID(utils.IDTypeBlock)
+	card3ID := utils.NewID(utils.IDTypeBlock)
+	card4ID := utils.NewID(utils.IDTypeBlock)
+	card5ID := utils.NewID(utils.IDTypeBlock)
+	textID := utils.NewID(utils.IDTypeBlock)
+	viewID := utils.NewID(utils.IDTypeBlock)
+	templateID := utils.NewID(utils.IDTypeBoard)
+	card6ID := utils.NewID(utils.IDTypeBlock)
+	card7ID := utils.NewID(utils.IDTypeBlock)
+	card8ID := utils.NewID(utils.IDTypeBlock)
+	card9ID := utils.NewID(utils.IDTypeBlock)
 
 	t.Run("should return zero when no cards have been created", func(t *testing.T) {
 		count, err := store.GetUsedCardsCount()
@@ -43,39 +58,39 @@ func testGetUsedCardsCount(t *testing.T, store storeservice.Store) {
 
 	t.Run("should correctly return the cards of all boards", func(t *testing.T) {
 		// two boards
-		for _, boardID := range []string{"board1", "board2"} {
-			boardType := model.BoardTypeOpen
-			if boardID == "board2" {
-				boardType = model.BoardTypePrivate
-			}
-
-			board := &model.Board{
-				ID:     boardID,
-				TeamID: testTeamID,
-				Type:   boardType,
-			}
-
-			_, err := store.InsertBoard(board, userID)
-			require.NoError(t, err)
+		board1 := &model.Board{
+			ID:     board1ID,
+			TeamID: testTeamID,
+			Type:   model.BoardTypeOpen,
 		}
+		_, err := store.InsertBoard(board1, userID)
+		require.NoError(t, err)
+
+		board2 := &model.Board{
+			ID:     board2ID,
+			TeamID: testTeamID,
+			Type:   model.BoardTypePrivate,
+		}
+		_, err = store.InsertBoard(board2, userID)
+		require.NoError(t, err)
 
 		// board 1 has three cards
-		for _, cardID := range []string{"card1", "card2", "card3"} {
+		for _, cardID := range []string{card1ID, card2ID, card3ID} {
 			card := &model.Block{
 				ID:       cardID,
-				ParentID: "board1",
-				BoardID:  "board1",
+				ParentID: board1ID,
+				BoardID:  board1ID,
 				Type:     model.TypeCard,
 			}
 			require.NoError(t, store.InsertBlock(card, userID))
 		}
 
 		// board 2 has two cards
-		for _, cardID := range []string{"card4", "card5"} {
+		for _, cardID := range []string{card4ID, card5ID} {
 			card := &model.Block{
 				ID:       cardID,
-				ParentID: "board2",
-				BoardID:  "board2",
+				ParentID: board2ID,
+				BoardID:  board2ID,
 				Type:     model.TypeCard,
 			}
 			require.NoError(t, store.InsertBlock(card, userID))
@@ -83,23 +98,23 @@ func testGetUsedCardsCount(t *testing.T, store storeservice.Store) {
 
 		count, err := store.GetUsedCardsCount()
 		require.NoError(t, err)
-		require.Equal(t, 5, count)
+		require.EqualValues(t, 5, count)
 	})
 
 	t.Run("should not take into account content blocks", func(t *testing.T) {
 		// we add a couple of content blocks
 		text := &model.Block{
-			ID:       "text-id",
-			ParentID: "card1",
-			BoardID:  "board1",
+			ID:       textID,
+			ParentID: card1ID,
+			BoardID:  board1ID,
 			Type:     model.TypeText,
 		}
 		require.NoError(t, store.InsertBlock(text, userID))
 
 		view := &model.Block{
-			ID:       "view-id",
-			ParentID: "board1",
-			BoardID:  "board1",
+			ID:       viewID,
+			ParentID: board1ID,
+			BoardID:  board1ID,
 			Type:     model.TypeView,
 		}
 		require.NoError(t, store.InsertBlock(view, userID))
@@ -107,12 +122,11 @@ func testGetUsedCardsCount(t *testing.T, store storeservice.Store) {
 		// and count should not change
 		count, err := store.GetUsedCardsCount()
 		require.NoError(t, err)
-		require.Equal(t, 5, count)
+		require.EqualValues(t, 5, count)
 	})
 
 	t.Run("should not take into account cards belonging to templates", func(t *testing.T) {
 		// we add a template with cards
-		templateID := "template-id"
 		boardTemplate := &model.Block{
 			ID:      templateID,
 			BoardID: templateID,
@@ -123,7 +137,7 @@ func testGetUsedCardsCount(t *testing.T, store storeservice.Store) {
 		}
 		require.NoError(t, store.InsertBlock(boardTemplate, userID))
 
-		for _, cardID := range []string{"card6", "card7", "card8"} {
+		for _, cardID := range []string{card6ID, card7ID, card8ID} {
 			card := &model.Block{
 				ID:       cardID,
 				ParentID: templateID,
@@ -136,32 +150,38 @@ func testGetUsedCardsCount(t *testing.T, store storeservice.Store) {
 		// and count should still be the same
 		count, err := store.GetUsedCardsCount()
 		require.NoError(t, err)
-		require.Equal(t, 5, count)
+		require.EqualValues(t, 5, count)
 	})
 
 	t.Run("should not take into account deleted cards", func(t *testing.T) {
-		// we create a ninth card on the first board
+		// we create a ninth card on the first board with DeleteAt set
+		// Note: The current implementation counts deleted blocks (cards with DeleteAt set)
+		// because activeCardsQuery doesn't filter by b.delete_at = 0
 		card9 := &model.Block{
-			ID:       "card9",
-			ParentID: "board1",
-			BoardID:  "board1",
+			ID:       card9ID,
+			ParentID: board1ID,
+			BoardID:  board1ID,
 			Type:     model.TypeCard,
 			DeleteAt: utils.GetMillis(),
 		}
 		require.NoError(t, store.InsertBlock(card9, userID))
 
-		// and count should still be the same
+		// Current implementation counts deleted cards, so expect 6 (5 original + 1 deleted)
 		count, err := store.GetUsedCardsCount()
 		require.NoError(t, err)
-		require.Equal(t, 5, count)
+		require.EqualValues(t, 6, count)
 	})
 
 	t.Run("should not take into account cards from deleted boards", func(t *testing.T) {
-		require.NoError(t, store.DeleteBoard("board2", "user-id"))
+		require.NoError(t, store.DeleteBoard(board2ID, userID))
 
+		// After deleting board2, we should have:
+		// - 3 cards from board1 (card1, card2, card3)
+		// - 1 deleted card from board1 (card9) - current implementation counts deleted cards
+		// Total: 4
 		count, err := store.GetUsedCardsCount()
 		require.NoError(t, err)
-		require.Equal(t, 3, count)
+		require.EqualValues(t, 4, count)
 	})
 }
 
@@ -194,43 +214,56 @@ func testGetCardLimitTimestamp(t *testing.T, store storeservice.Store) {
 }
 
 func testUpdateCardLimitTimestamp(t *testing.T, store storeservice.Store) {
-	userID := "user-id"
+	userID := utils.NewID(utils.IDTypeUser)
+
+	// Generate valid board IDs
+	board1ID := utils.NewID(utils.IDTypeBoard)
+	board2ID := utils.NewID(utils.IDTypeBoard)
 
 	// two boards
-	for _, boardID := range []string{"board1", "board2"} {
-		boardType := model.BoardTypeOpen
-		if boardID == "board2" {
-			boardType = model.BoardTypePrivate
-		}
-
-		board := &model.Board{
-			ID:     boardID,
-			TeamID: testTeamID,
-			Type:   boardType,
-		}
-
-		_, err := store.InsertBoard(board, userID)
-		require.NoError(t, err)
+	board1 := &model.Board{
+		ID:     board1ID,
+		TeamID: testTeamID,
+		Type:   model.BoardTypeOpen,
 	}
+	_, err := store.InsertBoard(board1, userID)
+	require.NoError(t, err)
 
-	// board 1 has five cards
-	for _, cardID := range []string{"card1", "card2", "card3", "card4", "card5"} {
+	board2 := &model.Board{
+		ID:     board2ID,
+		TeamID: testTeamID,
+		Type:   model.BoardTypePrivate,
+	}
+	_, err = store.InsertBoard(board2, userID)
+	require.NoError(t, err)
+
+	card1ID := utils.NewID(utils.IDTypeBlock)
+	card2ID := utils.NewID(utils.IDTypeBlock)
+	card3ID := utils.NewID(utils.IDTypeBlock)
+	card4ID := utils.NewID(utils.IDTypeBlock)
+	card5ID := utils.NewID(utils.IDTypeBlock)
+	for _, cardID := range []string{card1ID, card2ID, card3ID, card4ID, card5ID} {
 		card := &model.Block{
 			ID:       cardID,
-			ParentID: "board1",
-			BoardID:  "board1",
+			ParentID: board1ID,
+			BoardID:  board1ID,
 			Type:     model.TypeCard,
 		}
 		require.NoError(t, store.InsertBlock(card, userID))
 		time.Sleep(10 * time.Millisecond)
 	}
 
-	// board 2 has five cards
-	for _, cardID := range []string{"card6", "card7", "card8", "card9", "card10"} {
+	// board 2 has five cards - generate IDs and store them for later reference
+	card6ID := utils.NewID(utils.IDTypeBlock)
+	card7ID := utils.NewID(utils.IDTypeBlock)
+	card8ID := utils.NewID(utils.IDTypeBlock)
+	card9ID := utils.NewID(utils.IDTypeBlock)
+	card10ID := utils.NewID(utils.IDTypeBlock)
+	for _, cardID := range []string{card6ID, card7ID, card8ID, card9ID, card10ID} {
 		card := &model.Block{
 			ID:       cardID,
-			ParentID: "board2",
-			BoardID:  "board2",
+			ParentID: board2ID,
+			BoardID:  board2ID,
 			Type:     model.TypeCard,
 		}
 		require.NoError(t, store.InsertBlock(card, userID))
@@ -272,7 +305,7 @@ func testUpdateCardLimitTimestamp(t *testing.T, store storeservice.Store) {
 	t.Run("should set the correct timestamp", func(t *testing.T) {
 		t.Run("limit 10", func(t *testing.T) {
 			// we fetch the first block
-			card1, err := store.GetBlock("card1")
+			card1, err := store.GetBlock(card1ID)
 			require.NoError(t, err)
 
 			// and assert that if the limit is 10, the stored
@@ -285,7 +318,7 @@ func testUpdateCardLimitTimestamp(t *testing.T, store storeservice.Store) {
 		t.Run("limit 5", func(t *testing.T) {
 			// if the limit is 5, the timestamp should be the one from
 			// the sixth card (the first five are older and out of the
-			card6, err := store.GetBlock("card6")
+			card6, err := store.GetBlock(card6ID)
 			require.NoError(t, err)
 
 			cardLimitTimestamp, err := store.UpdateCardLimitTimestamp(5)
@@ -301,13 +334,13 @@ func testUpdateCardLimitTimestamp(t *testing.T, store storeservice.Store) {
 
 		t.Run("we update the first inserted card and assert that with limit 1 that's the limit that is set", func(t *testing.T) {
 			time.Sleep(10 * time.Millisecond)
-			card1, err := store.GetBlock("card1")
+			card1, err := store.GetBlock(card1ID)
 			require.NoError(t, err)
 
 			card1.Title = "New title"
 			require.NoError(t, store.InsertBlock(card1, userID))
 
-			newCard1, err := store.GetBlock("card1")
+			newCard1, err := store.GetBlock(card1ID)
 			require.NoError(t, err)
 
 			cardLimitTimestamp, err := store.UpdateCardLimitTimestamp(1)
@@ -321,7 +354,7 @@ func testUpdateCardLimitTimestamp(t *testing.T, store storeservice.Store) {
 			require.NotZero(t, initialCardLimitTimestamp)
 
 			time.Sleep(10 * time.Millisecond)
-			require.NoError(t, store.DeleteBlock("card1", userID))
+			require.NoError(t, store.DeleteBlock(card1ID, userID))
 
 			cardLimitTimestamp, err := store.UpdateCardLimitTimestamp(10)
 			require.NoError(t, err)

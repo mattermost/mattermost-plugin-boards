@@ -148,9 +148,14 @@ func TestApp_ImportArchive(t *testing.T) {
 			"test": board,
 		}
 
+		oldFileID1 := "7xhwgf5r15fr3dryfozf1dmy41r.jpg"
+		newFileID1 := "7xhwgf5r15fr3dryfozf1dmy42r.jpg"
+		oldFileID2 := "7xhwgf5r15fr3dryfozf1dmy43r.jpg"
+		newFileID2 := "7xhwgf5r15fr3dryfozf1dmy44r.jpg"
+
 		fileMap := map[string]string{
-			"oldFileName1.jpg": "newFileName1.jpg",
-			"oldFileName2.jpg": "newFileName2.jpg",
+			oldFileID1: newFileID1,
+			oldFileID2: newFileID2,
 		}
 
 		imageBlock := &model.Block{
@@ -161,7 +166,7 @@ func TestApp_ImportArchive(t *testing.T) {
 			Schema:     1,
 			Type:       "image",
 			Title:      "",
-			Fields:     map[string]interface{}{"fileId": "oldFileName1.jpg"},
+			Fields:     map[string]interface{}{"fileId": oldFileID1},
 			CreateAt:   1680725585250,
 			UpdateAt:   1680725585250,
 			DeleteAt:   0,
@@ -176,7 +181,7 @@ func TestApp_ImportArchive(t *testing.T) {
 			Schema:     1,
 			Type:       "attachment",
 			Title:      "",
-			Fields:     map[string]interface{}{"fileId": "oldFileName2.jpg"},
+			Fields:     map[string]interface{}{"fileId": oldFileID2},
 			CreateAt:   1680725585250,
 			UpdateAt:   1680725585250,
 			DeleteAt:   0,

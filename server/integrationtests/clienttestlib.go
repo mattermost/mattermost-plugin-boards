@@ -157,6 +157,139 @@ func getTestConfig() (*config.Configuration, error) {
 	}, nil
 }
 
+// testServicesAPI provides a servicesAPI implementation for tests
+type testServicesAPI struct {
+	users map[string]*model.User
+}
+
+func (t *testServicesAPI) GetUserByID(userID string) (*mmModel.User, error) {
+	user := t.users[userID]
+	if user == nil {
+		return nil, fmt.Errorf("user not found: %s", userID)
+	}
+	// Convert Boards model.User to Mattermost model.User
+	return &mmModel.User{
+		Id:       user.ID,
+		Username: user.Username,
+		Email:    user.Email,
+		CreateAt: user.CreateAt,
+		UpdateAt: user.UpdateAt,
+		DeleteAt: user.DeleteAt,
+	}, nil
+}
+
+func (t *testServicesAPI) GetUserByEmail(email string) (*mmModel.User, error) {
+	for _, user := range t.users {
+		if user.Email == email {
+			return &mmModel.User{
+				Id:       user.ID,
+				Username: user.Username,
+				Email:    user.Email,
+				CreateAt: user.CreateAt,
+				UpdateAt: user.UpdateAt,
+				DeleteAt: user.DeleteAt,
+			}, nil
+		}
+	}
+	return nil, fmt.Errorf("user not found: %s", email)
+}
+
+func (t *testServicesAPI) GetUserByUsername(username string) (*mmModel.User, error) {
+	for _, user := range t.users {
+		if user.Username == username {
+			return &mmModel.User{
+				Id:       user.ID,
+				Username: user.Username,
+				Email:    user.Email,
+				CreateAt: user.CreateAt,
+				UpdateAt: user.UpdateAt,
+				DeleteAt: user.DeleteAt,
+			}, nil
+		}
+	}
+	return nil, fmt.Errorf("user not found: %s", username)
+}
+
+func (t *testServicesAPI) UpdateUser(user *mmModel.User) (*mmModel.User, error) {
+	return user, nil
+}
+
+func (t *testServicesAPI) GetChannelByID(channelID string) (*mmModel.Channel, error) {
+	// Return a mock channel for tests - this is used in migrations
+	return &mmModel.Channel{
+		Id:        channelID,
+		Type:      mmModel.ChannelTypeDirect,
+		CreatorId: "team-member", // Default creator
+	}, nil
+}
+
+func (t *testServicesAPI) GetDirectChannel(userID1, userID2 string) (*mmModel.Channel, error) {
+	// Return a mock direct channel
+	channelID := mmModel.NewId()
+	return &mmModel.Channel{
+		Id:        channelID,
+		Type:      mmModel.ChannelTypeDirect,
+		CreatorId: userID1,
+	}, nil
+}
+
+func (t *testServicesAPI) GetChannelMember(channelID string, userID string) (*mmModel.ChannelMember, error) {
+	// Return NotFound error if user doesn't exist (matches Mattermost behavior)
+	if _, exists := t.users[userID]; !exists {
+		return nil, mmModel.NewAppError("GetChannelMember", "app.channel.get_member.missing.app_error", nil, "", http.StatusNotFound)
+	}
+	// Return a mock channel member
+	return &mmModel.ChannelMember{
+		ChannelId: channelID,
+		UserId:    userID,
+	}, nil
+}
+
+func (t *testServicesAPI) GetChannelsForTeamForUser(teamID string, userID string, includeDeleted bool) (mmModel.ChannelList, error) {
+	// Return empty list for tests - this is used for channel search
+	return mmModel.ChannelList{}, nil
+}
+
+func (t *testServicesAPI) GetLicense() *mmModel.License {
+	return nil
+}
+
+func (t *testServicesAPI) GetFileInfo(fileID string) (*mmModel.FileInfo, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (t *testServicesAPI) CreatePost(post *mmModel.Post) (*mmModel.Post, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (t *testServicesAPI) EnsureBot(bot *mmModel.Bot) (string, error) {
+	return "", fmt.Errorf("not implemented")
+}
+
+func (t *testServicesAPI) GetTeamMember(teamID string, userID string) (*mmModel.TeamMember, error) {
+	// Return NotFound error if user doesn't exist (matches Mattermost behavior)
+	if _, exists := t.users[userID]; !exists {
+		return nil, mmModel.NewAppError("GetTeamMember", "app.team.get_member.missing.app_error", nil, "", http.StatusNotFound)
+	}
+	// Return a mock team member
+	return &mmModel.TeamMember{
+		TeamId: teamID,
+		UserId: userID,
+	}, nil
+}
+
+func (t *testServicesAPI) GetPreferencesForUser(userID string) (mmModel.Preferences, error) {
+	return nil, nil
+}
+
+func (t *testServicesAPI) DeletePreferencesForUser(userID string, preferences mmModel.Preferences) error {
+	return nil
+}
+
+func (t *testServicesAPI) UpdatePreferencesForUser(userID string, preferences mmModel.Preferences) error {
+	return nil
+}
+
 func NewTestServerPluginMode() *server.Server {
 	cfg, err := getTestConfig()
 	if err != nil {
@@ -179,6 +312,65 @@ func NewTestServerPluginMode() *server.Server {
 		panic(fmt.Errorf("Database Ping failed: %w", err))
 	}
 
+	// Create Mattermost tables needed for migrations (Playbooks approach)
+	if err := sqlstore.SetupMattermostTablesForIntegration(sqlDB, cfg.DBType); err != nil {
+		panic(fmt.Errorf("failed to setup Mattermost tables: %w", err))
+	}
+
+	// Create test users map for servicesAPI
+	testUsers := map[string]*model.User{
+		"no-team-member": {
+			ID:       "no-team-member",
+			Username: "no-team-member",
+			Email:    "no-team-member@sample.com",
+			CreateAt: model.GetMillis(),
+			UpdateAt: model.GetMillis(),
+		},
+		"team-member": {
+			ID:       "team-member",
+			Username: "team-member",
+			Email:    "team-member@sample.com",
+			CreateAt: model.GetMillis(),
+			UpdateAt: model.GetMillis(),
+		},
+		"viewer": {
+			ID:       "viewer",
+			Username: "viewer",
+			Email:    "viewer@sample.com",
+			CreateAt: model.GetMillis(),
+			UpdateAt: model.GetMillis(),
+		},
+		"commenter": {
+			ID:       "commenter",
+			Username: "commenter",
+			Email:    "commenter@sample.com",
+			CreateAt: model.GetMillis(),
+			UpdateAt: model.GetMillis(),
+		},
+		"editor": {
+			ID:       "editor",
+			Username: "editor",
+			Email:    "editor@sample.com",
+			CreateAt: model.GetMillis(),
+			UpdateAt: model.GetMillis(),
+		},
+		"admin": {
+			ID:       "admin",
+			Username: "admin",
+			Email:    "admin@sample.com",
+			CreateAt: model.GetMillis(),
+			UpdateAt: model.GetMillis(),
+		},
+		"guest": {
+			ID:       "guest",
+			Username: "guest",
+			Email:    "guest@sample.com",
+			CreateAt: model.GetMillis(),
+			UpdateAt: model.GetMillis(),
+			IsGuest:  true,
+		},
+	}
+
 	storeParams := sqlstore.Params{
 		DBType:           cfg.DBType,
 		DBPingAttempts:   cfg.DBPingAttempts,
@@ -186,6 +378,7 @@ func NewTestServerPluginMode() *server.Server {
 		TablePrefix:      cfg.DBTablePrefix,
 		Logger:           logger,
 		DB:               sqlDB,
+		ServicesAPI:      &testServicesAPI{users: testUsers},
 		NewMutexFn: func(name string) (*cluster.Mutex, error) {
 			// Create a mutex using a test API that does nothing
 			// This allows migrations to run without actual cluster coordination

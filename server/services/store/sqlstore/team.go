@@ -185,7 +185,10 @@ func (s *SQLStore) getTeam(db sq.BaseRunner, id string) (*model.Team, error) {
 	row := query.QueryRow()
 	var displayName string
 	err := row.Scan(&displayName)
-	if err != nil && !model.IsErrNotFound(err) {
+	if err != nil {
+		if model.IsErrNotFound(err) {
+			return nil, model.NewErrNotFound("team")
+		}
 		s.logger.Error("GetTeam scan error",
 			mlog.String("team_id", id),
 			mlog.Err(err),

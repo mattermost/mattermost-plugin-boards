@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"testing"
 
+	"github.com/mattermost/mattermost-plugin-boards/server/client"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 	"github.com/stretchr/testify/require"
@@ -138,9 +139,11 @@ func randomBytes(t *testing.T, n int) []byte {
 
 func TestTeamUploadFile(t *testing.T) {
 	t.Run("no permission", func(t *testing.T) { // native auth, but not login
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		// Use unauthenticated client
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 		teamID := "0"
 		boardID := utils.NewID(utils.IDTypeBoard)
 		data := randomBytes(t, 1024)
@@ -150,9 +153,11 @@ func TestTeamUploadFile(t *testing.T) {
 	})
 
 	t.Run("a board admin should be able to update a file", func(t *testing.T) { // single token auth
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
 		teamID := "0"
 		newBoard := &model.Board{
 			Type:   model.BoardTypeOpen,
@@ -171,9 +176,12 @@ func TestTeamUploadFile(t *testing.T) {
 	})
 
 	t.Run("user that doesn't belong to the board should not be able to upload a file", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
 		teamID := "0"
 		newBoard := &model.Board{
 			Type:   model.BoardTypeOpen,

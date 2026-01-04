@@ -14,8 +14,11 @@ import (
 
 func TestExportBoard(t *testing.T) {
 	t.Run("export single board", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
 
 		board := &model.Board{
 			ID:        utils.NewID(utils.IDTypeBoard),

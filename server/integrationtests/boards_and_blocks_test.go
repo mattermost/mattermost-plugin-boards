@@ -6,18 +6,20 @@ package integrationtests
 import (
 	"testing"
 
+	"github.com/mattermost/mattermost-plugin-boards/server/client"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreateBoardsAndBlocks(t *testing.T) {
-	teamID := testTeamID
-
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).Start()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		// Use unauthenticated client
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 		newBab := &model.BoardsAndBlocks{
 			Boards: []*model.Board{},
 			Blocks: []*model.Block{},
@@ -29,8 +31,12 @@ func TestCreateBoardsAndBlocks(t *testing.T) {
 	})
 
 	t.Run("invalid boards and blocks", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
 
 		t.Run("no boards", func(t *testing.T) {
 			newBab := &model.BoardsAndBlocks{
@@ -167,12 +173,12 @@ func TestCreateBoardsAndBlocks(t *testing.T) {
 }
 
 func TestPatchBoardsAndBlocks(t *testing.T) {
-	teamID := "team-id"
-
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).Start()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		// Use unauthenticated client
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 		pbab := &model.PatchBoardsAndBlocks{}
 
 		bab, resp := th.Client.PatchBoardsAndBlocks(pbab)
@@ -181,9 +187,12 @@ func TestPatchBoardsAndBlocks(t *testing.T) {
 	})
 
 	t.Run("invalid patch boards and blocks", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
 		userID := th.GetUser1().ID
 		initialTitle := "initial title 1"
 		newTitle := "new title 1"
@@ -320,9 +329,12 @@ func TestPatchBoardsAndBlocks(t *testing.T) {
 	})
 
 	t.Run("if the user doesn't have permissions for one of the boards, nothing should be updated", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
 		userID := th.GetUser1().ID
 		initialTitle := "initial title 2"
 		newTitle := "new title 2"
@@ -384,9 +396,12 @@ func TestPatchBoardsAndBlocks(t *testing.T) {
 	})
 
 	t.Run("boards belonging to different teams should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
 		userID := th.GetUser1().ID
 		initialTitle := "initial title 3"
 		newTitle := "new title 3"
@@ -400,9 +415,10 @@ func TestPatchBoardsAndBlocks(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, board1)
 
+		teamID2 := mmModel.NewId()
 		newBoard2 := &model.Board{
 			Title:  initialTitle,
-			TeamID: "different-team-id",
+			TeamID: teamID2,
 			Type:   model.BoardTypeOpen,
 		}
 		board2, err := th.Server.App().CreateBoard(newBoard2, userID, true)
@@ -448,9 +464,12 @@ func TestPatchBoardsAndBlocks(t *testing.T) {
 	})
 
 	t.Run("patches should be rejected if one is invalid", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
 		userID := th.GetUser1().ID
 		initialTitle := "initial title 4"
 		newTitle := "new title 4"
@@ -515,9 +534,12 @@ func TestPatchBoardsAndBlocks(t *testing.T) {
 	})
 
 	t.Run("patches should be rejected if there is a block that doesn't belong to the boards being patched", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
 		userID := th.GetUser1().ID
 		initialTitle := "initial title"
 		newTitle := "new patched title"
@@ -578,9 +600,12 @@ func TestPatchBoardsAndBlocks(t *testing.T) {
 	})
 
 	t.Run("patches should be applied if they're valid and they're related", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
 		userID := th.GetUser1().ID
 		initialTitle := "initial title"
 		newTitle := "new other title"
@@ -660,12 +685,12 @@ func TestPatchBoardsAndBlocks(t *testing.T) {
 }
 
 func TestDeleteBoardsAndBlocks(t *testing.T) {
-	teamID := "team-id"
-
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).Start()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		// Use unauthenticated client
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 		dbab := &model.DeleteBoardsAndBlocks{}
 
 		success, resp := th.Client.DeleteBoardsAndBlocks(dbab)
@@ -674,9 +699,12 @@ func TestDeleteBoardsAndBlocks(t *testing.T) {
 	})
 
 	t.Run("invalid delete boards and blocks", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
 		// a board and a block are required for the permission checks
 		newBoard := &model.Board{
 			TeamID: teamID,
@@ -707,8 +735,9 @@ func TestDeleteBoardsAndBlocks(t *testing.T) {
 		})
 
 		t.Run("boards from different teams", func(t *testing.T) {
+			teamID2 := mmModel.NewId()
 			newOtherTeamsBoard := &model.Board{
-				TeamID: "another-team-id",
+				TeamID: teamID2,
 				Type:   model.BoardTypeOpen,
 			}
 			otherTeamsBoard, err := th.Server.App().CreateBoard(newOtherTeamsBoard, th.GetUser1().ID, true)
@@ -727,13 +756,16 @@ func TestDeleteBoardsAndBlocks(t *testing.T) {
 	})
 
 	t.Run("if the user has no permissions to one of the boards, nothing should be deleted", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
 		// the user is an admin of the first board
 		newBoard1 := &model.Board{
 			Type:   model.BoardTypeOpen,
-			TeamID: "team_id_1",
+			TeamID: teamID,
 		}
 		board1, err := th.Server.App().CreateBoard(newBoard1, th.GetUser1().ID, true)
 		require.NoError(t, err)
@@ -742,7 +774,7 @@ func TestDeleteBoardsAndBlocks(t *testing.T) {
 		// but not of the second
 		newBoard2 := &model.Board{
 			Type:   model.BoardTypeOpen,
-			TeamID: "team_id_1",
+			TeamID: teamID,
 		}
 		board2, err := th.Server.App().CreateBoard(newBoard2, th.GetUser1().ID, false)
 		require.NoError(t, err)
@@ -759,9 +791,12 @@ func TestDeleteBoardsAndBlocks(t *testing.T) {
 	})
 
 	t.Run("all boards and blocks should be deleted if the request is correct", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
 		newBab := &model.BoardsAndBlocks{
 			Boards: []*model.Board{
 				{ID: "board-id-1", Title: "public board", TeamID: teamID, Type: model.BoardTypeOpen},

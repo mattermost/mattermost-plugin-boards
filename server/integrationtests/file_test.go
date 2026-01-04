@@ -7,38 +7,44 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/mattermost/mattermost-plugin-boards/server/client"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestUploadFile(t *testing.T) {
-	const (
-		testTeamID = "team-id"
-	)
-
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		// Use unauthenticated client
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
+		testTeamID := "team-id"
 		file, resp := th.Client.TeamUploadFile(testTeamID, "test-board-id", bytes.NewBuffer([]byte("test")))
 		th.CheckUnauthorized(resp)
 		require.Nil(t, file)
 	})
 
 	t.Run("upload a file to an existing team and board without permissions", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		testTeamID := "team-id"
 		file, resp := th.Client.TeamUploadFile(testTeamID, "not-valid-board", bytes.NewBuffer([]byte("test")))
 		th.CheckForbidden(resp)
 		require.Nil(t, file)
 	})
 
 	t.Run("upload a file to an existing team and board with permissions", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		testTeamID := "team-id"
 		testBoard := th.CreateBoard(testTeamID, model.BoardTypeOpen)
 		file, resp := th.Client.TeamUploadFile(testTeamID, testBoard.ID, bytes.NewBuffer([]byte("test")))
 		th.CheckOK(resp)
@@ -48,9 +54,12 @@ func TestUploadFile(t *testing.T) {
 	})
 
 	t.Run("upload a file to an existing team and board with permissions but reaching the MaxFileLimit", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		testTeamID := "team-id"
 		testBoard := th.CreateBoard(testTeamID, model.BoardTypeOpen)
 
 		config := th.Server.App().GetConfig()
@@ -73,13 +82,13 @@ func TestUploadFile(t *testing.T) {
 }
 
 func TestFileInfo(t *testing.T) {
-	const (
-		testTeamID = "team-id"
-	)
-
 	t.Run("Retrieving file info", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		testTeamID := "team-id"
 		testBoard := th.CreateBoard(testTeamID, model.BoardTypeOpen)
 
 		fileInfo, resp := th.Client.TeamUploadFileInfo(testTeamID, testBoard.ID, "test")
