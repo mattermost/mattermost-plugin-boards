@@ -304,6 +304,11 @@ func SetupTests(t *testing.T) (store.Store, func()) {
 	dbType := *sqlSettings.DriverName
 	connectionString := *sqlSettings.DataSource
 
+	// Ensure cleanup runs even if test panics
+	t.Cleanup(func() {
+		storetest.CleanupSqlSettings(sqlSettings)
+	})
+
 	logger, _ := mlog.NewLogger()
 
 	sqlDB, err := sql.Open(dbType, connectionString)

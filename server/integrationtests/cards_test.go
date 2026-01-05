@@ -178,7 +178,8 @@ func TestGetCards(t *testing.T) {
 	})
 
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		cards, resp := th.Client.GetCards(board.ID, 0, 10)
+		unauthenticatedClient := client.NewClient(th.Server.Config().ServerRoot, "")
+		cards, resp := unauthenticatedClient.GetCards(board.ID, 0, 10)
 		th.CheckUnauthorized(resp)
 		require.Nil(t, cards)
 	})

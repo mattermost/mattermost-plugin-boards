@@ -70,6 +70,11 @@ func (a *API) handleCreateCard(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 	boardID := mux.Vars(r)["boardID"]
 
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to create card"))
+		return
+	}
+
 	val := r.URL.Query().Get("disable_notify")
 	disableNotify := val == True
 
@@ -169,6 +174,11 @@ func (a *API) handleGetCards(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/definitions/ErrorResponse"
 	userID := getUserID(r)
 	boardID := mux.Vars(r)["boardID"]
+
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to fetch cards"))
+		return
+	}
 
 	query := r.URL.Query()
 	strPage := query.Get("page")

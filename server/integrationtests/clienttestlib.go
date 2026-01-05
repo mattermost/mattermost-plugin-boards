@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"testing"
@@ -57,6 +58,50 @@ var (
 	userGuestID        = userGuest
 )
 
+type Clients struct {
+	Anon         *client.Client
+	NoTeamMember *client.Client
+	TeamMember   *client.Client
+	Viewer       *client.Client
+	Commenter    *client.Client
+	Editor       *client.Client
+	Admin        *client.Client
+	Guest        *client.Client
+}
+
+func setupClients(th *TestHelper) Clients {
+	clients := Clients{
+		Anon:         client.NewClient(th.Server.Config().ServerRoot, ""),
+		NoTeamMember: client.NewClient(th.Server.Config().ServerRoot, ""),
+		TeamMember:   client.NewClient(th.Server.Config().ServerRoot, ""),
+		Viewer:       client.NewClient(th.Server.Config().ServerRoot, ""),
+		Commenter:    client.NewClient(th.Server.Config().ServerRoot, ""),
+		Editor:       client.NewClient(th.Server.Config().ServerRoot, ""),
+		Admin:        client.NewClient(th.Server.Config().ServerRoot, ""),
+		Guest:        client.NewClient(th.Server.Config().ServerRoot, ""),
+	}
+
+	clients.NoTeamMember.HTTPHeader["Mattermost-User-Id"] = userNoTeamMember
+	clients.TeamMember.HTTPHeader["Mattermost-User-Id"] = userTeamMember
+	clients.Viewer.HTTPHeader["Mattermost-User-Id"] = userViewer
+	clients.Commenter.HTTPHeader["Mattermost-User-Id"] = userCommenter
+	clients.Editor.HTTPHeader["Mattermost-User-Id"] = userEditor
+	clients.Admin.HTTPHeader["Mattermost-User-Id"] = userAdmin
+	clients.Guest.HTTPHeader["Mattermost-User-Id"] = userGuest
+
+	// For plugin tests, the userID = username
+	userAnonID = userAnon
+	userNoTeamMemberID = userNoTeamMember
+	userTeamMemberID = userTeamMember
+	userViewerID = userViewer
+	userCommenterID = userCommenter
+	userEditorID = userEditor
+	userAdminID = userAdmin
+	userGuestID = userGuest
+
+	return clients
+}
+
 type LicenseType int
 
 const (
@@ -72,6 +117,8 @@ type TestHelper struct {
 	Client2 *client.Client
 
 	origEnvUnitTesting string
+	sqlSettings        *mmModel.SqlSettings
+	cleanupDone        bool
 }
 
 type FakePermissionPluginAPI struct{}
@@ -116,9 +163,23 @@ func getEnvWithDefault(name, defaultValue string) string {
 	return defaultValue
 }
 
-func getTestConfig() (*config.Configuration, error) {
-	driverName := getEnvWithDefault("TEST_DATABASE_DRIVERNAME", "postgres")
-	sqlSettings := storetest.MakeSqlSettings(driverName, false)
+// getAvailablePort finds an available port by listening on port 0 and then closing the listener
+func getAvailablePort() (int, error) {
+	listener, err := net.Listen("tcp", ":0")
+	if err != nil {
+		return 0, err
+	}
+	defer listener.Close()
+	addr := listener.Addr().(*net.TCPAddr)
+	return addr.Port, nil
+}
+
+func getTestConfig(sqlSettings *mmModel.SqlSettings) (*config.Configuration, error) {
+	// Get an available port dynamically to avoid conflicts when tests run in parallel
+	port, err := getAvailablePort()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get available port: %w", err)
+	}
 
 	logging := `
 	{
@@ -143,8 +204,8 @@ func getTestConfig() (*config.Configuration, error) {
 	}`
 
 	return &config.Configuration{
-		ServerRoot:        "http://localhost:8888",
-		Port:              8888,
+		ServerRoot:        fmt.Sprintf("http://localhost:%d", port),
+		Port:              port,
 		DBType:            *sqlSettings.DriverName,
 		DBConfigString:    *sqlSettings.DataSource,
 		DBTablePrefix:     "test_",
@@ -290,8 +351,8 @@ func (t *testServicesAPI) UpdatePreferencesForUser(userID string, preferences mm
 	return nil
 }
 
-func NewTestServerPluginMode() *server.Server {
-	cfg, err := getTestConfig()
+func NewTestServerPluginMode(sqlSettings *mmModel.SqlSettings) *server.Server {
+	cfg, err := getTestConfig(sqlSettings)
 	if err != nil {
 		panic(err)
 	}
@@ -418,12 +479,33 @@ func SetupTestHelperPluginMode(t *testing.T) *TestHelper {
 	origUnitTesting := os.Getenv("FOCALBOARD_UNIT_TESTING")
 	os.Setenv("FOCALBOARD_UNIT_TESTING", "1")
 
+	// Create sqlSettings for test database
+	driverName := getEnvWithDefault("TEST_DATABASE_DRIVERNAME", "postgres")
+	sqlSettings := storetest.MakeSqlSettings(driverName, false)
+
 	th := &TestHelper{
 		T:                  t,
 		origEnvUnitTesting: origUnitTesting,
+		sqlSettings:        sqlSettings,
+		cleanupDone:        false,
 	}
 
-	th.Server = NewTestServerPluginMode()
+	// Ensure cleanup runs even if test panics
+	t.Cleanup(func() {
+		if th.sqlSettings != nil && !th.cleanupDone {
+			// Use recover to handle errors gracefully (e.g., database already dropped)
+			defer func() {
+				if r := recover(); r != nil {
+					// Ignore panics from CleanupSqlSettings - database may already be cleaned up
+					// This prevents double-cleanup issues when both TearDown() and t.Cleanup() run
+				}
+			}()
+			storetest.CleanupSqlSettings(th.sqlSettings)
+			th.cleanupDone = true
+		}
+	})
+
+	th.Server = NewTestServerPluginMode(sqlSettings)
 	th.Start()
 	return th
 }
@@ -465,14 +547,13 @@ func (th *TestHelper) Start() *TestHelper {
 
 // InitBasic starts the test server and initializes the clients of the
 // helper, registering them and logging them into the system.
+// For plugin mode, this initializes clients using setupClients.
+// Note: SetupTestHelperPluginMode already calls Start(), so we don't need to call it again here.
 func (th *TestHelper) InitBasic() *TestHelper {
-	th.Start()
-
-	// get token
-	team, resp := th.Client.GetTeam(model.GlobalTeamID)
-	th.CheckOK(resp)
-	require.NotNil(th.T, team)
-	require.NotNil(th.T, team.SignupToken)
+	// Initialize clients for plugin mode
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
+	th.Client2 = clients.Viewer
 
 	return th
 }
@@ -495,6 +576,15 @@ func (th *TestHelper) TearDown() {
 
 	os.RemoveAll(th.Server.Config().FilesPath)
 
+	// Cleanup database using storetest.CleanupSqlSettings
+	// This handles both SQLite files and PostgreSQL/MySQL databases
+	// Note: t.Cleanup() will also try to clean up, so we mark it as done to prevent double cleanup
+	if th.sqlSettings != nil && !th.cleanupDone {
+		storetest.CleanupSqlSettings(th.sqlSettings)
+		th.cleanupDone = true
+	}
+
+	// Fallback: Try to remove SQLite file if it exists (for backward compatibility)
 	if err := os.Remove(th.Server.Config().DBConfigString); err == nil {
 		logger.Debug("Removed test database", mlog.String("file", th.Server.Config().DBConfigString))
 	}

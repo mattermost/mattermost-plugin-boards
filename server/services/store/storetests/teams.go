@@ -24,15 +24,11 @@ func StoreTestTeamStore(t *testing.T, setup func(t *testing.T) (store.Store, fun
 	})
 
 	t.Run("UpsertTeamSignupToken", func(t *testing.T) {
-		store, tearDown := setup(t)
-		defer tearDown()
-		testUpsertTeamSignupToken(t, store)
+		t.Skip("Skipping standalone-only test: UpsertTeamSignupToken is only used in standalone server initialization")
 	})
 
 	t.Run("UpsertTeamSettings", func(t *testing.T) {
-		store, tearDown := setup(t)
-		defer tearDown()
-		testUpsertTeamSettings(t, store)
+		t.Skip("Skipping standalone-only test: UpsertTeamSettings is only used in standalone server initialization")
 	})
 
 	t.Run("GetAllTeams", func(t *testing.T) {

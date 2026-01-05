@@ -13,21 +13,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mattermost/mattermost-plugin-boards/server/client"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/stretchr/testify/require"
 )
-
-type Clients struct {
-	Anon         *client.Client
-	NoTeamMember *client.Client
-	TeamMember   *client.Client
-	Viewer       *client.Client
-	Commenter    *client.Client
-	Editor       *client.Client
-	Admin        *client.Client
-	Guest        *client.Client
-}
 
 const (
 	methodPost   = "POST"
@@ -56,40 +44,6 @@ func (tt TestCase) identifier() string {
 		tt.expectedStatusCode,
 		tt.totalResults,
 	)
-}
-
-func setupClients(th *TestHelper) Clients {
-	// user1
-	clients := Clients{
-		Anon:         client.NewClient(th.Server.Config().ServerRoot, ""),
-		NoTeamMember: client.NewClient(th.Server.Config().ServerRoot, ""),
-		TeamMember:   client.NewClient(th.Server.Config().ServerRoot, ""),
-		Viewer:       client.NewClient(th.Server.Config().ServerRoot, ""),
-		Commenter:    client.NewClient(th.Server.Config().ServerRoot, ""),
-		Editor:       client.NewClient(th.Server.Config().ServerRoot, ""),
-		Admin:        client.NewClient(th.Server.Config().ServerRoot, ""),
-		Guest:        client.NewClient(th.Server.Config().ServerRoot, ""),
-	}
-
-	clients.NoTeamMember.HTTPHeader["Mattermost-User-Id"] = userNoTeamMember
-	clients.TeamMember.HTTPHeader["Mattermost-User-Id"] = userTeamMember
-	clients.Viewer.HTTPHeader["Mattermost-User-Id"] = userViewer
-	clients.Commenter.HTTPHeader["Mattermost-User-Id"] = userCommenter
-	clients.Editor.HTTPHeader["Mattermost-User-Id"] = userEditor
-	clients.Admin.HTTPHeader["Mattermost-User-Id"] = userAdmin
-	clients.Guest.HTTPHeader["Mattermost-User-Id"] = userGuest
-
-	// For plugin tests, the userID = username
-	userAnonID = userAnon
-	userNoTeamMemberID = userNoTeamMember
-	userTeamMemberID = userTeamMember
-	userViewerID = userViewer
-	userCommenterID = userCommenter
-	userEditorID = userEditor
-	userAdminID = userAdmin
-	userGuestID = userGuest
-
-	return clients
 }
 
 func toJSON(t *testing.T, obj interface{}) string {

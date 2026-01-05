@@ -5,6 +5,7 @@ package integrationtests
 
 import (
 	"encoding/json"
+	"os"
 	"sort"
 	"testing"
 	"time"
@@ -440,7 +441,10 @@ func TestGetAllBlocksForBoard(t *testing.T) {
 	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
-	board := th.CreateBoard("board-id", model.BoardTypeOpen)
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
+	teamID := mmModel.NewId()
+	board := th.CreateBoard(teamID, model.BoardTypeOpen)
 
 	parentBlockID := utils.NewID(utils.IDTypeBlock)
 	childBlockID1 := utils.NewID(utils.IDTypeBlock)
@@ -657,13 +661,14 @@ func TestGetBoard(t *testing.T) {
 		require.True(t, success)
 
 		// we make sure that the client cannot currently retrieve the
-		// board with no session
-		board, resp = th.Client.GetBoard(rBoard.ID, "")
+		// board with no session (use unauthenticated client)
+		unauthenticatedClient := client.NewClient(th.Server.Config().ServerRoot, "")
+		board, resp = unauthenticatedClient.GetBoard(rBoard.ID, "")
 		th.CheckUnauthorized(resp)
 		require.Nil(t, board)
 
 		// it should be able to retrieve it with the read token
-		board, resp = th.Client.GetBoard(rBoard.ID, sharingToken)
+		board, resp = unauthenticatedClient.GetBoard(rBoard.ID, sharingToken)
 		th.CheckOK(resp)
 		require.NotNil(t, board)
 	})
@@ -744,10 +749,32 @@ func TestGetBoard(t *testing.T) {
 
 func TestGetBoardMetadata(t *testing.T) {
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		th := SetupTestHelperPluginMode(t).InitBasic()
-		defer th.TearDown()
+		// Set environment variable to disable Compliance feature so license check fails first
+		originalEnv := os.Getenv("FOCALBOARD_UNIT_TESTING_COMPLIANCE")
+		os.Setenv("FOCALBOARD_UNIT_TESTING_COMPLIANCE", "false")
+		defer os.Setenv("FOCALBOARD_UNIT_TESTING_COMPLIANCE", originalEnv)
 
-		boardMetadata, resp := th.Client.GetBoardMetadata("boar-id", "")
+		th := SetupTestHelperPluginMode(t)
+		defer th.TearDown()
+		// Create a client with no authentication headers
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
+
+		// Create a board first so we can test authentication properly
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
+		board := &model.Board{
+			Title:  "test board",
+			Type:   model.BoardTypeOpen,
+			TeamID: teamID,
+		}
+		rBoard, err := th.Server.App().CreateBoard(board, userTeamMember, true)
+		require.NoError(t, err)
+
+		// Now use unauthenticated client
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
+		boardMetadata, resp := th.Client.GetBoardMetadata(rBoard.ID, "")
+		// The API checks authentication first and returns 401 for unauthenticated users
 		th.CheckUnauthorized(resp)
 		require.Nil(t, boardMetadata)
 	})
@@ -835,6 +862,11 @@ func TestGetBoardMetadata(t *testing.T) {
 	})
 
 	t.Run("getBoardMetadata should fail with no license", func(t *testing.T) {
+		// Set environment variable to disable Compliance feature
+		originalEnv := os.Getenv("FOCALBOARD_UNIT_TESTING_COMPLIANCE")
+		os.Setenv("FOCALBOARD_UNIT_TESTING_COMPLIANCE", "false")
+		defer os.Setenv("FOCALBOARD_UNIT_TESTING_COMPLIANCE", originalEnv)
+
 		th := SetupTestHelperPluginMode(t).InitBasic()
 		defer th.TearDown()
 		th.Server.Config().EnablePublicSharedBoards = true
@@ -856,6 +888,11 @@ func TestGetBoardMetadata(t *testing.T) {
 	})
 
 	t.Run("getBoardMetadata should fail on Professional license", func(t *testing.T) {
+		// Set environment variable to disable Compliance feature (Professional license)
+		originalEnv := os.Getenv("FOCALBOARD_UNIT_TESTING_COMPLIANCE")
+		os.Setenv("FOCALBOARD_UNIT_TESTING_COMPLIANCE", "false")
+		defer os.Setenv("FOCALBOARD_UNIT_TESTING_COMPLIANCE", originalEnv)
+
 		th := SetupTestHelperPluginMode(t).InitBasic()
 		defer th.TearDown()
 		th.Server.Config().EnablePublicSharedBoards = true
@@ -904,14 +941,17 @@ func TestGetBoardMetadata(t *testing.T) {
 		th.CheckOK(resp)
 		require.True(t, success)
 
-		// we make sure that the client cannot currently retrieve the
-		// board with no session
-		boardMetadata, resp := th.Client.GetBoardMetadata(rBoard.ID, "")
+		// Create an unauthenticated client to test read token rejection
+		unauthenticatedClient := client.NewClient(th.Server.Config().ServerRoot, "")
+
+		// The API checks authentication first and returns 401 for unauthenticated users
+		// Read tokens are not supported for metadata endpoint
+		boardMetadata, resp := unauthenticatedClient.GetBoardMetadata(rBoard.ID, "")
 		th.CheckUnauthorized(resp)
 		require.Nil(t, boardMetadata)
 
-		// it should not be able to retrieve it with the read token either
-		boardMetadata, resp = th.Client.GetBoardMetadata(rBoard.ID, sharingToken)
+		// Read tokens are not supported for metadata endpoint - it will also fail with 401
+		boardMetadata, resp = unauthenticatedClient.GetBoardMetadata(rBoard.ID, sharingToken)
 		th.CheckUnauthorized(resp)
 		require.Nil(t, boardMetadata)
 	})
@@ -1085,17 +1125,20 @@ func TestDeleteBoard(t *testing.T) {
 
 		clients := setupClients(th)
 		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer // User without delete permissions
 
 		teamID := mmModel.NewId()
+		user1 := th.GetUser1()
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypeOpen,
 			TeamID: teamID,
 		}
-		board, err := th.Server.App().CreateBoard(newBoard, "some-user-id", false)
+		board, err := th.Server.App().CreateBoard(newBoard, user1.ID, false)
 		require.NoError(t, err)
 
-		success, resp := th.Client.DeleteBoard(board.ID)
+		// Try to delete with user2 who doesn't have delete permissions
+		success, resp := th.Client2.DeleteBoard(board.ID)
 		th.CheckForbidden(resp)
 		require.False(t, success)
 
@@ -1183,8 +1226,9 @@ func TestUndeleteBoard(t *testing.T) {
 
 		clients := setupClients(th)
 		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
 		teamID := mmModel.NewId()
-		userID := "some-user-id" // User not in test setup
+		userID := th.GetUser1().ID
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypeOpen,
@@ -1197,7 +1241,7 @@ func TestUndeleteBoard(t *testing.T) {
 		err = th.Server.App().DeleteBoard(newBoard.ID, userID)
 		require.NoError(t, err)
 
-		success, resp := th.Client.UndeleteBoard(board.ID)
+		success, resp := th.Client2.UndeleteBoard(board.ID)
 		th.CheckForbidden(resp)
 		require.False(t, success)
 
@@ -1212,9 +1256,10 @@ func TestUndeleteBoard(t *testing.T) {
 		defer th.TearDown()
 
 		clients := setupClients(th)
-		th.Client = clients.Viewer // Viewer doesn't have admin permissions
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
 		teamID := mmModel.NewId()
-		creatorID := "some-user-id" // User not in test setup
+		creatorID := th.GetUser1().ID
 		newBoard := &model.Board{
 			Title:  "title",
 			Type:   model.BoardTypeOpen,
@@ -1223,8 +1268,10 @@ func TestUndeleteBoard(t *testing.T) {
 		board, err := th.Server.App().CreateBoard(newBoard, creatorID, false)
 		require.NoError(t, err)
 
+		th.Client2 = clients.Viewer
+		viewerUserID := th.GetUser2().ID
 		newUser2Member := &model.BoardMember{
-			UserID:       th.GetUser1().ID, // Add viewer as member
+			UserID:       viewerUserID,
 			BoardID:      board.ID,
 			SchemeEditor: true,
 		}
@@ -1235,7 +1282,7 @@ func TestUndeleteBoard(t *testing.T) {
 		err = th.Server.App().DeleteBoard(newBoard.ID, creatorID)
 		require.NoError(t, err)
 
-		success, resp := th.Client.UndeleteBoard(board.ID)
+		success, resp := th.Client2.UndeleteBoard(board.ID)
 		th.CheckForbidden(resp)
 		require.False(t, success)
 
@@ -1620,13 +1667,14 @@ func TestUpdateMember(t *testing.T) {
 			Type:   model.BoardTypeOpen,
 			TeamID: teamID,
 		}
-		board, err := th.Server.App().CreateBoard(newBoard, th.GetUser1().ID, true)
+		userID := th.GetUser1().ID
+		board, err := th.Server.App().CreateBoard(newBoard, userID, true)
 		require.NoError(t, err)
 
 		// Now use unauthenticated client
 		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 		updatedMember := &model.BoardMember{
-			UserID:       th.GetUser1().ID,
+			UserID:       userID,
 			BoardID:      board.ID,
 			SchemeEditor: true,
 		}
@@ -1815,14 +1863,15 @@ func TestDeleteMember(t *testing.T) {
 			Type:   model.BoardTypeOpen,
 			TeamID: teamID,
 		}
-		board, err := th.Server.App().CreateBoard(newBoard, th.GetUser1().ID, true)
+		userID := th.GetUser1().ID
+		board, err := th.Server.App().CreateBoard(newBoard, userID, true)
 		require.NoError(t, err)
 
 		// Now use unauthenticated client
 		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 
 		member := &model.BoardMember{
-			UserID:  th.GetUser1().ID,
+			UserID:  userID,
 			BoardID: board.ID,
 		}
 

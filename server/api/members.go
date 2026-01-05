@@ -55,6 +55,11 @@ func (a *API) handleGetMembersForBoard(w http.ResponseWriter, r *http.Request) {
 	boardID := mux.Vars(r)["boardID"]
 	userID := getUserID(r)
 
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to board members"))
+		return
+	}
+
 	if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to board members"))
 		return
@@ -123,6 +128,11 @@ func (a *API) handleAddMember(w http.ResponseWriter, r *http.Request) {
 
 	boardID := mux.Vars(r)["boardID"]
 	userID := getUserID(r)
+
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to add board member"))
+		return
+	}
 
 	board, err := a.app.GetBoard(boardID)
 	if err != nil {
@@ -416,6 +426,11 @@ func (a *API) handleUpdateMember(w http.ResponseWriter, r *http.Request) {
 	paramsUserID := mux.Vars(r)["userID"]
 	userID := getUserID(r)
 
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to update board member"))
+		return
+	}
+
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		a.errorResponse(w, r, err)
@@ -514,6 +529,11 @@ func (a *API) handleDeleteMember(w http.ResponseWriter, r *http.Request) {
 	boardID := mux.Vars(r)["boardID"]
 	paramsUserID := mux.Vars(r)["userID"]
 	userID := getUserID(r)
+
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to delete board member"))
+		return
+	}
 
 	if _, err := a.app.GetBoard(boardID); err != nil {
 		a.errorResponse(w, r, err)
