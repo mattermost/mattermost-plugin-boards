@@ -56,6 +56,10 @@ func (a *API) handleGetSharing(w http.ResponseWriter, r *http.Request) {
 	boardID := vars["boardID"]
 
 	userID := getUserID(r)
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to sharing the board"))
+		return
+	}
 	if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionShareBoard) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to sharing the board"))
 		return
@@ -122,6 +126,10 @@ func (a *API) handlePostSharing(w http.ResponseWriter, r *http.Request) {
 	boardID := mux.Vars(r)["boardID"]
 
 	userID := getUserID(r)
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to sharing the board"))
+		return
+	}
 	if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionShareBoard) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to sharing the board"))
 		return

@@ -13,6 +13,7 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/services/store"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -49,15 +50,21 @@ func testCreateBoardsAndBlocks(t *testing.T, store store.Store) {
 	require.Empty(t, boards)
 
 	t.Run("create boards and blocks", func(t *testing.T) {
+		testBoardID1 := utils.NewID(utils.IDTypeBoard)
+		testBoardID2 := utils.NewID(utils.IDTypeBoard)
+		testBoardID3 := utils.NewID(utils.IDTypeBoard)
+		testBlockID1 := utils.NewID(utils.IDTypeBlock)
+		testBlockID2 := utils.NewID(utils.IDTypeBlock)
+
 		newBab := &model.BoardsAndBlocks{
 			Boards: []*model.Board{
-				{ID: "board-id-1", TeamID: teamID, Type: model.BoardTypeOpen},
-				{ID: "board-id-2", TeamID: teamID, Type: model.BoardTypePrivate},
-				{ID: "board-id-3", TeamID: teamID, Type: model.BoardTypeOpen},
+				{ID: testBoardID1, TeamID: teamID, Type: model.BoardTypeOpen},
+				{ID: testBoardID2, TeamID: teamID, Type: model.BoardTypePrivate},
+				{ID: testBoardID3, TeamID: teamID, Type: model.BoardTypeOpen},
 			},
 			Blocks: []*model.Block{
-				{ID: "block-id-1", BoardID: "board-id-1", Type: model.TypeCard},
-				{ID: "block-id-2", BoardID: "board-id-2", Type: model.TypeCard},
+				{ID: testBlockID1, BoardID: testBoardID1, Type: model.TypeCard},
+				{ID: testBlockID2, BoardID: testBoardID2, Type: model.TypeCard},
 			},
 		}
 
@@ -77,20 +84,26 @@ func testCreateBoardsAndBlocks(t *testing.T, store store.Store) {
 			blockIDs = append(blockIDs, block.ID)
 		}
 
-		require.ElementsMatch(t, []string{"board-id-1", "board-id-2", "board-id-3"}, boardIDs)
-		require.ElementsMatch(t, []string{"block-id-1", "block-id-2"}, blockIDs)
+		require.ElementsMatch(t, []string{testBoardID1, testBoardID2, testBoardID3}, boardIDs)
+		require.ElementsMatch(t, []string{testBlockID1, testBlockID2}, blockIDs)
 	})
 
 	t.Run("create boards and blocks with admin", func(t *testing.T) {
+		testBoardID4 := utils.NewID(utils.IDTypeBoard)
+		testBoardID5 := utils.NewID(utils.IDTypeBoard)
+		testBoardID6 := utils.NewID(utils.IDTypeBoard)
+		testBlockID3 := utils.NewID(utils.IDTypeBlock)
+		testBlockID4 := utils.NewID(utils.IDTypeBlock)
+
 		newBab := &model.BoardsAndBlocks{
 			Boards: []*model.Board{
-				{ID: "board-id-4", TeamID: teamID, Type: model.BoardTypeOpen},
-				{ID: "board-id-5", TeamID: teamID, Type: model.BoardTypePrivate},
-				{ID: "board-id-6", TeamID: teamID, Type: model.BoardTypeOpen},
+				{ID: testBoardID4, TeamID: teamID, Type: model.BoardTypeOpen},
+				{ID: testBoardID5, TeamID: teamID, Type: model.BoardTypePrivate},
+				{ID: testBoardID6, TeamID: teamID, Type: model.BoardTypeOpen},
 			},
 			Blocks: []*model.Block{
-				{ID: "block-id-3", BoardID: "board-id-4", Type: model.TypeCard},
-				{ID: "block-id-4", BoardID: "board-id-5", Type: model.TypeCard},
+				{ID: testBlockID3, BoardID: testBoardID4, Type: model.TypeCard},
+				{ID: testBlockID4, BoardID: testBoardID5, Type: model.TypeCard},
 			},
 		}
 
@@ -111,28 +124,34 @@ func testCreateBoardsAndBlocks(t *testing.T, store store.Store) {
 			blockIDs = append(blockIDs, block.ID)
 		}
 
-		require.ElementsMatch(t, []string{"board-id-4", "board-id-5", "board-id-6"}, boardIDs)
-		require.ElementsMatch(t, []string{"block-id-3", "block-id-4"}, blockIDs)
+		require.ElementsMatch(t, []string{testBoardID4, testBoardID5, testBoardID6}, boardIDs)
+		require.ElementsMatch(t, []string{testBlockID3, testBlockID4}, blockIDs)
 
 		memberBoardIDs := []string{}
 		for _, member := range members {
 			require.Equal(t, userID, member.UserID)
 			memberBoardIDs = append(memberBoardIDs, member.BoardID)
 		}
-		require.ElementsMatch(t, []string{"board-id-4", "board-id-5", "board-id-6"}, memberBoardIDs)
+		require.ElementsMatch(t, []string{testBoardID4, testBoardID5, testBoardID6}, memberBoardIDs)
 	})
 
 	t.Run("on failure, nothing should be saved", func(t *testing.T) {
 		// one of the blocks is invalid as it doesn't have BoardID
+		testBoardID7 := utils.NewID(utils.IDTypeBoard)
+		testBoardID8 := utils.NewID(utils.IDTypeBoard)
+		testBoardID9 := utils.NewID(utils.IDTypeBoard)
+		testBlockID5 := utils.NewID(utils.IDTypeBlock)
+		testBlockID6 := utils.NewID(utils.IDTypeBlock)
+
 		newBab := &model.BoardsAndBlocks{
 			Boards: []*model.Board{
-				{ID: "board-id-7", TeamID: teamID, Type: model.BoardTypeOpen},
-				{ID: "board-id-8", TeamID: teamID, Type: model.BoardTypePrivate},
-				{ID: "board-id-9", TeamID: teamID, Type: model.BoardTypeOpen},
+				{ID: testBoardID7, TeamID: teamID, Type: model.BoardTypeOpen},
+				{ID: testBoardID8, TeamID: teamID, Type: model.BoardTypePrivate},
+				{ID: testBoardID9, TeamID: teamID, Type: model.BoardTypeOpen},
 			},
 			Blocks: []*model.Block{
-				{ID: "block-id-5", BoardID: "board-id-7", Type: model.TypeCard},
-				{ID: "block-id-6", BoardID: "", Type: model.TypeCard},
+				{ID: testBlockID5, BoardID: testBoardID7, Type: model.TypeCard},
+				{ID: testBlockID6, BoardID: "", Type: model.TypeCard},
 			},
 		}
 
@@ -148,15 +167,21 @@ func testCreateBoardsAndBlocks(t *testing.T, store store.Store) {
 
 	t.Run("should apply block size limits", func(t *testing.T) {
 		// one of the blocks is invalid as it has a title too large
+		testBoardID7 := utils.NewID(utils.IDTypeBoard)
+		testBoardID8 := utils.NewID(utils.IDTypeBoard)
+		testBoardID9 := utils.NewID(utils.IDTypeBoard)
+		testBlockID5 := utils.NewID(utils.IDTypeBlock)
+		testBlockID6 := utils.NewID(utils.IDTypeBlock)
+
 		newBab := &model.BoardsAndBlocks{
 			Boards: []*model.Board{
-				{ID: "board-id-7", TeamID: teamID, Type: model.BoardTypeOpen},
-				{ID: "board-id-8", TeamID: teamID, Type: model.BoardTypePrivate},
-				{ID: "board-id-9", TeamID: teamID, Type: model.BoardTypeOpen},
+				{ID: testBoardID7, TeamID: teamID, Type: model.BoardTypeOpen},
+				{ID: testBoardID8, TeamID: teamID, Type: model.BoardTypePrivate},
+				{ID: testBoardID9, TeamID: teamID, Type: model.BoardTypeOpen},
 			},
 			Blocks: []*model.Block{
-				{ID: "block-id-5", BoardID: "board-id-7", Type: model.TypeCard},
-				{ID: "block-id-6", BoardID: "board-id-8", Type: model.TypeCard, Title: strings.Repeat("A", model.BlockTitleMaxRunes+1)},
+				{ID: testBlockID5, BoardID: testBoardID7, Type: model.TypeCard},
+				{ID: testBlockID6, BoardID: testBoardID8, Type: model.TypeCard, Title: strings.Repeat("A", model.BlockTitleMaxRunes+1)},
 			},
 		}
 
@@ -183,8 +208,12 @@ func testPatchBoardsAndBlocks(t *testing.T, store store.Store) {
 		initialTitle := "initial title"
 		newTitle := "new title"
 
+		testBoardID1 := utils.NewID(utils.IDTypeBoard)
+		testBlockID1 := utils.NewID(utils.IDTypeBlock)
+		testBlockID2 := utils.NewID(utils.IDTypeBlock)
+
 		board := &model.Board{
-			ID:     "board-id-1",
+			ID:     testBoardID1,
 			Title:  initialTitle,
 			TeamID: teamID,
 			Type:   model.BoardTypeOpen,
@@ -193,19 +222,19 @@ func testPatchBoardsAndBlocks(t *testing.T, store store.Store) {
 		require.NoError(t, err)
 
 		block := &model.Block{
-			ID:      "block-id-1",
-			BoardID: "board-id-1",
+			ID:      testBlockID1,
+			BoardID: testBoardID1,
 			Title:   initialTitle,
 		}
 		require.NoError(t, store.InsertBlock(block, userID))
 
 		// apply the patches
 		pbab := &model.PatchBoardsAndBlocks{
-			BoardIDs: []string{"board-id-1"},
+			BoardIDs: []string{testBoardID1},
 			BoardPatches: []*model.BoardPatch{
 				{Title: &newTitle},
 			},
-			BlockIDs: []string{"block-id-1", "block-id-2"},
+			BlockIDs: []string{testBlockID1, testBlockID2},
 			BlockPatches: []*model.BlockPatch{
 				{Title: &newTitle},
 				{Title: &newTitle},
@@ -219,11 +248,11 @@ func testPatchBoardsAndBlocks(t *testing.T, store store.Store) {
 		require.Nil(t, bab)
 
 		// check that things have not changed
-		rBoard, err := store.GetBoard("board-id-1")
+		rBoard, err := store.GetBoard(testBoardID1)
 		require.NoError(t, err)
 		require.Equal(t, initialTitle, rBoard.Title)
 
-		rBlock, err := store.GetBlock("block-id-1")
+		rBlock, err := store.GetBlock(testBlockID1)
 		require.NoError(t, err)
 		require.Equal(t, initialTitle, rBlock.Title)
 	})
@@ -236,8 +265,11 @@ func testPatchBoardsAndBlocks(t *testing.T, store store.Store) {
 		initialTitle := "initial title"
 		newTitle := strings.Repeat("A", model.BlockTitleMaxRunes+1)
 
+		testBoardID1 := utils.NewID(utils.IDTypeBoard)
+		testBlockID1 := utils.NewID(utils.IDTypeBlock)
+
 		board := &model.Board{
-			ID:     "board-id-1",
+			ID:     testBoardID1,
 			Title:  initialTitle,
 			TeamID: teamID,
 			Type:   model.BoardTypeOpen,
@@ -246,15 +278,15 @@ func testPatchBoardsAndBlocks(t *testing.T, store store.Store) {
 		require.NoError(t, err)
 
 		block := &model.Block{
-			ID:      "block-id-1",
-			BoardID: "board-id-1",
+			ID:      testBlockID1,
+			BoardID: testBoardID1,
 			Title:   initialTitle,
 		}
 		require.NoError(t, store.InsertBlock(block, userID))
 
 		// apply the patches
 		pbab := &model.PatchBoardsAndBlocks{
-			BlockIDs: []string{"block-id-1"},
+			BlockIDs: []string{testBlockID1},
 			BlockPatches: []*model.BlockPatch{
 				{Title: &newTitle},
 			},
@@ -267,21 +299,27 @@ func testPatchBoardsAndBlocks(t *testing.T, store store.Store) {
 		require.Nil(t, bab)
 
 		// check that things have not changed
-		rBlock, err := store.GetBlock("block-id-1")
+		rBlock, err := store.GetBlock(testBlockID1)
 		require.NoError(t, err)
 		require.Equal(t, initialTitle, rBlock.Title)
 	})
 
 	t.Run("patch boards and blocks", func(t *testing.T) {
+		testBoardID1 := utils.NewID(utils.IDTypeBoard)
+		testBoardID2 := utils.NewID(utils.IDTypeBoard)
+		testBoardID3 := utils.NewID(utils.IDTypeBoard)
+		testBlockID1 := utils.NewID(utils.IDTypeBlock)
+		testBlockID2 := utils.NewID(utils.IDTypeBlock)
+
 		newBab := &model.BoardsAndBlocks{
 			Boards: []*model.Board{
-				{ID: "board-id-1", Description: "initial description", TeamID: teamID, Type: model.BoardTypeOpen},
-				{ID: "board-id-2", TeamID: teamID, Type: model.BoardTypePrivate},
-				{ID: "board-id-3", Title: "initial title", TeamID: teamID, Type: model.BoardTypeOpen},
+				{ID: testBoardID1, Description: "initial description", TeamID: teamID, Type: model.BoardTypeOpen},
+				{ID: testBoardID2, TeamID: teamID, Type: model.BoardTypePrivate},
+				{ID: testBoardID3, Title: "initial title", TeamID: teamID, Type: model.BoardTypeOpen},
 			},
 			Blocks: []*model.Block{
-				{ID: "block-id-1", Title: "initial title", BoardID: "board-id-1", Type: model.TypeCard},
-				{ID: "block-id-2", Schema: 1, BoardID: "board-id-2", Type: model.TypeCard},
+				{ID: testBlockID1, Title: "initial title", BoardID: testBoardID1, Type: model.TypeCard},
+				{ID: testBlockID2, Schema: 1, BoardID: testBoardID2, Type: model.TypeCard},
 			},
 		}
 
@@ -297,12 +335,12 @@ func testPatchBoardsAndBlocks(t *testing.T, store store.Store) {
 		var newSchema int64 = 2
 
 		pbab := &model.PatchBoardsAndBlocks{
-			BoardIDs: []string{"board-id-3", "board-id-1"},
+			BoardIDs: []string{testBoardID3, testBoardID1},
 			BoardPatches: []*model.BoardPatch{
 				{Title: &newTitle, Description: &newDescription},
 				{Description: &newDescription},
 			},
-			BlockIDs: []string{"block-id-1", "block-id-2"},
+			BlockIDs: []string{testBlockID1, testBlockID2},
 			BlockPatches: []*model.BlockPatch{
 				{Title: &newTitle},
 				{Schema: &newSchema},
@@ -318,20 +356,20 @@ func testPatchBoardsAndBlocks(t *testing.T, store store.Store) {
 		require.Len(t, bab.Blocks, 2)
 
 		// check that things have changed
-		board1, err := store.GetBoard("board-id-1")
+		board1, err := store.GetBoard(testBoardID1)
 		require.NoError(t, err)
 		require.Equal(t, newDescription, board1.Description)
 
-		board3, err := store.GetBoard("board-id-3")
+		board3, err := store.GetBoard(testBoardID3)
 		require.NoError(t, err)
 		require.Equal(t, newTitle, board3.Title)
 		require.Equal(t, newDescription, board3.Description)
 
-		block1, err := store.GetBlock("block-id-1")
+		block1, err := store.GetBlock(testBlockID1)
 		require.NoError(t, err)
 		require.Equal(t, newTitle, block1.Title)
 
-		block2, err := store.GetBlock("block-id-2")
+		block2, err := store.GetBlock(testBlockID2)
 		require.NoError(t, err)
 		require.Equal(t, newSchema, block2.Schema)
 	})
@@ -380,9 +418,10 @@ func testDeleteBoardsAndBlocks(t *testing.T, store store.Store) {
 		}
 		require.NoError(t, store.InsertBlock(block3, userID))
 
+		differentBoardID := utils.NewID(utils.IDTypeBoard)
 		block4 := &model.Block{
 			ID:      utils.NewID(utils.IDTypeBlock),
-			BoardID: "different-board-id",
+			BoardID: differentBoardID,
 		}
 		require.NoError(t, store.InsertBlock(block4, userID))
 
@@ -652,16 +691,24 @@ func testDuplicateBoard(t *testing.T, store store.Store) {
 	teamID := testTeamID
 	userID := testUserID
 
+	testBoardID1 := utils.NewID(utils.IDTypeBoard)
+	testBoardID2 := utils.NewID(utils.IDTypeBoard)
+	testBoardID3 := utils.NewID(utils.IDTypeBoard)
+	testBlockID1 := utils.NewID(utils.IDTypeBlock)
+	testBlockID1a := utils.NewID(utils.IDTypeBlock)
+	testBlockID2 := utils.NewID(utils.IDTypeBlock)
+	testChannelID := mmModel.NewId()
+
 	newBab := &model.BoardsAndBlocks{
 		Boards: []*model.Board{
-			{ID: "board-id-1", TeamID: teamID, Type: model.BoardTypeOpen, ChannelID: "test-channel"},
-			{ID: "board-id-2", TeamID: teamID, Type: model.BoardTypePrivate},
-			{ID: "board-id-3", TeamID: teamID, Type: model.BoardTypeOpen},
+			{ID: testBoardID1, TeamID: teamID, Type: model.BoardTypeOpen, ChannelID: testChannelID},
+			{ID: testBoardID2, TeamID: teamID, Type: model.BoardTypePrivate},
+			{ID: testBoardID3, TeamID: teamID, Type: model.BoardTypeOpen},
 		},
 		Blocks: []*model.Block{
-			{ID: "block-id-1", BoardID: "board-id-1", Type: model.TypeCard},
-			{ID: "block-id-1a", BoardID: "board-id-1", Type: model.TypeComment},
-			{ID: "block-id-2", BoardID: "board-id-2", Type: model.TypeCard},
+			{ID: testBlockID1, BoardID: testBoardID1, Type: model.TypeCard},
+			{ID: testBlockID1a, BoardID: testBoardID1, Type: model.TypeComment},
+			{ID: testBlockID2, BoardID: testBoardID2, Type: model.TypeCard},
 		},
 	}
 
@@ -672,7 +719,7 @@ func testDuplicateBoard(t *testing.T, store store.Store) {
 	require.Len(t, bab.Blocks, 3)
 
 	t.Run("duplicate existing board as no template", func(t *testing.T) {
-		bab, members, err := store.DuplicateBoard("board-id-1", userID, teamID, false)
+		bab, members, err := store.DuplicateBoard(testBoardID1, userID, teamID, false)
 		require.NoError(t, err)
 		require.Len(t, members, 1)
 		require.Len(t, bab.Boards, 1)
@@ -682,7 +729,7 @@ func testDuplicateBoard(t *testing.T, store store.Store) {
 	})
 
 	t.Run("duplicate existing board as template", func(t *testing.T) {
-		bab, members, err := store.DuplicateBoard("board-id-1", userID, teamID, true)
+		bab, members, err := store.DuplicateBoard(testBoardID1, userID, teamID, true)
 		require.NoError(t, err)
 		require.Len(t, members, 1)
 		require.Len(t, bab.Boards, 1)
@@ -692,7 +739,8 @@ func testDuplicateBoard(t *testing.T, store store.Store) {
 	})
 
 	t.Run("duplicate not existing board", func(t *testing.T) {
-		bab, members, err := store.DuplicateBoard("not-existing-id", userID, teamID, false)
+		notExistingID := utils.NewID(utils.IDTypeBoard)
+		bab, members, err := store.DuplicateBoard(notExistingID, userID, teamID, false)
 		require.Error(t, err)
 		require.Nil(t, members)
 		require.Nil(t, bab)

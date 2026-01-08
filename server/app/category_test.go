@@ -11,6 +11,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	testCategoryID1       = "7abcdefghijklmnopqrstuvwxyz"
+	testCategoryID2       = "7bcdefghijklmnopqrstuvwxyza"
+	testCategoryID3       = "7cdefghijklmnopqrstuvwxyzab"
+	testCategoryIDDefault = "7defghijklmnopqrstuvwxyzabc"
+	testDefaultCategoryID = "7efghijklmnopqrstuvwxyzabcd"
+)
+
 func TestCreateCategory(t *testing.T) {
 	th, tearDown := SetupTestHelper(t)
 	defer tearDown()
@@ -19,7 +27,7 @@ func TestCreateCategory(t *testing.T) {
 		th.Store.EXPECT().CreateCategory(utils.Anything).Return(nil)
 
 		th.Store.EXPECT().GetCategory(utils.Anything).Return(&model.Category{
-			ID: "category_id_1",
+			ID: testCategoryID1,
 		}, nil)
 
 		category := &model.Category{
@@ -69,7 +77,7 @@ func TestUpdateCategory(t *testing.T) {
 
 	t.Run("base case", func(t *testing.T) {
 		th.Store.EXPECT().GetCategory(utils.Anything).Return(&model.Category{
-			ID:     "category_id_1",
+			ID:     testCategoryID1,
 			Name:   "Category",
 			TeamID: "team_id_1",
 			UserID: "user_id_1",
@@ -77,13 +85,13 @@ func TestUpdateCategory(t *testing.T) {
 		}, nil)
 
 		th.Store.EXPECT().UpdateCategory(utils.Anything).Return(nil)
-		th.Store.EXPECT().GetCategory("category_id_1").Return(&model.Category{
-			ID:   "category_id_1",
+		th.Store.EXPECT().GetCategory(testCategoryID1).Return(&model.Category{
+			ID:   testCategoryID1,
 			Name: "Category",
 		}, nil)
 
 		category := &model.Category{
-			ID:     "category_id_1",
+			ID:     testCategoryID1,
 			Name:   "Category",
 			UserID: "user_id_1",
 			TeamID: "team_id_1",
@@ -96,7 +104,7 @@ func TestUpdateCategory(t *testing.T) {
 
 	t.Run("updating invalid category", func(t *testing.T) {
 		th.Store.EXPECT().GetCategory(utils.Anything).Return(&model.Category{
-			ID:     "category_id_1",
+			ID:     testCategoryID1,
 			Name:   "Category",
 			TeamID: "team_id_1",
 			UserID: "user_id_1",
@@ -104,7 +112,7 @@ func TestUpdateCategory(t *testing.T) {
 		}, nil)
 
 		category := &model.Category{
-			ID:     "category_id_1",
+			ID:     testCategoryID1,
 			Name:   "Name",
 			UserID: "user_id",
 			TeamID: "team_id",
@@ -116,7 +124,7 @@ func TestUpdateCategory(t *testing.T) {
 		assert.Nil(t, createdCategory)
 		assert.Error(t, err)
 
-		category.ID = "category_id_1"
+		category.ID = testCategoryID1
 		category.Name = ""
 		createdCategory, err = th.App.UpdateCategory(category)
 		assert.Nil(t, createdCategory)
@@ -142,7 +150,7 @@ func TestUpdateCategory(t *testing.T) {
 
 	t.Run("trying to update someone else's category", func(t *testing.T) {
 		th.Store.EXPECT().GetCategory(utils.Anything).Return(&model.Category{
-			ID:     "category_id_1",
+			ID:     testCategoryID1,
 			Name:   "Category",
 			TeamID: "team_id_1",
 			UserID: "user_id_1",
@@ -150,7 +158,7 @@ func TestUpdateCategory(t *testing.T) {
 		}, nil)
 
 		category := &model.Category{
-			ID:     "category_id_1",
+			ID:     testCategoryID1,
 			Name:   "Category",
 			UserID: "user_id_2",
 			TeamID: "team_id_1",
@@ -163,7 +171,7 @@ func TestUpdateCategory(t *testing.T) {
 
 	t.Run("trying to update some other team's category", func(t *testing.T) {
 		th.Store.EXPECT().GetCategory(utils.Anything).Return(&model.Category{
-			ID:     "category_id_1",
+			ID:     testCategoryID1,
 			Name:   "Category",
 			TeamID: "team_id_1",
 			UserID: "user_id_1",
@@ -171,7 +179,7 @@ func TestUpdateCategory(t *testing.T) {
 		}, nil)
 
 		category := &model.Category{
-			ID:     "category_id_1",
+			ID:     testCategoryID1,
 			Name:   "Category",
 			UserID: "user_id_1",
 			TeamID: "team_id_2",
@@ -184,7 +192,7 @@ func TestUpdateCategory(t *testing.T) {
 
 	t.Run("should not be allowed to rename system category", func(t *testing.T) {
 		th.Store.EXPECT().GetCategory(utils.Anything).Return(&model.Category{
-			ID:     "category_id_1",
+			ID:     testCategoryID1,
 			Name:   "Category",
 			TeamID: "team_id_1",
 			UserID: "user_id_1",
@@ -194,7 +202,7 @@ func TestUpdateCategory(t *testing.T) {
 		th.Store.EXPECT().UpdateCategory(utils.Anything).Return(nil)
 
 		th.Store.EXPECT().GetCategory(utils.Anything).Return(&model.Category{
-			ID:        "category_id_1",
+			ID:        testCategoryID1,
 			Name:      "Category",
 			TeamID:    "team_id_1",
 			UserID:    "user_id_1",
@@ -203,7 +211,7 @@ func TestUpdateCategory(t *testing.T) {
 		}, nil).Times(1)
 
 		category := &model.Category{
-			ID:     "category_id_1",
+			ID:     testCategoryID1,
 			Name:   "Updated Name",
 			UserID: "user_id_1",
 			TeamID: "team_id_1",
@@ -217,7 +225,7 @@ func TestUpdateCategory(t *testing.T) {
 
 	t.Run("should be allowed to collapse and expand any category type", func(t *testing.T) {
 		th.Store.EXPECT().GetCategory(utils.Anything).Return(&model.Category{
-			ID:        "category_id_1",
+			ID:        testCategoryID1,
 			Name:      "Category",
 			TeamID:    "team_id_1",
 			UserID:    "user_id_1",
@@ -228,7 +236,7 @@ func TestUpdateCategory(t *testing.T) {
 		th.Store.EXPECT().UpdateCategory(utils.Anything).Return(nil)
 
 		th.Store.EXPECT().GetCategory(utils.Anything).Return(&model.Category{
-			ID:        "category_id_1",
+			ID:        testCategoryID1,
 			Name:      "Category",
 			TeamID:    "team_id_1",
 			UserID:    "user_id_1",
@@ -237,7 +245,7 @@ func TestUpdateCategory(t *testing.T) {
 		}, nil).Times(1)
 
 		category := &model.Category{
-			ID:        "category_id_1",
+			ID:        testCategoryID1,
 			Name:      "Updated Name",
 			UserID:    "user_id_1",
 			TeamID:    "team_id_1",
@@ -257,24 +265,24 @@ func TestDeleteCategory(t *testing.T) {
 	defer tearDown()
 
 	t.Run("base case", func(t *testing.T) {
-		th.Store.EXPECT().GetCategory("category_id_1").Return(&model.Category{
-			ID:       "category_id_1",
+		th.Store.EXPECT().GetCategory(testCategoryID1).Return(&model.Category{
+			ID:       testCategoryID1,
 			DeleteAt: 0,
 			UserID:   "user_id_1",
 			TeamID:   "team_id_1",
 			Type:     "custom",
 		}, nil)
 
-		th.Store.EXPECT().DeleteCategory("category_id_1", "user_id_1", "team_id_1").Return(nil)
+		th.Store.EXPECT().DeleteCategory(testCategoryID1, "user_id_1", "team_id_1").Return(nil)
 
-		th.Store.EXPECT().GetCategory("category_id_1").Return(&model.Category{
+		th.Store.EXPECT().GetCategory(testCategoryID1).Return(&model.Category{
 			DeleteAt: 10000,
 		}, nil)
 
 		th.Store.EXPECT().GetUserCategoryBoards("user_id_1", "team_id_1").Return([]model.CategoryBoards{
 			{
 				Category: model.Category{
-					ID:       "category_id_default",
+					ID:       testCategoryIDDefault,
 					DeleteAt: 0,
 					UserID:   "user_id_1",
 					TeamID:   "team_id_1",
@@ -285,7 +293,7 @@ func TestDeleteCategory(t *testing.T) {
 			},
 			{
 				Category: model.Category{
-					ID:       "category_id_1",
+					ID:       testCategoryID1,
 					DeleteAt: 0,
 					UserID:   "user_id_1",
 					TeamID:   "team_id_1",
@@ -296,35 +304,35 @@ func TestDeleteCategory(t *testing.T) {
 			},
 		}, nil)
 
-		deletedCategory, err := th.App.DeleteCategory("category_id_1", "user_id_1", "team_id_1")
+		deletedCategory, err := th.App.DeleteCategory(testCategoryID1, "user_id_1", "team_id_1")
 		assert.NotNil(t, deletedCategory)
 		assert.NoError(t, err)
 	})
 
 	t.Run("trying to delete already deleted category", func(t *testing.T) {
-		th.Store.EXPECT().GetCategory("category_id_1").Return(&model.Category{
-			ID:       "category_id_1",
+		th.Store.EXPECT().GetCategory(testCategoryID1).Return(&model.Category{
+			ID:       testCategoryID1,
 			DeleteAt: 1000,
 			UserID:   "user_id_1",
 			TeamID:   "team_id_1",
 			Type:     "custom",
 		}, nil)
 
-		deletedCategory, err := th.App.DeleteCategory("category_id_1", "user_id_1", "team_id_1")
+		deletedCategory, err := th.App.DeleteCategory(testCategoryID1, "user_id_1", "team_id_1")
 		assert.NotNil(t, deletedCategory)
 		assert.NoError(t, err)
 	})
 
 	t.Run("trying to delete system category", func(t *testing.T) {
-		th.Store.EXPECT().GetCategory("category_id_1").Return(&model.Category{
-			ID:       "category_id_1",
+		th.Store.EXPECT().GetCategory(testCategoryID1).Return(&model.Category{
+			ID:       testCategoryID1,
 			DeleteAt: 0,
 			UserID:   "user_id_1",
 			TeamID:   "team_id_1",
 			Type:     "system",
 		}, nil)
 
-		deletedCategory, err := th.App.DeleteCategory("category_id_1", "user_id_1", "team_id_1")
+		deletedCategory, err := th.App.DeleteCategory(testCategoryID1, "user_id_1", "team_id_1")
 		assert.Nil(t, deletedCategory)
 		assert.Error(t, err)
 	})
@@ -338,21 +346,21 @@ func TestMoveBoardsToDefaultCategory(t *testing.T) {
 		th.Store.EXPECT().GetUserCategoryBoards("user_id", "team_id").Return([]model.CategoryBoards{
 			{
 				Category: model.Category{
-					ID:   "category_id_1",
+					ID:   testCategoryID1,
 					Name: "Boards",
 					Type: "system",
 				},
 			},
 			{
 				Category: model.Category{
-					ID:   "category_id_2",
+					ID:   testCategoryID2,
 					Name: "Custom Category 1",
 					Type: "custom",
 				},
 			},
 		}, nil)
 
-		err := th.App.moveBoardsToDefaultCategory("user_id", "team_id", "category_id_2")
+		err := th.App.moveBoardsToDefaultCategory("user_id", "team_id", testCategoryID2)
 		assert.NoError(t, err)
 	})
 
@@ -360,7 +368,7 @@ func TestMoveBoardsToDefaultCategory(t *testing.T) {
 		th.Store.EXPECT().GetUserCategoryBoards("user_id", "team_id").Return([]model.CategoryBoards{
 			{
 				Category: model.Category{
-					ID:   "category_id_2",
+					ID:   testCategoryID2,
 					Name: "Custom Category 1",
 					Type: "custom",
 				},
@@ -369,14 +377,14 @@ func TestMoveBoardsToDefaultCategory(t *testing.T) {
 
 		th.Store.EXPECT().CreateCategory(utils.Anything).Return(nil)
 		th.Store.EXPECT().GetCategory(utils.Anything).Return(&model.Category{
-			ID:   "default_category_id",
+			ID:   testDefaultCategoryID,
 			Name: "Boards",
 			Type: "system",
 		}, nil)
 		th.Store.EXPECT().GetMembersForUser("user_id").Return([]*model.BoardMember{}, nil)
 		th.Store.EXPECT().GetBoardsForUserAndTeam("user_id", "team_id", false).Return([]*model.Board{}, nil)
 
-		err := th.App.moveBoardsToDefaultCategory("user_id", "team_id", "category_id_2")
+		err := th.App.moveBoardsToDefaultCategory("user_id", "team_id", testCategoryID2)
 		assert.NoError(t, err)
 	})
 }
@@ -388,26 +396,26 @@ func TestReorderCategories(t *testing.T) {
 	t.Run("base case", func(t *testing.T) {
 		th.Store.EXPECT().GetUserCategories("user_id", "team_id").Return([]model.Category{
 			{
-				ID:   "category_id_1",
+				ID:   testCategoryID1,
 				Name: "Boards",
 				Type: "system",
 			},
 			{
-				ID:   "category_id_2",
+				ID:   testCategoryID2,
 				Name: "Category 2",
 				Type: "custom",
 			},
 			{
-				ID:   "category_id_3",
+				ID:   testCategoryID3,
 				Name: "Category 3",
 				Type: "custom",
 			},
 		}, nil)
 
-		th.Store.EXPECT().ReorderCategories("user_id", "team_id", []string{"category_id_2", "category_id_3", "category_id_1"}).
-			Return([]string{"category_id_2", "category_id_3", "category_id_1"}, nil)
+		th.Store.EXPECT().ReorderCategories("user_id", "team_id", []string{testCategoryID2, testCategoryID3, testCategoryID1}).
+			Return([]string{testCategoryID2, testCategoryID3, testCategoryID1}, nil)
 
-		newOrder, err := th.App.ReorderCategories("user_id", "team_id", []string{"category_id_2", "category_id_3", "category_id_1"})
+		newOrder, err := th.App.ReorderCategories("user_id", "team_id", []string{testCategoryID2, testCategoryID3, testCategoryID1})
 		assert.NoError(t, err)
 		assert.Equal(t, 3, len(newOrder))
 	})
@@ -415,23 +423,23 @@ func TestReorderCategories(t *testing.T) {
 	t.Run("not specifying all categories should fail", func(t *testing.T) {
 		th.Store.EXPECT().GetUserCategories("user_id", "team_id").Return([]model.Category{
 			{
-				ID:   "category_id_1",
+				ID:   testCategoryID1,
 				Name: "Boards",
 				Type: "system",
 			},
 			{
-				ID:   "category_id_2",
+				ID:   testCategoryID2,
 				Name: "Category 2",
 				Type: "custom",
 			},
 			{
-				ID:   "category_id_3",
+				ID:   testCategoryID3,
 				Name: "Category 3",
 				Type: "custom",
 			},
 		}, nil)
 
-		newOrder, err := th.App.ReorderCategories("user_id", "team_id", []string{"category_id_2", "category_id_3"})
+		newOrder, err := th.App.ReorderCategories("user_id", "team_id", []string{testCategoryID2, testCategoryID3})
 		assert.Error(t, err)
 		assert.Nil(t, newOrder)
 	})
@@ -444,26 +452,26 @@ func TestVerifyNewCategoriesMatchExisting(t *testing.T) {
 	t.Run("base case", func(t *testing.T) {
 		th.Store.EXPECT().GetUserCategories("user_id", "team_id").Return([]model.Category{
 			{
-				ID:   "category_id_1",
+				ID:   testCategoryID1,
 				Name: "Boards",
 				Type: "system",
 			},
 			{
-				ID:   "category_id_2",
+				ID:   testCategoryID2,
 				Name: "Category 2",
 				Type: "custom",
 			},
 			{
-				ID:   "category_id_3",
+				ID:   testCategoryID3,
 				Name: "Category 3",
 				Type: "custom",
 			},
 		}, nil)
 
 		err := th.App.verifyNewCategoriesMatchExisting("user_id", "team_id", []string{
-			"category_id_2",
-			"category_id_3",
-			"category_id_1",
+			testCategoryID2,
+			testCategoryID3,
+			testCategoryID1,
 		})
 		assert.NoError(t, err)
 	})
@@ -471,25 +479,25 @@ func TestVerifyNewCategoriesMatchExisting(t *testing.T) {
 	t.Run("different category counts", func(t *testing.T) {
 		th.Store.EXPECT().GetUserCategories("user_id", "team_id").Return([]model.Category{
 			{
-				ID:   "category_id_1",
+				ID:   testCategoryID1,
 				Name: "Boards",
 				Type: "system",
 			},
 			{
-				ID:   "category_id_2",
+				ID:   testCategoryID2,
 				Name: "Category 2",
 				Type: "custom",
 			},
 			{
-				ID:   "category_id_3",
+				ID:   testCategoryID3,
 				Name: "Category 3",
 				Type: "custom",
 			},
 		}, nil)
 
 		err := th.App.verifyNewCategoriesMatchExisting("user_id", "team_id", []string{
-			"category_id_2",
-			"category_id_3",
+			testCategoryID2,
+			testCategoryID3,
 		})
 		assert.Error(t, err)
 	})

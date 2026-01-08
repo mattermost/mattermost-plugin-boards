@@ -11,7 +11,7 @@ import (
 )
 
 func TestSidebar(t *testing.T) {
-	th := SetupTestHelperWithToken(t).Start()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
 	// we'll create a new board.
@@ -57,7 +57,7 @@ func TestSidebar(t *testing.T) {
 }
 
 func TestHideUnhideBoard(t *testing.T) {
-	th := SetupTestHelperWithToken(t).Start()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
 	// we'll create a new board.

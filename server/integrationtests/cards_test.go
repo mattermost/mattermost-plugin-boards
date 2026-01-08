@@ -8,18 +8,28 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/mattermost/mattermost-plugin-boards/server/client"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
+
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreateCard(t *testing.T) {
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
-		board := th.CreateBoard(testTeamID, model.BoardTypeOpen)
+		// Create board with authenticated client first
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
+		board := th.CreateBoard(teamID, model.BoardTypeOpen)
+
+		// Now use unauthenticated client
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 
 		card := &model.Card{
 			Title: "basic card",
@@ -30,10 +40,13 @@ func TestCreateCard(t *testing.T) {
 	})
 
 	t.Run("good", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
-		board := th.CreateBoard(testTeamID, model.BoardTypeOpen)
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
+		board := th.CreateBoard(teamID, model.BoardTypeOpen)
 		contentOrder := []string{utils.NewID(utils.IDTypeBlock), utils.NewID(utils.IDTypeBlock), utils.NewID(utils.IDTypeBlock)}
 
 		card := &model.Card{
@@ -54,10 +67,13 @@ func TestCreateCard(t *testing.T) {
 	})
 
 	t.Run("invalid card", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
-		board := th.CreateBoard(testTeamID, model.BoardTypeOpen)
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
+		board := th.CreateBoard(teamID, model.BoardTypeOpen)
 
 		card := &model.Card{
 			Title: "too many emoji's",
@@ -71,10 +87,13 @@ func TestCreateCard(t *testing.T) {
 }
 
 func TestGetCards(t *testing.T) {
-	th := SetupTestHelper(t).InitBasic()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
-	board := th.CreateBoard(testTeamID, model.BoardTypeOpen)
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
+	teamID := mmModel.NewId()
+	board := th.CreateBoard(teamID, model.BoardTypeOpen)
 	userID := th.GetUser1().ID
 
 	const cardCount = 25
@@ -159,7 +178,8 @@ func TestGetCards(t *testing.T) {
 	})
 
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		cards, resp := th.Client.GetCards(board.ID, 0, 10)
+		unauthenticatedClient := client.NewClient(th.Server.Config().ServerRoot, "")
+		cards, resp := unauthenticatedClient.GetCards(board.ID, 0, 10)
 		th.CheckUnauthorized(resp)
 		require.Nil(t, cards)
 	})
@@ -167,12 +187,18 @@ func TestGetCards(t *testing.T) {
 
 func TestPatchCard(t *testing.T) {
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
-		_, cards := th.CreateBoardAndCards(testTeamID, model.BoardTypeOpen, 1)
+		// Create board with authenticated client first
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
+		_, cards := th.CreateBoardAndCards(teamID, model.BoardTypeOpen, 1)
 		card := cards[0]
 
+		// Now use unauthenticated client
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 		newTitle := "another title"
 		patch := &model.CardPatch{
 			Title: &newTitle,
@@ -184,10 +210,13 @@ func TestPatchCard(t *testing.T) {
 	})
 
 	t.Run("good", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
-		board, cards := th.CreateBoardAndCards(testTeamID, model.BoardTypeOpen, 1)
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
+		board, cards := th.CreateBoardAndCards(teamID, model.BoardTypeOpen, 1)
 		card := cards[0]
 
 		// Patch the card
@@ -215,10 +244,13 @@ func TestPatchCard(t *testing.T) {
 	})
 
 	t.Run("invalid card patch", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
-		_, cards := th.CreateBoardAndCards(testTeamID, model.BoardTypeOpen, 1)
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
+		_, cards := th.CreateBoardAndCards(teamID, model.BoardTypeOpen, 1)
 		card := cards[0]
 
 		// Bad patch  (too many emoji)
@@ -235,22 +267,31 @@ func TestPatchCard(t *testing.T) {
 
 func TestGetCard(t *testing.T) {
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
-		_, cards := th.CreateBoardAndCards(testTeamID, model.BoardTypeOpen, 1)
+		// Create board with authenticated client first
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
+		_, cards := th.CreateBoardAndCards(teamID, model.BoardTypeOpen, 1)
 		card := cards[0]
 
+		// Now use unauthenticated client
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
 		cardFetched, resp := th.Client.GetCard(card.ID)
 		th.CheckUnauthorized(resp)
 		require.Nil(t, cardFetched)
 	})
 
 	t.Run("good", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
-		board, cards := th.CreateBoardAndCards(testTeamID, model.BoardTypeOpen, 1)
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
+		board, cards := th.CreateBoardAndCards(teamID, model.BoardTypeOpen, 1)
 		card := cards[0]
 
 		cardFetched, resp := th.Client.GetCard(card.ID)

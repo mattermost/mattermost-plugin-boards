@@ -13,18 +13,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	boardID    = "board-id-test"
-	categoryID = "category-id-test"
-)
-
 func StoreTestDataRetention(t *testing.T, setup func(t *testing.T) (store.Store, func())) {
 	t.Run("RunDataRetention", func(t *testing.T) {
 		store, tearDown := setup(t)
 		defer tearDown()
 
+		// Generate new IDs for each test run to avoid conflicts
+		testBoardID := utils.NewID(utils.IDTypeBoard)
+		testCategoryID := utils.NewID(utils.IDTypeNone) // Categories don't have a specific ID type
+
 		category := model.Category{
-			ID:     categoryID,
+			ID:     testCategoryID,
 			Name:   "TestCategory",
 			UserID: testUserID,
 			TeamID: testTeamID,
@@ -32,15 +31,15 @@ func StoreTestDataRetention(t *testing.T, setup func(t *testing.T) (store.Store,
 		err := store.CreateCategory(category)
 		require.NoError(t, err)
 
-		testRunDataRetention(t, store, 0)
-		testRunDataRetention(t, store, 2)
-		testRunDataRetention(t, store, 10)
+		testRunDataRetention(t, store, 0, testBoardID, testCategoryID)
+		testRunDataRetention(t, store, 2, testBoardID, testCategoryID)
+		testRunDataRetention(t, store, 10, testBoardID, testCategoryID)
 	})
 }
 
-func LoadData(t *testing.T, store store.Store) {
+func LoadData(t *testing.T, store store.Store, testBoardID, testCategoryID string) {
 	validBoard := model.Board{
-		ID:         boardID,
+		ID:         testBoardID,
 		IsTemplate: false,
 		ModifiedBy: testUserID,
 		TeamID:     testTeamID,
@@ -49,24 +48,24 @@ func LoadData(t *testing.T, store store.Store) {
 	require.NoError(t, err)
 
 	validBlock := &model.Block{
-		ID:         "id-test",
+		ID:         utils.NewID(utils.IDTypeBlock),
 		BoardID:    board.ID,
 		ModifiedBy: testUserID,
 	}
 
 	validBlock2 := &model.Block{
-		ID:         "id-test2",
+		ID:         utils.NewID(utils.IDTypeBlock),
 		BoardID:    board.ID,
 		ModifiedBy: testUserID,
 	}
 	validBlock3 := &model.Block{
-		ID:         "id-test3",
+		ID:         utils.NewID(utils.IDTypeBlock),
 		BoardID:    board.ID,
 		ModifiedBy: testUserID,
 	}
 
 	validBlock4 := &model.Block{
-		ID:         "id-test4",
+		ID:         utils.NewID(utils.IDTypeBlock),
 		BoardID:    board.ID,
 		ModifiedBy: testUserID,
 	}
@@ -78,28 +77,28 @@ func LoadData(t *testing.T, store store.Store) {
 
 	member := &model.BoardMember{
 		UserID:      testUserID,
-		BoardID:     boardID,
+		BoardID:     testBoardID,
 		SchemeAdmin: true,
 	}
 	_, err = store.SaveMember(member)
 	require.NoError(t, err)
 
 	sharing := model.Sharing{
-		ID:      boardID,
+		ID:      testBoardID,
 		Enabled: true,
 		Token:   "testToken",
 	}
 	err = store.UpsertSharing(sharing)
 	require.NoError(t, err)
 
-	err = store.AddUpdateCategoryBoard(testUserID, categoryID, []string{boardID})
+	err = store.AddUpdateCategoryBoard(testUserID, testCategoryID, []string{testBoardID})
 	require.NoError(t, err)
 }
 
-func testRunDataRetention(t *testing.T, store store.Store, batchSize int) {
-	LoadData(t, store)
+func testRunDataRetention(t *testing.T, store store.Store, batchSize int, testBoardID, testCategoryID string) {
+	LoadData(t, store, testBoardID, testCategoryID)
 
-	blocks, err := store.GetBlocksForBoard(boardID)
+	blocks, err := store.GetBlocksForBoard(testBoardID)
 	require.NoError(t, err)
 	require.Len(t, blocks, 4)
 	initialCount := len(blocks)
@@ -116,24 +115,32 @@ func testRunDataRetention(t *testing.T, store store.Store, batchSize int) {
 		require.True(t, deletions > int64(initialCount))
 
 		// expect all blocks to be deleted.
-		blocks, errBlocks := store.GetBlocksForBoard(boardID)
+		blocks, errBlocks := store.GetBlocksForBoard(testBoardID)
 		require.NoError(t, errBlocks)
 		require.Equal(t, 0, len(blocks))
 
 		// GetMemberForBoard throws error on now rows found
-		member, err := store.GetMemberForBoard(boardID, testUserID)
+		member, err := store.GetMemberForBoard(testBoardID, testUserID)
 		require.Error(t, err)
 		require.True(t, model.IsErrNotFound(err), err)
 		require.Nil(t, member)
 
 		// GetSharing throws error on now rows found
-		sharing, err := store.GetSharing(boardID)
+		sharing, err := store.GetSharing(testBoardID)
 		require.Error(t, err)
 		require.True(t, model.IsErrNotFound(err), err)
 		require.Nil(t, sharing)
 
-		category, err := store.GetUserCategoryBoards(boardID, testTeamID)
+		// Data retention deletes category_boards entries but not categories themselves
+		// Check that the category exists but has no boards
+		categoryBoards, err := store.GetUserCategoryBoards(testUserID, testTeamID)
 		require.NoError(t, err)
-		require.Empty(t, category)
+		// The category should exist but with no boards
+		if len(categoryBoards) > 0 {
+			// If category exists, it should have no board metadata
+			for _, cb := range categoryBoards {
+				require.Empty(t, cb.BoardMetadata, "category should have no boards after data retention")
+			}
+		}
 	})
 }

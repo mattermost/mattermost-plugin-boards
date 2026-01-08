@@ -65,8 +65,12 @@ func createTestSubscriptions(client *client.Client, num int) ([]*model.Subscript
 }
 
 func TestCreateSubscription(t *testing.T) {
-	th := SetupTestHelper(t).InitBasic()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
+
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
+	th.Client2 = clients.Viewer
 
 	t.Run("Create valid subscription", func(t *testing.T) {
 		subs, userID, err := createTestSubscriptions(th.Client, 5)
@@ -101,8 +105,12 @@ func TestCreateSubscription(t *testing.T) {
 }
 
 func TestGetSubscriptions(t *testing.T) {
-	th := SetupTestHelper(t).InitBasic()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
+
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
+	th.Client2 = clients.Viewer
 
 	t.Run("Get subscriptions for user", func(t *testing.T) {
 		mySubs, user1ID, err := createTestSubscriptions(th.Client, 5)
@@ -124,8 +132,11 @@ func TestGetSubscriptions(t *testing.T) {
 }
 
 func TestDeleteSubscription(t *testing.T) {
-	th := SetupTestHelper(t).InitBasic()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
+
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
 
 	t.Run("Delete valid subscription", func(t *testing.T) {
 		subs, userID, err := createTestSubscriptions(th.Client, 3)
