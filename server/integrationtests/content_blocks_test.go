@@ -10,6 +10,7 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,7 +18,11 @@ func TestMoveContentBlock(t *testing.T) {
 	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
-	board := th.CreateBoard("team-id", model.BoardTypeOpen)
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
+
+	teamID := mmModel.NewId()
+	board := th.CreateBoard(teamID, model.BoardTypeOpen)
 
 	cardID1 := utils.NewID(utils.IDTypeBlock)
 	cardID2 := utils.NewID(utils.IDTypeBlock)

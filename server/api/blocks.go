@@ -220,6 +220,11 @@ func (a *API) handlePostBlocks(w http.ResponseWriter, r *http.Request) {
 	boardID := mux.Vars(r)["boardID"]
 	userID := getUserID(r)
 
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to create blocks"))
+		return
+	}
+
 	val := r.URL.Query().Get("disable_notify")
 	disableNotify := val == True
 
@@ -374,6 +379,11 @@ func (a *API) handleDeleteBlock(w http.ResponseWriter, r *http.Request) {
 	boardID := vars["boardID"]
 	blockID := vars["blockID"]
 
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to delete block"))
+		return
+	}
+
 	val := r.URL.Query().Get("disable_notify")
 	disableNotify := val == True
 
@@ -451,9 +461,11 @@ func (a *API) handleUndeleteBlock(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
-	userID := session.UserID
+	userID := getUserID(r)
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to undelete block"))
+		return
+	}
 
 	vars := mux.Vars(r)
 	blockID := vars["blockID"]
@@ -551,6 +563,11 @@ func (a *API) handlePatchBlock(w http.ResponseWriter, r *http.Request) {
 	boardID := vars["boardID"]
 	blockID := vars["blockID"]
 
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to patch block"))
+		return
+	}
+
 	val := r.URL.Query().Get("disable_notify")
 	disableNotify := val == True
 
@@ -634,12 +651,16 @@ func (a *API) handlePatchBlocks(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
-	userID := session.UserID
+	userID := getUserID(r)
+
+	// Check authentication first
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to patch blocks"))
+		return
+	}
 
 	vars := mux.Vars(r)
-	teamID := vars["teamID"]
+	_ = vars["boardID"] // boardID is available but not used directly here
 
 	val := r.URL.Query().Get("disable_notify")
 	disableNotify := val == True
@@ -663,16 +684,34 @@ func (a *API) handlePatchBlocks(w http.ResponseWriter, r *http.Request) {
 		auditRec.AddMeta("block_"+strconv.FormatInt(int64(i), 10), patches.BlockIDs[i])
 	}
 
+	// Get teamID from the first block's board
+	var teamID string
 	for _, blockID := range patches.BlockIDs {
 		var block *model.Block
 		block, err = a.app.GetBlockByID(blockID)
 		if err != nil {
-			a.errorResponse(w, r, model.NewErrForbidden("access denied to make board changes"))
+			if model.IsErrNotFound(err) {
+				a.errorResponse(w, r, model.NewErrNotFound("block ID="+blockID))
+			} else {
+				a.errorResponse(w, r, model.NewErrForbidden("access denied to make board changes"))
+			}
+			return
+		}
+		if block == nil {
+			a.errorResponse(w, r, model.NewErrNotFound("block ID="+blockID))
 			return
 		}
 		if !a.permissions.HasPermissionToBoard(userID, block.BoardID, model.PermissionManageBoardCards) {
-			a.errorResponse(w, r, model.NewErrPermission("access denied to make board changesa"))
+			a.errorResponse(w, r, model.NewErrPermission("access denied to make board changes"))
 			return
+		}
+		if teamID == "" {
+			board, bErr := a.app.GetBoard(block.BoardID)
+			if bErr != nil {
+				a.errorResponse(w, r, bErr)
+				return
+			}
+			teamID = board.TeamID
 		}
 	}
 

@@ -306,6 +306,13 @@ func SetupTests(t *testing.T) (store.Store, func()) {
 
 	// Ensure cleanup runs even if test panics
 	t.Cleanup(func() {
+		// Use recover to handle errors gracefully (e.g., database already dropped)
+		defer func() {
+			if r := recover(); r != nil {
+				// Ignore panics from CleanupSqlSettings - database may already be cleaned up
+				// This prevents double-cleanup issues
+			}
+		}()
 		storetest.CleanupSqlSettings(sqlSettings)
 	})
 

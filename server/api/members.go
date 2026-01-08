@@ -60,9 +60,26 @@ func (a *API) handleGetMembersForBoard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard) {
-		a.errorResponse(w, r, model.NewErrPermission("access denied to board members"))
+	// For template boards, require explicit board membership (not synthetic)
+	board, err := a.app.GetBoard(boardID)
+	if err != nil {
+		a.errorResponse(w, r, err)
 		return
+	}
+
+	if board.IsTemplate {
+		// Check for explicit board membership (not synthetic)
+		member, err := a.app.GetMemberForBoard(boardID, userID)
+		if err != nil || member == nil || member.Synthetic {
+			a.errorResponse(w, r, model.NewErrPermission("access denied to board members"))
+			return
+		}
+	} else {
+		// For non-template boards, use standard permission check
+		if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard) {
+			a.errorResponse(w, r, model.NewErrPermission("access denied to board members"))
+			return
+		}
 	}
 
 	auditRec := a.makeAuditRecord(r, "getMembersForBoard", audit.Fail)
@@ -347,7 +364,7 @@ func (a *API) handleLeaveBoard(w http.ResponseWriter, r *http.Request) {
 
 	userID := getUserID(r)
 	if userID == "" {
-		a.errorResponse(w, r, model.NewErrBadRequest("invalid session"))
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to leave board"))
 		return
 	}
 

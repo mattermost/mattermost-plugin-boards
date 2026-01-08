@@ -280,6 +280,11 @@ func (a *API) handlePatchCard(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 	cardID := mux.Vars(r)["cardID"]
 
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to patch card"))
+		return
+	}
+
 	val := r.URL.Query().Get("disable_notify")
 	disableNotify := val == True
 
@@ -365,6 +370,11 @@ func (a *API) handleGetCard(w http.ResponseWriter, r *http.Request) {
 
 	userID := getUserID(r)
 	cardID := mux.Vars(r)["cardID"]
+
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to get card"))
+		return
+	}
 
 	card, err := a.app.GetCardByID(cardID)
 	if err != nil {

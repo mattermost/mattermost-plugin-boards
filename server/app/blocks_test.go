@@ -78,6 +78,42 @@ func TestPatchBlocks(t *testing.T) {
 		require.ErrorIs(t, err, sql.ErrNoRows)
 	})
 
+	t.Run("patchBlocks notification GetBlock error scenario", func(t *testing.T) {
+		blockPatches := model.BlockPatchBatch{
+			BlockIDs: []string{"block1"},
+			BlockPatches: []model.BlockPatch{
+				{Title: mmModel.NewPointer("new title")},
+			},
+		}
+
+		block1 := &model.Block{ID: "block1"}
+		th.Store.EXPECT().GetBlocksByIDs([]string{"block1"}).Return([]*model.Block{block1}, nil)
+		th.Store.EXPECT().PatchBlocks(gomock.Eq(&blockPatches), gomock.Eq("user-id-1")).Return(nil)
+		th.Store.EXPECT().GetBlock("block1").Return(nil, model.NewErrNotFound("block ID=block1"))
+		err := th.App.PatchBlocks("team-id", &blockPatches, "user-id-1")
+		require.NoError(t, err)
+	})
+
+	t.Run("patchBlocks multiple blocks scenario", func(t *testing.T) {
+		blockPatches := model.BlockPatchBatch{
+			BlockIDs: []string{"block1", "block2"},
+			BlockPatches: []model.BlockPatch{
+				{Title: mmModel.NewPointer("new title 1")},
+				{Title: mmModel.NewPointer("new title 2")},
+			},
+		}
+
+		block1 := &model.Block{ID: "block1"}
+		block2 := &model.Block{ID: "block2"}
+		th.Store.EXPECT().GetBlocksByIDs([]string{"block1", "block2"}).Return([]*model.Block{block1, block2}, nil)
+		th.Store.EXPECT().PatchBlocks(gomock.Eq(&blockPatches), gomock.Eq("user-id-1")).Return(nil)
+		th.Store.EXPECT().GetBlock("block1").Return(block1, nil)
+		th.Store.EXPECT().GetBlock("block2").Return(block2, nil)
+		th.Store.EXPECT().GetMembersForBoard(gomock.Any()).Times(2)
+		err := th.App.PatchBlocks("team-id", &blockPatches, "user-id-1")
+		require.NoError(t, err)
+	})
+
 	t.Run("cloud limit error scenario", func(t *testing.T) {
 		t.Skipf("The Cloud Limits feature has been disabled")
 

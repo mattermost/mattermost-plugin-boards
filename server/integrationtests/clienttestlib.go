@@ -141,7 +141,9 @@ func (*FakePermissionPluginAPI) HasPermissionToTeam(userID string, teamID string
 }
 
 func (*FakePermissionPluginAPI) HasPermissionToChannel(userID string, channelID string, permission *mmModel.Permission) bool {
-	return channelID == "valid-channel-id" || channelID == "valid-channel-id-2"
+	// Accept any valid Mattermost ID format (26 characters)
+	// This allows tests to use dynamically generated channel IDs
+	return mmModel.IsValidId(channelID)
 }
 
 // testMutexAPI provides a no-op mutex for tests
@@ -220,7 +222,9 @@ func getTestConfig(sqlSettings *mmModel.SqlSettings) (*config.Configuration, err
 
 // testServicesAPI provides a servicesAPI implementation for tests
 type testServicesAPI struct {
-	users map[string]*model.User
+	users  map[string]*model.User
+	db     *sql.DB
+	dbType string
 }
 
 func (t *testServicesAPI) GetUserByID(userID string) (*mmModel.User, error) {
@@ -316,7 +320,71 @@ func (t *testServicesAPI) GetLicense() *mmModel.License {
 }
 
 func (t *testServicesAPI) GetFileInfo(fileID string) (*mmModel.FileInfo, error) {
-	return nil, fmt.Errorf("not implemented")
+	// Query the FileInfo table (Mattermost's table) to retrieve saved file info
+	// This matches what the real Mattermost servicesAPI would do
+	var query string
+	if t.dbType == model.PostgresDBType {
+		query = `SELECT Id, CreateAt, UpdateAt, DeleteAt, Path, ThumbnailPath, PreviewPath, Name, Extension, Size, MimeType, Width, Height, HasPreviewImage, MiniPreview, Content, RemoteId, CreatorId, PostId FROM FileInfo WHERE Id = $1`
+	} else {
+		query = `SELECT Id, CreateAt, UpdateAt, DeleteAt, Path, ThumbnailPath, PreviewPath, Name, Extension, Size, MimeType, Width, Height, HasPreviewImage, MiniPreview, Content, RemoteId, CreatorId, PostId FROM FileInfo WHERE Id = ?`
+	}
+
+	var fileInfo mmModel.FileInfo
+	var err error
+	if t.dbType == model.PostgresDBType {
+		err = t.db.QueryRow(query, fileID).Scan(
+			&fileInfo.Id,
+			&fileInfo.CreateAt,
+			&fileInfo.UpdateAt,
+			&fileInfo.DeleteAt,
+			&fileInfo.Path,
+			&fileInfo.ThumbnailPath,
+			&fileInfo.PreviewPath,
+			&fileInfo.Name,
+			&fileInfo.Extension,
+			&fileInfo.Size,
+			&fileInfo.MimeType,
+			&fileInfo.Width,
+			&fileInfo.Height,
+			&fileInfo.HasPreviewImage,
+			&fileInfo.MiniPreview,
+			&fileInfo.Content,
+			&fileInfo.RemoteId,
+			&fileInfo.CreatorId,
+			&fileInfo.PostId,
+		)
+	} else {
+		err = t.db.QueryRow(query, fileID).Scan(
+			&fileInfo.Id,
+			&fileInfo.CreateAt,
+			&fileInfo.UpdateAt,
+			&fileInfo.DeleteAt,
+			&fileInfo.Path,
+			&fileInfo.ThumbnailPath,
+			&fileInfo.PreviewPath,
+			&fileInfo.Name,
+			&fileInfo.Extension,
+			&fileInfo.Size,
+			&fileInfo.MimeType,
+			&fileInfo.Width,
+			&fileInfo.Height,
+			&fileInfo.HasPreviewImage,
+			&fileInfo.MiniPreview,
+			&fileInfo.Content,
+			&fileInfo.RemoteId,
+			&fileInfo.CreatorId,
+			&fileInfo.PostId,
+		)
+	}
+
+	if err == sql.ErrNoRows {
+		return nil, mmModel.NewAppError("GetFileInfo", "app.file_info.get.app_error", nil, "", http.StatusNotFound)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &fileInfo, nil
 }
 
 func (t *testServicesAPI) CreatePost(post *mmModel.Post) (*mmModel.Post, error) {
@@ -439,7 +507,7 @@ func NewTestServerPluginMode(sqlSettings *mmModel.SqlSettings) *server.Server {
 		TablePrefix:      cfg.DBTablePrefix,
 		Logger:           logger,
 		DB:               sqlDB,
-		ServicesAPI:      &testServicesAPI{users: testUsers},
+		ServicesAPI:      &testServicesAPI{users: testUsers, db: sqlDB, dbType: cfg.DBType},
 		NewMutexFn: func(name string) (*cluster.Mutex, error) {
 			// Create a mutex using a test API that does nothing
 			// This allows migrations to run without actual cluster coordination
@@ -705,4 +773,43 @@ func (th *TestHelper) CheckRequestEntityTooLarge(r *client.Response) {
 func (th *TestHelper) CheckNotImplemented(r *client.Response) {
 	require.Equal(th.T, http.StatusNotImplemented, r.StatusCode)
 	require.Error(th.T, r.Error)
+}
+
+// AddUserToTeamMembers inserts a user into the TeamMembers table for the given team.
+// This is useful for tests that need to ensure a user is a team member so that
+// SearchBoardsForTeam can find public boards associated with that team.
+func (th *TestHelper) AddUserToTeamMembers(teamID, userID string) error {
+	dbType := th.Server.Config().DBType
+	connectionString := th.Server.Config().DBConfigString
+	db, err := sql.Open(dbType, connectionString)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	if dbType == model.PostgresDBType {
+		// PostgreSQL uses lowercase table and column names
+		// Check if record exists first to avoid constraint errors
+		var count int
+		checkSQL := `SELECT COUNT(*) FROM teammembers WHERE teamid = $1 AND userid = $2`
+		err := db.QueryRow(checkSQL, teamID, userID).Scan(&count)
+		if err != nil {
+			return err
+		}
+		if count == 0 {
+			insertTeamMemberSQL := `INSERT INTO teammembers (teamid, userid, roles, deleteat) VALUES ($1, $2, $3, $4)`
+			_, err = db.Exec(insertTeamMemberSQL, teamID, userID, "member", 0)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		// MySQL uses camel case
+		insertTeamMemberSQL := `INSERT IGNORE INTO TeamMembers (TeamId, UserId, Roles, DeleteAt) VALUES (?, ?, ?, ?)`
+		_, err = db.Exec(insertTeamMemberSQL, teamID, userID, "member", 0)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

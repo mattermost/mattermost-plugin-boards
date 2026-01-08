@@ -57,6 +57,11 @@ func (a *API) handleGetBoards(w http.ResponseWriter, r *http.Request) {
 	teamID := mux.Vars(r)["teamID"]
 	userID := getUserID(r)
 
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to team boards"))
+		return
+	}
+
 	if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionViewTeam) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to team"))
 		return
@@ -125,6 +130,11 @@ func (a *API) handleCreateBoard(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	userID := getUserID(r)
+
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to create board"))
+		return
+	}
 
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -255,6 +265,10 @@ func (a *API) handleGetBoard(w http.ResponseWriter, r *http.Request) {
 			isGuest, err = a.userIsGuest(userID)
 			if err != nil {
 				a.errorResponse(w, r, err)
+				return
+			}
+			if board.IsTemplate && isGuest {
+				a.errorResponse(w, r, model.NewErrPermission("guest are not allowed to get board templates"))
 				return
 			}
 			if isGuest {
