@@ -726,6 +726,14 @@ func (a *API) handlePatchBlocks(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+		if teamID == "" {
+			board, bErr := a.app.GetBoard(block.BoardID)
+			if bErr != nil {
+				a.errorResponse(w, r, bErr)
+				return
+			}
+			teamID = board.TeamID
+		}
 	}
 
 	err = a.app.PatchBlocksAndNotify(teamID, patches, userID, disableNotify)
