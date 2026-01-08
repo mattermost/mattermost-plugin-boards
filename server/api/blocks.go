@@ -587,6 +587,13 @@ func (a *API) handlePatchBlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if block.Type == model.TypeComment && block.CreatedBy != userID {
+		if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionDeleteOthersComments) {
+			a.errorResponse(w, r, model.NewErrPermission("access denied to modify others' comments"))
+			return
+		}
+	}
+
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		a.errorResponse(w, r, err)
@@ -712,6 +719,12 @@ func (a *API) handlePatchBlocks(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			teamID = board.TeamID
+		}
+		if block.Type == model.TypeComment && block.CreatedBy != userID {
+			if !a.permissions.HasPermissionToBoard(userID, block.BoardID, model.PermissionDeleteOthersComments) {
+				a.errorResponse(w, r, model.NewErrPermission("access denied to modify others' comments"))
+				return
+			}
 		}
 	}
 
