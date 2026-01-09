@@ -175,7 +175,7 @@ func (a *API) handleServeFile(w http.ResponseWriter, r *http.Request) {
 		a.errorResponse(w, r, err)
 	}
 
-	defer fileReader.Close()
+	defer func() { _ = fileReader.Close() }()
 
 	mimeType := ""
 	var fileSize int64
@@ -393,7 +393,7 @@ func (a *API) handleUploadFile(w http.ResponseWriter, r *http.Request) {
 		a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	auditRec := a.makeAuditRecord(r, "uploadFile", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)

@@ -79,6 +79,7 @@ func NewServer(rootPath string, serverRoot string, port int, ssl, localOnly bool
 }
 
 func (ws *Server) Router() *mux.Router {
+	//nolint:staticcheck // QF1008: prefer to keep explicit Server qualifier
 	return ws.Server.Handler.(*mux.Router)
 }
 

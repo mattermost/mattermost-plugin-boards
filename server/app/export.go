@@ -220,7 +220,7 @@ func (a *App) writeArchiveFile(zw *zip.Writer, filename string, boardID string, 
 		)
 		return nil
 	}
-	defer fileReader.Close()
+	defer func() { _ = fileReader.Close() }()
 
 	_, err = io.Copy(dest, fileReader)
 	return err

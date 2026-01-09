@@ -80,7 +80,7 @@ func (bm *BoardsMigrator) runMattermostMigrations() error {
 	if err != nil {
 		return err
 	}
-	defer engine.Close()
+	defer func() { _ = engine.Close() }()
 
 	return engine.ApplyAll()
 }
