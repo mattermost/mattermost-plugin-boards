@@ -22,7 +22,6 @@ import (
 
 	"github.com/mattermost/morph"
 	drivers "github.com/mattermost/morph/drivers"
-	mysql "github.com/mattermost/morph/drivers/mysql"
 	postgres "github.com/mattermost/morph/drivers/postgres"
 	sqlite "github.com/mattermost/morph/drivers/sqlite"
 	embedded "github.com/mattermost/morph/sources/embedded"
@@ -46,24 +45,7 @@ const (
 
 var errChannelCreatorNotInTeam = errors.New("channel creator not found in user teams")
 
-// migrations in MySQL need to run with the multiStatements flag
-// enabled, so this method creates a new connection ensuring that it's
-// enabled.
 func (s *SQLStore) getMigrationConnection() (*sql.DB, error) {
-	connectionString := s.connectionString
-	if s.dbType == model.MysqlDBType {
-		var err error
-		connectionString, err = sqlUtils.ResetReadTimeout(connectionString)
-		if err != nil {
-			return nil, err
-		}
-
-		connectionString, err = sqlUtils.AppendMultipleStatementsFlag(connectionString)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	var settings mmModel.SqlSettings
 	settings.SetDefaults(false)
 	if s.configFn != nil {
@@ -71,7 +53,10 @@ func (s *SQLStore) getMigrationConnection() (*sql.DB, error) {
 	}
 	*settings.DriverName = s.dbType
 
-	db, _ := sqlUtils.SetupConnection(s.logger, "master", connectionString, &settings, s.dbPingAttempts)
+	db, err := sqlUtils.SetupConnection(s.logger, "master", s.connectionString, &settings, s.dbPingAttempts)
+	if err != nil {
+		return nil, err
+	}
 
 	return db, nil
 }
@@ -132,13 +117,6 @@ func (s *SQLStore) Migrate() error {
 		}
 	}
 
-	if s.dbType == model.MysqlDBType {
-		driver, err = mysql.WithInstance(db)
-		if err != nil {
-			return err
-		}
-	}
-
 	assetsList, err := Assets.ReadDir("migrations")
 	if err != nil {
 		return err
@@ -152,7 +130,6 @@ func (s *SQLStore) Migrate() error {
 		"prefix":   s.tablePrefix,
 		"postgres": s.dbType == model.PostgresDBType,
 		"sqlite":   s.dbType == model.SqliteDBType,
-		"mysql":    s.dbType == model.MysqlDBType,
 	}
 
 	migrationAssets := &embedded.AssetSource{
