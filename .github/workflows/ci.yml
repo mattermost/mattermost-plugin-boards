@@ -40,15 +40,5 @@ jobs:
     - name: set up golangci-lint
       run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.64.8
     
-    - name: Lint & test server 
+    - name: Lint & test server
       run: cd focalboard; make server-ci
-      
-  dist:
-    permissions:
-      id-token: write
-      contents: read
-    uses: mattermost/actions-workflows/.github/workflows/plugin-dist-pr.yml@main
-    secrets: inherit
-    with:
-      dist-target: "dist-linux"
-      s3-prefix: "mattermost-plugin-boards"
