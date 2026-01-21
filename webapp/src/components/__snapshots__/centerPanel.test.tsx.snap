@@ -9,27 +9,6 @@ exports[`components/centerPanel Clicking on the Hidden card count should open a 
       class="top-head"
     >
       <div
-        class="TopBar"
-      >
-        <a
-          class="link"
-          href="https://www.focalboard.com/fwlink/feedback-focalboard.html?v=1.0.0"
-          rel="noreferrer"
-          target="_blank"
-        >
-          Give feedback
-        </a>
-        <a
-          href="https://www.focalboard.com/guide/user?utm_source=webapp"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <i
-            class="CompassIcon icon-help-circle-outline HelpIcon"
-          />
-        </a>
-      </div>
-      <div
         class="mid-head"
       >
         <div
@@ -717,27 +696,6 @@ exports[`components/centerPanel return centerPanel and click on card to show car
       class="top-head"
     >
       <div
-        class="TopBar"
-      >
-        <a
-          class="link"
-          href="https://www.focalboard.com/fwlink/feedback-focalboard.html?v=1.0.0"
-          rel="noreferrer"
-          target="_blank"
-        >
-          Give feedback
-        </a>
-        <a
-          href="https://www.focalboard.com/guide/user?utm_source=webapp"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <i
-            class="CompassIcon icon-help-circle-outline HelpIcon"
-          />
-        </a>
-      </div>
-      <div
         class="mid-head"
       >
         <div
@@ -1269,27 +1227,6 @@ exports[`components/centerPanel return centerPanel and click on new card to edit
     <div
       class="top-head"
     >
-      <div
-        class="TopBar"
-      >
-        <a
-          class="link"
-          href="https://www.focalboard.com/fwlink/feedback-focalboard.html?v=1.0.0"
-          rel="noreferrer"
-          target="_blank"
-        >
-          Give feedback
-        </a>
-        <a
-          href="https://www.focalboard.com/guide/user?utm_source=webapp"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <i
-            class="CompassIcon icon-help-circle-outline HelpIcon"
-          />
-        </a>
-      </div>
       <div
         class="mid-head"
       >
@@ -1928,27 +1865,6 @@ exports[`components/centerPanel return centerPanel and press touch 1 with readon
       class="top-head"
     >
       <div
-        class="TopBar"
-      >
-        <a
-          class="link"
-          href="https://www.focalboard.com/fwlink/feedback-focalboard.html?v=1.0.0"
-          rel="noreferrer"
-          target="_blank"
-        >
-          Give feedback
-        </a>
-        <a
-          href="https://www.focalboard.com/guide/user?utm_source=webapp"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <i
-            class="CompassIcon icon-help-circle-outline HelpIcon"
-          />
-        </a>
-      </div>
-      <div
         class="mid-head"
       >
         <div
@@ -2326,27 +2242,6 @@ exports[`components/centerPanel return centerPanel and press touch ctrl+d for on
     <div
       class="top-head"
     >
-      <div
-        class="TopBar"
-      >
-        <a
-          class="link"
-          href="https://www.focalboard.com/fwlink/feedback-focalboard.html?v=1.0.0"
-          rel="noreferrer"
-          target="_blank"
-        >
-          Give feedback
-        </a>
-        <a
-          href="https://www.focalboard.com/guide/user?utm_source=webapp"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <i
-            class="CompassIcon icon-help-circle-outline HelpIcon"
-          />
-        </a>
-      </div>
       <div
         class="mid-head"
       >
@@ -2985,27 +2880,6 @@ exports[`components/centerPanel return centerPanel and press touch del for one c
       class="top-head"
     >
       <div
-        class="TopBar"
-      >
-        <a
-          class="link"
-          href="https://www.focalboard.com/fwlink/feedback-focalboard.html?v=1.0.0"
-          rel="noreferrer"
-          target="_blank"
-        >
-          Give feedback
-        </a>
-        <a
-          href="https://www.focalboard.com/guide/user?utm_source=webapp"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <i
-            class="CompassIcon icon-help-circle-outline HelpIcon"
-          />
-        </a>
-      </div>
-      <div
         class="mid-head"
       >
         <div
@@ -3642,27 +3516,6 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
     <div
       class="top-head"
     >
-      <div
-        class="TopBar"
-      >
-        <a
-          class="link"
-          href="https://www.focalboard.com/fwlink/feedback-focalboard.html?v=1.0.0"
-          rel="noreferrer"
-          target="_blank"
-        >
-          Give feedback
-        </a>
-        <a
-          href="https://www.focalboard.com/guide/user?utm_source=webapp"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <i
-            class="CompassIcon icon-help-circle-outline HelpIcon"
-          />
-        </a>
-      </div>
       <div
         class="mid-head"
       >
@@ -4301,27 +4154,6 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
       class="top-head"
     >
       <div
-        class="TopBar"
-      >
-        <a
-          class="link"
-          href="https://www.focalboard.com/fwlink/feedback-focalboard.html?v=1.0.0"
-          rel="noreferrer"
-          target="_blank"
-        >
-          Give feedback
-        </a>
-        <a
-          href="https://www.focalboard.com/guide/user?utm_source=webapp"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <i
-            class="CompassIcon icon-help-circle-outline HelpIcon"
-          />
-        </a>
-      </div>
-      <div
         class="mid-head"
       >
         <div
@@ -4958,27 +4790,6 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
     <div
       class="top-head"
     >
-      <div
-        class="TopBar"
-      >
-        <a
-          class="link"
-          href="https://www.focalboard.com/fwlink/feedback-focalboard.html?v=1.0.0"
-          rel="noreferrer"
-          target="_blank"
-        >
-          Give feedback
-        </a>
-        <a
-          href="https://www.focalboard.com/guide/user?utm_source=webapp"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <i
-            class="CompassIcon icon-help-circle-outline HelpIcon"
-          />
-        </a>
-      </div>
       <div
         class="mid-head"
       >
@@ -5617,27 +5428,6 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
       class="top-head"
     >
       <div
-        class="TopBar"
-      >
-        <a
-          class="link"
-          href="https://www.focalboard.com/fwlink/feedback-focalboard.html?v=1.0.0"
-          rel="noreferrer"
-          target="_blank"
-        >
-          Give feedback
-        </a>
-        <a
-          href="https://www.focalboard.com/guide/user?utm_source=webapp"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <i
-            class="CompassIcon icon-help-circle-outline HelpIcon"
-          />
-        </a>
-      </div>
-      <div
         class="mid-head"
       >
         <div
@@ -6274,27 +6064,6 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
     <div
       class="top-head"
     >
-      <div
-        class="TopBar"
-      >
-        <a
-          class="link"
-          href="https://www.focalboard.com/fwlink/feedback-focalboard.html?v=1.0.0"
-          rel="noreferrer"
-          target="_blank"
-        >
-          Give feedback
-        </a>
-        <a
-          href="https://www.focalboard.com/guide/user?utm_source=webapp"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <i
-            class="CompassIcon icon-help-circle-outline HelpIcon"
-          />
-        </a>
-      </div>
       <div
         class="mid-head"
       >
@@ -6933,27 +6702,6 @@ exports[`components/centerPanel return centerPanel and select one card and click
       class="top-head"
     >
       <div
-        class="TopBar"
-      >
-        <a
-          class="link"
-          href="https://www.focalboard.com/fwlink/feedback-focalboard.html?v=1.0.0"
-          rel="noreferrer"
-          target="_blank"
-        >
-          Give feedback
-        </a>
-        <a
-          href="https://www.focalboard.com/guide/user?utm_source=webapp"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <i
-            class="CompassIcon icon-help-circle-outline HelpIcon"
-          />
-        </a>
-      </div>
-      <div
         class="mid-head"
       >
         <div
@@ -7590,27 +7338,6 @@ exports[`components/centerPanel return centerPanel and select one card and click
     <div
       class="top-head"
     >
-      <div
-        class="TopBar"
-      >
-        <a
-          class="link"
-          href="https://www.focalboard.com/fwlink/feedback-focalboard.html?v=1.0.0"
-          rel="noreferrer"
-          target="_blank"
-        >
-          Give feedback
-        </a>
-        <a
-          href="https://www.focalboard.com/guide/user?utm_source=webapp"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <i
-            class="CompassIcon icon-help-circle-outline HelpIcon"
-          />
-        </a>
-      </div>
       <div
         class="mid-head"
       >
@@ -8249,27 +7976,6 @@ exports[`components/centerPanel should match snapshot for Gallery 1`] = `
       class="top-head"
     >
       <div
-        class="TopBar"
-      >
-        <a
-          class="link"
-          href="https://www.focalboard.com/fwlink/feedback-focalboard.html?v=1.0.0"
-          rel="noreferrer"
-          target="_blank"
-        >
-          Give feedback
-        </a>
-        <a
-          href="https://www.focalboard.com/guide/user?utm_source=webapp"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <i
-            class="CompassIcon icon-help-circle-outline HelpIcon"
-          />
-        </a>
-      </div>
-      <div
         class="mid-head"
       >
         <div
@@ -8523,27 +8229,6 @@ exports[`components/centerPanel should match snapshot for Kanban 1`] = `
     <div
       class="top-head"
     >
-      <div
-        class="TopBar"
-      >
-        <a
-          class="link"
-          href="https://www.focalboard.com/fwlink/feedback-focalboard.html?v=1.0.0"
-          rel="noreferrer"
-          target="_blank"
-        >
-          Give feedback
-        </a>
-        <a
-          href="https://www.focalboard.com/guide/user?utm_source=webapp"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <i
-            class="CompassIcon icon-help-circle-outline HelpIcon"
-          />
-        </a>
-      </div>
       <div
         class="mid-head"
       >
@@ -9043,27 +8728,6 @@ exports[`components/centerPanel should match snapshot for Kanban, not shared 1`]
       class="top-head"
     >
       <div
-        class="TopBar"
-      >
-        <a
-          class="link"
-          href="https://www.focalboard.com/fwlink/feedback-focalboard.html?v=1.0.0"
-          rel="noreferrer"
-          target="_blank"
-        >
-          Give feedback
-        </a>
-        <a
-          href="https://www.focalboard.com/guide/user?utm_source=webapp"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <i
-            class="CompassIcon icon-help-circle-outline HelpIcon"
-          />
-        </a>
-      </div>
-      <div
         class="mid-head"
       >
         <div
@@ -9561,27 +9225,6 @@ exports[`components/centerPanel should match snapshot for Table 1`] = `
     <div
       class="top-head"
     >
-      <div
-        class="TopBar"
-      >
-        <a
-          class="link"
-          href="https://www.focalboard.com/fwlink/feedback-focalboard.html?v=1.0.0"
-          rel="noreferrer"
-          target="_blank"
-        >
-          Give feedback
-        </a>
-        <a
-          href="https://www.focalboard.com/guide/user?utm_source=webapp"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <i
-            class="CompassIcon icon-help-circle-outline HelpIcon"
-          />
-        </a>
-      </div>
       <div
         class="mid-head"
       >

@@ -121,88 +121,104 @@ exports[`components/cardDialog already following card 1`] = `
             </div>
           </div>
           <div
-            class="octo-propertylist CardDetailProperties"
+            class="CardDetail__main-content"
           >
             <div
-              class="octo-propertyname add-property"
+              class="CardDetail__left-section"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="CardDetail CardDetail--fullwidth content-blocks"
               >
-                <button
-                  type="button"
+                <div
+                  class="octo-content CardDetailContents"
                 >
-                  <span>
-                    + Add a property
-                  </span>
-                </button>
+                  <div
+                    class="octo-block"
+                  >
+                    <div
+                      class="octo-block-margin"
+                    />
+                    <div
+                      class="MarkdownEditor octo-editor  "
+                    >
+                      <div
+                        class="octo-editor-preview octo-placeholder"
+                        data-testid="preview-element"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div
+                  class="CardDetailContentsMenu content add-content"
+                >
+                  <div
+                    aria-label="menuwrapper"
+                    class="MenuWrapper"
+                    role="button"
+                  >
+                    <button
+                      type="button"
+                    >
+                      <span>
+                        Add content
+                      </span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          <hr />
-          <div
-            class="CommentsList"
-          >
             <div
-              class="CommentsList__new"
+              class="CardDetail__right-section"
             >
-              <img
-                class="comment-avatar"
-              />
               <div
-                class="MarkdownEditor octo-editor newcomment "
+                class="octo-propertylist CardDetailProperties"
               >
                 <div
-                  class="octo-editor-preview octo-placeholder"
-                  data-testid="preview-element"
-                />
+                  class="octo-propertyname add-property"
+                >
+                  <div
+                    aria-label="menuwrapper"
+                    class="MenuWrapper"
+                    role="button"
+                  >
+                    <button
+                      type="button"
+                    >
+                      <span>
+                        + Add a property
+                      </span>
+                    </button>
+                  </div>
+                </div>
               </div>
-              
             </div>
-            <hr
-              class="CommentsList__divider"
-            />
           </div>
-        </div>
-        <div
-          class="CardDetail CardDetail--fullwidth content-blocks"
-        >
           <div
-            class="octo-content CardDetailContents"
+            class="CardDetail__comments-section"
           >
+            <hr />
             <div
-              class="octo-block"
+              class="CommentsList"
             >
               <div
-                class="octo-block-margin"
-              />
-              <div
-                class="MarkdownEditor octo-editor  "
+                class="CommentsList__new"
               >
+                <img
+                  class="comment-avatar"
+                />
                 <div
-                  class="octo-editor-preview octo-placeholder"
-                  data-testid="preview-element"
-                />
+                  class="MarkdownEditor octo-editor newcomment "
+                >
+                  <div
+                    class="octo-editor-preview octo-placeholder"
+                    data-testid="preview-element"
+                  />
+                </div>
+                
               </div>
-            </div>
-          </div>
-          <div
-            class="CardDetailContentsMenu content add-content"
-          >
-            <div
-              aria-label="menuwrapper"
-              class="MenuWrapper"
-              role="button"
-            >
-              <button
-                type="button"
-              >
-                <span>
-                  Add content
-                </span>
-              </button>
+              <hr
+                class="CommentsList__divider"
+              />
             </div>
           </div>
         </div>
@@ -561,26 +577,42 @@ exports[`components/cardDialog return a cardDialog readonly 1`] = `
             </div>
           </div>
           <div
-            class="octo-propertylist CardDetailProperties"
-          />
-          <hr />
-          <div
-            class="CommentsList"
-          />
-        </div>
-        <div
-          class="CardDetail CardDetail--fullwidth content-blocks"
-        >
-          <div
-            class="octo-content CardDetailContents"
+            class="CardDetail__main-content"
           >
             <div
-              class="octo-block"
+              class="CardDetail__left-section"
             >
               <div
-                class="octo-block-margin"
+                class="CardDetail CardDetail--fullwidth content-blocks"
+              >
+                <div
+                  class="octo-content CardDetailContents"
+                >
+                  <div
+                    class="octo-block"
+                  >
+                    <div
+                      class="octo-block-margin"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              class="CardDetail__right-section"
+            >
+              <div
+                class="octo-propertylist CardDetailProperties"
               />
             </div>
+          </div>
+          <div
+            class="CardDetail__comments-section"
+          >
+            <hr />
+            <div
+              class="CommentsList"
+            />
           </div>
         </div>
       </div>
@@ -847,88 +879,104 @@ exports[`components/cardDialog return cardDialog menu content 1`] = `
             </div>
           </div>
           <div
-            class="octo-propertylist CardDetailProperties"
+            class="CardDetail__main-content"
           >
             <div
-              class="octo-propertyname add-property"
+              class="CardDetail__left-section"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="CardDetail CardDetail--fullwidth content-blocks"
               >
-                <button
-                  type="button"
+                <div
+                  class="octo-content CardDetailContents"
                 >
-                  <span>
-                    + Add a property
-                  </span>
-                </button>
+                  <div
+                    class="octo-block"
+                  >
+                    <div
+                      class="octo-block-margin"
+                    />
+                    <div
+                      class="MarkdownEditor octo-editor  "
+                    >
+                      <div
+                        class="octo-editor-preview octo-placeholder"
+                        data-testid="preview-element"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div
+                  class="CardDetailContentsMenu content add-content"
+                >
+                  <div
+                    aria-label="menuwrapper"
+                    class="MenuWrapper"
+                    role="button"
+                  >
+                    <button
+                      type="button"
+                    >
+                      <span>
+                        Add content
+                      </span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          <hr />
-          <div
-            class="CommentsList"
-          >
             <div
-              class="CommentsList__new"
+              class="CardDetail__right-section"
             >
-              <img
-                class="comment-avatar"
-              />
               <div
-                class="MarkdownEditor octo-editor newcomment "
+                class="octo-propertylist CardDetailProperties"
               >
                 <div
-                  class="octo-editor-preview octo-placeholder"
-                  data-testid="preview-element"
-                />
+                  class="octo-propertyname add-property"
+                >
+                  <div
+                    aria-label="menuwrapper"
+                    class="MenuWrapper"
+                    role="button"
+                  >
+                    <button
+                      type="button"
+                    >
+                      <span>
+                        + Add a property
+                      </span>
+                    </button>
+                  </div>
+                </div>
               </div>
-              
             </div>
-            <hr
-              class="CommentsList__divider"
-            />
           </div>
-        </div>
-        <div
-          class="CardDetail CardDetail--fullwidth content-blocks"
-        >
           <div
-            class="octo-content CardDetailContents"
+            class="CardDetail__comments-section"
           >
+            <hr />
             <div
-              class="octo-block"
+              class="CommentsList"
             >
               <div
-                class="octo-block-margin"
-              />
-              <div
-                class="MarkdownEditor octo-editor  "
+                class="CommentsList__new"
               >
+                <img
+                  class="comment-avatar"
+                />
                 <div
-                  class="octo-editor-preview octo-placeholder"
-                  data-testid="preview-element"
-                />
+                  class="MarkdownEditor octo-editor newcomment "
+                >
+                  <div
+                    class="octo-editor-preview octo-placeholder"
+                    data-testid="preview-element"
+                  />
+                </div>
+                
               </div>
-            </div>
-          </div>
-          <div
-            class="CardDetailContentsMenu content add-content"
-          >
-            <div
-              aria-label="menuwrapper"
-              class="MenuWrapper"
-              role="button"
-            >
-              <button
-                type="button"
-              >
-                <span>
-                  Add content
-                </span>
-              </button>
+              <hr
+                class="CommentsList__divider"
+              />
             </div>
           </div>
         </div>
@@ -1059,88 +1107,104 @@ exports[`components/cardDialog return cardDialog menu content and cancel delete 
             </div>
           </div>
           <div
-            class="octo-propertylist CardDetailProperties"
+            class="CardDetail__main-content"
           >
             <div
-              class="octo-propertyname add-property"
+              class="CardDetail__left-section"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="CardDetail CardDetail--fullwidth content-blocks"
               >
-                <button
-                  type="button"
+                <div
+                  class="octo-content CardDetailContents"
                 >
-                  <span>
-                    + Add a property
-                  </span>
-                </button>
+                  <div
+                    class="octo-block"
+                  >
+                    <div
+                      class="octo-block-margin"
+                    />
+                    <div
+                      class="MarkdownEditor octo-editor  "
+                    >
+                      <div
+                        class="octo-editor-preview octo-placeholder"
+                        data-testid="preview-element"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div
+                  class="CardDetailContentsMenu content add-content"
+                >
+                  <div
+                    aria-label="menuwrapper"
+                    class="MenuWrapper"
+                    role="button"
+                  >
+                    <button
+                      type="button"
+                    >
+                      <span>
+                        Add content
+                      </span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          <hr />
-          <div
-            class="CommentsList"
-          >
             <div
-              class="CommentsList__new"
+              class="CardDetail__right-section"
             >
-              <img
-                class="comment-avatar"
-              />
               <div
-                class="MarkdownEditor octo-editor newcomment "
+                class="octo-propertylist CardDetailProperties"
               >
                 <div
-                  class="octo-editor-preview octo-placeholder"
-                  data-testid="preview-element"
-                />
+                  class="octo-propertyname add-property"
+                >
+                  <div
+                    aria-label="menuwrapper"
+                    class="MenuWrapper"
+                    role="button"
+                  >
+                    <button
+                      type="button"
+                    >
+                      <span>
+                        + Add a property
+                      </span>
+                    </button>
+                  </div>
+                </div>
               </div>
-              
             </div>
-            <hr
-              class="CommentsList__divider"
-            />
           </div>
-        </div>
-        <div
-          class="CardDetail CardDetail--fullwidth content-blocks"
-        >
           <div
-            class="octo-content CardDetailContents"
+            class="CardDetail__comments-section"
           >
+            <hr />
             <div
-              class="octo-block"
+              class="CommentsList"
             >
               <div
-                class="octo-block-margin"
-              />
-              <div
-                class="MarkdownEditor octo-editor  "
+                class="CommentsList__new"
               >
+                <img
+                  class="comment-avatar"
+                />
                 <div
-                  class="octo-editor-preview octo-placeholder"
-                  data-testid="preview-element"
-                />
+                  class="MarkdownEditor octo-editor newcomment "
+                >
+                  <div
+                    class="octo-editor-preview octo-placeholder"
+                    data-testid="preview-element"
+                  />
+                </div>
+                
               </div>
-            </div>
-          </div>
-          <div
-            class="CardDetailContentsMenu content add-content"
-          >
-            <div
-              aria-label="menuwrapper"
-              class="MenuWrapper"
-              role="button"
-            >
-              <button
-                type="button"
-              >
-                <span>
-                  Add content
-                </span>
-              </button>
+              <hr
+                class="CommentsList__divider"
+              />
             </div>
           </div>
         </div>
@@ -1271,88 +1335,104 @@ exports[`components/cardDialog should match snapshot 1`] = `
             </div>
           </div>
           <div
-            class="octo-propertylist CardDetailProperties"
+            class="CardDetail__main-content"
           >
             <div
-              class="octo-propertyname add-property"
+              class="CardDetail__left-section"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="CardDetail CardDetail--fullwidth content-blocks"
               >
-                <button
-                  type="button"
+                <div
+                  class="octo-content CardDetailContents"
                 >
-                  <span>
-                    + Add a property
-                  </span>
-                </button>
+                  <div
+                    class="octo-block"
+                  >
+                    <div
+                      class="octo-block-margin"
+                    />
+                    <div
+                      class="MarkdownEditor octo-editor  "
+                    >
+                      <div
+                        class="octo-editor-preview octo-placeholder"
+                        data-testid="preview-element"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div
+                  class="CardDetailContentsMenu content add-content"
+                >
+                  <div
+                    aria-label="menuwrapper"
+                    class="MenuWrapper"
+                    role="button"
+                  >
+                    <button
+                      type="button"
+                    >
+                      <span>
+                        Add content
+                      </span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          <hr />
-          <div
-            class="CommentsList"
-          >
             <div
-              class="CommentsList__new"
+              class="CardDetail__right-section"
             >
-              <img
-                class="comment-avatar"
-              />
               <div
-                class="MarkdownEditor octo-editor newcomment "
+                class="octo-propertylist CardDetailProperties"
               >
                 <div
-                  class="octo-editor-preview octo-placeholder"
-                  data-testid="preview-element"
-                />
+                  class="octo-propertyname add-property"
+                >
+                  <div
+                    aria-label="menuwrapper"
+                    class="MenuWrapper"
+                    role="button"
+                  >
+                    <button
+                      type="button"
+                    >
+                      <span>
+                        + Add a property
+                      </span>
+                    </button>
+                  </div>
+                </div>
               </div>
-              
             </div>
-            <hr
-              class="CommentsList__divider"
-            />
           </div>
-        </div>
-        <div
-          class="CardDetail CardDetail--fullwidth content-blocks"
-        >
           <div
-            class="octo-content CardDetailContents"
+            class="CardDetail__comments-section"
           >
+            <hr />
             <div
-              class="octo-block"
+              class="CommentsList"
             >
               <div
-                class="octo-block-margin"
-              />
-              <div
-                class="MarkdownEditor octo-editor  "
+                class="CommentsList__new"
               >
+                <img
+                  class="comment-avatar"
+                />
                 <div
-                  class="octo-editor-preview octo-placeholder"
-                  data-testid="preview-element"
-                />
+                  class="MarkdownEditor octo-editor newcomment "
+                >
+                  <div
+                    class="octo-editor-preview octo-placeholder"
+                    data-testid="preview-element"
+                  />
+                </div>
+                
               </div>
-            </div>
-          </div>
-          <div
-            class="CardDetailContentsMenu content add-content"
-          >
-            <div
-              aria-label="menuwrapper"
-              class="MenuWrapper"
-              role="button"
-            >
-              <button
-                type="button"
-              >
-                <span>
-                  Add content
-                </span>
-              </button>
+              <hr
+                class="CommentsList__divider"
+              />
             </div>
           </div>
         </div>
@@ -1468,26 +1548,42 @@ exports[`components/cardDialog should match snapshot without permissions 1`] = `
             </div>
           </div>
           <div
-            class="octo-propertylist CardDetailProperties"
-          />
-          <hr />
-          <div
-            class="CommentsList"
-          />
-        </div>
-        <div
-          class="CardDetail CardDetail--fullwidth content-blocks"
-        >
-          <div
-            class="octo-content CardDetailContents"
+            class="CardDetail__main-content"
           >
             <div
-              class="octo-block"
+              class="CardDetail__left-section"
             >
               <div
-                class="octo-block-margin"
+                class="CardDetail CardDetail--fullwidth content-blocks"
+              >
+                <div
+                  class="octo-content CardDetailContents"
+                >
+                  <div
+                    class="octo-block"
+                  >
+                    <div
+                      class="octo-block-margin"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              class="CardDetail__right-section"
+            >
+              <div
+                class="octo-propertylist CardDetailProperties"
               />
             </div>
+          </div>
+          <div
+            class="CardDetail__comments-section"
+          >
+            <hr />
+            <div
+              class="CommentsList"
+            />
           </div>
         </div>
       </div>
