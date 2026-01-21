@@ -110,25 +110,22 @@ make trigger-release
    ├── plugin.json
    ├── server/
    │   └── dist/
-   │       ├── plugin-linux-amd64
-   │       ├── plugin-linux-arm64
-   │       ├── plugin-darwin-amd64
-   │       ├── plugin-darwin-arm64
-   │       └── plugin-windows-amd64.exe
+   │       └── plugin-linux-amd64
    └── webapp/
        └── dist/
            └── main.js
    ```
 
-3. **Все платформы в одном архиве:**
-   - Linux (amd64, arm64)
-   - macOS (amd64, arm64)
-   - Windows (amd64)
+3. **Оптимизация для self-hosted:**
+   - Для одного сервера достаточно одной платформы
+   - Mattermost загружает только бинарник, соответствующий OS/ARCH сервера
+   - Остальные платформы игнорируются
+   - Размер bundle: ~46 MB вместо ~150-160 MB
 
 ### ✅ Наш workflow делает это автоматически
 
 GitHub Actions workflow (`.github/workflows/release.yml`) создает правильный bundle:
-- ✅ Собирает все платформы
+- ✅ Собирает Linux AMD64 (оптимизировано для self-hosted)
 - ✅ Создает правильную структуру
 - ✅ Называет файл корректно
 - ✅ Публикует в GitHub Releases
@@ -150,7 +147,7 @@ tar -tzf boards-9.2.3.tar.gz | head -20
 # boards/
 # boards/plugin.json
 # boards/server/dist/plugin-linux-amd64
-# boards/server/dist/plugin-darwin-amd64
+# boards/webapp/dist/main.js
 # и т.д.
 ```
 
