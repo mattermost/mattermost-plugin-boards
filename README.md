@@ -92,12 +92,16 @@ This project uses GitHub Actions for automated releases:
    ```
 
 3. **GitHub Actions will automatically:**
-   - Build the plugin for Linux AMD64
+   - Build the plugin for all platforms (Linux, macOS, Windows)
    - Create a git tag `v{version}`
    - Create a GitHub Release
-   - Upload `boards-{version}.tar.gz` artifact
+   - Upload universal bundle `boards-{version}.tar.gz` (~150-160 MB)
+   - **Enable automatic updates through Mattermost UI**
 
-For detailed instructions, see [RELEASE.md](RELEASE.md)
+For detailed instructions, see:
+- [RELEASE.md](RELEASE.md) - Complete release guide
+- [QUICKSTART-RELEASE.md](QUICKSTART-RELEASE.md) - Quick start
+- [docs/AUTO-UPDATE-GUIDE.md](docs/AUTO-UPDATE-GUIDE.md) - Auto-update setup
 
 ### Local Build
 

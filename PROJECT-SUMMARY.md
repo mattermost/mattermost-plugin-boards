@@ -134,9 +134,14 @@ make dist-linux
 ### Результат сборки
 
 - **Файл:** `dist/boards-{version}.tar.gz`
-- **Платформа:** Linux AMD64
+- **Платформы:** Linux (amd64, arm64), macOS (amd64, arm64), Windows (amd64)
+- **Размер:** ~150-160 MB (содержит все платформы)
 - **Содержимое:**
-  - `boards/server/dist/plugin-linux-amd64` - Backend бинарник
+  - `boards/server/dist/plugin-linux-amd64` - Backend бинарник (Linux AMD64)
+  - `boards/server/dist/plugin-linux-arm64` - Backend бинарник (Linux ARM64)
+  - `boards/server/dist/plugin-darwin-amd64` - Backend бинарник (macOS AMD64)
+  - `boards/server/dist/plugin-darwin-arm64` - Backend бинарник (macOS ARM64)
+  - `boards/server/dist/plugin-windows-amd64.exe` - Backend бинарник (Windows AMD64)
   - `boards/webapp/dist/main.js` - Frontend bundle
   - `boards/plugin.json` - Манифест плагина
   - `boards/assets/` - Статические ресурсы
@@ -220,11 +225,14 @@ systemctl restart mattermost
 
 ---
 
-## 🎯 Целевая платформа
+## 🎯 Целевые платформы
 
-- **Основная:** Linux AMD64
+- **Поддерживаемые платформы:**
+  - Linux (AMD64, ARM64)
+  - macOS (AMD64, ARM64)
+  - Windows (AMD64)
 - **Mattermost версия:** 10.7.0+
-- **Формат плагина:** tar.gz архив
+- **Формат плагина:** tar.gz архив (универсальный bundle)
 
 ---
 

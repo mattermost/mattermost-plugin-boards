@@ -41,9 +41,9 @@ jobs:
     - name: Set up golangci-lint
       run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.64.8
     
-    - name: Build plugin for Linux AMD64
+    - name: Build plugin for all platforms
       run: |
-        make dist-linux
+        make dist
     
     - name: Check if release exists
       id: check_release
@@ -93,7 +93,7 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "- **Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Tag:** ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Platform:** Linux AMD64" >> $GITHUB_STEP_SUMMARY
+        echo "- **Platforms:** Linux (amd64, arm64), macOS (amd64, arm64), Windows (amd64)" >> $GITHUB_STEP_SUMMARY
         echo "- **Artifact:** boards-${{ steps.version.outputs.version }}.tar.gz" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "Download the release from: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
