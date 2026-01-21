@@ -44,6 +44,9 @@ jobs:
       run: cd focalboard; make server-ci
       
   dist:
+    permissions:
+      id-token: write
+      contents: read
     uses: mattermost/actions-workflows/.github/workflows/plugin-dist-pr.yml@main
     secrets: inherit
     with:
