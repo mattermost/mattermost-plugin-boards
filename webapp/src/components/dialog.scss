@@ -61,8 +61,8 @@
 
         @media not screen and (max-width: 975px) {
             margin: 72px auto;
-            max-width: 975px;
-            height: calc(100% - 144px);
+            max-width: calc(100% - 60px);
+            height: calc(100% - 60px);
 
             .hideOnWidescreen {
                 /* Hide elements on larger screens */

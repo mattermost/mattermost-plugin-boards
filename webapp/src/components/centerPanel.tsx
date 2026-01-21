@@ -46,7 +46,6 @@ import ShareBoardLoginButton from './shareBoard/shareBoardLoginButton'
 
 import CardDialog from './cardDialog'
 import RootPortal from './rootPortal'
-import TopBar from './topBar'
 import ViewHeader from './viewHeader/viewHeader'
 import ViewTitle from './viewTitle'
 import Kanban from './kanban/kanban'
@@ -417,7 +416,6 @@ const CenterPanel = (props: Props) => {
                 </RootPortal>}
 
             <div className='top-head'>
-                <TopBar/>
                 <div className='mid-head'>
                     <ViewTitle
                         key={board.id + board.title}
