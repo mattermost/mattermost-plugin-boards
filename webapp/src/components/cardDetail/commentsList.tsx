@@ -89,9 +89,6 @@ const CommentsList = (props: Props) => {
 
     return (
         <div className='CommentsList'>
-            {/* New comment */}
-            {!props.readonly && newCommentComponent}
-
             {comments.slice(0).reverse().map((comment) => {
                 // Only modify _own_ comments, EXCEPT for Admins, which can delete _any_ comment
                 // NOTE: editing comments will exist in the future (in addition to deleting)
@@ -106,6 +103,9 @@ const CommentsList = (props: Props) => {
                     />
                 )
             })}
+
+            {/* New comment at the bottom */}
+            {!props.readonly && newCommentComponent}
 
             {/* horizontal divider below comments */}
             {!(comments.length === 0 && props.readonly) && <hr className='CommentsList__divider'/>}

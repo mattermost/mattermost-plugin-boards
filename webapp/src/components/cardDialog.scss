@@ -5,7 +5,7 @@
         height: 100%;
 
         @media (min-width: 975px) {
-            height: calc(100% - 144px);
+            height: calc(100% - 60px);
         }
 
         >.CardDetail {
@@ -24,6 +24,49 @@
 
         >.CardDetail--fullwidth {
             padding-left: 78px;
+        }
+
+        .CardDetail__main-content {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            align-items: flex-start;
+
+            @media (min-width: 975px) {
+                flex-direction: row;
+                gap: 24px;
+            }
+        }
+
+        .CardDetail__left-section {
+            width: 100%;
+            order: 2;
+
+            @media (min-width: 975px) {
+                flex: 1;
+                min-width: 0;
+                order: 1;
+            }
+        }
+
+        .CardDetail__right-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            order: 1;
+
+            @media (min-width: 975px) {
+                flex: 0 0 280px;
+                order: 2;
+            }
+        }
+
+        .CardDetail__comments-section {
+            width: 100%;
+
+            @media (min-width: 975px) {
+                margin-top: 24px;
+            }
         }
     }
 }

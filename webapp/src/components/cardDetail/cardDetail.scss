@@ -40,6 +40,14 @@
         min-height: 32px;
         display: flex;
 
+        @media (min-width: 975px) {
+            .CardDetail__right-section & {
+                font-size: 12px;
+                padding: 2px 4px;
+                min-height: 24px;
+            }
+        }
+
         &:not(.URLProperty) {
             flex-wrap: wrap;
         }
@@ -55,6 +63,12 @@
             transition: background 100ms ease-out 0s;
             cursor: pointer;
             border-radius: 4px;
+
+            @media (min-width: 975px) {
+                .CardDetail__right-section & {
+                    min-width: 120px;
+                }
+            }
 
             &:hover {
                 background-color: rgba(var(--center-channel-color-rgb), 0.08);
@@ -93,6 +107,14 @@
         margin: 6px 0;
         min-height: 32px;
 
+        @media (min-width: 975px) {
+            .CardDetail__right-section & {
+                margin: 3px 0;
+                min-height: 28px;
+                max-width: 100%;
+            }
+        }
+
         .Switch {
             margin: 4px 0 0 8px;
             width: 40px;
@@ -130,6 +152,14 @@
     .octo-propertyrow {
         .octo-propertyname {
             flex: 0 0 150px;
+
+            @media (min-width: 975px) {
+                .CardDetail__right-section & {
+                    flex: 0 0 100px;
+                    width: 100px;
+                    font-size: 12px;
+                }
+            }
         }
     }
 
@@ -144,6 +174,13 @@
             padding: 4px 8px;
             text-align: left;
             justify-content: unset;
+
+            @media (min-width: 975px) {
+                .CardDetail__right-section & {
+                    padding: 2px 4px;
+                    font-size: 12px;
+                }
+            }
         }
 
         &.add-property {
@@ -155,6 +192,12 @@
 
     &.content-blocks {
         position: relative;
+
+        @media (min-width: 975px) {
+            .CardDetail__left-section & {
+                padding-left: 0;
+            }
+        }
 
         &:hover,
         &:focus-within {

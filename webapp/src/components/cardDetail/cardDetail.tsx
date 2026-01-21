@@ -279,43 +279,12 @@ const CardDetail = (props: Props): JSX.Element|null => {
                     </Button>
                 </div>}
 
-                {/* Property list */}
+                {/* Main content area with left and right sections */}
 
-                {!limited &&
-                <CardDetailProperties
-                    board={props.board}
-                    card={props.card}
-                    cards={props.cards}
-                    activeView={props.activeView}
-                    views={props.views}
-                    readonly={props.readonly}
-                />}
-
-                {attachments.length !== 0 && <Fragment>
-                    <hr/>
-                    <AttachmentList
-                        attachments={attachments}
-                        onDelete={onDelete}
-                        addAttachment={addAttachment}
-                    />
-                </Fragment>}
-
-                {/* Comments */}
-
-                {!limited && <Fragment>
-                    <hr/>
-                    <CommentsList
-                        comments={comments}
-                        boardId={card.boardId}
-                        cardId={card.id}
-                        readonly={props.readonly || !canCommentBoardCards}
-                    />
-                </Fragment>}
-            </div>
-
-            {/* Content blocks */}
-
-            {!limited && <div className='CardDetail CardDetail--fullwidth content-blocks'>
+                {!limited && <div className='CardDetail__main-content'>
+                    {/* Left section: Description and attachments */}
+                    <div className='CardDetail__left-section'>
+                        <div className='CardDetail CardDetail--fullwidth content-blocks'>
                 {newBoardsEditor && (
                     <BlocksEditor
                         boardId={card.boardId}
@@ -394,7 +363,43 @@ const CardDetail = (props: Props): JSX.Element|null => {
                         />
                         {!props.readonly && canEditBoardCards && <CardDetailContentsMenu/>}
                     </CardDetailProvider>)}
-            </div>}
+                        </div>
+
+                        {attachments.length !== 0 && <Fragment>
+                            <hr/>
+                            <AttachmentList
+                                attachments={attachments}
+                                onDelete={onDelete}
+                                addAttachment={addAttachment}
+                            />
+                        </Fragment>}
+                    </div>
+
+                    {/* Right section: Properties */}
+                    <div className='CardDetail__right-section'>
+                        <CardDetailProperties
+                            board={props.board}
+                            card={props.card}
+                            cards={props.cards}
+                            activeView={props.activeView}
+                            views={props.views}
+                            readonly={props.readonly}
+                        />
+                    </div>
+                </div>}
+
+                {/* Comments section - full width at the bottom */}
+
+                {!limited && <div className='CardDetail__comments-section'>
+                    <hr/>
+                    <CommentsList
+                        comments={comments}
+                        boardId={card.boardId}
+                        cardId={card.id}
+                        readonly={props.readonly || !canCommentBoardCards}
+                    />
+                </div>}
+            </div>
         </>
     )
 }

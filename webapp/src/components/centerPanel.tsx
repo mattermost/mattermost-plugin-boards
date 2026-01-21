@@ -417,7 +417,6 @@ const CenterPanel = (props: Props) => {
                 </RootPortal>}
 
             <div className='top-head'>
-                <TopBar/>
                 <div className='mid-head'>
                     <ViewTitle
                         key={board.id + board.title}
