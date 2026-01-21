@@ -20,6 +20,7 @@ git push origin main:release
 - Перейдите в GitHub → Actions
 - Дождитесь завершения workflow "Release Build"
 - Релиз появится в разделе Releases
+- **Создается bundle со всеми платформами** (~150-160 MB)
 
 ### Шаг 4: Скачайте и установите
 ```bash
