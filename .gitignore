@@ -17,6 +17,7 @@ pids
 # VSCode project files
 .vscode
 *.code-workspace
+.augment
 
 # golang
 go.work
