@@ -74,43 +74,49 @@ make watch-plugin
 
 ## How to Release
 
-To trigger a release, follow these steps:
+### Automated Release (Recommended)
 
-1. **For Patch Release:** Run the following command:
-    ```
-    make patch
-    ```
-   This will release a patch change.
+This project uses GitHub Actions for automated releases:
 
-2. **For Minor Release:** Run the following command:
-    ```
-    make minor
-    ```
-   This will release a minor change.
+1. **Update version in `plugin.json`**
+   ```bash
+   # Edit plugin.json and change the "version" field
+   # Example: "version": "9.2.3"
+   ```
 
-3. **For Major Release:** Run the following command:
-    ```
-    make major
-    ```
-   This will release a major change.
+2. **Commit and push to release branch**
+   ```bash
+   git add plugin.json
+   git commit -m "Bump version to 9.2.3"
+   git push origin main:release
+   ```
 
-4. **For Patch Release Candidate (RC):** Run the following command:
-    ```
-    make patch-rc
-    ```
-   This will release a patch release candidate.
+3. **GitHub Actions will automatically:**
+   - Build the plugin for Linux AMD64
+   - Create a git tag `v{version}`
+   - Create a GitHub Release
+   - Upload `boards-{version}.tar.gz` artifact
 
-5. **For Minor Release Candidate (RC):** Run the following command:
-    ```
-    make minor-rc
-    ```
-   This will release a minor release candidate.
+For detailed instructions, see [RELEASE.md](RELEASE.md)
 
-6. **For Major Release Candidate (RC):** Run the following command:
-    ```
-    make major-rc
-    ```
-   This will release a major release candidate.
+### Local Build
+
+To build the release locally:
+
+**Linux/macOS:**
+```bash
+./scripts/build-release.sh
+```
+
+**Windows:**
+```powershell
+.\scripts\build-release.ps1
+```
+
+Or manually:
+```bash
+make dist-linux
+```
 
 
 ### Unit testing

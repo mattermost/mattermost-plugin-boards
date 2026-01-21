@@ -1,0 +1,100 @@
+name: Release Build
+
+on:
+  push:
+    branches:
+      - 'release'
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    
+    - name: Extract version from plugin.json
+      id: version
+      run: |
+        VERSION=$(jq -r '.version' plugin.json)
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+        echo "Extracted version: $VERSION"
+    
+    - name: Set up Go
+      uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # v5.2.0
+      with:
+        go-version-file: go.mod
+    
+    - name: Setup Node
+      uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+      with:
+        node-version-file: .nvmrc
+    
+    - name: Install dependencies
+      run: |
+        cd webapp && npm ci
+    
+    - name: Set up golangci-lint
+      run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.64.8
+    
+    - name: Build plugin for Linux AMD64
+      run: |
+        make dist-linux
+    
+    - name: Check if release exists
+      id: check_release
+      run: |
+        if gh release view ${{ steps.version.outputs.tag }} > /dev/null 2>&1; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+          echo "Release ${{ steps.version.outputs.tag }} already exists"
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+          echo "Release ${{ steps.version.outputs.tag }} does not exist"
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Create Git Tag
+      if: steps.check_release.outputs.exists == 'false'
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git tag -a ${{ steps.version.outputs.tag }} -m "Release ${{ steps.version.outputs.tag }}"
+        git push origin ${{ steps.version.outputs.tag }}
+    
+    - name: Create GitHub Release
+      if: steps.check_release.outputs.exists == 'false'
+      id: create_release
+      run: |
+        gh release create ${{ steps.version.outputs.tag }} \
+          --title "Release ${{ steps.version.outputs.version }}" \
+          --notes "Automated release build for version ${{ steps.version.outputs.version }}" \
+          dist/boards-${{ steps.version.outputs.version }}.tar.gz
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Update existing release
+      if: steps.check_release.outputs.exists == 'true'
+      run: |
+        echo "Deleting old assets..."
+        gh release delete-asset ${{ steps.version.outputs.tag }} boards-${{ steps.version.outputs.version }}.tar.gz --yes || true
+        echo "Uploading new asset..."
+        gh release upload ${{ steps.version.outputs.tag }} dist/boards-${{ steps.version.outputs.version }}.tar.gz --clobber
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Release Summary
+      run: |
+        echo "## Release Build Complete! 🚀" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Tag:** ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Platform:** Linux AMD64" >> $GITHUB_STEP_SUMMARY
+        echo "- **Artifact:** boards-${{ steps.version.outputs.version }}.tar.gz" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Download the release from: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+

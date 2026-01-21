@@ -544,3 +544,32 @@ major-rc: ## to bump major release candidate version (semver)
 	git tag -s -a v$(MAJOR).$(MINOR).$(PATCH)-rc$(RC) -m "Bumping $(APP_NAME) to Major RC version $(MAJOR).$(MINOR).$(PATCH)-rc$(RC)"
 	git push origin v$(MAJOR).$(MINOR).$(PATCH)-rc$(RC)
 	@echo Bumped $(APP_NAME) to Major RC version $(MAJOR).$(MINOR).$(PATCH)-rc$(RC)
+
+## Trigger automated release build (pushes to release branch)
+.PHONY: trigger-release
+trigger-release: ## Trigger automated release build via GitHub Actions
+	@echo "🚀 Triggering automated release build..."
+	@CURRENT_VERSION=$$(jq -r '.version' plugin.json); \
+	echo "📦 Current version: $$CURRENT_VERSION"; \
+	echo ""; \
+	echo "This will push current branch to 'release' branch and trigger GitHub Actions."; \
+	echo "GitHub Actions will:"; \
+	echo "  1. Build the plugin for Linux AMD64"; \
+	echo "  2. Create git tag v$$CURRENT_VERSION"; \
+	echo "  3. Create GitHub Release"; \
+	echo "  4. Upload boards-$$CURRENT_VERSION.tar.gz"; \
+	echo ""; \
+	read -p "Continue? [y/N] " -n 1 -r; \
+	echo ""; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		git push origin HEAD:release; \
+		echo "✅ Pushed to release branch"; \
+		echo "🔗 Check progress at: https://github.com/$$(git config --get remote.origin.url | sed 's/.*github.com[:/]\(.*\)\.git/\1/')/actions"; \
+	else \
+		echo "❌ Cancelled"; \
+	fi
+
+## Show current version from plugin.json
+.PHONY: show-version
+show-version: ## Display current plugin version
+	@echo "Current version: $$(jq -r '.version' plugin.json)"
