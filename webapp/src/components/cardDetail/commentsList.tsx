@@ -1,7 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useState} from 'react'
+import React, {useState, useEffect} from 'react'
 import {FormattedMessage, useIntl} from 'react-intl'
 
 import {CommentBlock, createCommentBlock} from '../../blocks/commentBlock'
@@ -32,8 +32,17 @@ type Props = {
 
 const CommentsList = (props: Props) => {
     const [newComment, setNewComment] = useState('')
+    const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 975)
     const me = useAppSelector<IUser|null>(getMe)
     const canDeleteOthersComments = useHasCurrentBoardPermissions([Permission.DeleteOthersComments])
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsDesktop(window.innerWidth >= 975)
+        }
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
+    }, [])
 
     const onSendClicked = () => {
         const commentText = newComment
@@ -87,9 +96,13 @@ const CommentsList = (props: Props) => {
         </div>
     )
 
+    // For desktop: oldest to newest (no reverse)
+    // For mobile: newest to oldest (reverse)
+    const sortedComments = isDesktop ? comments.slice(0) : comments.slice(0).reverse()
+
     return (
         <div className='CommentsList'>
-            {comments.slice(0).reverse().map((comment) => {
+            {sortedComments.map((comment) => {
                 // Only modify _own_ comments, EXCEPT for Admins, which can delete _any_ comment
                 // NOTE: editing comments will exist in the future (in addition to deleting)
                 const canDeleteComment: boolean = canDeleteOthersComments || me?.id === comment.modifiedBy
