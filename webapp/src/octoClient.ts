@@ -742,6 +742,11 @@ class OctoClient {
         return this.getBoardsWithPath(path)
     }
 
+    async getBoardsForTeam(teamId: string): Promise<Board[]> {
+        const path = this.teamPath(teamId) + '/boards'
+        return this.getBoardsWithPath(path)
+    }
+
     async getBoard(boardID: string): Promise<Board | undefined> {
         let path = `/api/v2/boards/${boardID}`
         const readToken = Utils.getReadToken()

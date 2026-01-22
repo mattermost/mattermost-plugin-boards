@@ -66,16 +66,10 @@ const BoardCodesManager = (props: Props) => {
                         allBoards.push(...teamTemplates)
                     }
 
-                    // Get regular boards for this team using direct fetch
-                    // octoClient.getBoards() doesn't accept teamId, so we use fetch directly
-                    const response = await fetch(octoClient.getBaseURL() + `/api/v2/teams/${team.id}/boards`, {
-                        headers: octoClient.headers()
-                    })
-                    if (response.status === 200) {
-                        const regularBoards = await response.json() as Board[]
-                        if (regularBoards && regularBoards.length > 0) {
-                            allBoards.push(...regularBoards)
-                        }
+                    // Get regular boards for this team
+                    const regularBoards = await octoClient.getBoardsForTeam(team.id)
+                    if (regularBoards && regularBoards.length > 0) {
+                        allBoards.push(...regularBoards)
                     }
                 } catch (teamErr) {
                     Utils.logError(`Failed to load boards for team ${team.id}: ${teamErr}`)
