@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
@@ -19,8 +20,10 @@ import (
 )
 
 const (
-	FigmaAPIBaseURL = "https://api.figma.com"
-	MaxNodeSize     = 2000
+	FigmaAPIBaseURL     = "https://api.figma.com"
+	MaxNodeSize         = 2000
+	MaxFigmaRequestSize = 1024 * 1024 // 1MB limit for JSON request body
+	FigmaAPITimeout     = 30          // 30 seconds timeout for Figma API calls
 )
 
 var (
@@ -101,8 +104,15 @@ func (a *API) handleFigmaPreview(w http.ResponseWriter, r *http.Request) {
 	//   '500':
 	//     description: internal error
 
+	// Limit request body size to prevent memory pressure
+	r.Body = http.MaxBytesReader(w, r.Body, MaxFigmaRequestSize)
+
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
+		if strings.HasSuffix(err.Error(), "http: request body too large") {
+			a.errorResponse(w, r, model.ErrRequestEntityTooLarge)
+			return
+		}
 		a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
 		return
 	}
@@ -115,6 +125,14 @@ func (a *API) handleFigmaPreview(w http.ResponseWriter, r *http.Request) {
 
 	if req.FileKey == "" || req.NodeID == "" || req.BoardID == "" {
 		a.errorResponse(w, r, model.NewErrBadRequest("fileKey, nodeId, and boardId are required"))
+		return
+	}
+
+	userID := getUserID(r)
+
+	// Check permission to manage board cards before allowing file writes
+	if !a.permissions.HasPermissionToBoard(userID, req.BoardID, model.PermissionManageBoardCards) {
+		a.errorResponse(w, r, model.NewErrPermission("access denied to make board changes"))
 		return
 	}
 
@@ -134,16 +152,19 @@ func (a *API) handleFigmaPreview(w http.ResponseWriter, r *http.Request) {
 	// Convert node ID from URL format (261-10355) to API format (261:10355)
 	apiNodeID := strings.ReplaceAll(req.NodeID, "-", ":")
 
+	// Create HTTP client with timeout for resilience
+	client := &http.Client{
+		Timeout: FigmaAPITimeout * time.Second,
+	}
+
 	// Check node dimensions
 	nodeURL := fmt.Sprintf("%s/v1/files/%s/nodes?ids=%s", FigmaAPIBaseURL, req.FileKey, apiNodeID)
-	nodeReq, err := http.NewRequest("GET", nodeURL, nil)
+	nodeReq, err := http.NewRequestWithContext(r.Context(), "GET", nodeURL, nil)
 	if err != nil {
 		a.errorResponse(w, r, fmt.Errorf("failed to create request: %w", err))
 		return
 	}
 	nodeReq.Header.Set("X-Figma-Token", figmaToken)
-
-	client := &http.Client{}
 	nodeResp, err := client.Do(nodeReq)
 	if err != nil {
 		a.errorResponse(w, r, fmt.Errorf("failed to fetch node info: %w", err))
@@ -181,7 +202,7 @@ func (a *API) handleFigmaPreview(w http.ResponseWriter, r *http.Request) {
 
 	// Get image URL from Figma
 	imageURL := fmt.Sprintf("%s/v1/images/%s?ids=%s&format=png", FigmaAPIBaseURL, req.FileKey, apiNodeID)
-	imageReq, err := http.NewRequest("GET", imageURL, nil)
+	imageReq, err := http.NewRequestWithContext(r.Context(), "GET", imageURL, nil)
 	if err != nil {
 		a.errorResponse(w, r, fmt.Errorf("failed to create image request: %w", err))
 		return
@@ -213,8 +234,8 @@ func (a *API) handleFigmaPreview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Download the image using http.NewRequest for security
-	downloadReq, err := http.NewRequest("GET", downloadURL, nil)
+	// Download the image using http.NewRequestWithContext for security and context binding
+	downloadReq, err := http.NewRequestWithContext(r.Context(), "GET", downloadURL, nil)
 	if err != nil {
 		a.errorResponse(w, r, fmt.Errorf("failed to create download request: %w", err))
 		return
@@ -241,7 +262,7 @@ func (a *API) handleFigmaPreview(w http.ResponseWriter, r *http.Request) {
 
 	// Save the image file
 	filename := fmt.Sprintf("figma-%s-%s.png", req.FileKey, req.NodeID)
-	fileID, err := a.app.SaveFile(downloadResp.Body, board.TeamID, req.BoardID, filename, false)
+	fileID, err := a.app.SaveFile(downloadResp.Body, board.TeamID, req.BoardID, filename, board.IsTemplate)
 	if err != nil {
 		a.errorResponse(w, r, err)
 		return

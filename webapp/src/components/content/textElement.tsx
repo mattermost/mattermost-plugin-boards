@@ -33,7 +33,7 @@ const TextElement = (props: Props): JSX.Element => {
     const [processingLinks, setProcessingLinks] = useState<Set<string>>(new Set())
 
     useEffect(() => {
-        if (!readonly || !containerRef.current) {
+        if (readonly || !containerRef.current) {
             return
         }
 
