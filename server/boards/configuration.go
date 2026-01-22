@@ -20,6 +20,7 @@ import (
 // copy appropriate for your types.
 type configuration struct {
 	EnablePublicSharedBoards bool
+	FigmaPersonalAccessToken string
 }
 
 // Clone shallow copies the configuration. Your implementation may require a deep copy if
@@ -83,8 +84,14 @@ func (b *BoardsApp) OnConfigurationChange() error {
 		enableShareBoards = true
 	}
 
+	figmaToken := ""
+	if token, ok := mmconfig.PluginSettings.Plugins[PluginName]["FigmaPersonalAccessToken"].(string); ok {
+		figmaToken = token
+	}
+
 	configuration := &configuration{
 		EnablePublicSharedBoards: enableShareBoards,
+		FigmaPersonalAccessToken: figmaToken,
 	}
 	b.setConfiguration(configuration)
 	b.server.Config().EnablePublicSharedBoards = enableShareBoards

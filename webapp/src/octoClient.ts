@@ -253,7 +253,7 @@ class OctoClient {
         return (await this.getJson(response, {})) as UserPreference[]
     }
 
-    async getCardsForBoard(boardID: string, page: number = 0, perPage: number = -1): Promise<any[]> {
+    async getCardsForBoard(boardID: string, page = 0, perPage = -1): Promise<any[]> {
         const path = `/api/v2/boards/${boardID}/cards?page=${page}&per_page=${perPage}`
         const response = await fetch(this.getBaseURL() + path, {headers: this.headers()})
         if (response.status !== 200) {

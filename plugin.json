@@ -35,6 +35,19 @@
             "type": "custom",
             "display_name": "Board Codes Management:",
             "help_text": "Manage board codes for all teams. Codes are unique within a team and must be 1-10 alphanumeric characters starting with a letter."
+        },
+        {
+            "key": "Integrations",
+            "type": "header",
+            "display_name": "Integrations"
+        },
+        {
+            "key": "FigmaPersonalAccessToken",
+            "type": "text",
+            "display_name": "Figma Personal Access Token:",
+            "default": "",
+            "help_text": "Enter your Figma Personal Access Token for integration with Figma. This token is stored securely and used for accessing Figma API. Learn how to generate a token at https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens",
+            "placeholder": "figd_..."
         }]
     }
 }
