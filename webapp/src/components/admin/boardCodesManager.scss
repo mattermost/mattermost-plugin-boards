@@ -1,0 +1,150 @@
+.BoardCodesManager {
+    padding: 20px 0;
+
+    &.loading,
+    &.error {
+        padding: 20px;
+        text-align: center;
+        color: rgba(var(--center-channel-color-rgb), 0.72);
+    }
+
+    &.error {
+        color: var(--error-text);
+    }
+
+    &__header {
+        margin-bottom: 20px;
+    }
+
+    &__help-text {
+        margin: 0;
+        color: rgba(var(--center-channel-color-rgb), 0.72);
+        font-size: 14px;
+    }
+
+    &__empty {
+        padding: 40px 20px;
+        text-align: center;
+        color: rgba(var(--center-channel-color-rgb), 0.56);
+        font-style: italic;
+    }
+
+    &__list {
+        overflow-x: auto;
+    }
+
+    &__table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--center-channel-bg);
+
+        thead {
+            background: rgba(var(--center-channel-color-rgb), 0.08);
+            
+            th {
+                padding: 12px 16px;
+                text-align: left;
+                font-weight: 600;
+                font-size: 14px;
+                color: rgba(var(--center-channel-color-rgb), 0.72);
+                border-bottom: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+            }
+        }
+
+        tbody {
+            tr {
+                border-bottom: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
+
+                &:hover {
+                    background: rgba(var(--center-channel-color-rgb), 0.04);
+                }
+            }
+
+            td {
+                padding: 12px 16px;
+                font-size: 14px;
+                color: var(--center-channel-color);
+            }
+        }
+    }
+
+    &__row {
+        // Row styles
+    }
+
+    &__title {
+        font-weight: 500;
+    }
+
+    &__icon {
+        margin-right: 8px;
+        font-size: 18px;
+    }
+
+    &__team {
+        color: rgba(var(--center-channel-color-rgb), 0.64);
+        font-size: 13px;
+    }
+
+    &__code {
+        min-width: 200px;
+    }
+
+    &__code-display {
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+        font-size: 13px;
+        padding: 4px 8px;
+        background: rgba(var(--center-channel-color-rgb), 0.08);
+        border-radius: 3px;
+
+        em {
+            font-style: italic;
+            color: rgba(var(--center-channel-color-rgb), 0.56);
+        }
+    }
+
+    &__code-edit {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        input {
+            padding: 6px 10px;
+            border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+            font-size: 13px;
+            background: var(--center-channel-bg);
+            color: var(--center-channel-color);
+            max-width: 150px;
+
+            &:focus {
+                outline: none;
+                border-color: var(--button-bg);
+                box-shadow: 0 0 0 2px rgba(var(--button-bg-rgb), 0.2);
+            }
+
+            &.error {
+                border-color: var(--error-text);
+            }
+        }
+    }
+
+    &__error {
+        color: var(--error-text);
+        font-size: 12px;
+    }
+
+    &__actions {
+        white-space: nowrap;
+
+        button {
+            margin-right: 8px;
+
+            &:last-child {
+                margin-right: 0;
+            }
+        }
+    }
+}
+
