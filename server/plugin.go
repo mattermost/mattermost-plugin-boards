@@ -60,6 +60,7 @@ func (p *Plugin) OnConfigurationChange() error {
 		return nil
 	}
 
+	p.API.LogInfo("Plugin.OnConfigurationChange called")
 	return p.boardsApp.OnConfigurationChange()
 }
 
