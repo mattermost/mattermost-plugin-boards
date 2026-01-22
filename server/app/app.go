@@ -85,7 +85,9 @@ func (a *App) GetConfig() *config.Configuration {
 }
 
 func (a *App) GetFigmaToken() string {
-	return a.config.FigmaPersonalAccessToken
+	token := a.config.FigmaPersonalAccessToken
+	a.logger.Debug("GetFigmaToken called", mlog.Int("tokenLength", len(token)), mlog.Bool("isEmpty", token == ""))
+	return token
 }
 
 func New(config *config.Configuration, wsAdapter ws.Adapter, services Services) *App {

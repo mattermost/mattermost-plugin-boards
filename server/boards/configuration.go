@@ -5,6 +5,8 @@ package boards
 
 import (
 	"reflect"
+
+	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )
 
 // configuration captures the plugin's external configuration as exposed in the Mattermost server
@@ -87,6 +89,9 @@ func (b *BoardsApp) OnConfigurationChange() error {
 	figmaToken := ""
 	if token, ok := mmconfig.PluginSettings.Plugins[PluginName]["FigmaPersonalAccessToken"].(string); ok {
 		figmaToken = token
+		b.logger.Info("Figma token loaded from config", mlog.Int("tokenLength", len(figmaToken)))
+	} else {
+		b.logger.Warn("Figma token not found in config")
 	}
 
 	configuration := &configuration{
@@ -120,6 +125,7 @@ func (b *BoardsApp) OnConfigurationChange() error {
 	}
 	b.server.Config().MaxFileSize = maxFileSize
 	b.server.Config().FigmaPersonalAccessToken = figmaToken
+	b.logger.Info("Figma token set in server config", mlog.Int("tokenLength", len(figmaToken)))
 
 	b.server.UpdateAppConfig()
 	b.wsPluginAdapter.BroadcastConfigChange(*b.server.App().GetClientConfig())
