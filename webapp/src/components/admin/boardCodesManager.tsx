@@ -2,7 +2,6 @@
 // See LICENSE.txt for license information.
 
 import React, {useState, useEffect} from 'react'
-import {FormattedMessage, useIntl} from 'react-intl'
 
 import {Board} from '../../blocks/board'
 import {BoardView} from '../../blocks/boardView'
@@ -35,7 +34,6 @@ type BoardWithViews = {
 }
 
 const BoardCodesManager = (props: Props) => {
-    const intl = useIntl()
     const [boards, setBoards] = useState<BoardWithViews[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
