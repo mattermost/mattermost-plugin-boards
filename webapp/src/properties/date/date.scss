@@ -33,8 +33,18 @@
     .Modal {
         position: absolute;
         top: 0;
-        left: 0;
         margin-bottom: 100px;
+
+        // On mobile, position at left edge
+        @media screen and (max-width: 974px) {
+            left: 0;
+        }
+
+        // On desktop, position to the left of the trigger for better visibility
+        @media (min-width: 975px) {
+            right: 100%;
+            margin-right: 8px;
+        }
     }
 
     &.empty .Button {
