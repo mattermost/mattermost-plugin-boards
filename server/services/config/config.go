@@ -61,6 +61,7 @@ type Configuration struct {
 	TeammateNameDisplay      string            `json:"teammate_name_display" mapstructure:"teammateNameDisplay"`
 	ShowEmailAddress         bool              `json:"show_email_address" mapstructure:"showEmailAddress"`
 	ShowFullName             bool              `json:"show_full_name" mapstructure:"showFullName"`
+	FigmaPersonalAccessToken string            `json:"figma_personal_access_token" mapstructure:"figmaPersonalAccessToken"`
 
 	AuthMode string `json:"authMode" mapstructure:"authMode"`
 

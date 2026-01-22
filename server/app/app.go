@@ -85,20 +85,7 @@ func (a *App) GetConfig() *config.Configuration {
 }
 
 func (a *App) GetFigmaToken() string {
-	if a.servicesAPI == nil {
-		return ""
-	}
-
-	mmconfig := a.servicesAPI.GetConfig()
-	if mmconfig == nil {
-		return ""
-	}
-
-	if token, ok := mmconfig.PluginSettings.Plugins["focalboard"]["FigmaPersonalAccessToken"].(string); ok {
-		return token
-	}
-
-	return ""
+	return a.config.FigmaPersonalAccessToken
 }
 
 func New(config *config.Configuration, wsAdapter ws.Adapter, services Services) *App {

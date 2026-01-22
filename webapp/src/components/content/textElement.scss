@@ -2,24 +2,45 @@
 // See LICENSE.txt for license information.
 
 .figma-attach-button {
-    display: inline-block;
-    margin-left: 8px;
-    padding: 2px 8px;
-    font-size: 12px;
-    color: rgb(var(--link-color));
-    background: transparent;
-    border: 1px solid rgba(var(--link-color), 0.3);
-    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 6px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(var(--center-channel-color-rgb), 0.72);
+    background: rgba(var(--center-channel-color-rgb), 0.04);
+    border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+    border-radius: 4px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
+    line-height: 1;
+    vertical-align: middle;
+
+    .figma-icon {
+        flex-shrink: 0;
+        width: 12px;
+        height: 18px;
+        margin-top: -1px;
+    }
+
+    span {
+        white-space: nowrap;
+    }
 
     &:hover:not(:disabled) {
-        background: rgba(var(--link-color), 0.1);
-        border-color: rgb(var(--link-color));
+        background: rgba(var(--center-channel-color-rgb), 0.08);
+        border-color: rgba(var(--center-channel-color-rgb), 0.24);
+        color: rgba(var(--center-channel-color-rgb), 0.88);
+    }
+
+    &:active:not(:disabled) {
+        background: rgba(var(--center-channel-color-rgb), 0.12);
     }
 
     &:disabled {
-        opacity: 0.6;
+        opacity: 0.5;
         cursor: not-allowed;
     }
 }
