@@ -88,6 +88,7 @@ type Store interface {
 	GetBoard(id string) (*model.Board, error)
 	GetBoardsForUserAndTeam(userID, teamID string, includePublicBoards bool) ([]*model.Board, error)
 	GetBoardsInTeamByIds(boardIDs []string, teamID string) ([]*model.Board, error)
+	GetBoardByCode(code string, teamID string) (*model.Board, error)
 	// @withTransaction
 	DeleteBoard(boardID, userID string) error
 

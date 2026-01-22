@@ -130,6 +130,36 @@ func GetBaseFilePath() string {
 	return path.Join("boards", time.Now().Format("20060102"))
 }
 
+func GenerateBoardCode(title string) string {
+	if title == "" {
+		return ""
+	}
+
+	words := strings.Fields(title)
+	code := ""
+
+	for _, word := range words {
+		if len(word) == 0 {
+			continue
+		}
+
+		firstChar := rune(word[0])
+		if (firstChar >= 'A' && firstChar <= 'Z') || (firstChar >= 'a' && firstChar <= 'z') {
+			code += strings.ToUpper(string(firstChar))
+		}
+
+		if len(code) >= 10 {
+			break
+		}
+	}
+
+	if len(code) == 0 {
+		code = "B"
+	}
+
+	return code
+}
+
 // RetrieveFileIDFromBlockFieldStorage extracts the file ID from the stored format.
 // The stored format is "{fileID}.{extension}", so we split by "." and extract the fileID.
 func RetrieveFileIDFromBlockFieldStorage(id string) string {

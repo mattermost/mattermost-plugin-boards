@@ -676,6 +676,21 @@ func (mr *MockStoreMockRecorder) GetBoardsInTeamByIds(boardIDs, teamID interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBoardsInTeamByIds", reflect.TypeOf((*MockStore)(nil).GetBoardsInTeamByIds), boardIDs, teamID)
 }
 
+// GetBoardByCode mocks base method.
+func (m *MockStore) GetBoardByCode(code string, teamID string) (*model.Board, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBoardByCode", code, teamID)
+	ret0, _ := ret[0].(*model.Board)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBoardByCode indicates an expected call of GetBoardByCode.
+func (mr *MockStoreMockRecorder) GetBoardByCode(code, teamID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBoardByCode", reflect.TypeOf((*MockStore)(nil).GetBoardByCode), code, teamID)
+}
+
 // GetCardLimitTimestamp mocks base method.
 func (m *MockStore) GetCardLimitTimestamp() (int64, error) {
 	m.ctrl.T.Helper()

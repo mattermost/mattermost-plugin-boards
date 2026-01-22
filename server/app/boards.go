@@ -230,11 +230,41 @@ func (a *App) GetTemplateBoards(teamID, userID string) ([]*model.Board, error) {
 	return a.store.GetTemplateBoards(teamID, userID)
 }
 
+func (a *App) generateUniqueBoardCode(title string, teamID string) string {
+	baseCode := utils.GenerateBoardCode(title)
+	code := baseCode
+	counter := 1
+
+	for {
+		existingBoard, err := a.store.GetBoardByCode(code, teamID)
+		if err != nil || existingBoard == nil {
+			break
+		}
+
+		code = baseCode + fmt.Sprintf("%d", counter)
+		if len(code) > 10 {
+			code = baseCode[:10-len(fmt.Sprintf("%d", counter))] + fmt.Sprintf("%d", counter)
+		}
+		counter++
+
+		if counter > 9999 {
+			code = baseCode + utils.NewID(utils.IDTypeNone)[:4]
+			break
+		}
+	}
+
+	return code
+}
+
 func (a *App) CreateBoard(board *model.Board, userID string, addMember bool) (*model.Board, error) {
 	if board.ID != "" {
 		return nil, ErrNewBoardCannotHaveID
 	}
 	board.ID = utils.NewID(utils.IDTypeBoard)
+
+	if board.Code == "" {
+		board.Code = a.generateUniqueBoardCode(board.Title, board.TeamID)
+	}
 
 	var newBoard *model.Board
 	var member *model.BoardMember

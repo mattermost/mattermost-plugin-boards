@@ -69,6 +69,10 @@ type Board struct {
 	// required: false
 	Title string `json:"title"`
 
+	// The unique alphanumeric code for the board
+	// required: false
+	Code string `json:"code"`
+
 	// The description of the board
 	// required: false
 	Description string `json:"description"`
@@ -139,6 +143,10 @@ type BoardPatch struct {
 	// The title of the board
 	// required: false
 	Title *string `json:"title"`
+
+	// The unique alphanumeric code for the board
+	// required: false
+	Code *string `json:"code"`
 
 	// The description of the board
 	// required: false
@@ -275,6 +283,10 @@ func (p *BoardPatch) Patch(board *Board) *Board {
 
 	if p.Title != nil {
 		board.Title = *p.Title
+	}
+
+	if p.Code != nil {
+		board.Code = *p.Code
 	}
 
 	if p.MinimumRole != nil {
@@ -418,7 +430,29 @@ func (b *Board) baseValidation() error {
 		return InvalidBoardErr{"invalid-board-minimum-role"}
 	}
 
+	if b.Code != "" && !IsValidBoardCode(b.Code) {
+		return InvalidBoardErr{"invalid-board-code"}
+	}
+
 	return nil
+}
+
+func IsValidBoardCode(code string) bool {
+	if len(code) == 0 || len(code) > 10 {
+		return false
+	}
+
+	if code[0] < 'A' || (code[0] > 'Z' && code[0] < 'a') || code[0] > 'z' {
+		return false
+	}
+
+	for _, c := range code {
+		if !((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // BoardMemberHistoryEntry stores the information of the membership of a user on a board
