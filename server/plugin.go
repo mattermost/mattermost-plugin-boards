@@ -50,6 +50,12 @@ func (p *Plugin) OnActivate() error {
 	model.LogServerInfo(logger)
 
 	p.boardsApp = boardsApp
+
+	// Load initial configuration before starting the server
+	if err := p.boardsApp.OnConfigurationChange(); err != nil {
+		return fmt.Errorf("failed to load initial configuration: %w", err)
+	}
+
 	return p.boardsApp.Start()
 }
 
