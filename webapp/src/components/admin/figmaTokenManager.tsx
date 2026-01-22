@@ -84,7 +84,7 @@ const FigmaTokenManager = (props: Props) => {
                             Cancel
                         </button>
                         <p className='FigmaTokenManager__note'>
-                            Enter new token and click "Save" button at the bottom of the page. Leave empty to keep current token.
+                            Enter new token and click &ldquo;Save&rdquo; button at the bottom of the page. Leave empty to keep current token.
                         </p>
                     </div>
                 ) : (
