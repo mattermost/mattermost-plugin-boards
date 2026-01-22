@@ -18,7 +18,6 @@ import {Utils} from '../../utils'
 import Button from '../../widgets/buttons/button'
 import {Focusable} from '../../widgets/editable'
 import EditableArea from '../../widgets/editableArea'
-import CompassIcon from '../../widgets/icons/compassIcon'
 import TelemetryClient, {TelemetryActions, TelemetryCategory} from '../../telemetry/telemetryClient'
 
 import BlockIconSelector from '../blockIconSelector'
@@ -142,11 +141,6 @@ const CardDetail = (props: Props): JSX.Element|null => {
         }
     }, [])
 
-    const setRandomIcon = useCallback(() => {
-        const newIcon = BlockIcons.shared.randomIcon()
-        mutator.changeBlockIcon(props.board.id, card.id, card.fields.icon, newIcon)
-    }, [card.id, card.fields.icon])
-
     const dispatch = useAppDispatch()
     useEffect(() => {
         dispatch(setCurrentCard(card.id))
@@ -202,24 +196,6 @@ const CardDetail = (props: Props): JSX.Element|null => {
                     size='l'
                     readonly={props.readonly || !canEditBoardCards || limited}
                 />
-                {!props.readonly && canEditBoardCards && !card.fields.icon &&
-                    <div className='add-buttons'>
-                        <Button
-                            emphasis='default'
-                            size='small'
-                            onClick={setRandomIcon}
-                            icon={
-                                <CompassIcon
-                                    icon='emoticon-outline'
-                                />}
-
-                        >
-                            <FormattedMessage
-                                id='CardDetail.add-icon'
-                                defaultMessage='Add icon'
-                            />
-                        </Button>
-                    </div>}
 
                 <EditableArea
                     ref={titleRef}
