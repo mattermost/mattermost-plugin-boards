@@ -18,6 +18,8 @@ import {Utils} from '../../utils'
 
 import {TestBlockFactory} from '../../test/testBlockFactory'
 
+import {CardDetailProvider} from '../cardDetail/cardDetailContext'
+
 import TextElement from './textElement'
 
 jest.mock('../../utils')
@@ -70,13 +72,17 @@ describe('components/content/TextElement', () => {
     }
     const store = mockStateStore([], state)
 
+    const card = TestBlockFactory.createCard(board1)
+
     test('return a textElement', async () => {
         const component = wrapDNDIntl(
             <ReduxProvider store={store}>
-                <TextElement
-                    block={defaultBlock}
-                    readonly={false}
-                />
+                <CardDetailProvider card={card}>
+                    <TextElement
+                        block={defaultBlock}
+                        readonly={false}
+                    />
+                </CardDetailProvider>
             </ReduxProvider>,
         )
 

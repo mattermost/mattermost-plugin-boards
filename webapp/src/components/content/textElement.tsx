@@ -60,24 +60,15 @@ const TextElement = (props: Props): JSX.Element => {
             return
         }
 
-        // Get all content blocks from the card to check if previews already exist
+        // Get the card from context
         const card = cardDetail.card
         if (!card) {
             return
         }
 
-        // Check which Figma links already have attached previews
+        // Add [Attach preview] buttons for Figma links
         figmaLinks.forEach(({element, url, hash}) => {
-            // Check if an image block with this hash already exists
-            const hasPreview = card.fields.contentOrder?.some((blockId: string | string[]) => {
-                if (typeof blockId !== 'string') {
-                    return false
-                }
-                const contentBlock = cardDetail.contents.find((b: Block) => b.id === blockId)
-                return contentBlock?.type === 'image' && contentBlock?.title === hash
-            })
-
-            if (hasPreview || processingLinks.has(url)) {
+            if (processingLinks.has(url)) {
                 return
             }
 
