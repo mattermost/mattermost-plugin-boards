@@ -272,6 +272,23 @@ class OctoClient {
         return fetch(this.getBaseURL() + path, {headers: this.headers()})
     }
 
+    async generateFigmaPreview(fileKey: string, nodeId: string, boardId: string): Promise<{fileId: string; error?: string}> {
+        const path = '/api/v2/figma/preview'
+        const body = JSON.stringify({fileKey, nodeId, boardId})
+        const response = await fetch(this.getBaseURL() + path, Client4.getOptions({
+            method: 'POST',
+            headers: this.headers(),
+            body,
+        }))
+
+        if (response.status !== 200) {
+            const errorData = await this.getJson(response, {error: 'Failed to generate Figma preview'})
+            return {fileId: '', error: errorData.error || 'Failed to generate Figma preview'}
+        }
+
+        return (await this.getJson(response, {fileId: ''})) as {fileId: string}
+    }
+
     async importFullArchive(file: File): Promise<Response> {
         const formData = new FormData()
         formData.append('file', file)
