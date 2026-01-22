@@ -41,25 +41,19 @@ const FigmaTokenManager = (props: Props) => {
         setTokenValue('')
     }
 
-    const handleSaveClick = () => {
-        if (tokenValue.trim() === '') {
-            setIsEditing(false)
-            return
-        }
-
-        props.onChange(props.id, tokenValue)
-        props.setSaveNeeded()
-        setIsEditing(false)
-        setTokenValue('')
-    }
-
     const handleCancelClick = () => {
         setIsEditing(false)
         setTokenValue('')
     }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setTokenValue(e.target.value)
+        const newValue = e.target.value
+        setTokenValue(newValue)
+
+        if (newValue.trim() !== '') {
+            props.onChange(props.id, newValue)
+            props.setSaveNeeded()
+        }
     }
 
     return (
@@ -81,24 +75,16 @@ const FigmaTokenManager = (props: Props) => {
                             disabled={props.disabled}
                             aria-label='Figma Personal Access Token'
                         />
-                        <div className='FigmaTokenManager__actions'>
-                            <button
-                                onClick={handleSaveClick}
-                                disabled={props.disabled}
-                                className='FigmaTokenManager__button FigmaTokenManager__button--primary'
-                            >
-                                Save
-                            </button>
-                            <button
-                                onClick={handleCancelClick}
-                                disabled={props.disabled}
-                                className='FigmaTokenManager__button FigmaTokenManager__button--secondary'
-                            >
-                                Cancel
-                            </button>
-                        </div>
+                        <button
+                            type='button'
+                            onClick={handleCancelClick}
+                            disabled={props.disabled}
+                            className='FigmaTokenManager__button FigmaTokenManager__button--secondary'
+                        >
+                            Cancel
+                        </button>
                         <p className='FigmaTokenManager__note'>
-                            Leave empty to keep the current token unchanged
+                            Enter new token and click "Save" button at the bottom of the page. Leave empty to keep current token.
                         </p>
                     </div>
                 ) : (
@@ -107,6 +93,7 @@ const FigmaTokenManager = (props: Props) => {
                             {displayValue || <em>Not configured</em>}
                         </span>
                         <button
+                            type='button'
                             onClick={handleEditClick}
                             disabled={props.disabled}
                             className='FigmaTokenManager__button FigmaTokenManager__button--secondary'
