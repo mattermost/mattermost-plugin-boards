@@ -59,7 +59,7 @@ const BoardCodesManager = (props: Props) => {
             setBoards(boardsWithViews)
         } catch (err) {
             setError('Failed to load boards')
-            Utils.logError('Failed to load boards:', err)
+            Utils.logError(`Failed to load boards: ${err}`)
         } finally {
             setLoading(false)
         }
@@ -120,12 +120,12 @@ const BoardCodesManager = (props: Props) => {
                     : b
             ))
         } catch (err) {
-            setBoards(boards.map(b => 
-                b.board.id === boardId 
+            setBoards(boards.map(b =>
+                b.board.id === boardId
                     ? {...b, error: 'Failed to save code'}
                     : b
             ))
-            Utils.logError('Failed to save board code:', err)
+            Utils.logError(`Failed to save board code: ${err}`)
         }
     }
 
