@@ -4,6 +4,7 @@
 package boards
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
@@ -87,11 +88,33 @@ func (b *BoardsApp) OnConfigurationChange() error {
 	}
 
 	figmaToken := ""
-	if token, ok := mmconfig.PluginSettings.Plugins[PluginName]["FigmaPersonalAccessToken"].(string); ok {
-		figmaToken = token
-		b.logger.Info("Figma token loaded from config", mlog.Int("tokenLength", len(figmaToken)))
+
+	// Debug: log what's in the plugin settings
+	b.logger.Info("Reading plugin settings",
+		mlog.Bool("pluginExists", mmconfig.PluginSettings.Plugins[PluginName] != nil),
+		mlog.Int("settingsCount", len(mmconfig.PluginSettings.Plugins[PluginName])))
+
+	// Try to get the token
+	if tokenValue, exists := mmconfig.PluginSettings.Plugins[PluginName]["FigmaPersonalAccessToken"]; exists {
+		b.logger.Info("FigmaPersonalAccessToken key exists in config",
+			mlog.String("valueType", fmt.Sprintf("%T", tokenValue)))
+
+		if token, ok := tokenValue.(string); ok {
+			figmaToken = token
+			b.logger.Info("Figma token loaded from config", mlog.Int("tokenLength", len(figmaToken)))
+		} else {
+			b.logger.Warn("Figma token exists but is not a string",
+				mlog.String("actualType", fmt.Sprintf("%T", tokenValue)))
+		}
 	} else {
-		b.logger.Warn("Figma token not found in config")
+		b.logger.Warn("FigmaPersonalAccessToken key not found in config")
+
+		// Debug: log all keys in plugin settings
+		keys := make([]string, 0, len(mmconfig.PluginSettings.Plugins[PluginName]))
+		for k := range mmconfig.PluginSettings.Plugins[PluginName] {
+			keys = append(keys, k)
+		}
+		b.logger.Info("Available plugin setting keys", mlog.String("keys", fmt.Sprintf("%v", keys)))
 	}
 
 	configuration := &configuration{

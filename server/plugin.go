@@ -52,9 +52,11 @@ func (p *Plugin) OnActivate() error {
 	p.boardsApp = boardsApp
 
 	// Load initial configuration before starting the server
+	p.API.LogInfo("Plugin.OnActivate: About to call OnConfigurationChange")
 	if err := p.boardsApp.OnConfigurationChange(); err != nil {
 		return fmt.Errorf("failed to load initial configuration: %w", err)
 	}
+	p.API.LogInfo("Plugin.OnActivate: OnConfigurationChange completed successfully")
 
 	return p.boardsApp.Start()
 }
