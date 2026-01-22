@@ -25,6 +25,7 @@ export interface PluginRegistry {
     registerSiteStatisticsHandler(handler: () => void)
     registerActionAfterChannelCreation(component: React.Element)
     registerReconnectHandler?(handler: () => void)
+    registerAdminConsoleCustomSetting?(key: string, component: React.ElementType)
 
     // Add more if needed from https://developers.mattermost.com/extend/plugins/webapp/reference
 }

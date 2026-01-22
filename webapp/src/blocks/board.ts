@@ -32,6 +32,7 @@ type Board = {
     minimumRole: MemberRole
 
     title: string
+    code?: string
     description: string
     icon?: string
     showDescription: boolean
@@ -49,6 +50,7 @@ type BoardPatch = {
     type?: BoardTypes
     minimumRole?: MemberRole
     title?: string
+    code?: string
     description?: string
     icon?: string
     showDescription?: boolean
@@ -135,6 +137,7 @@ function createBoard(board?: Board): Board {
         type: board?.type || BoardTypePrivate,
         minimumRole: board?.minimumRole || MemberRole.None,
         title: board?.title || '',
+        code: board?.code || '',
         description: board?.description || '',
         icon: board?.icon || '',
         showDescription: board?.showDescription || false,

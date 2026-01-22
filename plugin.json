@@ -1,12 +1,12 @@
 {
     "id": "focalboard",
-    "name": "Mattermost Boards - FamBear Edition",
+    "name": "FamBear Boards",
     "description": "The Mattermost Boards plugin (FamBear Edition)",
     "homepage_url": "https://github.com/fambear/mattermost-plugin-boards",
     "support_url": "https://github.com/fambear/mattermost-plugin-boards/issues",
     "release_notes_url": "https://github.com/fambear/mattermost-plugin-boards/releases",
     "icon_path": "assets/starter-template-icon.svg",
-    "version": "9.2.2",
+    "version": "9.2.3",
     "min_server_version": "10.7.0",
     "server": {
         "executables": {
@@ -29,6 +29,12 @@
             "display_name": "Enable Publicly-Shared Boards:",
             "default": false,
             "help_text": "This allows board editors to share boards that can be accessed by anyone with the link."
+        },
+        {
+            "key": "BoardCodesManager",
+            "type": "custom",
+            "display_name": "Board Codes Management:",
+            "help_text": "Manage board codes for all teams. Codes are unique within a team and must be 1-10 alphanumeric characters starting with a letter."
         }]
     }
 }
