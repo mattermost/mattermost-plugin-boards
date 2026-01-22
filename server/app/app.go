@@ -31,6 +31,7 @@ const (
 
 type servicesAPI interface {
 	GetUsersFromProfiles(options *mm_model.UserGetOptions) ([]*mm_model.User, error)
+	GetConfig() *mm_model.Config
 }
 
 type ReadCloseSeeker = filestore.ReadCloseSeeker
@@ -81,6 +82,23 @@ func (a *App) SetConfig(config *config.Configuration) {
 
 func (a *App) GetConfig() *config.Configuration {
 	return a.config
+}
+
+func (a *App) GetFigmaToken() string {
+	if a.servicesAPI == nil {
+		return ""
+	}
+
+	mmconfig := a.servicesAPI.GetConfig()
+	if mmconfig == nil {
+		return ""
+	}
+
+	if token, ok := mmconfig.PluginSettings.Plugins["focalboard"]["FigmaPersonalAccessToken"].(string); ok {
+		return token
+	}
+
+	return ""
 }
 
 func New(config *config.Configuration, wsAdapter ws.Adapter, services Services) *App {
