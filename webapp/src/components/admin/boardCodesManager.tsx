@@ -60,16 +60,12 @@ const BoardCodesManager = (props: Props) => {
             const allBoards: Board[] = []
             for (const team of teams) {
                 try {
-                    // Get template boards for this team
-                    const teamTemplates = await octoClient.getTeamTemplates(team.id)
-                    if (teamTemplates && teamTemplates.length > 0) {
-                        allBoards.push(...teamTemplates)
-                    }
-
-                    // Get regular boards for this team
+                    // Get regular boards for this team (excluding templates)
                     const regularBoards = await octoClient.getBoardsForTeam(team.id)
                     if (regularBoards && regularBoards.length > 0) {
-                        allBoards.push(...regularBoards)
+                        // Filter out template boards
+                        const nonTemplateBoards = regularBoards.filter(board => !board.isTemplate)
+                        allBoards.push(...nonTemplateBoards)
                     }
                 } catch (teamErr) {
                     Utils.logError(`Failed to load boards for team ${team.id}: ${teamErr}`)
@@ -82,7 +78,12 @@ const BoardCodesManager = (props: Props) => {
                 return
             }
 
-            const boardsWithViews: BoardWithViews[] = allBoards.map(board => ({
+            // Remove duplicates by board ID
+            const uniqueBoards = Array.from(
+                new Map(allBoards.map(board => [board.id, board])).values()
+            )
+
+            const boardsWithViews: BoardWithViews[] = uniqueBoards.map(board => ({
                 board,
                 views: [],
                 code: board.code || '',
@@ -217,7 +218,6 @@ const BoardCodesManager = (props: Props) => {
                         <thead>
                             <tr>
                                 <th>Board Title</th>
-                                <th>Team</th>
                                 <th>Code</th>
                                 <th>Actions</th>
                             </tr>
@@ -228,9 +228,6 @@ const BoardCodesManager = (props: Props) => {
                                     <td className='BoardCodesManager__title'>
                                         {board.icon ? <span className='BoardCodesManager__icon'>{board.icon}</span> : null}
                                         {board.title}
-                                    </td>
-                                    <td className='BoardCodesManager__team'>
-                                        {board.teamId}
                                     </td>
                                     <td className='BoardCodesManager__code'>
                                         {isEditing ? (
