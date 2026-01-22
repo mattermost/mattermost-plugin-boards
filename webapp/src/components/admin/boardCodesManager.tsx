@@ -7,6 +7,7 @@ import {Board} from '../../blocks/board'
 import {BoardView} from '../../blocks/boardView'
 import octoClient from '../../octoClient'
 import {Utils} from '../../utils'
+import Archiver from '../../archiver'
 
 import './boardCodesManager.scss'
 
@@ -29,6 +30,7 @@ type BoardWithViews = {
     board: Board
     views: BoardView[]
     code: string
+    cardCount: number
     isEditing: boolean
     error: string
 }
@@ -83,13 +85,26 @@ const BoardCodesManager = (props: Props) => {
                 new Map(allBoards.map(board => [board.id, board])).values()
             )
 
-            const boardsWithViews: BoardWithViews[] = uniqueBoards.map(board => ({
-                board,
-                views: [],
-                code: board.code || '',
-                isEditing: false,
-                error: ''
-            }))
+            // Load card counts for each board
+            const boardsWithViews: BoardWithViews[] = await Promise.all(
+                uniqueBoards.map(async (board) => {
+                    let cardCount = 0
+                    try {
+                        const cards = await octoClient.getCardsForBoard(board.id, 0, -1)
+                        cardCount = cards.length
+                    } catch (cardErr) {
+                        Utils.logError(`Failed to load cards for board ${board.id}: ${cardErr}`)
+                    }
+                    return {
+                        board,
+                        views: [],
+                        code: board.code || '',
+                        cardCount,
+                        isEditing: false,
+                        error: ''
+                    }
+                })
+            )
 
             setBoards(boardsWithViews)
         } catch (err) {
@@ -219,11 +234,12 @@ const BoardCodesManager = (props: Props) => {
                             <tr>
                                 <th>Board Title</th>
                                 <th>Code</th>
+                                <th>Cards</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {boards.map(({board, code, isEditing, error}) => (
+                            {boards.map(({board, code, cardCount, isEditing, error}) => (
                                 <tr key={board.id} className='BoardCodesManager__row'>
                                     <td className='BoardCodesManager__title'>
                                         {board.icon ? <span className='BoardCodesManager__icon'>{board.icon}</span> : null}
@@ -250,6 +266,9 @@ const BoardCodesManager = (props: Props) => {
                                             </span>
                                         )}
                                     </td>
+                                    <td className='BoardCodesManager__cards'>
+                                        {cardCount}
+                                    </td>
                                     <td className='BoardCodesManager__actions'>
                                         {isEditing ? (
                                             <>
@@ -271,14 +290,24 @@ const BoardCodesManager = (props: Props) => {
                                                 </button>
                                             </>
                                         ) : (
-                                            <button
-                                                type='button'
-                                                onClick={() => handleEditClick(board.id)}
-                                                disabled={props.disabled}
-                                                className='btn btn-link btn-sm'
-                                            >
-                                                Edit
-                                            </button>
+                                            <>
+                                                <button
+                                                    type='button'
+                                                    onClick={() => handleEditClick(board.id)}
+                                                    disabled={props.disabled}
+                                                    className='btn btn-link btn-sm'
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    type='button'
+                                                    onClick={() => Archiver.exportBoardArchive(board)}
+                                                    disabled={props.disabled}
+                                                    className='btn btn-link btn-sm'
+                                                >
+                                                    Export
+                                                </button>
+                                            </>
                                         )}
                                     </td>
                                 </tr>
