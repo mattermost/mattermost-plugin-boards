@@ -5,6 +5,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,6 +21,13 @@ import (
 const (
 	FigmaAPIBaseURL = "https://api.figma.com"
 	MaxNodeSize     = 2000
+)
+
+var (
+	ErrFigmaAPIError          = errors.New("figma API error")
+	ErrFigmaImageAPIError     = errors.New("figma image API error")
+	ErrImageDownloadURLFailed = errors.New("failed to get image download URL")
+	ErrImageDownloadFailed    = errors.New("failed to download image from Figma")
 )
 
 type FigmaPreviewRequest struct {
@@ -100,8 +108,8 @@ func (a *API) handleFigmaPreview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req FigmaPreviewRequest
-	if err := json.Unmarshal(requestBody, &req); err != nil {
-		a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
+	if unmarshalErr := json.Unmarshal(requestBody, &req); unmarshalErr != nil {
+		a.errorResponse(w, r, model.NewErrBadRequest(unmarshalErr.Error()))
 		return
 	}
 
@@ -145,14 +153,14 @@ func (a *API) handleFigmaPreview(w http.ResponseWriter, r *http.Request) {
 
 	if nodeResp.StatusCode != 200 {
 		body, _ := io.ReadAll(nodeResp.Body)
-		a.errorResponse(w, r, fmt.Errorf("figma API error: %s", string(body)))
+		a.errorResponse(w, r, fmt.Errorf("%w: %s", ErrFigmaAPIError, string(body)))
 		return
 	}
 
 	// Parse node response to check dimensions
 	var nodeData FigmaNodeResponse
-	if err := json.NewDecoder(nodeResp.Body).Decode(&nodeData); err != nil {
-		a.errorResponse(w, r, fmt.Errorf("failed to parse node data: %w", err))
+	if decodeErr := json.NewDecoder(nodeResp.Body).Decode(&nodeData); decodeErr != nil {
+		a.errorResponse(w, r, fmt.Errorf("failed to parse node data: %w", decodeErr))
 		return
 	}
 
@@ -189,24 +197,30 @@ func (a *API) handleFigmaPreview(w http.ResponseWriter, r *http.Request) {
 
 	if imageResp.StatusCode != 200 {
 		body, _ := io.ReadAll(imageResp.Body)
-		a.errorResponse(w, r, fmt.Errorf("figma image API error: %s", string(body)))
+		a.errorResponse(w, r, fmt.Errorf("%w: %s", ErrFigmaImageAPIError, string(body)))
 		return
 	}
 
 	var imageData FigmaImageResponse
-	if err := json.NewDecoder(imageResp.Body).Decode(&imageData); err != nil {
-		a.errorResponse(w, r, fmt.Errorf("failed to parse image data: %w", err))
+	if decodeErr := json.NewDecoder(imageResp.Body).Decode(&imageData); decodeErr != nil {
+		a.errorResponse(w, r, fmt.Errorf("failed to parse image data: %w", decodeErr))
 		return
 	}
 
 	downloadURL, exists := imageData.Images[apiNodeID]
 	if !exists || downloadURL == "" {
-		a.errorResponse(w, r, fmt.Errorf("failed to get image download URL"))
+		a.errorResponse(w, r, ErrImageDownloadURLFailed)
 		return
 	}
 
-	// Download the image
-	downloadResp, err := http.Get(downloadURL)
+	// Download the image using http.NewRequest for security
+	downloadReq, err := http.NewRequest("GET", downloadURL, nil)
+	if err != nil {
+		a.errorResponse(w, r, fmt.Errorf("failed to create download request: %w", err))
+		return
+	}
+
+	downloadResp, err := client.Do(downloadReq)
 	if err != nil {
 		a.errorResponse(w, r, fmt.Errorf("failed to download image: %w", err))
 		return
@@ -214,7 +228,7 @@ func (a *API) handleFigmaPreview(w http.ResponseWriter, r *http.Request) {
 	defer downloadResp.Body.Close()
 
 	if downloadResp.StatusCode != 200 {
-		a.errorResponse(w, r, fmt.Errorf("failed to download image from Figma"))
+		a.errorResponse(w, r, ErrImageDownloadFailed)
 		return
 	}
 
