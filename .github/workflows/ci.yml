@@ -39,6 +39,12 @@ jobs:
 
     - name: set up golangci-lint
       run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.64.8
-    
+
+    - name: Check down migrations
+      run: |
+        cd focalboard
+        echo 'SELECT 1;' > downmigration
+        for file in server/services/store/sqlstore/migrations/*.down.sql; do diff -Bw downmigration $file; done
+
     - name: Lint & test server
       run: cd focalboard; make server-ci
