@@ -7,7 +7,7 @@ import {Board} from '../../blocks/board'
 import {BoardView} from '../../blocks/boardView'
 import octoClient from '../../octoClient'
 import {Utils} from '../../utils'
-import Archiver from '../../archiver'
+import {Archiver} from '../../archiver'
 
 import './boardCodesManager.scss'
 
