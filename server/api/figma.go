@@ -144,6 +144,16 @@ func (a *API) handleFigmaPreview(w http.ResponseWriter, r *http.Request) {
 
 	// Get Figma token from configuration
 	figmaToken := a.app.GetFigmaToken()
+
+	// Log masked token for debugging
+	maskedToken := ""
+	if len(figmaToken) > 16 {
+		maskedToken = figmaToken[:8] + "..." + figmaToken[len(figmaToken)-8:]
+	} else if len(figmaToken) > 0 {
+		maskedToken = figmaToken[:min(4, len(figmaToken))] + "..."
+	}
+	a.logger.Info("Figma token retrieved for preview", mlog.String("maskedToken", maskedToken), mlog.Int("tokenLength", len(figmaToken)))
+
 	if figmaToken == "" {
 		a.errorResponse(w, r, model.NewErrBadRequest("Figma Personal Access Token not configured"))
 		return
@@ -159,12 +169,16 @@ func (a *API) handleFigmaPreview(w http.ResponseWriter, r *http.Request) {
 
 	// Check node dimensions
 	nodeURL := fmt.Sprintf("%s/v1/files/%s/nodes?ids=%s", FigmaAPIBaseURL, req.FileKey, apiNodeID)
+	a.logger.Info("Requesting Figma node info", mlog.String("url", nodeURL), mlog.String("nodeID", apiNodeID))
+
 	nodeReq, err := http.NewRequestWithContext(r.Context(), "GET", nodeURL, nil)
 	if err != nil {
 		a.errorResponse(w, r, fmt.Errorf("failed to create request: %w", err))
 		return
 	}
 	nodeReq.Header.Set("X-Figma-Token", figmaToken)
+	a.logger.Debug("Figma API request headers set", mlog.String("headerName", "X-Figma-Token"), mlog.Bool("tokenSet", figmaToken != ""))
+
 	nodeResp, err := client.Do(nodeReq)
 	if err != nil {
 		a.errorResponse(w, r, fmt.Errorf("failed to fetch node info: %w", err))
