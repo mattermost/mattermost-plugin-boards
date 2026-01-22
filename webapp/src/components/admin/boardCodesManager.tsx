@@ -47,15 +47,48 @@ const BoardCodesManager = (props: Props) => {
             setLoading(true)
             setError('')
 
-            // Use searchAll to get boards from all teams (System Console context)
-            const fetchedBoards = await octoClient.searchAll('')
+            // Get all teams first
+            const teams = await octoClient.getTeams()
 
-            if (!fetchedBoards) {
-                setError('Failed to load boards - API returned no data')
+            if (!teams || teams.length === 0) {
+                setError('No teams found')
+                setBoards([])
                 return
             }
 
-            const boardsWithViews: BoardWithViews[] = fetchedBoards.map(board => ({
+            // Get boards from all teams
+            const allBoards: Board[] = []
+            for (const team of teams) {
+                try {
+                    // Get template boards for this team
+                    const teamTemplates = await octoClient.getTeamTemplates(team.id)
+                    if (teamTemplates && teamTemplates.length > 0) {
+                        allBoards.push(...teamTemplates)
+                    }
+
+                    // Get regular boards for this team using direct fetch
+                    // octoClient.getBoards() doesn't accept teamId, so we use fetch directly
+                    const response = await fetch(octoClient.getBaseURL() + `/api/v2/teams/${team.id}/boards`, {
+                        headers: octoClient.headers()
+                    })
+                    if (response.status === 200) {
+                        const regularBoards = await response.json() as Board[]
+                        if (regularBoards && regularBoards.length > 0) {
+                            allBoards.push(...regularBoards)
+                        }
+                    }
+                } catch (teamErr) {
+                    Utils.logError(`Failed to load boards for team ${team.id}: ${teamErr}`)
+                    // Continue with other teams
+                }
+            }
+
+            if (allBoards.length === 0) {
+                setBoards([])
+                return
+            }
+
+            const boardsWithViews: BoardWithViews[] = allBoards.map(board => ({
                 board,
                 views: [],
                 code: board.code || '',
