@@ -119,6 +119,7 @@ func (b *BoardsApp) OnConfigurationChange() error {
 		maxFileSize = *mmconfig.FileSettings.MaxFileSize
 	}
 	b.server.Config().MaxFileSize = maxFileSize
+	b.server.Config().FigmaPersonalAccessToken = figmaToken
 
 	b.server.UpdateAppConfig()
 	b.wsPluginAdapter.BroadcastConfigChange(*b.server.App().GetClientConfig())
