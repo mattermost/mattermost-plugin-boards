@@ -36,6 +36,7 @@ func boardFields(tableAlias string) []string {
 		tableAlias + "type",
 		tableAlias + "minimum_role",
 		tableAlias + "title",
+		"COALESCE(" + tableAlias + "code, '')",
 		tableAlias + "description",
 		tableAlias + "icon",
 		tableAlias + "show_description",
@@ -59,6 +60,7 @@ func boardHistoryFields() []string {
 		"type",
 		"minimum_role",
 		"COALESCE(title, '')",
+		"COALESCE(code, '')",
 		"COALESCE(description, '')",
 		"COALESCE(icon, '')",
 		"COALESCE(show_description, false)",
@@ -102,6 +104,7 @@ func (s *SQLStore) boardsFromRows(rows *sql.Rows) ([]*model.Board, error) {
 			&board.Type,
 			&board.MinimumRole,
 			&board.Title,
+			&board.Code,
 			&board.Description,
 			&board.Icon,
 			&board.ShowDescription,
@@ -318,6 +321,7 @@ func (s *SQLStore) insertBoard(db sq.BaseRunner, board *model.Board, userID stri
 		"modified_by":      board.ModifiedBy,
 		"type":             board.Type,
 		"title":            board.Title,
+		"code":             board.Code,
 		"minimum_role":     board.MinimumRole,
 		"description":      board.Description,
 		"icon":             board.Icon,
@@ -339,6 +343,7 @@ func (s *SQLStore) insertBoard(db sq.BaseRunner, board *model.Board, userID stri
 			Set("channel_id", board.ChannelID).
 			Set("minimum_role", board.MinimumRole).
 			Set("title", board.Title).
+			Set("code", board.Code).
 			Set("description", board.Description).
 			Set("icon", board.Icon).
 			Set("show_description", board.ShowDescription).
@@ -373,6 +378,33 @@ func (s *SQLStore) insertBoard(db sq.BaseRunner, board *model.Board, userID stri
 	}
 
 	return board, nil
+}
+
+func (s *SQLStore) getBoardByCode(db sq.BaseRunner, code string, teamID string) (*model.Board, error) {
+	query := s.getQueryBuilder(db).
+		Select(boardFields("b")...).
+		From(s.tablePrefix + "boards as b").
+		Where(sq.Eq{"b.code": code}).
+		Where(sq.Eq{"b.team_id": teamID}).
+		Where(sq.Eq{"b.delete_at": 0})
+
+	rows, err := query.Query()
+	if err != nil {
+		s.logger.Error("getBoardByCode error", mlog.Err(err))
+		return nil, err
+	}
+	defer s.CloseRows(rows)
+
+	boards, err := s.boardsFromRows(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(boards) == 0 {
+		return nil, model.NewErrNotFound("board with code " + code)
+	}
+
+	return boards[0], nil
 }
 
 func (s *SQLStore) patchBoard(db sq.BaseRunner, boardID string, boardPatch *model.BoardPatch, userID string) (*model.Board, error) {
@@ -415,6 +447,7 @@ func (s *SQLStore) deleteBoardAndChildren(db sq.BaseRunner, boardID, userID stri
 		"type":             board.Type,
 		"minimum_role":     board.MinimumRole,
 		"title":            board.Title,
+		"code":             board.Code,
 		"description":      board.Description,
 		"icon":             board.Icon,
 		"show_description": board.ShowDescription,
@@ -856,6 +889,7 @@ func (s *SQLStore) undeleteBoard(db sq.BaseRunner, boardID string, modifiedBy st
 		"modified_by",
 		"type",
 		"title",
+		"code",
 		"minimum_role",
 		"description",
 		"icon",
@@ -877,6 +911,7 @@ func (s *SQLStore) undeleteBoard(db sq.BaseRunner, boardID string, modifiedBy st
 		modifiedBy,
 		board.Type,
 		board.Title,
+		board.Code,
 		board.MinimumRole,
 		board.Description,
 		board.Icon,
