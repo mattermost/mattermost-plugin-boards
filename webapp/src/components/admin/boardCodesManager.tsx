@@ -46,8 +46,15 @@ const BoardCodesManager = (props: Props) => {
         try {
             setLoading(true)
             setError('')
-            const fetchedBoards = await octoClient.getBoards()
-            
+
+            // Use searchAll to get boards from all teams (System Console context)
+            const fetchedBoards = await octoClient.searchAll('')
+
+            if (!fetchedBoards) {
+                setError('Failed to load boards - API returned no data')
+                return
+            }
+
             const boardsWithViews: BoardWithViews[] = fetchedBoards.map(board => ({
                 board,
                 views: [],
@@ -55,10 +62,10 @@ const BoardCodesManager = (props: Props) => {
                 isEditing: false,
                 error: ''
             }))
-            
+
             setBoards(boardsWithViews)
         } catch (err) {
-            setError('Failed to load boards')
+            setError(`Failed to load boards: ${err}`)
             Utils.logError(`Failed to load boards: ${err}`)
         } finally {
             setLoading(false)
@@ -82,56 +89,78 @@ const BoardCodesManager = (props: Props) => {
     }
 
     const handleCodeChange = (boardId: string, newCode: string) => {
-        setBoards(boards.map(b => 
-            b.board.id === boardId 
-                ? {...b, code: newCode, error: ''}
+        // Validate in real-time
+        const validationError = validateCode(newCode)
+
+        setBoards(prev => prev.map(b =>
+            b.board.id === boardId
+                ? {...b, code: newCode, error: validationError}
                 : b
         ))
-        props.setSaveNeeded()
+        // Don't call setSaveNeeded - this component handles its own save via per-row Save button
     }
 
     const handleEditClick = (boardId: string) => {
-        setBoards(boards.map(b => 
-            b.board.id === boardId 
-                ? {...b, isEditing: true}
+        setBoards(prev => prev.map(b =>
+            b.board.id === boardId
+                ? {...b, isEditing: true, error: ''}
                 : b
         ))
     }
 
     const handleSaveClick = async (boardId: string) => {
-        const boardData = boards.find(b => b.board.id === boardId)
-        if (!boardData) return
+        // Use functional form to avoid stale closure
+        setBoards(prev => {
+            const boardData = prev.find(b => b.board.id === boardId)
+            if (!boardData) return prev
 
-        const validationError = validateCode(boardData.code)
-        if (validationError) {
-            setBoards(boards.map(b => 
-                b.board.id === boardId 
-                    ? {...b, error: validationError}
-                    : b
-            ))
-            return
-        }
+            const validationError = validateCode(boardData.code)
+            if (validationError) {
+                return prev.map(b =>
+                    b.board.id === boardId
+                        ? {...b, error: validationError}
+                        : b
+                )
+            }
 
-        try {
-            await octoClient.patchBoard(boardId, {code: boardData.code})
-            setBoards(boards.map(b => 
-                b.board.id === boardId 
-                    ? {...b, isEditing: false, error: '', board: {...b.board, code: boardData.code}}
-                    : b
-            ))
-        } catch (err) {
-            setBoards(boards.map(b =>
-                b.board.id === boardId
-                    ? {...b, error: 'Failed to save code'}
-                    : b
-            ))
-            Utils.logError(`Failed to save board code: ${err}`)
-        }
+            // Perform async save
+            octoClient.patchBoard(boardId, {code: boardData.code})
+                .then(response => {
+                    // Check response status
+                    if (!response.ok) {
+                        setBoards(prev2 => prev2.map(b =>
+                            b.board.id === boardId
+                                ? {...b, error: `Failed to save code (HTTP ${response.status})`}
+                                : b
+                        ))
+                        Utils.logError(`Failed to save board code: HTTP ${response.status}`)
+                        return
+                    }
+
+                    // Success - close edit mode and update board
+                    setBoards(prev2 => prev2.map(b =>
+                        b.board.id === boardId
+                            ? {...b, isEditing: false, error: '', board: {...b.board, code: boardData.code}}
+                            : b
+                    ))
+                })
+                .catch(err => {
+                    setBoards(prev2 => prev2.map(b =>
+                        b.board.id === boardId
+                            ? {...b, error: 'Failed to save code'}
+                            : b
+                    ))
+                    Utils.logError(`Failed to save board code: ${err}`)
+                })
+
+            // Return current state unchanged (async operation will update later)
+            return prev
+        })
     }
 
     const handleCancelClick = (boardId: string) => {
-        setBoards(boards.map(b => 
-            b.board.id === boardId 
+        setBoards(prev => prev.map(b =>
+            b.board.id === boardId
                 ? {...b, code: b.board.code || '', isEditing: false, error: ''}
                 : b
         ))
