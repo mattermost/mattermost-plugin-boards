@@ -272,13 +272,4 @@
     .BlocksEditor {
         width: 100%;
     }
-
-    // Align date picker modal to the left in the right section on desktop
-    @media (min-width: 975px) {
-        .CardDetail__right-section {
-            .Modal {
-                left: 0;
-            }
-        }
-    }
 }
