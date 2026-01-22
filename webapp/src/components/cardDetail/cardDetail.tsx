@@ -4,7 +4,6 @@
 import React, {useCallback, useEffect, useRef, useState, Fragment, useMemo} from 'react'
 import {FormattedMessage, useIntl, IntlShape} from 'react-intl'
 
-import {BlockIcons} from '../../blockIcons'
 import {Card} from '../../blocks/card'
 import {BoardView} from '../../blocks/boardView'
 import {Board} from '../../blocks/board'
