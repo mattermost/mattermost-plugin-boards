@@ -77,23 +77,6 @@ exports[`components/cardDialog already following card 1`] = `
           class="CardDetail "
         >
           <div
-            class="IconSelector"
-          >
-            <div
-              aria-label="menuwrapper"
-              class="MenuWrapper"
-              role="button"
-            >
-              <div
-                class="octo-icon size-l"
-              >
-                <span>
-                  i
-                </span>
-              </div>
-            </div>
-          </div>
-          <div
             class="EditableAreaWrap"
           >
             <textarea
@@ -284,17 +267,6 @@ exports[`components/cardDialog limited card shows hidden view (no toolbar) 1`] =
         <div
           class="CardDetail  CardDetail--is-limited"
         >
-          <div
-            class="IconSelector"
-          >
-            <div
-              class="octo-icon size-l readonly"
-            >
-              <span>
-                i
-              </span>
-            </div>
-          </div>
           <div
             class="EditableAreaWrap"
           >
@@ -537,17 +509,6 @@ exports[`components/cardDialog return a cardDialog readonly 1`] = `
         <div
           class="CardDetail "
         >
-          <div
-            class="IconSelector"
-          >
-            <div
-              class="octo-icon size-l readonly"
-            >
-              <span>
-                i
-              </span>
-            </div>
-          </div>
           <div
             class="EditableAreaWrap"
           >
@@ -835,23 +796,6 @@ exports[`components/cardDialog return cardDialog menu content 1`] = `
           class="CardDetail "
         >
           <div
-            class="IconSelector"
-          >
-            <div
-              aria-label="menuwrapper"
-              class="MenuWrapper"
-              role="button"
-            >
-              <div
-                class="octo-icon size-l"
-              >
-                <span>
-                  i
-                </span>
-              </div>
-            </div>
-          </div>
-          <div
             class="EditableAreaWrap"
           >
             <textarea
@@ -1062,23 +1006,6 @@ exports[`components/cardDialog return cardDialog menu content and cancel delete 
         <div
           class="CardDetail "
         >
-          <div
-            class="IconSelector"
-          >
-            <div
-              aria-label="menuwrapper"
-              class="MenuWrapper"
-              role="button"
-            >
-              <div
-                class="octo-icon size-l"
-              >
-                <span>
-                  i
-                </span>
-              </div>
-            </div>
-          </div>
           <div
             class="EditableAreaWrap"
           >
@@ -1291,23 +1218,6 @@ exports[`components/cardDialog should match snapshot 1`] = `
           class="CardDetail "
         >
           <div
-            class="IconSelector"
-          >
-            <div
-              aria-label="menuwrapper"
-              class="MenuWrapper"
-              role="button"
-            >
-              <div
-                class="octo-icon size-l"
-              >
-                <span>
-                  i
-                </span>
-              </div>
-            </div>
-          </div>
-          <div
             class="EditableAreaWrap"
           >
             <textarea
@@ -1508,17 +1418,6 @@ exports[`components/cardDialog should match snapshot without permissions 1`] = `
         <div
           class="CardDetail "
         >
-          <div
-            class="IconSelector"
-          >
-            <div
-              class="octo-icon size-l readonly"
-            >
-              <span>
-                i
-              </span>
-            </div>
-          </div>
           <div
             class="EditableAreaWrap"
           >

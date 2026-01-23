@@ -637,11 +637,6 @@ exports[`src/components/workspace return workspace and showcard 1`] = `
                   class="octo-icontitle"
                 >
                   <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
-                  <div
                     class="octo-titletext"
                   >
                     card-1
@@ -680,11 +675,6 @@ exports[`src/components/workspace return workspace and showcard 1`] = `
                   class="octo-icontitle"
                 >
                   <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
-                  <div
                     class="octo-titletext"
                   >
                     card-2
@@ -722,11 +712,6 @@ exports[`src/components/workspace return workspace and showcard 1`] = `
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <div
                     class="octo-titletext"
                   >
@@ -964,11 +949,6 @@ exports[`src/components/workspace return workspace readonly and showcard 1`] = `
                   class="octo-icontitle"
                 >
                   <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
-                  <div
                     class="octo-titletext"
                   >
                     card-1
@@ -994,11 +974,6 @@ exports[`src/components/workspace return workspace readonly and showcard 1`] = `
                   class="octo-icontitle"
                 >
                   <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
-                  <div
                     class="octo-titletext"
                   >
                     card-2
@@ -1023,11 +998,6 @@ exports[`src/components/workspace return workspace readonly and showcard 1`] = `
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <div
                     class="octo-titletext"
                   >
@@ -1706,11 +1676,6 @@ exports[`src/components/workspace should match snapshot 1`] = `
                   class="octo-icontitle"
                 >
                   <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
-                  <div
                     class="octo-titletext"
                   >
                     card-1
@@ -1749,11 +1714,6 @@ exports[`src/components/workspace should match snapshot 1`] = `
                   class="octo-icontitle"
                 >
                   <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
-                  <div
                     class="octo-titletext"
                   >
                     card-2
@@ -1791,11 +1751,6 @@ exports[`src/components/workspace should match snapshot 1`] = `
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <div
                     class="octo-titletext"
                   >
@@ -2033,11 +1988,6 @@ exports[`src/components/workspace should match snapshot with readonly 1`] = `
                   class="octo-icontitle"
                 >
                   <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
-                  <div
                     class="octo-titletext"
                   >
                     card-1
@@ -2063,11 +2013,6 @@ exports[`src/components/workspace should match snapshot with readonly 1`] = `
                   class="octo-icontitle"
                 >
                   <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
-                  <div
                     class="octo-titletext"
                   >
                     card-2
@@ -2092,11 +2037,6 @@ exports[`src/components/workspace should match snapshot with readonly 1`] = `
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <div
                     class="octo-titletext"
                   >

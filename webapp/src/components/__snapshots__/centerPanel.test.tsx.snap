@@ -249,6 +249,29 @@ exports[`components/centerPanel Clicking on the Hidden card count should open a 
         >
           <div
             class="octo-table-cell header-cell"
+            draggable="true"
+            style="overflow: unset; opacity: 1; width: 100px;"
+          >
+            <div
+              aria-label="menuwrapper"
+              class="MenuWrapper"
+              role="button"
+            >
+              <span
+                class="Label empty "
+              >
+                Code
+              </span>
+            </div>
+            <div
+              class="octo-spacer"
+            />
+            <div
+              class="HorizontalGrip"
+            />
+          </div>
+          <div
+            class="octo-table-cell header-cell"
             style="overflow: unset; opacity: 1; width: 100px;"
           >
             <div
@@ -414,6 +437,10 @@ exports[`components/centerPanel Clicking on the Hidden card count should open a 
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -421,11 +448,6 @@ exports[`components/centerPanel Clicking on the Hidden card count should open a 
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -487,6 +509,10 @@ exports[`components/centerPanel Clicking on the Hidden card count should open a 
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -494,11 +520,6 @@ exports[`components/centerPanel Clicking on the Hidden card count should open a 
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -1147,11 +1168,6 @@ exports[`components/centerPanel return centerPanel and click on card to show car
               class="octo-icontitle"
             >
               <div
-                class="octo-icon"
-              >
-                i
-              </div>
-              <div
                 class="octo-titletext"
               >
                 card1
@@ -1180,11 +1196,6 @@ exports[`components/centerPanel return centerPanel and click on card to show car
             <div
               class="octo-icontitle"
             >
-              <div
-                class="octo-icon"
-              >
-                i
-              </div>
               <div
                 class="octo-titletext"
               >
@@ -1468,6 +1479,29 @@ exports[`components/centerPanel return centerPanel and click on new card to edit
         >
           <div
             class="octo-table-cell header-cell"
+            draggable="true"
+            style="overflow: unset; opacity: 1; width: 100px;"
+          >
+            <div
+              aria-label="menuwrapper"
+              class="MenuWrapper"
+              role="button"
+            >
+              <span
+                class="Label empty "
+              >
+                Code
+              </span>
+            </div>
+            <div
+              class="octo-spacer"
+            />
+            <div
+              class="HorizontalGrip"
+            />
+          </div>
+          <div
+            class="octo-table-cell header-cell"
             style="overflow: unset; opacity: 1; width: 100px;"
           >
             <div
@@ -1633,6 +1667,10 @@ exports[`components/centerPanel return centerPanel and click on new card to edit
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -1640,11 +1678,6 @@ exports[`components/centerPanel return centerPanel and click on new card to edit
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -1706,6 +1739,10 @@ exports[`components/centerPanel return centerPanel and click on new card to edit
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -1713,11 +1750,6 @@ exports[`components/centerPanel return centerPanel and click on new card to edit
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -1971,6 +2003,26 @@ exports[`components/centerPanel return centerPanel and press touch 1 with readon
         >
           <div
             class="octo-table-cell header-cell"
+            draggable="true"
+            style="overflow: unset; opacity: 1; width: 100px;"
+          >
+            <div
+              aria-label="menuwrapper"
+              class="MenuWrapper disabled"
+              role="button"
+            >
+              <span
+                class="Label empty "
+              >
+                Code
+              </span>
+            </div>
+            <div
+              class="octo-spacer"
+            />
+          </div>
+          <div
+            class="octo-table-cell header-cell"
             style="overflow: unset; opacity: 1; width: 100px;"
           >
             <div
@@ -2081,6 +2133,10 @@ exports[`components/centerPanel return centerPanel and press touch 1 with readon
                 class="action-cell octo-table-cell-btn"
               />
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -2088,11 +2144,6 @@ exports[`components/centerPanel return centerPanel and press touch 1 with readon
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable readonly "
                     placeholder="Untitled"
@@ -2125,6 +2176,10 @@ exports[`components/centerPanel return centerPanel and press touch 1 with readon
                 class="action-cell octo-table-cell-btn"
               />
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -2132,11 +2187,6 @@ exports[`components/centerPanel return centerPanel and press touch 1 with readon
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable readonly "
                     placeholder="Untitled"
@@ -2483,6 +2533,29 @@ exports[`components/centerPanel return centerPanel and press touch ctrl+d for on
         >
           <div
             class="octo-table-cell header-cell"
+            draggable="true"
+            style="overflow: unset; opacity: 1; width: 100px;"
+          >
+            <div
+              aria-label="menuwrapper"
+              class="MenuWrapper"
+              role="button"
+            >
+              <span
+                class="Label empty "
+              >
+                Code
+              </span>
+            </div>
+            <div
+              class="octo-spacer"
+            />
+            <div
+              class="HorizontalGrip"
+            />
+          </div>
+          <div
+            class="octo-table-cell header-cell"
             style="overflow: unset; opacity: 1; width: 100px;"
           >
             <div
@@ -2648,6 +2721,10 @@ exports[`components/centerPanel return centerPanel and press touch ctrl+d for on
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -2655,11 +2732,6 @@ exports[`components/centerPanel return centerPanel and press touch ctrl+d for on
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -2721,6 +2793,10 @@ exports[`components/centerPanel return centerPanel and press touch ctrl+d for on
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -2728,11 +2804,6 @@ exports[`components/centerPanel return centerPanel and press touch ctrl+d for on
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -3120,6 +3191,29 @@ exports[`components/centerPanel return centerPanel and press touch del for one c
         >
           <div
             class="octo-table-cell header-cell"
+            draggable="true"
+            style="overflow: unset; opacity: 1; width: 100px;"
+          >
+            <div
+              aria-label="menuwrapper"
+              class="MenuWrapper"
+              role="button"
+            >
+              <span
+                class="Label empty "
+              >
+                Code
+              </span>
+            </div>
+            <div
+              class="octo-spacer"
+            />
+            <div
+              class="HorizontalGrip"
+            />
+          </div>
+          <div
+            class="octo-table-cell header-cell"
             style="overflow: unset; opacity: 1; width: 100px;"
           >
             <div
@@ -3285,6 +3379,10 @@ exports[`components/centerPanel return centerPanel and press touch del for one c
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -3292,11 +3390,6 @@ exports[`components/centerPanel return centerPanel and press touch del for one c
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -3358,6 +3451,10 @@ exports[`components/centerPanel return centerPanel and press touch del for one c
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -3365,11 +3462,6 @@ exports[`components/centerPanel return centerPanel and press touch del for one c
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -3757,6 +3849,29 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
         >
           <div
             class="octo-table-cell header-cell"
+            draggable="true"
+            style="overflow: unset; opacity: 1; width: 100px;"
+          >
+            <div
+              aria-label="menuwrapper"
+              class="MenuWrapper"
+              role="button"
+            >
+              <span
+                class="Label empty "
+              >
+                Code
+              </span>
+            </div>
+            <div
+              class="octo-spacer"
+            />
+            <div
+              class="HorizontalGrip"
+            />
+          </div>
+          <div
+            class="octo-table-cell header-cell"
             style="overflow: unset; opacity: 1; width: 100px;"
           >
             <div
@@ -3922,6 +4037,10 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -3929,11 +4048,6 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -3995,6 +4109,10 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -4002,11 +4120,6 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -4394,6 +4507,29 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
         >
           <div
             class="octo-table-cell header-cell"
+            draggable="true"
+            style="overflow: unset; opacity: 1; width: 100px;"
+          >
+            <div
+              aria-label="menuwrapper"
+              class="MenuWrapper"
+              role="button"
+            >
+              <span
+                class="Label empty "
+              >
+                Code
+              </span>
+            </div>
+            <div
+              class="octo-spacer"
+            />
+            <div
+              class="HorizontalGrip"
+            />
+          </div>
+          <div
+            class="octo-table-cell header-cell"
             style="overflow: unset; opacity: 1; width: 100px;"
           >
             <div
@@ -4559,6 +4695,10 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -4566,11 +4706,6 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -4632,6 +4767,10 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -4639,11 +4778,6 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -5031,6 +5165,29 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
         >
           <div
             class="octo-table-cell header-cell"
+            draggable="true"
+            style="overflow: unset; opacity: 1; width: 100px;"
+          >
+            <div
+              aria-label="menuwrapper"
+              class="MenuWrapper"
+              role="button"
+            >
+              <span
+                class="Label empty "
+              >
+                Code
+              </span>
+            </div>
+            <div
+              class="octo-spacer"
+            />
+            <div
+              class="HorizontalGrip"
+            />
+          </div>
+          <div
+            class="octo-table-cell header-cell"
             style="overflow: unset; opacity: 1; width: 100px;"
           >
             <div
@@ -5196,6 +5353,10 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -5203,11 +5364,6 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -5269,6 +5425,10 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -5276,11 +5436,6 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -5668,6 +5823,29 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
         >
           <div
             class="octo-table-cell header-cell"
+            draggable="true"
+            style="overflow: unset; opacity: 1; width: 100px;"
+          >
+            <div
+              aria-label="menuwrapper"
+              class="MenuWrapper"
+              role="button"
+            >
+              <span
+                class="Label empty "
+              >
+                Code
+              </span>
+            </div>
+            <div
+              class="octo-spacer"
+            />
+            <div
+              class="HorizontalGrip"
+            />
+          </div>
+          <div
+            class="octo-table-cell header-cell"
             style="overflow: unset; opacity: 1; width: 100px;"
           >
             <div
@@ -5833,6 +6011,10 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -5840,11 +6022,6 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -5906,6 +6083,10 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -5913,11 +6094,6 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -6305,6 +6481,29 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
         >
           <div
             class="octo-table-cell header-cell"
+            draggable="true"
+            style="overflow: unset; opacity: 1; width: 100px;"
+          >
+            <div
+              aria-label="menuwrapper"
+              class="MenuWrapper"
+              role="button"
+            >
+              <span
+                class="Label empty "
+              >
+                Code
+              </span>
+            </div>
+            <div
+              class="octo-spacer"
+            />
+            <div
+              class="HorizontalGrip"
+            />
+          </div>
+          <div
+            class="octo-table-cell header-cell"
             style="overflow: unset; opacity: 1; width: 100px;"
           >
             <div
@@ -6470,6 +6669,10 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -6477,11 +6680,6 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -6543,6 +6741,10 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -6550,11 +6752,6 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -6942,6 +7139,29 @@ exports[`components/centerPanel return centerPanel and select one card and click
         >
           <div
             class="octo-table-cell header-cell"
+            draggable="true"
+            style="overflow: unset; opacity: 1; width: 100px;"
+          >
+            <div
+              aria-label="menuwrapper"
+              class="MenuWrapper"
+              role="button"
+            >
+              <span
+                class="Label empty "
+              >
+                Code
+              </span>
+            </div>
+            <div
+              class="octo-spacer"
+            />
+            <div
+              class="HorizontalGrip"
+            />
+          </div>
+          <div
+            class="octo-table-cell header-cell"
             style="overflow: unset; opacity: 1; width: 100px;"
           >
             <div
@@ -7107,6 +7327,10 @@ exports[`components/centerPanel return centerPanel and select one card and click
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -7114,11 +7338,6 @@ exports[`components/centerPanel return centerPanel and select one card and click
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -7180,6 +7399,10 @@ exports[`components/centerPanel return centerPanel and select one card and click
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -7187,11 +7410,6 @@ exports[`components/centerPanel return centerPanel and select one card and click
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -7579,6 +7797,29 @@ exports[`components/centerPanel return centerPanel and select one card and click
         >
           <div
             class="octo-table-cell header-cell"
+            draggable="true"
+            style="overflow: unset; opacity: 1; width: 100px;"
+          >
+            <div
+              aria-label="menuwrapper"
+              class="MenuWrapper"
+              role="button"
+            >
+              <span
+                class="Label empty "
+              >
+                Code
+              </span>
+            </div>
+            <div
+              class="octo-spacer"
+            />
+            <div
+              class="HorizontalGrip"
+            />
+          </div>
+          <div
+            class="octo-table-cell header-cell"
             style="overflow: unset; opacity: 1; width: 100px;"
           >
             <div
@@ -7744,6 +7985,10 @@ exports[`components/centerPanel return centerPanel and select one card and click
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -7751,11 +7996,6 @@ exports[`components/centerPanel return centerPanel and select one card and click
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -7817,6 +8057,10 @@ exports[`components/centerPanel return centerPanel and select one card and click
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -7824,11 +8068,6 @@ exports[`components/centerPanel return centerPanel and select one card and click
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
@@ -8681,11 +8920,6 @@ exports[`components/centerPanel should match snapshot for Kanban 1`] = `
               class="octo-icontitle"
             >
               <div
-                class="octo-icon"
-              >
-                i
-              </div>
-              <div
                 class="octo-titletext"
               >
                 card1
@@ -9179,11 +9413,6 @@ exports[`components/centerPanel should match snapshot for Kanban, not shared 1`]
               class="octo-icontitle"
             >
               <div
-                class="octo-icon"
-              >
-                i
-              </div>
-              <div
                 class="octo-titletext"
               >
                 card1
@@ -9466,6 +9695,29 @@ exports[`components/centerPanel should match snapshot for Table 1`] = `
         >
           <div
             class="octo-table-cell header-cell"
+            draggable="true"
+            style="overflow: unset; opacity: 1; width: 100px;"
+          >
+            <div
+              aria-label="menuwrapper"
+              class="MenuWrapper"
+              role="button"
+            >
+              <span
+                class="Label empty "
+              >
+                Code
+              </span>
+            </div>
+            <div
+              class="octo-spacer"
+            />
+            <div
+              class="HorizontalGrip"
+            />
+          </div>
+          <div
+            class="octo-table-cell header-cell"
             style="overflow: unset; opacity: 1; width: 100px;"
           >
             <div
@@ -9631,6 +9883,10 @@ exports[`components/centerPanel should match snapshot for Table 1`] = `
                 </button>
               </div>
               <div
+                class="octo-table-cell code-cell"
+                style="width: 100px;"
+              />
+              <div
                 class="octo-table-cell title-cell"
                 id="mainBoardHeader"
                 style="width: 100px;"
@@ -9638,11 +9894,6 @@ exports[`components/centerPanel should match snapshot for Table 1`] = `
                 <div
                   class="octo-icontitle"
                 >
-                  <div
-                    class="octo-icon"
-                  >
-                    i
-                  </div>
                   <input
                     class="Editable "
                     placeholder="Untitled"
