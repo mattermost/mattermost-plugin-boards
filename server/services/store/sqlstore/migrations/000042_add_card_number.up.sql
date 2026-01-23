@@ -28,6 +28,9 @@ ALTER TABLE {{.prefix}}blocks_history ADD COLUMN number BIGINT DEFAULT 0;
 INSERT INTO {{.prefix}}card_sequence (id)
 SELECT generate_series(1, (SELECT COUNT(*) FROM {{.prefix}}blocks WHERE type = 'card' AND delete_at = 0));
 
+-- Update the sequence to continue from the last inserted value
+SELECT setval('{{.prefix}}card_sequence_id_seq', (SELECT MAX(id) FROM {{.prefix}}card_sequence));
+
 WITH numbered_cards AS (
     SELECT id, ROW_NUMBER() OVER (ORDER BY create_at, id) as row_num
     FROM {{.prefix}}blocks
