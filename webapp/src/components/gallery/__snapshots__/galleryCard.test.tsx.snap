@@ -14,11 +14,6 @@ exports[`src/components/gallery/GalleryCard with a comment content return Galler
       class="gallery-title"
     >
       <div
-        class="octo-icon"
-      >
-        i
-      </div>
-      <div
         class="octo-titletext"
       >
         title
@@ -190,11 +185,6 @@ exports[`src/components/gallery/GalleryCard with a comment content should match 
     <div
       class="gallery-title"
     >
-      <div
-        class="octo-icon"
-      >
-        i
-      </div>
       <div
         class="octo-titletext"
       >
@@ -374,11 +364,6 @@ exports[`src/components/gallery/GalleryCard with an image content should match s
       class="gallery-title"
     >
       <div
-        class="octo-icon"
-      >
-        i
-      </div>
-      <div
         class="octo-titletext"
       >
         title
@@ -405,11 +390,6 @@ exports[`src/components/gallery/GalleryCard with many contents return GalleryCar
     <div
       class="gallery-title"
     >
-      <div
-        class="octo-icon"
-      >
-        i
-      </div>
       <div
         class="octo-titletext"
       >
@@ -586,11 +566,6 @@ exports[`src/components/gallery/GalleryCard with many contents should match snap
     <div
       class="gallery-title"
     >
-      <div
-        class="octo-icon"
-      >
-        i
-      </div>
       <div
         class="octo-titletext"
       >
@@ -770,11 +745,6 @@ exports[`src/components/gallery/GalleryCard with many images content should matc
       class="gallery-title"
     >
       <div
-        class="octo-icon"
-      >
-        i
-      </div>
-      <div
         class="octo-titletext"
       >
         title
@@ -810,11 +780,6 @@ exports[`src/components/gallery/GalleryCard without block content return Gallery
     <div
       class="gallery-title"
     >
-      <div
-        class="octo-icon"
-      >
-        i
-      </div>
       <div
         class="octo-titletext"
       >
@@ -852,11 +817,6 @@ exports[`src/components/gallery/GalleryCard without block content return Gallery
       class="gallery-title"
     >
       <div
-        class="octo-icon"
-      >
-        i
-      </div>
-      <div
         class="octo-titletext"
       >
         title
@@ -892,11 +852,6 @@ exports[`src/components/gallery/GalleryCard without block content return Gallery
     <div
       class="gallery-title"
     >
-      <div
-        class="octo-icon"
-      >
-        i
-      </div>
       <div
         class="octo-titletext"
       >
@@ -1004,11 +959,6 @@ exports[`src/components/gallery/GalleryCard without block content return Gallery
     <div
       class="gallery-title"
     >
-      <div
-        class="octo-icon"
-      >
-        i
-      </div>
       <div
         class="octo-titletext"
       >
@@ -1181,11 +1131,6 @@ exports[`src/components/gallery/GalleryCard without block content should match s
     <div
       class="gallery-title"
     >
-      <div
-        class="octo-icon"
-      >
-        i
-      </div>
       <div
         class="octo-titletext"
       >

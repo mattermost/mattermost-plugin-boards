@@ -160,11 +160,6 @@ exports[`src/components/kanban/kanbanCard return kanbanCard and click on copy li
       class="octo-icontitle"
     >
       <div
-        class="octo-icon"
-      >
-        i
-      </div>
-      <div
         class="octo-titletext"
       >
         title
@@ -341,11 +336,6 @@ exports[`src/components/kanban/kanbanCard return kanbanCard and click on delete 
     <div
       class="octo-icontitle"
     >
-      <div
-        class="octo-icon"
-      >
-        i
-      </div>
       <div
         class="octo-titletext"
       >
@@ -524,11 +514,6 @@ exports[`src/components/kanban/kanbanCard return kanbanCard and click on duplica
       class="octo-icontitle"
     >
       <div
-        class="octo-icon"
-      >
-        i
-      </div>
-      <div
         class="octo-titletext"
       >
         title
@@ -570,11 +555,6 @@ exports[`src/components/kanban/kanbanCard should match snapshot 1`] = `
       class="octo-icontitle"
     >
       <div
-        class="octo-icon"
-      >
-        i
-      </div>
-      <div
         class="octo-titletext"
       >
         title
@@ -602,11 +582,6 @@ exports[`src/components/kanban/kanbanCard should match snapshot with readonly 1`
     <div
       class="octo-icontitle"
     >
-      <div
-        class="octo-icon"
-      >
-        i
-      </div>
       <div
         class="octo-titletext"
       >

@@ -57,6 +57,7 @@ exports[`components/viewHeader/dateFilter handles calendar click event 1`] = `
     view={
       Object {
         "boardId": "testBoardID",
+        "code": undefined,
         "createAt": 1672228800000,
         "createdBy": "",
         "deleteAt": 0,
@@ -106,6 +107,7 @@ exports[`components/viewHeader/dateFilter handles calendar click event 1`] = `
         "id": "testViewID",
         "limited": false,
         "modifiedBy": "",
+        "number": undefined,
         "parentId": "",
         "schema": 1,
         "title": "view title",

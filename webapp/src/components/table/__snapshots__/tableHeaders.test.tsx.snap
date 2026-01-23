@@ -8,6 +8,29 @@ exports[`components/table/TableHeaders should match snapshot 1`] = `
   >
     <div
       class="octo-table-cell header-cell"
+      draggable="true"
+      style="overflow: unset; opacity: 1; width: 100px;"
+    >
+      <div
+        aria-label="menuwrapper"
+        class="MenuWrapper"
+        role="button"
+      >
+        <span
+          class="Label empty "
+        >
+          Code
+        </span>
+      </div>
+      <div
+        class="octo-spacer"
+      />
+      <div
+        class="HorizontalGrip"
+      />
+    </div>
+    <div
+      class="octo-table-cell header-cell"
       style="overflow: unset; opacity: 1; width: 100px;"
     >
       <div
