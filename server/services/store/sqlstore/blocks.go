@@ -64,7 +64,8 @@ func (s *SQLStore) GetNextCardNumber(boardID string) (int64, error) {
 	var nextNumber int64
 	var err error
 
-	if s.dbType == model.PostgresDBType {
+	switch s.dbType {
+	case model.PostgresDBType:
 		// PostgreSQL: INSERT and get RETURNING id
 		query := s.getQueryBuilder(s.db).
 			Insert(s.tablePrefix + "card_sequence").
@@ -74,7 +75,7 @@ func (s *SQLStore) GetNextCardNumber(boardID string) (int64, error) {
 
 		row := query.QueryRow()
 		err = row.Scan(&nextNumber)
-	} else if s.dbType == model.MysqlDBType {
+	case model.MysqlDBType:
 		// MySQL: INSERT and get LAST_INSERT_ID()
 		insertQuery := s.getQueryBuilder(s.db).
 			Insert(s.tablePrefix + "card_sequence").
@@ -92,7 +93,7 @@ func (s *SQLStore) GetNextCardNumber(boardID string) (int64, error) {
 
 		row := selectQuery.QueryRow()
 		err = row.Scan(&nextNumber)
-	} else {
+	default:
 		// SQLite: INSERT and get last_insert_rowid()
 		insertQuery := s.getQueryBuilder(s.db).
 			Insert(s.tablePrefix + "card_sequence").
