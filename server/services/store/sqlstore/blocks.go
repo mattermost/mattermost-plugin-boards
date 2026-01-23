@@ -269,7 +269,8 @@ func (s *SQLStore) blocksFromRows(rows *sql.Rows) ([]*model.Block, error) {
 			&block.CreateAt,
 			&block.UpdateAt,
 			&block.DeleteAt,
-			&block.BoardID)
+			&block.BoardID,
+			&block.Number)
 		if err != nil {
 			// handle this error
 			s.logger.Error(`ERROR blocksFromRows`, mlog.Err(err))
