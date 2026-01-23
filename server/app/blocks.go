@@ -201,8 +201,9 @@ func (a *App) InsertBlocksAndNotify(blocks []*model.Block, modifiedByID string, 
 			return nil, checkErr
 		}
 
-		// Assign card number if this is a new card block without a number
-		if block.Type == model.TypeCard && block.Number == 0 {
+		// Assign card number if this is a NEW card block without a number
+		// Only assign to new cards (existingBlock == nil) to avoid renumbering existing cards
+		if existingBlock == nil && block.Type == model.TypeCard && block.Number == 0 {
 			nextNumber, err := a.store.GetNextCardNumber(boardID)
 			if err != nil {
 				return nil, fmt.Errorf("cannot get next card number: %w", err)
