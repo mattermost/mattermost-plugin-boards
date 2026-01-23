@@ -154,6 +154,13 @@ func (a *API) handleGetBlocks(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Populate card codes for card blocks
+	for _, block := range blocks {
+		if block.Type == model.TypeCard {
+			a.app.PopulateBlockCode(block, board)
+		}
+	}
+
 	a.logger.Debug("GetBlocks",
 		mlog.String("boardID", boardID),
 		mlog.String("parentID", parentID),

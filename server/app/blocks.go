@@ -32,6 +32,13 @@ func (a *App) GetBlocks(boardID, parentID string, blockType string) ([]*model.Bl
 	return a.store.GetBlocksWithParent(boardID, parentID)
 }
 
+// PopulateBlockCode populates the Code field for card blocks
+func (a *App) PopulateBlockCode(block *model.Block, board *model.Board) {
+	if block.Type == model.TypeCard && block.Number > 0 && board.Code != "" {
+		block.Code = fmt.Sprintf("%s-%d", board.Code, block.Number)
+	}
+}
+
 func (a *App) DuplicateBlock(boardID string, blockID string, userID string, asTemplate bool) ([]*model.Block, error) {
 	board, err := a.GetBoard(boardID)
 	if err != nil {
