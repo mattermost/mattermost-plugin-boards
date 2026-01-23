@@ -381,11 +381,6 @@ exports[`components/boardTemplateSelector/boardTemplateSelectorPreview should ma
               class="octo-icontitle"
             >
               <div
-                class="octo-icon"
-              >
-                🚴🏻‍♂️
-              </div>
-              <div
                 class="octo-titletext"
               >
                 Card

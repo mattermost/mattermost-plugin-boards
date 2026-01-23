@@ -68,6 +68,14 @@ type Card struct {
 	// required: false
 	Icon string `json:"icon"`
 
+	// The sequential number of the card within the board
+	// required: false
+	Number int64 `json:"number"`
+
+	// The card code (board code + number, e.g., "AB-123")
+	// required: false
+	Code string `json:"code,omitempty"`
+
 	// True if this card belongs to a template
 	// required: false
 	IsTemplate bool `json:"isTemplate"`
@@ -217,6 +225,7 @@ func Card2Block(card *Card) *Block {
 		UpdateAt:   card.UpdateAt,
 		DeleteAt:   card.DeleteAt,
 		BoardID:    card.BoardID,
+		Number:     card.Number,
 	}
 }
 
@@ -282,6 +291,7 @@ func Block2Card(block *Block) (*Card, error) {
 		Title:        block.Title,
 		ContentOrder: contentOrder,
 		Icon:         icon,
+		Number:       block.Number,
 		IsTemplate:   isTemplate,
 		Properties:   properties,
 		CreateAt:     block.CreateAt,

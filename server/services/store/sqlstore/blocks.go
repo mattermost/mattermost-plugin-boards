@@ -53,7 +53,72 @@ func (s *SQLStore) blockFields(tableAlias string) []string {
 		tableAlias + "update_at",
 		tableAlias + "delete_at",
 		"COALESCE(" + tableAlias + "board_id, '0')",
+		"COALESCE(" + tableAlias + "number, 0)",
 	}
+}
+
+func (s *SQLStore) GetNextCardNumber(boardID string) (int64, error) {
+	// Use card_sequence table with auto-increment for atomic number generation
+	// This prevents race conditions and ensures unique sequential numbers
+
+	var nextNumber int64
+	var err error
+
+	switch s.dbType {
+	case model.PostgresDBType:
+		// PostgreSQL: INSERT and get RETURNING id
+		query := s.getQueryBuilder(s.db).
+			Insert(s.tablePrefix + "card_sequence").
+			Columns("id").
+			Values(sq.Expr("DEFAULT")).
+			Suffix("RETURNING id")
+
+		row := query.QueryRow()
+		err = row.Scan(&nextNumber)
+	case model.MysqlDBType:
+		// MySQL: INSERT and get LAST_INSERT_ID()
+		insertQuery := s.getQueryBuilder(s.db).
+			Insert(s.tablePrefix + "card_sequence").
+			Columns("id").
+			Values(sq.Expr("NULL"))
+
+		_, err = insertQuery.Exec()
+		if err != nil {
+			s.logger.Error("GetNextCardNumber INSERT ERROR", mlog.Err(err))
+			return 0, err
+		}
+
+		selectQuery := s.getQueryBuilder(s.db).
+			Select("LAST_INSERT_ID()")
+
+		row := selectQuery.QueryRow()
+		err = row.Scan(&nextNumber)
+	default:
+		// SQLite: INSERT and get last_insert_rowid()
+		insertQuery := s.getQueryBuilder(s.db).
+			Insert(s.tablePrefix + "card_sequence").
+			Columns("id").
+			Values(sq.Expr("NULL"))
+
+		_, err = insertQuery.Exec()
+		if err != nil {
+			s.logger.Error("GetNextCardNumber INSERT ERROR", mlog.Err(err))
+			return 0, err
+		}
+
+		selectQuery := s.getQueryBuilder(s.db).
+			Select("last_insert_rowid()")
+
+		row := selectQuery.QueryRow()
+		err = row.Scan(&nextNumber)
+	}
+
+	if err != nil {
+		s.logger.Error("GetNextCardNumber ERROR", mlog.Err(err))
+		return 0, err
+	}
+
+	return nextNumber, nil
 }
 
 func (s *SQLStore) getBlocks(db sq.BaseRunner, opts model.QueryBlocksOptions) ([]*model.Block, error) {
@@ -263,6 +328,7 @@ func (s *SQLStore) insertBlock(db sq.BaseRunner, block *model.Block, userID stri
 			"update_at",
 			"delete_at",
 			"board_id",
+			"number",
 		)
 
 	// Preserve the original creator when updating an existing block
@@ -287,6 +353,7 @@ func (s *SQLStore) insertBlock(db sq.BaseRunner, block *model.Block, userID stri
 		"create_at":             createAt,
 		"update_at":             block.UpdateAt,
 		"board_id":              block.BoardID,
+		"number":                block.Number,
 	}
 
 	if existingBlock != nil {
@@ -301,7 +368,8 @@ func (s *SQLStore) insertBlock(db sq.BaseRunner, block *model.Block, userID stri
 			Set("title", block.Title).
 			Set("fields", fieldsJSON).
 			Set("update_at", block.UpdateAt).
-			Set("delete_at", block.DeleteAt)
+			Set("delete_at", block.DeleteAt).
+			Set("number", block.Number)
 
 		if _, err := query.Exec(); err != nil {
 			s.logger.Error(`InsertBlock error occurred while updating existing block`, mlog.String("blockID", block.ID), mlog.Err(err))
@@ -394,6 +462,7 @@ func (s *SQLStore) deleteBlockAndChildren(db sq.BaseRunner, blockID string, modi
 			"update_at",
 			"delete_at",
 			"created_by",
+			"number",
 		).
 		Values(
 			block.BoardID,
@@ -408,6 +477,7 @@ func (s *SQLStore) deleteBlockAndChildren(db sq.BaseRunner, blockID string, modi
 			now,
 			now,
 			block.CreatedBy,
+			block.Number,
 		)
 
 	if _, err := insertQuery.Exec(); err != nil {
@@ -492,6 +562,7 @@ func (s *SQLStore) undeleteBlock(db sq.BaseRunner, blockID string, modifiedBy st
 		"update_at",
 		"delete_at",
 		"created_by",
+		"number",
 	}
 
 	values := []interface{}{
@@ -508,6 +579,7 @@ func (s *SQLStore) undeleteBlock(db sq.BaseRunner, blockID string, modifiedBy st
 		now,
 		0,
 		block.CreatedBy,
+		block.Number,
 	}
 	insertHistoryQuery := s.getQueryBuilder(db).Insert(s.tablePrefix + "blocks_history").
 		Columns(columns...).

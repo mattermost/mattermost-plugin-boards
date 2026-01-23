@@ -584,6 +584,21 @@ func (mr *MockStoreMockRecorder) GetBoardCount(includeDeleted interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBoardCount", reflect.TypeOf((*MockStore)(nil).GetBoardCount), includeDeleted)
 }
 
+// GetNextCardNumber mocks base method.
+func (m *MockStore) GetNextCardNumber(boardID string) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNextCardNumber", boardID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetNextCardNumber indicates an expected call of GetNextCardNumber.
+func (mr *MockStoreMockRecorder) GetNextCardNumber(boardID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNextCardNumber", reflect.TypeOf((*MockStore)(nil).GetNextCardNumber), boardID)
+}
+
 // GetBoardHistory mocks base method.
 func (m *MockStore) GetBoardHistory(boardID string, opts model.QueryBoardHistoryOptions) ([]*model.Board, error) {
 	m.ctrl.T.Helper()

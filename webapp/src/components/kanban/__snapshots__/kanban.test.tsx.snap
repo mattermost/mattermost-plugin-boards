@@ -165,11 +165,6 @@ exports[`src/component/kanban/kanban return kanban and change title on KanbanCol
             class="octo-icontitle"
           >
             <div
-              class="octo-icon"
-            >
-              i
-            </div>
-            <div
               class="octo-titletext"
             >
               title
@@ -197,11 +192,6 @@ exports[`src/component/kanban/kanban return kanban and change title on KanbanCol
           <div
             class="octo-icontitle"
           >
-            <div
-              class="octo-icon"
-            >
-              i
-            </div>
             <div
               class="octo-titletext"
             >
@@ -241,11 +231,6 @@ exports[`src/component/kanban/kanban return kanban and change title on KanbanCol
           <div
             class="octo-icontitle"
           >
-            <div
-              class="octo-icon"
-            >
-              i
-            </div>
             <div
               class="octo-titletext"
             >
@@ -612,11 +597,6 @@ exports[`src/component/kanban/kanban return kanban and click on KanbanCalculatio
             class="octo-icontitle"
           >
             <div
-              class="octo-icon"
-            >
-              i
-            </div>
-            <div
               class="octo-titletext"
             >
               title
@@ -644,11 +624,6 @@ exports[`src/component/kanban/kanban return kanban and click on KanbanCalculatio
           <div
             class="octo-icontitle"
           >
-            <div
-              class="octo-icon"
-            >
-              i
-            </div>
             <div
               class="octo-titletext"
             >
@@ -688,11 +663,6 @@ exports[`src/component/kanban/kanban return kanban and click on KanbanCalculatio
           <div
             class="octo-icontitle"
           >
-            <div
-              class="octo-icon"
-            >
-              i
-            </div>
             <div
               class="octo-titletext"
             >
@@ -898,11 +868,6 @@ exports[`src/component/kanban/kanban should match snapshot 1`] = `
             class="octo-icontitle"
           >
             <div
-              class="octo-icon"
-            >
-              i
-            </div>
-            <div
               class="octo-titletext"
             >
               title
@@ -930,11 +895,6 @@ exports[`src/component/kanban/kanban should match snapshot 1`] = `
           <div
             class="octo-icontitle"
           >
-            <div
-              class="octo-icon"
-            >
-              i
-            </div>
             <div
               class="octo-titletext"
             >
@@ -974,11 +934,6 @@ exports[`src/component/kanban/kanban should match snapshot 1`] = `
           <div
             class="octo-icontitle"
           >
-            <div
-              class="octo-icon"
-            >
-              i
-            </div>
             <div
               class="octo-titletext"
             >
@@ -1135,11 +1090,6 @@ exports[`src/component/kanban/kanban should match snapshot without permissions 1
             class="octo-icontitle"
           >
             <div
-              class="octo-icon"
-            >
-              i
-            </div>
-            <div
               class="octo-titletext"
             >
               title
@@ -1167,11 +1117,6 @@ exports[`src/component/kanban/kanban should match snapshot without permissions 1
           <div
             class="octo-icontitle"
           >
-            <div
-              class="octo-icon"
-            >
-              i
-            </div>
             <div
               class="octo-titletext"
             >
@@ -1204,11 +1149,6 @@ exports[`src/component/kanban/kanban should match snapshot without permissions 1
           <div
             class="octo-icontitle"
           >
-            <div
-              class="octo-icon"
-            >
-              i
-            </div>
             <div
               class="octo-titletext"
             >

@@ -6,17 +6,6 @@ exports[`components/cardDetail/CardDetail should render hidden view if limited 1
     class="CardDetail  CardDetail--is-limited"
   >
     <div
-      class="IconSelector"
-    >
-      <div
-        class="octo-icon size-l readonly"
-      >
-        <span>
-          i
-        </span>
-      </div>
-    </div>
-    <div
       class="EditableAreaWrap"
     >
       <textarea

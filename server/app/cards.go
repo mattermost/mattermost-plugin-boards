@@ -22,6 +22,19 @@ func (a *App) CreateCard(card *model.Card, boardID string, userID string, disabl
 	card.UpdateAt = now
 	card.DeleteAt = 0
 
+	// Get the next card number for this board
+	nextNumber, err := a.store.GetNextCardNumber(boardID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get next card number: %w", err)
+	}
+	card.Number = nextNumber
+
+	// Get board to populate card code
+	board, err := a.store.GetBoard(boardID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get board: %w", err)
+	}
+
 	block := model.Card2Block(card)
 
 	newBlocks, err := a.InsertBlocksAndNotify([]*model.Block{block}, userID, disableNotify)
@@ -33,6 +46,8 @@ func (a *App) CreateCard(card *model.Card, boardID string, userID string, disabl
 	if err != nil {
 		return nil, err
 	}
+
+	a.populateCardCode(newCard, board)
 
 	return newCard, nil
 }
@@ -50,16 +65,29 @@ func (a *App) GetCardsForBoard(boardID string, page int, perPage int) ([]*model.
 		return nil, err
 	}
 
+	// Get board to populate card codes
+	board, err := a.store.GetBoard(boardID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get board: %w", err)
+	}
+
 	cards := make([]*model.Card, 0, len(blocks))
 	for _, blk := range blocks {
 		b := blk
 		if card, err := model.Block2Card(b); err != nil {
 			return nil, fmt.Errorf("Block2Card fail: %w", err)
 		} else {
+			a.populateCardCode(card, board)
 			cards = append(cards, card)
 		}
 	}
 	return cards, nil
+}
+
+func (a *App) populateCardCode(card *model.Card, board *model.Board) {
+	if card.Number > 0 && board.Code != "" {
+		card.Code = fmt.Sprintf("%s-%d", board.Code, card.Number)
+	}
 }
 
 func (a *App) PatchCard(cardPatch *model.CardPatch, cardID string, userID string, disableNotify bool) (*model.Card, error) {
@@ -78,6 +106,13 @@ func (a *App) PatchCard(cardPatch *model.CardPatch, cardID string, userID string
 		return nil, err
 	}
 
+	// Get board to populate card code
+	board, err := a.store.GetBoard(newCard.BoardID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get board: %w", err)
+	}
+	a.populateCardCode(newCard, board)
+
 	return newCard, nil
 }
 
@@ -91,6 +126,13 @@ func (a *App) GetCardByID(cardID string) (*model.Card, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Get board to populate card code
+	board, err := a.store.GetBoard(card.BoardID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get board: %w", err)
+	}
+	a.populateCardCode(card, board)
 
 	return card, nil
 }

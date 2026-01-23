@@ -19,8 +19,6 @@ import {Focusable} from '../../widgets/editable'
 import EditableArea from '../../widgets/editableArea'
 import TelemetryClient, {TelemetryActions, TelemetryCategory} from '../../telemetry/telemetryClient'
 
-import BlockIconSelector from '../blockIconSelector'
-
 import {useAppDispatch, useAppSelector} from '../../store/hooks'
 import {updateCards, setCurrent as setCurrentCard} from '../../store/cards'
 import {updateContents} from '../../store/contents'
@@ -190,11 +188,27 @@ const CardDetail = (props: Props): JSX.Element|null => {
     return (
         <>
             <div className={`CardDetail ${limited ? ' CardDetail--is-limited' : ''}`}>
-                <BlockIconSelector
-                    block={card}
-                    size='l'
-                    readonly={props.readonly || !canEditBoardCards || limited}
-                />
+                {card.code && (
+                    <div className='card-code-header'>
+                        <span className='card-code-text'>{card.code}</span>
+                        <button
+                            type='button'
+                            className='Button card-code-copy-btn'
+                            onClick={async () => {
+                                try {
+                                    const url = window.location.href
+                                    await navigator.clipboard.writeText(url)
+                                } catch (err) {
+                                    // Fallback: log error and optionally show user feedback
+                                    console.error('Failed to copy card URL to clipboard:', err)
+                                }
+                            }}
+                            title='Copy card URL'
+                        >
+                            🔗
+                        </button>
+                    </div>
+                )}
 
                 <EditableArea
                     ref={titleRef}

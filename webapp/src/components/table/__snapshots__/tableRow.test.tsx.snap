@@ -20,6 +20,10 @@ exports[`components/table/TableRow should match snapshot 1`] = `
       </button>
     </div>
     <div
+      class="octo-table-cell code-cell"
+      style="width: 100px;"
+    />
+    <div
       class="octo-table-cell title-cell"
       id="mainBoardHeader"
       style="width: 100px;"
@@ -27,11 +31,6 @@ exports[`components/table/TableRow should match snapshot 1`] = `
       <div
         class="octo-icontitle"
       >
-        <div
-          class="octo-icon"
-        >
-          i
-        </div>
         <input
           class="Editable "
           placeholder="Untitled"
@@ -98,6 +97,10 @@ exports[`components/table/TableRow should match snapshot, collapsed tree 1`] = `
       </button>
     </div>
     <div
+      class="octo-table-cell code-cell"
+      style="width: 100px;"
+    />
+    <div
       class="octo-table-cell title-cell"
       id="mainBoardHeader"
       style="width: 100px;"
@@ -105,11 +108,6 @@ exports[`components/table/TableRow should match snapshot, collapsed tree 1`] = `
       <div
         class="octo-icontitle"
       >
-        <div
-          class="octo-icon"
-        >
-          i
-        </div>
         <input
           class="Editable "
           placeholder="Untitled"
@@ -176,6 +174,10 @@ exports[`components/table/TableRow should match snapshot, display properties 1`]
       </button>
     </div>
     <div
+      class="octo-table-cell code-cell"
+      style="width: 100px;"
+    />
+    <div
       class="octo-table-cell title-cell"
       id="mainBoardHeader"
       style="width: 100px;"
@@ -183,11 +185,6 @@ exports[`components/table/TableRow should match snapshot, display properties 1`]
       <div
         class="octo-icontitle"
       >
-        <div
-          class="octo-icon"
-        >
-          i
-        </div>
         <input
           class="Editable "
           placeholder="Untitled"
@@ -292,6 +289,10 @@ exports[`components/table/TableRow should match snapshot, isSelected 1`] = `
       </button>
     </div>
     <div
+      class="octo-table-cell code-cell"
+      style="width: 100px;"
+    />
+    <div
       class="octo-table-cell title-cell"
       id="mainBoardHeader"
       style="width: 100px;"
@@ -299,11 +300,6 @@ exports[`components/table/TableRow should match snapshot, isSelected 1`] = `
       <div
         class="octo-icontitle"
       >
-        <div
-          class="octo-icon"
-        >
-          i
-        </div>
         <input
           class="Editable "
           placeholder="Untitled"
@@ -361,6 +357,10 @@ exports[`components/table/TableRow should match snapshot, read-only 1`] = `
       class="action-cell octo-table-cell-btn"
     />
     <div
+      class="octo-table-cell code-cell"
+      style="width: 100px;"
+    />
+    <div
       class="octo-table-cell title-cell"
       id="mainBoardHeader"
       style="width: 100px;"
@@ -368,11 +368,6 @@ exports[`components/table/TableRow should match snapshot, read-only 1`] = `
       <div
         class="octo-icontitle"
       >
-        <div
-          class="octo-icon"
-        >
-          i
-        </div>
         <input
           class="Editable readonly "
           placeholder="Untitled"
@@ -419,6 +414,10 @@ exports[`components/table/TableRow should match snapshot, resizing column 1`] = 
       </button>
     </div>
     <div
+      class="octo-table-cell code-cell"
+      style="width: 100px;"
+    />
+    <div
       class="octo-table-cell title-cell"
       id="mainBoardHeader"
       style="width: 100px;"
@@ -426,11 +425,6 @@ exports[`components/table/TableRow should match snapshot, resizing column 1`] = 
       <div
         class="octo-icontitle"
       >
-        <div
-          class="octo-icon"
-        >
-          i
-        </div>
         <input
           class="Editable "
           placeholder="Untitled"

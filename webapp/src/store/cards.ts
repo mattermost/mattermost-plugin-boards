@@ -237,6 +237,16 @@ function sortCards(cards: Card[], lastCommentByCard: {[key: string]: CommentBloc
                 const result = titleOrCreatedOrder(a, b)
                 return sortOption.reversed ? -result : result
             })
+        } else if (sortOption.propertyId === 'code') {
+            Utils.log('Sort by card number')
+            sortedCards = sortedCards.sort((a, b) => {
+                const aValue = a.number || 0
+                const bValue = b.number || 0
+
+                // Numeric sort by card number
+                const result = aValue - bValue
+                return sortOption.reversed ? -result : result
+            })
         } else {
             const sortPropertyId = sortOption.propertyId
             const template = board.cardProperties.find((o) => o.id === sortPropertyId)
@@ -338,8 +348,13 @@ function searchFilterCards(cards: Card[], board: Board, searchTextRaw: string): 
     }
 
     return cards.filter((card: Card) => {
-        const searchTextInCardTitle: boolean = card.title?.toLocaleLowerCase().includes(searchText)
+        const searchTextInCardTitle: boolean = card.title?.toLocaleLowerCase().includes(searchText) || false
         if (searchTextInCardTitle) {
+            return true
+        }
+
+        const searchTextInCardCode: boolean = card.code?.toLocaleLowerCase().includes(searchText) || false
+        if (searchTextInCardCode) {
             return true
         }
 
