@@ -201,6 +201,16 @@ func (a *App) InsertBlocksAndNotify(blocks []*model.Block, modifiedByID string, 
 			return nil, checkErr
 		}
 
+		// Assign card number if this is a NEW card block without a number
+		// Only assign to new cards (existingBlock == nil) to avoid renumbering existing cards
+		if existingBlock == nil && block.Type == model.TypeCard && block.Number == 0 {
+			nextNumber, err := a.store.GetNextCardNumber(boardID)
+			if err != nil {
+				return nil, fmt.Errorf("cannot get next card number: %w", err)
+			}
+			block.Number = nextNumber
+		}
+
 		if existingBlock == nil && (block.Type == "image" || block.Type == "attachment") {
 			fileIDsToRestore := extractFileIDsFromBlock(block)
 			if len(fileIDsToRestore) > 0 {
