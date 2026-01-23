@@ -60,6 +60,19 @@
         width: 24px;
     }
 
+    .code-cell {
+        .card-code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background-color: rgba(var(--center-channel-color-rgb), 0.08);
+            color: rgba(var(--center-channel-color-rgb), 0.72);
+            display: inline-block;
+        }
+    }
+
     .URLProperty:hover .Button_Copy {
         display: none;
     }

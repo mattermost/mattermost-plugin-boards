@@ -160,6 +160,15 @@ const TableRow = (props: Props) => {
                 )}
             </div>
 
+            {/* Code */}
+            <div
+                className='octo-table-cell code-cell'
+                style={{width: columnResize.width('code')}}
+                ref={(ref) => columnResize.updateRef(card.id, 'code', ref)}
+            >
+                {card.code && <div className='card-code'>{card.code}</div>}
+            </div>
+
             {/* Name / title */}
             <div
                 className='octo-table-cell title-cell'
@@ -168,7 +177,6 @@ const TableRow = (props: Props) => {
                 ref={(ref) => columnResize.updateRef(card.id, Constants.titleColumnId, ref)}
             >
                 <div className='octo-icontitle'>
-                    <div className='octo-icon'>{card.fields.icon}</div>
                     <Editable
                         ref={titleRef}
                         value={title}

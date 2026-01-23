@@ -86,6 +86,10 @@ type Block struct {
 	// required: true
 	BoardID string `json:"boardId"`
 
+	// The sequential number of the card within the board (only for card blocks)
+	// required: false
+	Number int64 `json:"number,omitempty"`
+
 	// Indicates if the card is limited
 	// required: false
 	Limited bool `json:"limited,omitempty"`

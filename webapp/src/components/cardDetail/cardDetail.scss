@@ -1,6 +1,38 @@
 @import '../../styles/z-index';
 
 .CardDetail {
+    .card-code-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+
+        .card-code-text {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 4px;
+            background-color: rgba(var(--center-channel-color-rgb), 0.08);
+            color: rgba(var(--center-channel-color-rgb), 0.72);
+        }
+
+        .card-code-copy-btn {
+            padding: 4px 8px;
+            font-size: 16px;
+            background: transparent;
+            border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 100ms ease-out;
+
+            &:hover {
+                background-color: rgba(var(--center-channel-color-rgb), 0.08);
+                border-color: rgba(var(--center-channel-color-rgb), 0.32);
+            }
+        }
+    }
+
     .title {
         width: 100%;
         font-size: 32px;

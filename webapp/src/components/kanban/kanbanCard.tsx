@@ -135,7 +135,7 @@ const KanbanCard = (props: Props) => {
                 }
 
                 <div className='octo-icontitle'>
-                    { card.fields.icon ? <div className='octo-icon'>{emojiData?.native || card.fields.icon}</div> : undefined }
+                    { card.code && <div className='card-code'>{card.code}</div> }
                     <div
                         key='__title'
                         className='octo-titletext'

@@ -107,11 +107,37 @@ const TableHeaders = (props: Props): JSX.Element => {
         titleSorted = titleSortOption.reversed ? 'down' : 'up'
     }
 
+    const codeSorted: 'up' | 'down' | 'none' = useMemo(() => {
+        const sortOption = activeView.fields.sortOptions.find((o: ISortOption) => o.propertyId === 'code')
+        if (sortOption) {
+            return sortOption.reversed ? 'down' : 'up'
+        }
+        return 'none'
+    }, [activeView.fields.sortOptions])
+
     return (
         <div
             className='octo-table-header TableHeaders'
             id='mainBoardHeader'
         >
+            <TableHeader
+                name={
+                    <FormattedMessage
+                        id='TableComponent.code'
+                        defaultMessage='Code'
+                    />
+                }
+                sorted={codeSorted}
+                readonly={props.readonly}
+                board={board}
+                activeView={activeView}
+                cards={cards}
+                views={views}
+                template={{id: 'code', name: 'code', type: 'text', options: []}}
+                onDrop={onDropToColumn}
+                onAutoSizeColumn={onAutoSizeColumn}
+            />
+
             <TableHeader
                 name={
                     <FormattedMessage

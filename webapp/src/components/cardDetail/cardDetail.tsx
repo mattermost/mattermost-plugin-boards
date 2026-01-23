@@ -190,11 +190,22 @@ const CardDetail = (props: Props): JSX.Element|null => {
     return (
         <>
             <div className={`CardDetail ${limited ? ' CardDetail--is-limited' : ''}`}>
-                <BlockIconSelector
-                    block={card}
-                    size='l'
-                    readonly={props.readonly || !canEditBoardCards || limited}
-                />
+                {card.code && (
+                    <div className='card-code-header'>
+                        <span className='card-code-text'>{card.code}</span>
+                        <button
+                            type='button'
+                            className='Button card-code-copy-btn'
+                            onClick={() => {
+                                const url = window.location.href
+                                navigator.clipboard.writeText(url)
+                            }}
+                            title='Copy card URL'
+                        >
+                            🔗
+                        </button>
+                    </div>
+                )}
 
                 <EditableArea
                     ref={titleRef}
