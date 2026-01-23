@@ -17,6 +17,15 @@ import (
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )
 
+// populateBlockCodes populates the Code field for all card blocks in the slice.
+func (a *API) populateBlockCodes(blocks []*model.Block, board *model.Board) {
+	for _, block := range blocks {
+		if block.Type == model.TypeCard {
+			a.app.PopulateBlockCode(block, board)
+		}
+	}
+}
+
 func (a *API) registerBlocksRoutes(r *mux.Router) {
 	// Blocks APIs
 	r.HandleFunc("/boards/{boardID}/blocks", a.attachSession(a.handleGetBlocks)).Methods("GET")
@@ -155,11 +164,7 @@ func (a *API) handleGetBlocks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Populate card codes for card blocks
-	for _, block := range blocks {
-		if block.Type == model.TypeCard {
-			a.app.PopulateBlockCode(block, board)
-		}
-	}
+	a.populateBlockCodes(blocks, board)
 
 	a.logger.Debug("GetBlocks",
 		mlog.String("boardID", boardID),
@@ -247,6 +252,9 @@ func (a *API) handlePostBlocks(w http.ResponseWriter, r *http.Request) {
 	hasComments := false
 	hasContents := false
 	for _, block := range blocks {
+		// Clear client-supplied code values (code is server-derived, read-only)
+		block.Code = ""
+
 		// Error checking
 		if len(block.Type) < 1 {
 			message := fmt.Sprintf("missing type for block id %s", block.ID)
@@ -322,6 +330,16 @@ func (a *API) handlePostBlocks(w http.ResponseWriter, r *http.Request) {
 		a.errorResponse(w, r, err)
 		return
 	}
+
+	// Get board to populate card codes
+	board, err := a.app.GetBoard(boardID)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	// Populate card codes for card blocks
+	a.populateBlockCodes(newBlocks, board)
 
 	a.logger.Debug("POST Blocks",
 		mlog.Int("block_count", len(blocks)),
@@ -799,6 +817,16 @@ func (a *API) handleDuplicateBlock(w http.ResponseWriter, r *http.Request) {
 		a.errorResponse(w, r, err)
 		return
 	}
+
+	// Get board to populate card codes
+	board, err2 := a.app.GetBoard(boardID)
+	if err2 != nil {
+		a.errorResponse(w, r, err2)
+		return
+	}
+
+	// Populate card codes for card blocks
+	a.populateBlockCodes(blocks, board)
 
 	data, err := json.Marshal(blocks)
 	if err != nil {
