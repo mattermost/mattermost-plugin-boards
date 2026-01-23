@@ -90,6 +90,10 @@ type Block struct {
 	// required: false
 	Number int64 `json:"number,omitempty"`
 
+	// The card code (board code + number, e.g., "AB-123") (only for card blocks)
+	// required: false
+	Code string `json:"code,omitempty"`
+
 	// Indicates if the card is limited
 	// required: false
 	Limited bool `json:"limited,omitempty"`
