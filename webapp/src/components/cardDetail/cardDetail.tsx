@@ -194,9 +194,14 @@ const CardDetail = (props: Props): JSX.Element|null => {
                         <button
                             type='button'
                             className='Button card-code-copy-btn'
-                            onClick={() => {
-                                const url = window.location.href
-                                navigator.clipboard.writeText(url)
+                            onClick={async () => {
+                                try {
+                                    const url = window.location.href
+                                    await navigator.clipboard.writeText(url)
+                                } catch (err) {
+                                    // Fallback: log error and optionally show user feedback
+                                    console.error('Failed to copy card URL to clipboard:', err)
+                                }
                             }}
                             title='Copy card URL'
                         >

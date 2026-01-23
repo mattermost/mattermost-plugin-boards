@@ -58,16 +58,60 @@ func (s *SQLStore) blockFields(tableAlias string) []string {
 }
 
 func (s *SQLStore) GetNextCardNumber(boardID string) (int64, error) {
-	// Global card numbering across all boards
-	query := s.getQueryBuilder(s.db).
-		Select("COALESCE(MAX(number), 0) + 1").
-		From(s.tablePrefix + "blocks").
-		Where(sq.Eq{"type": model.TypeCard}).
-		Where(sq.Eq{"delete_at": 0})
+	// Use card_sequence table with auto-increment for atomic number generation
+	// This prevents race conditions and ensures unique sequential numbers
 
-	row := query.QueryRow()
 	var nextNumber int64
-	err := row.Scan(&nextNumber)
+	var err error
+
+	if s.dbType == model.PostgresDBType {
+		// PostgreSQL: INSERT and get RETURNING id
+		query := s.getQueryBuilder(s.db).
+			Insert(s.tablePrefix + "card_sequence").
+			Columns("id").
+			Values(sq.Expr("DEFAULT")).
+			Suffix("RETURNING id")
+
+		row := query.QueryRow()
+		err = row.Scan(&nextNumber)
+	} else if s.dbType == model.MysqlDBType {
+		// MySQL: INSERT and get LAST_INSERT_ID()
+		insertQuery := s.getQueryBuilder(s.db).
+			Insert(s.tablePrefix + "card_sequence").
+			Columns("id").
+			Values(sq.Expr("NULL"))
+
+		_, err = insertQuery.Exec()
+		if err != nil {
+			s.logger.Error("GetNextCardNumber INSERT ERROR", mlog.Err(err))
+			return 0, err
+		}
+
+		selectQuery := s.getQueryBuilder(s.db).
+			Select("LAST_INSERT_ID()")
+
+		row := selectQuery.QueryRow()
+		err = row.Scan(&nextNumber)
+	} else {
+		// SQLite: INSERT and get last_insert_rowid()
+		insertQuery := s.getQueryBuilder(s.db).
+			Insert(s.tablePrefix + "card_sequence").
+			Columns("id").
+			Values(sq.Expr("NULL"))
+
+		_, err = insertQuery.Exec()
+		if err != nil {
+			s.logger.Error("GetNextCardNumber INSERT ERROR", mlog.Err(err))
+			return 0, err
+		}
+
+		selectQuery := s.getQueryBuilder(s.db).
+			Select("last_insert_rowid()")
+
+		row := selectQuery.QueryRow()
+		err = row.Scan(&nextNumber)
+	}
+
 	if err != nil {
 		s.logger.Error("GetNextCardNumber ERROR", mlog.Err(err))
 		return 0, err

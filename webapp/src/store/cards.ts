@@ -238,19 +238,13 @@ function sortCards(cards: Card[], lastCommentByCard: {[key: string]: CommentBloc
                 return sortOption.reversed ? -result : result
             })
         } else if (sortOption.propertyId === 'code') {
-            Utils.log('Sort by code')
+            Utils.log('Sort by card number')
             sortedCards = sortedCards.sort((a, b) => {
-                const aValue = a.code || ''
-                const bValue = b.code || ''
+                const aValue = a.number || 0
+                const bValue = b.number || 0
 
-                if (aValue && !bValue) {
-                    return -1
-                }
-                if (bValue && !aValue) {
-                    return 1
-                }
-
-                const result = aValue.localeCompare(bValue)
+                // Numeric sort by card number
+                const result = aValue - bValue
                 return sortOption.reversed ? -result : result
             })
         } else {
