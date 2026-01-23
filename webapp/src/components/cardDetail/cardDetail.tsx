@@ -19,8 +19,6 @@ import {Focusable} from '../../widgets/editable'
 import EditableArea from '../../widgets/editableArea'
 import TelemetryClient, {TelemetryActions, TelemetryCategory} from '../../telemetry/telemetryClient'
 
-import BlockIconSelector from '../blockIconSelector'
-
 import {useAppDispatch, useAppSelector} from '../../store/hooks'
 import {updateCards, setCurrent as setCurrentCard} from '../../store/cards'
 import {updateContents} from '../../store/contents'
