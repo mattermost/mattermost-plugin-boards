@@ -28,6 +28,7 @@ import BlocksEditor from '../blocksEditor/blocksEditor'
 import {BlockData} from '../blocksEditor/blocks/types'
 import {ClientConfig} from '../../config/clientConfig'
 import {getClientConfig} from '../../store/clientConfig'
+import {sendFlashMessage} from '../flashMessages'
 
 import CardSkeleton from '../../svg/card-skeleton'
 
@@ -194,14 +195,10 @@ const CardDetail = (props: Props): JSX.Element|null => {
                         <button
                             type='button'
                             className='Button card-code-copy-btn'
-                            onClick={async () => {
-                                try {
-                                    const url = window.location.href
-                                    await navigator.clipboard.writeText(url)
-                                } catch (err) {
-                                    // Fallback: log error and optionally show user feedback
-                                    console.error('Failed to copy card URL to clipboard:', err)
-                                }
+                            onClick={() => {
+                                const cardLink = window.location.origin + '/boards/task/' + card.code
+                                Utils.copyTextToClipboard(cardLink)
+                                sendFlashMessage({content: intl.formatMessage({id: 'CardActionsMenu.copiedLink', defaultMessage: 'Copied!'}), severity: 'high'})
                             }}
                             title='Copy card URL'
                         >
