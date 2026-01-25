@@ -418,7 +418,9 @@ exports[`components/contentBlock should match snapshot with imageBlock 1`] = `
       <img
         alt=""
         class="ImageElement"
+        role="button"
         src="test.jpg"
+        tabindex="0"
       />
     </div>
     <div

@@ -31,7 +31,9 @@ exports[`components/content/ImageElement should match snapshot 1`] = `
   <img
     alt="test-title"
     class="ImageElement"
+    role="button"
     src="test.jpg"
+    tabindex="0"
   />
 </div>
 `;
