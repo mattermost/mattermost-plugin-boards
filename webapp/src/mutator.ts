@@ -132,6 +132,7 @@ class Mutator {
                 const res = await octoClient.insertBlock(boardId, block)
                 const jsonres = await res.json()
                 const newBlock = jsonres[0] as Block
+                updateAllBoardsAndBlocks([], [newBlock])
                 await afterRedo?.(newBlock)
                 return newBlock
             },
