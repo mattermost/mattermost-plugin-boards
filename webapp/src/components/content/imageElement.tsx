@@ -42,8 +42,17 @@ const ImageElement = (props: Props): JSX.Element|null => {
         }
     }, [])
 
-    const handleImageClick = useCallback(() => {
+    const handleImageClick = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation()
         setShowViewer(true)
+    }, [])
+
+    const handleImageKeyDown = useCallback((e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            e.stopPropagation()
+            setShowViewer(true)
+        }
     }, [])
 
     const handleCloseViewer = useCallback(() => {
@@ -67,6 +76,9 @@ const ImageElement = (props: Props): JSX.Element|null => {
                 src={imageDataUrl}
                 alt={block.title}
                 onClick={handleImageClick}
+                onKeyDown={handleImageKeyDown}
+                tabIndex={0}
+                role='button'
             />
             {showViewer && (
                 <RootPortal>
