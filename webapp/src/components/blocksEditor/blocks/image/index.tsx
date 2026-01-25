@@ -1,10 +1,12 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useRef, useEffect, useState} from 'react'
+import React, {useRef, useEffect, useState, useCallback} from 'react'
 
 import {BlockInputProps, ContentType} from '../types'
 import octoClient from '../../../../octoClient'
+import ImageViewer from '../../../imageViewer/imageViewer'
+import RootPortal from '../../../rootPortal'
 
 import './image.scss'
 
@@ -23,6 +25,7 @@ const Image: ContentType<FileInfo> = {
     editable: false,
     Display: (props: BlockInputProps<FileInfo>) => {
         const [imageDataUrl, setImageDataUrl] = useState<string|null>(null)
+        const [showViewer, setShowViewer] = useState(false)
 
         useEffect(() => {
             if (!imageDataUrl) {
@@ -36,13 +39,32 @@ const Image: ContentType<FileInfo> = {
             }
         }, [props.value, props.value.file, props.currentBoardId])
 
+        const handleImageClick = useCallback(() => {
+            setShowViewer(true)
+        }, [])
+
+        const handleCloseViewer = useCallback(() => {
+            setShowViewer(false)
+        }, [])
+
         if (imageDataUrl) {
             return (
-                <img
-                    data-testid='image'
-                    className='ImageView'
-                    src={imageDataUrl}
-                />
+                <>
+                    <img
+                        data-testid='image'
+                        className='ImageView'
+                        src={imageDataUrl}
+                        onClick={handleImageClick}
+                    />
+                    {showViewer && (
+                        <RootPortal>
+                            <ImageViewer
+                                imageUrl={imageDataUrl}
+                                onClose={handleCloseViewer}
+                            />
+                        </RootPortal>
+                    )}
+                </>
             )
         }
         return null
