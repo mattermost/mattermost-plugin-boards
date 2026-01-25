@@ -39,8 +39,17 @@ const Image: ContentType<FileInfo> = {
             }
         }, [props.value, props.value.file, props.currentBoardId])
 
-        const handleImageClick = useCallback(() => {
+        const handleImageClick = useCallback((e: React.MouseEvent) => {
+            e.stopPropagation()
             setShowViewer(true)
+        }, [])
+
+        const handleImageKeyDown = useCallback((e: React.KeyboardEvent) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                e.stopPropagation()
+                setShowViewer(true)
+            }
         }, [])
 
         const handleCloseViewer = useCallback(() => {
@@ -55,6 +64,10 @@ const Image: ContentType<FileInfo> = {
                         className='ImageView'
                         src={imageDataUrl}
                         onClick={handleImageClick}
+                        onKeyDown={handleImageKeyDown}
+                        tabIndex={0}
+                        role='button'
+                        alt=''
                     />
                     {showViewer && (
                         <RootPortal>

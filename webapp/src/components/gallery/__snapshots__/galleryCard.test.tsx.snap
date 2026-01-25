@@ -357,7 +357,9 @@ exports[`src/components/gallery/GalleryCard with an image content should match s
       <img
         alt=""
         class="ImageElement"
+        role="button"
         src="test.jpg"
+        tabindex="0"
       />
     </div>
     <div
@@ -738,7 +740,9 @@ exports[`src/components/gallery/GalleryCard with many images content should matc
       <img
         alt=""
         class="ImageElement"
+        role="button"
         src="test.jpg"
+        tabindex="0"
       />
     </div>
     <div

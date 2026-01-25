@@ -3,9 +3,12 @@
 exports[`components/blocksEditor/blocks/image should match Display snapshot 1`] = `
 <div>
   <img
+    alt=""
     class="ImageView"
     data-testid="image"
+    role="button"
     src="test.jpg"
+    tabindex="0"
   />
 </div>
 `;

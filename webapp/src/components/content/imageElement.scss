@@ -1,4 +1,9 @@
 .ImageElement {
     cursor: pointer;
+
+    &:focus {
+        outline: 2px solid rgba(var(--button-bg-rgb), 0.8);
+        outline-offset: 2px;
+    }
 }
 
