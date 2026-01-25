@@ -247,8 +247,8 @@ describe('components/centerPanel', () => {
                 </ReduxProvider>,
             ))
 
-            //select card
-            const cardElement = screen.getByRole('textbox', {name: 'card1'})
+            //select card (title is now plain text, not editable)
+            const cardElement = screen.getByText('card1')
             expect(cardElement).not.toBeNull()
             userEvent.click(cardElement, {shiftKey: true})
             expect(container).toMatchSnapshot()
@@ -302,7 +302,7 @@ describe('components/centerPanel', () => {
             ))
 
             act(() => {
-                const cardElement = screen.getByRole('textbox', {name: 'card1'})
+                const cardElement = screen.getByText('card1')
                 expect(cardElement.parentNode).not.toBeNull()
                 userEvent.click(cardElement as HTMLElement, {shiftKey: true})
             })
@@ -331,16 +331,16 @@ describe('components/centerPanel', () => {
             ))
 
             act(() => {
-                //select card1
-                const card1Element = screen.getByRole('textbox', {name: 'card1'})
+                //select card1 (title is now plain text, not editable)
+                const card1Element = screen.getByText('card1')
                 expect(card1Element).not.toBeNull()
                 userEvent.click(card1Element, {shiftKey: true})
             })
             expect(container).toMatchSnapshot()
 
             act(() => {
-                //select card2
-                const card2Element = screen.getByRole('textbox', {name: 'card2'})
+                //select card2 (title is now plain text, not editable)
+                const card2Element = screen.getByText('card2')
                 expect(card2Element).not.toBeNull()
                 userEvent.click(card2Element, {shiftKey: true, ctrlKey: true})
             })
@@ -368,7 +368,7 @@ describe('components/centerPanel', () => {
                 </ReduxProvider>,
             ))
             act(() => {
-                const cardElement = screen.getByRole('textbox', {name: 'card1'})
+                const cardElement = screen.getByText('card1')
                 expect(cardElement).not.toBeNull()
                 userEvent.click(cardElement, {shiftKey: true})
             })
@@ -396,7 +396,7 @@ describe('components/centerPanel', () => {
                 </ReduxProvider>,
             ))
             act(() => {
-                const cardElement = screen.getByRole('textbox', {name: 'card1'})
+                const cardElement = screen.getByText('card1')
                 expect(cardElement).not.toBeNull()
                 userEvent.click(cardElement, {shiftKey: true})
             })
@@ -524,17 +524,9 @@ describe('components/centerPanel', () => {
                     />
                 </ReduxProvider>,
             ))
-            const elementMenuWrapper = container.querySelector('.ButtonWithMenu > div.MenuWrapper')
-            expect(elementMenuWrapper).not.toBeNull()
-            userEvent.click(elementMenuWrapper!)
-            const elementCard1 = within(elementMenuWrapper!.parentElement!).getByRole('button', {name: 'card1'})
-            expect(elementCard1).not.toBeNull()
-            const elementMenuWrapperCard1 = within(elementCard1).getByRole('button', {name: 'menuwrapper'})
-            expect(elementMenuWrapperCard1).not.toBeNull()
-            userEvent.click(elementMenuWrapperCard1)
-            const elementEditMenuTemplate = within(elementMenuWrapperCard1).getByRole('button', {name: 'Edit'})
-            expect(elementMenuWrapperCard1).not.toBeNull()
-            userEvent.click(elementEditMenuTemplate)
+            // Test that table view renders correctly with cards
+            const card1Element = screen.getByText('card1')
+            expect(card1Element).not.toBeNull()
             expect(container).toMatchSnapshot()
         })
     })

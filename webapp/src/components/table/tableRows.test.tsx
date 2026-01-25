@@ -82,8 +82,9 @@ describe('components/table/TableRows', () => {
 
         const {container, getByText} = render(component)
 
-        const open = getByText(/Open/i)
-        fireEvent.click(open)
+        // Click on card title to open card (OPEN button was removed)
+        const cardTitle = getByText(card.title || 'Untitled')
+        fireEvent.click(cardTitle)
         expect(callback).toBeCalled()
         expect(container).toMatchSnapshot()
     })
