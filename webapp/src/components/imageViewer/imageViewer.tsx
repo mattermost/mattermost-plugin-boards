@@ -40,7 +40,7 @@ const ImageViewer = (props: Props): JSX.Element => {
         e.preventDefault()
         e.stopPropagation()
         onClose()
-    }, {enableOnFormTags: true})
+    })
 
     const handleZoomIn = useCallback(() => {
         setZoom((prevZoom) => Math.min(prevZoom + ZOOM_STEP, MAX_ZOOM))
