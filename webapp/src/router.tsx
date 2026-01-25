@@ -17,6 +17,7 @@ import {IAppWindow} from './types'
 import BoardPage from './pages/boardPage/boardPage'
 import WelcomePage from './pages/welcome/welcomePage'
 import ErrorPage from './pages/errorPage'
+import TaskRedirect from './pages/taskRedirect'
 import {Utils} from './utils'
 import octoClient from './octoClient'
 import {setGlobalError, getGlobalError} from './store/globalError'
@@ -168,6 +169,12 @@ const FocalboardRouter = (props: Props): JSX.Element => {
 
                 <FBRoute path='/error'>
                     <ErrorPage/>
+                </FBRoute>
+                <FBRoute
+                    loginRequired={true}
+                    path='/task/:code'
+                >
+                    <TaskRedirect/>
                 </FBRoute>
                 <FBRoute path={['/team/:teamId/new/:channelId']}>
                     <BoardPage new={true}/>

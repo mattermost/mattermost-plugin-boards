@@ -70,6 +70,8 @@
             background-color: rgba(var(--center-channel-color-rgb), 0.08);
             color: rgba(var(--center-channel-color-rgb), 0.72);
             display: inline-block;
+            white-space: nowrap;
+            vertical-align: top;
         }
     }
 

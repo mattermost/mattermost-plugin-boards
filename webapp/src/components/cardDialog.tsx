@@ -122,6 +122,7 @@ const CardDialog = (props: Props): JSX.Element => {
         <CardActionsMenu
             cardId={props.cardId}
             boardId={board.id}
+            cardCode={card?.code}
             onClickDelete={handleDeleteButtonOnClick}
         >
             {!isTemplate &&

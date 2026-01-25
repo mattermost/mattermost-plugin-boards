@@ -28,6 +28,7 @@ func (a *API) registerCardsRoutes(r *mux.Router) {
 	r.HandleFunc("/boards/{boardID}/cards", a.sessionRequired(a.handleGetCards)).Methods("GET")
 	r.HandleFunc("/cards/{cardID}", a.sessionRequired(a.handlePatchCard)).Methods("PATCH")
 	r.HandleFunc("/cards/{cardID}", a.sessionRequired(a.handleGetCard)).Methods("GET")
+	r.HandleFunc("/task/{code}", a.sessionRequired(a.handleGetCardByCode)).Methods("GET")
 }
 
 func (a *API) handleCreateCard(w http.ResponseWriter, r *http.Request) {
@@ -380,6 +381,88 @@ func (a *API) handleGetCard(w http.ResponseWriter, r *http.Request) {
 	)
 
 	data, err := json.Marshal(card)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	// response
+	jsonBytesResponse(w, http.StatusOK, data)
+
+	auditRec.Success()
+}
+
+func (a *API) handleGetCardByCode(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation GET /task/{code} getCardByCode
+	//
+	// Gets card information by card code and returns redirect parameters.
+	//
+	// ---
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: code
+	//   in: path
+	//   description: Card code (e.g., "FB-277")
+	//   required: true
+	//   type: string
+	// security:
+	// - BearerAuth: []
+	// responses:
+	//   '200':
+	//     description: success
+	//     schema:
+	//       type: object
+	//       properties:
+	//         cardId:
+	//           type: string
+	//         boardId:
+	//           type: string
+	//         viewId:
+	//           type: string
+	//         teamId:
+	//           type: string
+	//   default:
+	//     description: internal error
+	//     schema:
+	//       "$ref": "#/definitions/ErrorResponse"
+
+	userID := getUserID(r)
+	code := mux.Vars(r)["code"]
+
+	card, board, viewID, err := a.app.GetCardByCode(code)
+	if err != nil {
+		message := fmt.Sprintf("could not fetch card with code %s: %s", code, err)
+		a.errorResponse(w, r, model.NewErrBadRequest(message))
+		return
+	}
+
+	if !a.permissions.HasPermissionToBoard(userID, card.BoardID, model.PermissionManageBoardCards) {
+		a.errorResponse(w, r, model.NewErrPermission("access denied to fetch card"))
+		return
+	}
+
+	auditRec := a.makeAuditRecord(r, "getCardByCode", audit.Fail)
+	defer a.audit.LogRecord(audit.LevelRead, auditRec)
+	auditRec.AddMeta("code", code)
+	auditRec.AddMeta("boardID", card.BoardID)
+	auditRec.AddMeta("cardID", card.ID)
+
+	a.logger.Debug("GetCardByCode",
+		mlog.String("code", code),
+		mlog.String("boardID", card.BoardID),
+		mlog.String("cardID", card.ID),
+		mlog.String("userID", userID),
+	)
+
+	response := map[string]string{
+		"cardId":  card.ID,
+		"boardId": board.ID,
+		"viewId":  viewID,
+		"teamId":  board.TeamID,
+	}
+
+	data, err := json.Marshal(response)
 	if err != nil {
 		a.errorResponse(w, r, err)
 		return

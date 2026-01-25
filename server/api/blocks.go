@@ -338,8 +338,25 @@ func (a *API) handlePostBlocks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	a.logger.Debug("POST Blocks - Board info",
+		mlog.String("boardID", boardID),
+		mlog.String("boardCode", board.Code),
+		mlog.Int("newBlocksCount", len(newBlocks)),
+	)
+
 	// Populate card codes for card blocks
 	a.populateBlockCodes(newBlocks, board)
+
+	// Log populated codes for debugging
+	for _, block := range newBlocks {
+		if block.Type == model.TypeCard {
+			a.logger.Debug("POST Blocks - Card code populated",
+				mlog.String("blockID", block.ID),
+				mlog.Int("number", int(block.Number)),
+				mlog.String("code", block.Code),
+			)
+		}
+	}
 
 	a.logger.Debug("POST Blocks",
 		mlog.Int("block_count", len(blocks)),

@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
@@ -699,6 +700,57 @@ func (s *SQLStore) getBlock(db sq.BaseRunner, blockID string) (*model.Block, err
 	}
 
 	return blocks[0], nil
+}
+
+func (s *SQLStore) getCardByCode(db sq.BaseRunner, code string) (*model.Block, *model.Board, error) {
+	parts := strings.Split(code, "-")
+	if len(parts) != 2 {
+		return nil, nil, model.NewErrNotFound("invalid card code format: " + code)
+	}
+
+	boardCode := parts[0]
+	cardNumber := parts[1]
+
+	var number int64
+	var err error
+	if number, err = strconv.ParseInt(cardNumber, 10, 64); err != nil {
+		return nil, nil, model.NewErrNotFound("invalid card number in code: " + code)
+	}
+
+	query := s.getQueryBuilder(db).
+		Select(s.blockFields("b.")...).
+		From(s.tablePrefix + "blocks as b").
+		Join(s.tablePrefix + "boards as board ON b.board_id = board.id").
+		Where(sq.Eq{"board.code": boardCode}).
+		Where(sq.Eq{"b.number": number}).
+		Where(sq.Eq{"b.type": model.TypeCard}).
+		Where(sq.Eq{"b.delete_at": 0}).
+		Where(sq.Eq{"board.delete_at": 0})
+
+	rows, err := query.Query()
+	if err != nil {
+		s.logger.Error(`getCardByCode ERROR`, mlog.Err(err))
+		return nil, nil, err
+	}
+	defer s.CloseRows(rows)
+
+	blocks, err := s.blocksFromRows(rows)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if len(blocks) == 0 {
+		return nil, nil, model.NewErrNotFound("card with code " + code)
+	}
+
+	card := blocks[0]
+
+	board, err := s.getBoard(db, card.BoardID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return card, board, nil
 }
 
 func (s *SQLStore) getBlockHistory(db sq.BaseRunner, blockID string, opts model.QueryBlockHistoryOptions) ([]*model.Block, error) {

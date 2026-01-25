@@ -37,6 +37,7 @@ type Store interface {
 	GetBlockCountsByType() (map[string]int64, error)
 	GetBoardCount(includeDeleted bool) (int64, error)
 	GetBlock(blockID string) (*model.Block, error)
+	GetCardByCode(code string) (*model.Block, *model.Board, error)
 	GetNextCardNumber(boardID string) (int64, error)
 	// @withTransaction
 	PatchBlock(blockID string, blockPatch *model.BlockPatch, userID string) error

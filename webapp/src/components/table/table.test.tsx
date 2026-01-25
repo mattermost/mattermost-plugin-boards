@@ -4,13 +4,12 @@
 
 import React from 'react'
 import {Provider as ReduxProvider} from 'react-redux'
-import {render, screen} from '@testing-library/react'
+import {render} from '@testing-library/react'
 import configureStore from 'redux-mock-store'
 import '@testing-library/jest-dom'
 import userEvents from '@testing-library/user-event'
 
 import 'isomorphic-fetch'
-import {mocked} from 'jest-mock'
 
 import {TestBlockFactory} from '../../test/testBlockFactory'
 import {FetchMock} from '../../test/fetchMock'
@@ -21,8 +20,6 @@ import {IUser} from '../../user'
 import {Utils, IDType} from '../../utils'
 
 import {wrapDNDIntl} from '../../testUtils'
-
-import Mutator from '../../mutator'
 
 import Table from './table'
 
@@ -35,7 +32,6 @@ beforeEach(() => {
 jest.mock('../../mutator')
 jest.mock('../../utils')
 jest.mock('../../telemetry/telemetryClient')
-const mockedMutator = mocked(Mutator, true)
 
 describe('components/table/Table', () => {
     const board = TestBlockFactory.createBoard()
@@ -626,7 +622,7 @@ describe('components/table/Table extended', () => {
         expect(container).toMatchSnapshot()
     })
 
-    test('should delete snapshot', async () => {
+    test('should open card on title click', async () => {
         const board = TestBlockFactory.createBoard()
 
         const modifiedById = Utils.createGuid(IDType.User)
@@ -655,6 +651,7 @@ describe('components/table/Table extended', () => {
             },
         })
 
+        const showCardMock = jest.fn()
         const component = wrapDNDIntl(
             <ReduxProvider store={store}>
                 <Table
@@ -666,7 +663,7 @@ describe('components/table/Table extended', () => {
                     selectedCardIds={[]}
                     readonly={false}
                     cardIdToFocusOnRender=''
-                    showCard={jest.fn()}
+                    showCard={showCardMock}
                     addCard={jest.fn()}
                     onCardClicked={jest.fn()}
                     hiddenCardsCount={0}
@@ -675,19 +672,13 @@ describe('components/table/Table extended', () => {
             </ReduxProvider>,
         )
 
-        const {getByTitle, getByRole, getAllByTitle} = render(component)
-        const card1Name = getByTitle(card1.title)
-        userEvents.hover(card1Name)
-        const menuBtn = getAllByTitle('MenuBtn')
-        userEvents.click(menuBtn[0])
-        const deleteBtn = getByRole('button', {name: 'Delete'})
-        userEvents.click(deleteBtn)
-        const dailogDeleteBtn = screen.getByRole('button', {name: 'Delete'})
-        userEvents.click(dailogDeleteBtn)
-        expect(mockedMutator.deleteBlock).toBeCalledTimes(1)
+        const {getByText} = render(component)
+        const card1Name = getByText(card1.title)
+        userEvents.click(card1Name)
+        expect(showCardMock).toBeCalledWith(card1.id)
     })
 
-    test('should have Duplicate Button', async () => {
+    test('should open card on code click', async () => {
         const board = TestBlockFactory.createBoard()
 
         const modifiedById = Utils.createGuid(IDType.User)
@@ -699,8 +690,10 @@ describe('components/table/Table extended', () => {
         })
         const card1 = TestBlockFactory.createCard(board)
         card1.title = 'card1'
+        card1.code = 'TEST-1'
         const card2 = TestBlockFactory.createCard(board)
         card2.title = 'card2'
+        card2.code = 'TEST-2'
         const view = TestBlockFactory.createBoardView(board)
         view.fields.viewType = 'table'
         view.fields.groupById = undefined
@@ -716,6 +709,7 @@ describe('components/table/Table extended', () => {
             },
         })
 
+        const showCardMock = jest.fn()
         const component = wrapDNDIntl(
             <ReduxProvider store={store}>
                 <Table
@@ -727,7 +721,7 @@ describe('components/table/Table extended', () => {
                     selectedCardIds={[]}
                     readonly={false}
                     cardIdToFocusOnRender=''
-                    showCard={jest.fn()}
+                    showCard={showCardMock}
                     addCard={jest.fn()}
                     onCardClicked={jest.fn()}
                     hiddenCardsCount={0}
@@ -736,15 +730,9 @@ describe('components/table/Table extended', () => {
             </ReduxProvider>,
         )
 
-        const {getByTitle, getByRole, getAllByTitle, container} = render(component)
-        const card1Name = getByTitle(card1.title)
-        userEvents.hover(card1Name)
-        const menuBtn = getAllByTitle('MenuBtn')
-        userEvents.click(menuBtn[0])
-        const duplicateBtn = getByRole('button', {name: 'Duplicate'})
-        expect(duplicateBtn).not.toBe(null)
-        userEvents.click(duplicateBtn)
-        expect(mockedMutator.duplicateCard).toBeCalledTimes(1)
-        expect(container).toMatchSnapshot()
+        const {getByText} = render(component)
+        const card1Code = getByText(card1.code)
+        userEvents.click(card1Code)
+        expect(showCardMock).toBeCalledWith(card1.id)
     })
 })
