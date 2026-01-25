@@ -4,13 +4,12 @@
 
 import React from 'react'
 import {Provider as ReduxProvider} from 'react-redux'
-import {render, screen} from '@testing-library/react'
+import {render} from '@testing-library/react'
 import configureStore from 'redux-mock-store'
 import '@testing-library/jest-dom'
 import userEvents from '@testing-library/user-event'
 
 import 'isomorphic-fetch'
-import {mocked} from 'jest-mock'
 
 import {TestBlockFactory} from '../../test/testBlockFactory'
 import {FetchMock} from '../../test/fetchMock'
@@ -21,8 +20,6 @@ import {IUser} from '../../user'
 import {Utils, IDType} from '../../utils'
 
 import {wrapDNDIntl} from '../../testUtils'
-
-import Mutator from '../../mutator'
 
 import Table from './table'
 
@@ -35,7 +32,6 @@ beforeEach(() => {
 jest.mock('../../mutator')
 jest.mock('../../utils')
 jest.mock('../../telemetry/telemetryClient')
-const mockedMutator = mocked(Mutator, true)
 
 describe('components/table/Table', () => {
     const board = TestBlockFactory.createBoard()
