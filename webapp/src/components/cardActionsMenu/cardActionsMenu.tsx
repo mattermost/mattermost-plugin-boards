@@ -21,6 +21,7 @@ import TelemetryClient, {TelemetryActions, TelemetryCategory} from '../../teleme
 type Props = {
     cardId: string
     boardId: string
+    cardCode?: string
     onClickDelete: () => void
     onClickDuplicate?: () => void
     children?: ReactNode
@@ -67,11 +68,7 @@ export const CardActionsMenu = (props: Props): JSX.Element => {
                     id='copy'
                     name={intl.formatMessage({id: 'CardActionsMenu.copyLink', defaultMessage: 'Copy link'})}
                     onClick={() => {
-                        let cardLink = window.location.href
-
-                        if (!cardLink.includes(cardId)) {
-                            cardLink += `/${cardId}`
-                        }
+                        const cardLink = window.location.origin + '/boards/task/' + (props.cardCode || cardId)
 
                         Utils.copyTextToClipboard(cardLink)
                         sendFlashMessage({content: intl.formatMessage({id: 'CardActionsMenu.copiedLink', defaultMessage: 'Copied!'}), severity: 'high'})

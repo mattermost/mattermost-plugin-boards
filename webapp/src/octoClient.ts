@@ -262,6 +262,15 @@ class OctoClient {
         return (await this.getJson(response, [])) as any[]
     }
 
+    async getCardByCode(code: string): Promise<{cardId: string; boardId: string; viewId: string; teamId: string}> {
+        const path = `/api/v2/task/${code}`
+        const response = await fetch(this.getBaseURL() + path, {headers: this.headers()})
+        if (response.status !== 200) {
+            throw new Error(`Card not found: ${code}`)
+        }
+        return (await this.getJson(response, {})) as {cardId: string; boardId: string; viewId: string; teamId: string}
+    }
+
     async exportBoardArchive(boardID: string): Promise<Response> {
         const path = `/api/v2/boards/${boardID}/archive/export`
         return fetch(this.getBaseURL() + path, {headers: this.headers()})
