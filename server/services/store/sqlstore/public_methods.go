@@ -368,6 +368,11 @@ func (s *SQLStore) GetBoardCount(includeDeleted bool) (int64, error) {
 
 }
 
+func (s *SQLStore) GetCardByCode(code string) (*model.Block, *model.Board, error) {
+	return s.getCardByCode(s.db, code)
+
+}
+
 func (s *SQLStore) GetBoardHistory(boardID string, opts model.QueryBoardHistoryOptions) ([]*model.Board, error) {
 	return s.getBoardHistory(s.db, boardID, opts)
 
