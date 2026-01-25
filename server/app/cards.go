@@ -136,3 +136,30 @@ func (a *App) GetCardByID(cardID string) (*model.Card, error) {
 
 	return card, nil
 }
+
+func (a *App) GetCardByCode(code string) (*model.Card, *model.Board, string, error) {
+	block, board, err := a.store.GetCardByCode(code)
+	if err != nil {
+		return nil, nil, "", err
+	}
+
+	card, err := model.Block2Card(block)
+	if err != nil {
+		return nil, nil, "", fmt.Errorf("Block2Card fail: %w", err)
+	}
+
+	a.populateCardCode(card, board)
+
+	// Get first view for the board
+	views, err := a.store.GetBlocksWithType(board.ID, string(model.TypeView))
+	if err != nil {
+		return nil, nil, "", fmt.Errorf("cannot get views: %w", err)
+	}
+
+	viewID := ""
+	if len(views) > 0 {
+		viewID = views[0].ID
+	}
+
+	return card, board, viewID, nil
+}
