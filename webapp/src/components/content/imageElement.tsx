@@ -1,7 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useState, useCallback} from 'react'
 import {IntlShape} from 'react-intl'
 
 import {ContentBlock} from '../../blocks/contentBlock'
@@ -12,9 +12,13 @@ import ImageIcon from '../../widgets/icons/image'
 import {sendFlashMessage} from '../../components/flashMessages'
 
 import {FileInfo} from '../../blocks/block'
+import ImageViewer from '../imageViewer/imageViewer'
+import RootPortal from '../rootPortal'
 
 import {contentRegistry} from './contentRegistry'
 import ArchivedFile from './archivedFile/archivedFile'
+
+import './imageElement.scss'
 
 type Props = {
     block: ContentBlock
@@ -23,6 +27,7 @@ type Props = {
 const ImageElement = (props: Props): JSX.Element|null => {
     const [imageDataUrl, setImageDataUrl] = useState<string|null>(null)
     const [fileInfo, setFileInfo] = useState<FileInfo>({})
+    const [showViewer, setShowViewer] = useState(false)
 
     const {block} = props
 
@@ -37,6 +42,14 @@ const ImageElement = (props: Props): JSX.Element|null => {
         }
     }, [])
 
+    const handleImageClick = useCallback(() => {
+        setShowViewer(true)
+    }, [])
+
+    const handleCloseViewer = useCallback(() => {
+        setShowViewer(false)
+    }, [])
+
     if (fileInfo.archived) {
         return (
             <ArchivedFile fileInfo={fileInfo}/>
@@ -48,11 +61,22 @@ const ImageElement = (props: Props): JSX.Element|null => {
     }
 
     return (
-        <img
-            className='ImageElement'
-            src={imageDataUrl}
-            alt={block.title}
-        />
+        <>
+            <img
+                className='ImageElement'
+                src={imageDataUrl}
+                alt={block.title}
+                onClick={handleImageClick}
+            />
+            {showViewer && (
+                <RootPortal>
+                    <ImageViewer
+                        imageUrl={imageDataUrl}
+                        onClose={handleCloseViewer}
+                    />
+                </RootPortal>
+            )}
+        </>
     )
 }
 
