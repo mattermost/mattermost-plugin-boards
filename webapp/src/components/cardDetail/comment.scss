@@ -40,6 +40,22 @@
         font-size: 12px;
     }
 
+    .comment-reply {
+        color: rgb(var(--link-color-rgb));
+        font-size: 12px;
+        margin-left: 8px;
+        cursor: pointer;
+        text-decoration: none;
+        background: none;
+        border: none;
+        padding: 0;
+        font-family: inherit;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
     .comment-text {
         color: rgb(var(--center-channel-color-rgb));
         width: 100%;

@@ -11,6 +11,15 @@
         border-radius: 100%;
     }
 
+    .comment-thread-item {
+        position: relative;
+
+        &.comment-reply {
+            border-left: 2px solid rgba(var(--center-channel-color-rgb), 0.16);
+            padding-left: 16px;
+        }
+    }
+
     .CommentsList__new {
         position: relative;
         display: flex;
@@ -20,10 +29,15 @@
         min-height: 48px;
     }
 
-    .newcomment {
+    .newcomment-wrapper {
         flex-grow: 1;
-        margin: 0 0 0 8px;
+        border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+        border-radius: 4px;
         overflow: hidden;
+    }
+
+    .newcomment {
+        padding: 8px 12px;
 
         + button {
             margin: -4px 0 0 8px;

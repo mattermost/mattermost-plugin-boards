@@ -390,7 +390,31 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
                 if (foundStart) {
                     const blockText = block.getText()
                     const actualPrefix = format === 'bulletList' ? prefix : `${listNumber}. `
-                    const newText = actualPrefix + blockText
+
+                    // Check if text already has the same type of prefix
+                    const bulletRegex = /^\* /
+                    const numberRegex = /^\d+\. /
+
+                    let newText: string
+                    if (format === 'bulletList') {
+                        // If already has bullet prefix, skip. If has number prefix, replace it.
+                        if (bulletRegex.test(blockText)) {
+                            newText = blockText
+                        } else if (numberRegex.test(blockText)) {
+                            newText = blockText.replace(numberRegex, prefix)
+                        } else {
+                            newText = prefix + blockText
+                        }
+                    } else {
+                        // numberList: If already has number prefix, skip. If has bullet prefix, replace it.
+                        if (numberRegex.test(blockText)) {
+                            newText = blockText
+                        } else if (bulletRegex.test(blockText)) {
+                            newText = blockText.replace(bulletRegex, actualPrefix)
+                        } else {
+                            newText = actualPrefix + blockText
+                        }
+                    }
 
                     // Create a forward selection for this block to avoid backward selection issues
                     const blockSelection = SelectionState.createEmpty(blockKey).merge({
@@ -443,7 +467,13 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
                 // Process blocks in selection
                 if (foundStart) {
                     const blockText = block.getText()
-                    const newText = prefix + blockText
+
+                    // Check if text already has a quote prefix
+                    const quoteRegex = /^> /
+                    const hasPrefix = quoteRegex.test(blockText)
+
+                    // Only add prefix if it doesn't already exist
+                    const newText = hasPrefix ? blockText : prefix + blockText
 
                     // Create a forward selection for this block to avoid backward selection issues
                     const blockSelection = SelectionState.createEmpty(blockKey).merge({

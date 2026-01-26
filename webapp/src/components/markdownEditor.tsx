@@ -23,6 +23,7 @@ type Props = {
     autofocus?: boolean
     saveOnEnter?: boolean
     showToolbar?: boolean
+    keepEditing?: boolean
 }
 
 const MarkdownEditor = (props: Props): JSX.Element => {
@@ -51,7 +52,9 @@ const MarkdownEditor = (props: Props): JSX.Element => {
     )
 
     const editorOnBlur = (newText: string) => {
-        setIsEditing(false)
+        if (!props.keepEditing) {
+            setIsEditing(false)
+        }
         onBlur && onBlur(newText)
     }
 

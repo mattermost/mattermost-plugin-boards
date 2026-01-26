@@ -186,16 +186,17 @@ exports[`components/cardDialog already following card 1`] = `
               <div
                 class="CommentsList__new"
               >
-                <img
-                  class="comment-avatar"
-                />
                 <div
-                  class="MarkdownEditor octo-editor newcomment "
+                  class="newcomment-wrapper"
                 >
                   <div
-                    class="octo-editor-preview octo-placeholder"
-                    data-testid="preview-element"
-                  />
+                    class="MarkdownEditor octo-editor newcomment "
+                  >
+                    <div
+                      class="octo-editor-preview octo-placeholder"
+                      data-testid="preview-element"
+                    />
+                  </div>
                 </div>
                 
               </div>
@@ -905,16 +906,17 @@ exports[`components/cardDialog return cardDialog menu content 1`] = `
               <div
                 class="CommentsList__new"
               >
-                <img
-                  class="comment-avatar"
-                />
                 <div
-                  class="MarkdownEditor octo-editor newcomment "
+                  class="newcomment-wrapper"
                 >
                   <div
-                    class="octo-editor-preview octo-placeholder"
-                    data-testid="preview-element"
-                  />
+                    class="MarkdownEditor octo-editor newcomment "
+                  >
+                    <div
+                      class="octo-editor-preview octo-placeholder"
+                      data-testid="preview-element"
+                    />
+                  </div>
                 </div>
                 
               </div>
@@ -1116,16 +1118,17 @@ exports[`components/cardDialog return cardDialog menu content and cancel delete 
               <div
                 class="CommentsList__new"
               >
-                <img
-                  class="comment-avatar"
-                />
                 <div
-                  class="MarkdownEditor octo-editor newcomment "
+                  class="newcomment-wrapper"
                 >
                   <div
-                    class="octo-editor-preview octo-placeholder"
-                    data-testid="preview-element"
-                  />
+                    class="MarkdownEditor octo-editor newcomment "
+                  >
+                    <div
+                      class="octo-editor-preview octo-placeholder"
+                      data-testid="preview-element"
+                    />
+                  </div>
                 </div>
                 
               </div>
@@ -1327,16 +1330,17 @@ exports[`components/cardDialog should match snapshot 1`] = `
               <div
                 class="CommentsList__new"
               >
-                <img
-                  class="comment-avatar"
-                />
                 <div
-                  class="MarkdownEditor octo-editor newcomment "
+                  class="newcomment-wrapper"
                 >
                   <div
-                    class="octo-editor-preview octo-placeholder"
-                    data-testid="preview-element"
-                  />
+                    class="MarkdownEditor octo-editor newcomment "
+                  >
+                    <div
+                      class="octo-editor-preview octo-placeholder"
+                      data-testid="preview-element"
+                    />
+                  </div>
                 </div>
                 
               </div>

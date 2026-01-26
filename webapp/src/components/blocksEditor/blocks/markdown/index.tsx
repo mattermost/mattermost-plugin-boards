@@ -43,6 +43,7 @@ const MarkdownContent: ContentType = {
                         props.onCancel()
                     }}
                     showToolbar={true}
+                    keepEditing={true}
                 />
             </div>
         )
