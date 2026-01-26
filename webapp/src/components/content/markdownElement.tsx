@@ -6,7 +6,7 @@ import {useIntl} from 'react-intl'
 
 import {MarkdownBlock, createMarkdownBlock} from '../../blocks/markdownBlock'
 import mutator from '../../mutator'
-import TextIcon from '../../widgets/icons/text'
+import MarkdownIcon from '../../widgets/icons/markdown'
 import {MarkdownEditor} from '../markdownEditor'
 
 import {contentRegistry} from './contentRegistry'
@@ -40,7 +40,7 @@ const MarkdownElement = (props: Props): JSX.Element => {
 contentRegistry.registerContentType({
     type: 'markdown',
     getDisplayText: (intl) => intl.formatMessage({id: 'ContentBlock.markdown', defaultMessage: 'markdown'}),
-    getIcon: () => <TextIcon/>,
+    getIcon: () => <MarkdownIcon/>,
     createBlock: async () => {
         return createMarkdownBlock()
     },

@@ -26,6 +26,9 @@ const ImageViewer = (props: Props): JSX.Element => {
     const intl = useIntl()
     const [zoom, setZoom] = useState(1)
     const [isMobile, setIsMobile] = useState(false)
+    const [isDragging, setIsDragging] = useState(false)
+    const [dragStart, setDragStart] = useState({x: 0, y: 0})
+    const [imagePosition, setImagePosition] = useState({x: 0, y: 0})
 
     useEffect(() => {
         const checkMobile = () => {
@@ -49,6 +52,33 @@ const ImageViewer = (props: Props): JSX.Element => {
     const handleZoomOut = useCallback(() => {
         setZoom((prevZoom) => Math.max(prevZoom - ZOOM_STEP, MIN_ZOOM))
     }, [])
+
+    const handleMouseDown = useCallback((e: React.MouseEvent) => {
+        if (zoom > 1) {
+            setIsDragging(true)
+            setDragStart({x: e.clientX - imagePosition.x, y: e.clientY - imagePosition.y})
+            e.preventDefault()
+        }
+    }, [zoom, imagePosition])
+
+    const handleMouseMove = useCallback((e: React.MouseEvent) => {
+        if (isDragging && zoom > 1) {
+            setImagePosition({
+                x: e.clientX - dragStart.x,
+                y: e.clientY - dragStart.y,
+            })
+        }
+    }, [isDragging, zoom, dragStart])
+
+    const handleMouseUp = useCallback(() => {
+        setIsDragging(false)
+    }, [])
+
+    useEffect(() => {
+        if (zoom <= 1) {
+            setImagePosition({x: 0, y: 0})
+        }
+    }, [zoom])
 
     const handleBackdropClick = useCallback((e: React.MouseEvent) => {
         const target = e.target
@@ -102,7 +132,15 @@ const ImageViewer = (props: Props): JSX.Element => {
                     src={imageUrl}
                     alt=''
                     data-zoom={zoom}
+                    style={{
+                        transform: `scale(${zoom}) translate(${imagePosition.x / zoom}px, ${imagePosition.y / zoom}px)`,
+                        cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
+                    }}
                     onClick={(e) => e.stopPropagation()}
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
                 />
             </div>
             {!isMobile && (

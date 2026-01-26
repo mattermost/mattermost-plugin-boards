@@ -99,9 +99,7 @@ func (a *App) PatchBlockAndNotify(blockID string, blockPatch *model.BlockPatch, 
 	}
 
 	// Populate code field for card blocks before broadcasting
-	if block.Type == model.TypeCard && block.Number > 0 && board.Code != "" {
-		block.Code = fmt.Sprintf("%s-%d", board.Code, block.Number)
-	}
+	a.PopulateBlockCode(block, board)
 
 	a.blockChangeNotifier.Enqueue(func() error {
 		// broadcast on websocket
@@ -150,8 +148,15 @@ func (a *App) PatchBlocksAndNotify(teamID string, blockPatches *model.BlockPatch
 			// Populate code field for card blocks before broadcasting
 			if newBlock.Type == model.TypeCard && newBlock.Number > 0 {
 				board, err := a.store.GetBoard(newBlock.BoardID)
-				if err == nil && board.Code != "" {
-					newBlock.Code = fmt.Sprintf("%s-%d", board.Code, newBlock.Number)
+				if err != nil {
+					a.logger.Error("Failed to get board for code population",
+						mlog.String("block_id", blockID),
+						mlog.String("board_id", newBlock.BoardID),
+						mlog.Err(err),
+					)
+					// Continue broadcasting without code to avoid blocking the update
+				} else {
+					a.PopulateBlockCode(newBlock, board)
 				}
 			}
 
@@ -179,9 +184,7 @@ func (a *App) InsertBlockAndNotify(block *model.Block, modifiedByID string, disa
 	err := a.store.InsertBlock(block, modifiedByID)
 	if err == nil {
 		// Populate code field for card blocks before broadcasting
-		if block.Type == model.TypeCard && block.Number > 0 && board.Code != "" {
-			block.Code = fmt.Sprintf("%s-%d", board.Code, block.Number)
-		}
+		a.PopulateBlockCode(block, board)
 
 		a.blockChangeNotifier.Enqueue(func() error {
 			a.wsAdapter.BroadcastBlockChange(board.TeamID, block)
