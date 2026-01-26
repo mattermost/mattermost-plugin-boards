@@ -30,6 +30,84 @@ type Props = {
     readonly: boolean
 }
 
+type CommentNode = {
+    comment: CommentBlock
+    children: CommentNode[]
+}
+
+function buildCommentTree(comments: readonly CommentBlock[]): CommentNode[] {
+    const commentMap = new Map<string, CommentNode>()
+    const rootComments: CommentNode[] = []
+
+    comments.forEach((comment) => {
+        commentMap.set(comment.id, {comment, children: []})
+    })
+
+    comments.forEach((comment) => {
+        const node = commentMap.get(comment.id)!
+        const parentId = comment.fields?.parentCommentId as string | undefined
+
+        if (parentId && commentMap.has(parentId)) {
+            const parentNode = commentMap.get(parentId)!
+            parentNode.children.push(node)
+        } else {
+            rootComments.push(node)
+        }
+    })
+
+    const sortByDate = (nodes: CommentNode[]) => {
+        nodes.sort((a, b) => a.comment.createAt - b.comment.createAt)
+        nodes.forEach((node) => sortByDate(node.children))
+    }
+
+    sortByDate(rootComments)
+
+    return rootComments
+}
+
+type CommentTreeNodeProps = {
+    node: CommentNode
+    level: number
+    readonly: boolean
+    canDeleteOthersComments: boolean
+    me: IUser | null
+    onReply?: (commentId: string, quotedText: string) => void
+}
+
+const CommentTreeNode: React.FC<CommentTreeNodeProps> = ({node, level, readonly, canDeleteOthersComments, me, onReply}) => {
+    const canDeleteComment = canDeleteOthersComments || me?.id === node.comment.modifiedBy
+    const isReply = level > 0
+
+    return (
+        <>
+            <div
+                className={`comment-thread-item ${isReply ? 'comment-reply' : ''}`}
+                style={{marginLeft: `${level * 40}px`}}
+            >
+                <Comment
+                    key={node.comment.id}
+                    comment={node.comment}
+                    userImageUrl={Utils.getProfilePicture(node.comment.modifiedBy)}
+                    userId={node.comment.modifiedBy}
+                    readonly={readonly || !canDeleteComment}
+                    onReply={!readonly ? onReply : undefined}
+                />
+            </div>
+            {node.children.map((childNode) => (
+                <CommentTreeNode
+                    key={childNode.comment.id}
+                    node={childNode}
+                    level={level + 1}
+                    readonly={readonly}
+                    canDeleteOthersComments={canDeleteOthersComments}
+                    me={me}
+                    onReply={onReply}
+                />
+            ))}
+        </>
+    )
+}
+
 const CommentsList = (props: Props) => {
     const [newComment, setNewComment] = useState('')
     const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null)
@@ -101,27 +179,22 @@ const CommentsList = (props: Props) => {
         </div>
     )
 
-    // Always show comments from oldest to newest (top to bottom)
-    // New comment input is always at the bottom
-    const sortedComments = comments.slice(0)
+    // Build comment tree and render with threading
+    const commentTree = buildCommentTree(comments)
 
     return (
         <div className='CommentsList'>
-            {sortedComments.map((comment) => {
-                // Only modify _own_ comments, EXCEPT for Admins, which can delete _any_ comment
-                // NOTE: editing comments will exist in the future (in addition to deleting)
-                const canDeleteComment: boolean = canDeleteOthersComments || me?.id === comment.modifiedBy
-                return (
-                    <Comment
-                        key={comment.id}
-                        comment={comment}
-                        userImageUrl={Utils.getProfilePicture(comment.modifiedBy)}
-                        userId={comment.modifiedBy}
-                        readonly={props.readonly || !canDeleteComment}
-                        onReply={!props.readonly ? handleReply : undefined}
-                    />
-                )
-            })}
+            {commentTree.map((node) => (
+                <CommentTreeNode
+                    key={node.comment.id}
+                    node={node}
+                    level={0}
+                    readonly={props.readonly}
+                    canDeleteOthersComments={canDeleteOthersComments}
+                    me={me}
+                    onReply={handleReply}
+                />
+            ))}
 
             {/* New comment at the bottom */}
             {!props.readonly && newCommentComponent}

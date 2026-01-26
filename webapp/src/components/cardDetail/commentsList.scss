@@ -11,6 +11,15 @@
         border-radius: 100%;
     }
 
+    .comment-thread-item {
+        position: relative;
+
+        &.comment-reply {
+            border-left: 2px solid rgba(var(--center-channel-color-rgb), 0.16);
+            padding-left: 16px;
+        }
+    }
+
     .CommentsList__new {
         position: relative;
         display: flex;
