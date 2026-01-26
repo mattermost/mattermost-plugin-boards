@@ -407,8 +407,21 @@ describe('components/cardDialog', () => {
         const dividerBlock = TestBlockFactory.createDivider(card)
         dividerBlock.id = 'divider-block'
 
+        const testCard = {...card}
+        testCard.fields = {
+            ...testCard.fields,
+            contentOrder: [textBlock1.id, textBlock2.id, textBlock3.id, dividerBlock.id],
+        }
+
         const newState = {
             ...state,
+            cards: {
+                ...state.cards,
+                cards: {
+                    ...state.cards.cards,
+                    [testCard.id]: testCard,
+                },
+            },
             contents: {
                 contents: {
                     [textBlock1.id]: textBlock1,
@@ -417,7 +430,7 @@ describe('components/cardDialog', () => {
                     [dividerBlock.id]: dividerBlock,
                 },
                 contentsByCard: {
-                    [card.id]: [textBlock1, textBlock2, textBlock3, dividerBlock],
+                    [testCard.id]: [textBlock1, textBlock2, textBlock3, dividerBlock],
                 },
             },
         }
@@ -432,8 +445,8 @@ describe('components/cardDialog', () => {
                         board={board}
                         activeView={boardView}
                         views={[boardView]}
-                        cards={[card]}
-                        cardId={card.id}
+                        cards={[testCard]}
+                        cardId={testCard.id}
                         onClose={onClose}
                         showCard={jest.fn()}
                         readonly={false}
@@ -462,15 +475,28 @@ describe('components/cardDialog', () => {
         const dividerBlock2 = TestBlockFactory.createDivider(card)
         dividerBlock2.id = 'divider-block-2'
 
+        const testCard = {...card}
+        testCard.fields = {
+            ...testCard.fields,
+            contentOrder: [dividerBlock1.id, dividerBlock2.id],
+        }
+
         const newState = {
             ...state,
+            cards: {
+                ...state.cards,
+                cards: {
+                    ...state.cards.cards,
+                    [testCard.id]: testCard,
+                },
+            },
             contents: {
                 contents: {
                     [dividerBlock1.id]: dividerBlock1,
                     [dividerBlock2.id]: dividerBlock2,
                 },
                 contentsByCard: {
-                    [card.id]: [dividerBlock1, dividerBlock2],
+                    [testCard.id]: [dividerBlock1, dividerBlock2],
                 },
             },
         }
@@ -485,8 +511,8 @@ describe('components/cardDialog', () => {
                         board={board}
                         activeView={boardView}
                         views={[boardView]}
-                        cards={[card]}
-                        cardId={card.id}
+                        cards={[testCard]}
+                        cardId={testCard.id}
                         onClose={onClose}
                         showCard={jest.fn()}
                         readonly={false}

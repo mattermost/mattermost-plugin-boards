@@ -96,7 +96,7 @@ exports[`components/blocksEditor/blocks/markdown should render markdown with cod
   >
     <p>
       <code>
-        javascript\nconst x = 1;\n
+        javascript\\nconst x = 1;\\n
       </code>
     </p>
   </div>
@@ -112,7 +112,7 @@ exports[`components/blocksEditor/blocks/markdown should render markdown with lis
 
 
       <li>
-        Item 1\n- Item 2\n- Item 3
+        Item 1\\n- Item 2\\n- Item 3
       </li>
 
 
