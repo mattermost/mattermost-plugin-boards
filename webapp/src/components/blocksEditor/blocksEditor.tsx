@@ -1,7 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useState, useMemo} from 'react'
+import React, {useState, useMemo, useCallback, useEffect, useRef} from 'react'
 import {DndProvider} from 'react-dnd'
 import {HTML5Backend} from 'react-dnd-html5-backend'
 
@@ -16,13 +16,35 @@ type Props = {
     onBlockModified: (block: BlockData) => Promise<BlockData|null>
     onBlockMoved: (block: BlockData, beforeBlock: BlockData|null, afterBlock: BlockData|null) => Promise<void>
     blocks: BlockData[]
+    onEditingChange?: (blockId: string | null) => void
+    focusBlockId?: string | null
 }
 
 function BlocksEditor(props: Props) {
     const [nextType, setNextType] = useState<string>('')
     const [editing, setEditing] = useState<BlockData|null>(null)
     const [afterBlock, setAfterBlock] = useState<BlockData|null>(null)
+    const lastFocusedBlockIdRef = useRef<string | null>(null)
     const contentOrder = useMemo(() => props.blocks.filter((b) => b.id).map((b) => b.id!), [props.blocks])
+
+    const setEditingWithCallback = useCallback((block: BlockData | null) => {
+        setEditing(block)
+        if (props.onEditingChange) {
+            props.onEditingChange(block?.id || null)
+        }
+    }, [props.onEditingChange])
+
+    useEffect(() => {
+        if (props.focusBlockId && props.focusBlockId !== lastFocusedBlockIdRef.current) {
+            const blockToFocus = props.blocks.find((b) => b.id === props.focusBlockId)
+            if (blockToFocus) {
+                setEditingWithCallback(blockToFocus)
+                setAfterBlock(null)
+                lastFocusedBlockIdRef.current = props.focusBlockId
+            }
+        }
+    }, [props.focusBlockId, props.blocks, setEditingWithCallback])
+
     return (
         <div
             className='BlocksEditor'
@@ -30,9 +52,9 @@ function BlocksEditor(props: Props) {
                 if (e.key === 'ArrowUp') {
                     if (editing === null) {
                         if (afterBlock === null) {
-                            setEditing(props.blocks[props.blocks.length - 1] || null)
+                            setEditingWithCallback(props.blocks[props.blocks.length - 1] || null)
                         } else {
-                            setEditing(afterBlock)
+                            setEditingWithCallback(afterBlock)
                         }
                         setAfterBlock(null)
                         return
@@ -48,7 +70,7 @@ function BlocksEditor(props: Props) {
                         }
                     }
                     if (prevBlock) {
-                        setEditing(prevBlock)
+                        setEditingWithCallback(prevBlock)
                         setAfterBlock(null)
                     }
                 } else if (e.key === 'ArrowDown') {
@@ -74,7 +96,7 @@ function BlocksEditor(props: Props) {
                             breakNext = true
                         }
                     }
-                    setEditing(nextBlock)
+                    setEditingWithCallback(nextBlock)
                     setAfterBlock(null)
                 }
             }}
@@ -89,7 +111,7 @@ function BlocksEditor(props: Props) {
                             block={d}
                             editing={editing}
                             setEditing={(block) => {
-                                setEditing(block)
+                                setEditingWithCallback(block)
                                 setAfterBlock(null)
                             }}
                             contentOrder={contentOrder}

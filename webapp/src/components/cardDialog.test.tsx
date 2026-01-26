@@ -174,7 +174,10 @@ describe('components/cardDialog', () => {
             ))
         })
         const buttonElement = screen.getByRole('button', {name: 'Close dialog'})
-        userEvent.click(buttonElement)
+        await act(async () => {
+            userEvent.click(buttonElement)
+        })
+        await new Promise((resolve) => setTimeout(resolve, 100))
         expect(closeFn).toBeCalledTimes(1)
     })
     test('return cardDialog menu content', async () => {
@@ -386,5 +389,145 @@ describe('components/cardDialog', () => {
             container = result.container
         })
         expect(container).toMatchSnapshot()
+    })
+
+    test('should cleanup empty blocks on close', async () => {
+        const textBlock1 = TestBlockFactory.createText(card)
+        textBlock1.id = 'text-block-1'
+        textBlock1.title = 'Some text'
+
+        const textBlock2 = TestBlockFactory.createText(card)
+        textBlock2.id = 'text-block-2'
+        textBlock2.title = ''
+
+        const textBlock3 = TestBlockFactory.createText(card)
+        textBlock3.id = 'text-block-3'
+        textBlock3.title = '   '
+
+        const dividerBlock = TestBlockFactory.createDivider(card)
+        dividerBlock.id = 'divider-block'
+
+        const testCard = {...card}
+        testCard.fields = {
+            ...testCard.fields,
+            contentOrder: [textBlock1.id, textBlock2.id, textBlock3.id, dividerBlock.id],
+        }
+
+        const newState = {
+            ...state,
+            cards: {
+                ...state.cards,
+                cards: {
+                    ...state.cards.cards,
+                    [testCard.id]: testCard,
+                },
+            },
+            contents: {
+                contents: {
+                    [textBlock1.id]: textBlock1,
+                    [textBlock2.id]: textBlock2,
+                    [textBlock3.id]: textBlock3,
+                    [dividerBlock.id]: dividerBlock,
+                },
+                contentsByCard: {
+                    [testCard.id]: [textBlock1, textBlock2, textBlock3, dividerBlock],
+                },
+            },
+        }
+
+        const newStore = mockStateStore([], newState)
+        const onClose = jest.fn()
+
+        await act(async () => {
+            render(wrapDNDIntl(
+                <ReduxProvider store={newStore}>
+                    <CardDialog
+                        board={board}
+                        activeView={boardView}
+                        views={[boardView]}
+                        cards={[testCard]}
+                        cardId={testCard.id}
+                        onClose={onClose}
+                        showCard={jest.fn()}
+                        readonly={false}
+                    />
+                </ReduxProvider>,
+            ))
+        })
+
+        const closeButton = screen.getByRole('button', {name: 'Close dialog'})
+        await act(async () => {
+            userEvent.click(closeButton)
+            await new Promise((resolve) => setTimeout(resolve, 100))
+        })
+
+        expect(mockedMutator.deleteBlock).toHaveBeenCalledWith(textBlock2, 'cleanup empty blocks')
+        expect(mockedMutator.deleteBlock).toHaveBeenCalledWith(textBlock3, 'cleanup empty blocks')
+        expect(mockedMutator.deleteBlock).not.toHaveBeenCalledWith(textBlock1, expect.anything())
+        expect(mockedMutator.deleteBlock).not.toHaveBeenCalledWith(dividerBlock, expect.anything())
+        expect(onClose).toHaveBeenCalled()
+    })
+
+    test('should not cleanup divider blocks even if empty', async () => {
+        const dividerBlock1 = TestBlockFactory.createDivider(card)
+        dividerBlock1.id = 'divider-block-1'
+
+        const dividerBlock2 = TestBlockFactory.createDivider(card)
+        dividerBlock2.id = 'divider-block-2'
+
+        const testCard = {...card}
+        testCard.fields = {
+            ...testCard.fields,
+            contentOrder: [dividerBlock1.id, dividerBlock2.id],
+        }
+
+        const newState = {
+            ...state,
+            cards: {
+                ...state.cards,
+                cards: {
+                    ...state.cards.cards,
+                    [testCard.id]: testCard,
+                },
+            },
+            contents: {
+                contents: {
+                    [dividerBlock1.id]: dividerBlock1,
+                    [dividerBlock2.id]: dividerBlock2,
+                },
+                contentsByCard: {
+                    [testCard.id]: [dividerBlock1, dividerBlock2],
+                },
+            },
+        }
+
+        const newStore = mockStateStore([], newState)
+        const onClose = jest.fn()
+
+        await act(async () => {
+            render(wrapDNDIntl(
+                <ReduxProvider store={newStore}>
+                    <CardDialog
+                        board={board}
+                        activeView={boardView}
+                        views={[boardView]}
+                        cards={[testCard]}
+                        cardId={testCard.id}
+                        onClose={onClose}
+                        showCard={jest.fn()}
+                        readonly={false}
+                    />
+                </ReduxProvider>,
+            ))
+        })
+
+        const closeButton = screen.getByRole('button', {name: 'Close dialog'})
+        await act(async () => {
+            userEvent.click(closeButton)
+            await new Promise((resolve) => setTimeout(resolve, 100))
+        })
+
+        expect(mockedMutator.deleteBlock).not.toHaveBeenCalled()
+        expect(onClose).toHaveBeenCalled()
     })
 })
