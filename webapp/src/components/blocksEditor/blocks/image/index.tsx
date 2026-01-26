@@ -113,14 +113,14 @@ const Image: ContentType<FileInfo> = {
                                 </div>
                             </div>
                         </div>
-                        {(imageDimensions || fullFileInfo.size || imageDataUrl) && (
+                        {(imageDimensions || (fullFileInfo && fullFileInfo.size) || imageDataUrl) && (
                             <div className='ImageView__metadata'>
                                 {imageDimensions && (
                                     <span className='ImageView__dimensions'>
                                         {imageDimensions.width}×{imageDimensions.height}
                                     </span>
                                 )}
-                                {fullFileInfo.size && (
+                                {fullFileInfo && fullFileInfo.size && (
                                     <span className='ImageView__size'>
                                         {Utils.humanFileSize(fullFileInfo.size)}
                                     </span>

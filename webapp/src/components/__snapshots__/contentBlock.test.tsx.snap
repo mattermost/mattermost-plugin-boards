@@ -415,13 +415,51 @@ exports[`components/contentBlock should match snapshot with imageBlock 1`] = `
         class="addToRow "
         style="flex: 0 0 auto; height: 100%;"
       />
-      <img
-        alt=""
-        class="ImageElement"
-        role="button"
-        src="test.jpg"
-        tabindex="0"
-      />
+      <div
+        class="ImageElement__container"
+      >
+        <div
+          class="ImageElement__wrapper"
+        >
+          <img
+            alt=""
+            aria-label="View image in full screen"
+            class="ImageElement"
+            src="test.jpg"
+          />
+          <div
+            aria-label="View image in full screen"
+            class="ImageElement__overlay"
+            role="button"
+            tabindex="0"
+          >
+            <div
+              class="ImageElement__magnify-icon"
+            >
+              <i
+                class="CompassIcon icon-magnify MagnifyIcon"
+              />
+            </div>
+          </div>
+        </div>
+        <div
+          class="ImageElement__metadata"
+        >
+          <span
+            class="ImageElement__size"
+          >
+            161.1 KiB
+          </span>
+          <a
+            class="ImageElement__download"
+            href="test.jpg"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            Download
+          </a>
+        </div>
+      </div>
     </div>
     <div
       class="addToRow "

@@ -34,6 +34,13 @@ describe('src/components/gallery/GalleryCard', () => {
     const mockedUtils = mocked(Utils, true)
     const mockedOcto = mocked(octoClient, true)
     mockedOcto.getFileAsDataUrl.mockResolvedValue({url: 'test.jpg'})
+    mockedOcto.getFileInfo.mockResolvedValue({
+        url: 'test.jpg',
+        name: 'test-image.jpg',
+        extension: '.jpg',
+        size: 165002,
+    })
+    mockedUtils.humanFileSize.mockReturnValue('161.1 KiB')
 
     const board = TestBlockFactory.createBoard()
     board.id = 'boardId'

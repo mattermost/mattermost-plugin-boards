@@ -67,6 +67,12 @@ describe('components/content/ImageElement', () => {
             extension: '.txt',
             size: 165002,
         })
+        mockedOcto.getFileInfo.mockResolvedValue({
+            archived: true,
+            name: 'Filename',
+            extension: '.txt',
+            size: 165002,
+        })
 
         const component = wrapIntl(
             <ImageElement

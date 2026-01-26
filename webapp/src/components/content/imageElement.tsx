@@ -113,14 +113,14 @@ const ImageElement = (props: Props): JSX.Element|null => {
                         </div>
                     </div>
                 </div>
-                {(imageDimensions || fileInfo.size || imageDataUrl) && (
+                {(imageDimensions || (fileInfo && fileInfo.size) || imageDataUrl) && (
                     <div className='ImageElement__metadata'>
                         {imageDimensions && (
                             <span className='ImageElement__dimensions'>
                                 {imageDimensions.width}×{imageDimensions.height}
                             </span>
                         )}
-                        {fileInfo.size && (
+                        {fileInfo && fileInfo.size && (
                             <span className='ImageElement__size'>
                                 {Utils.humanFileSize(fileInfo.size)}
                             </span>
