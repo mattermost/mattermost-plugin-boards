@@ -224,7 +224,7 @@ exports[`components/blocksEditor/rootInput should match Input snapshot with menu
             id="react-select-4-option-6"
             tabindex="-1"
           >
-            /list-item Creates a new List item block.
+            /markdown Creates a new Markdown block.
           </div>
           <div
             aria-disabled="false"
@@ -232,7 +232,7 @@ exports[`components/blocksEditor/rootInput should match Input snapshot with menu
             id="react-select-4-option-7"
             tabindex="-1"
           >
-            /attachment Creates a new Attachment block.
+            /list-item Creates a new List item block.
           </div>
           <div
             aria-disabled="false"
@@ -240,7 +240,7 @@ exports[`components/blocksEditor/rootInput should match Input snapshot with menu
             id="react-select-4-option-8"
             tabindex="-1"
           >
-            /quote Creates a new Quote block.
+            /attachment Creates a new Attachment block.
           </div>
           <div
             aria-disabled="false"
@@ -248,12 +248,20 @@ exports[`components/blocksEditor/rootInput should match Input snapshot with menu
             id="react-select-4-option-9"
             tabindex="-1"
           >
-            /video Creates a new Video block.
+            /quote Creates a new Quote block.
           </div>
           <div
             aria-disabled="false"
             class=" css-x3yilo-option"
             id="react-select-4-option-10"
+            tabindex="-1"
+          >
+            /video Creates a new Video block.
+          </div>
+          <div
+            aria-disabled="false"
+            class=" css-x3yilo-option"
+            id="react-select-4-option-11"
             tabindex="-1"
           >
             /checkbox Creates a new Checkbox block.

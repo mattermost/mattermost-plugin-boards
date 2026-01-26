@@ -4,8 +4,11 @@ exports[`components/blocksEditor/blocks/markdown should match Display snapshot 1
 <div>
   <div
     class="octo-editor-preview"
-    dangerouslySetInnerHTML={{__html: '<p>test-value</p>\n'}}
-  />
+  >
+    <p>
+      test-value
+    </p>
+  </div>
 </div>
 `;
 
@@ -74,8 +77,15 @@ exports[`components/blocksEditor/blocks/markdown should render markdown with bol
 <div>
   <div
     class="octo-editor-preview"
-    dangerouslySetInnerHTML={{__html: '<p>This is <strong>bold</strong> text</p>\n'}}
-  />
+  >
+    <p>
+      This is 
+      <strong>
+        bold
+      </strong>
+       text
+    </p>
+  </div>
 </div>
 `;
 
@@ -83,8 +93,15 @@ exports[`components/blocksEditor/blocks/markdown should render markdown with cod
 <div>
   <div
     class="octo-editor-preview"
-    dangerouslySetInnerHTML={{__html: '<pre><code class="language-javascript">const x = 1;\n</code></pre>\n'}}
-  />
+  >
+    <p>
+      <code>
+        javascript
+const x = 1;
+
+      </code>
+    </p>
+  </div>
 </div>
 `;
 
@@ -92,8 +109,19 @@ exports[`components/blocksEditor/blocks/markdown should render markdown with lis
 <div>
   <div
     class="octo-editor-preview"
-    dangerouslySetInnerHTML={{__html: '<ul>\n<li>Item 1</li>\n<li>Item 2</li>\n<li>Item 3</li>\n</ul>\n'}}
-  />
+  >
+    <ul>
+      
+
+      <li>
+        Item 1
+- Item 2
+- Item 3
+      </li>
+      
+
+    </ul>
+  </div>
 </div>
 `;
 
@@ -101,7 +129,6 @@ exports[`components/blocksEditor/blocks/markdown should show placeholder when em
 <div>
   <div
     class="octo-editor-preview octo-placeholder"
-    dangerouslySetInnerHTML={{__html: ''}}
   />
 </div>
 `;
