@@ -329,44 +329,111 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
         }
         case 'bulletList':
         case 'numberList': {
-            // For lists, add prefix to current line
+            // For lists, add prefix to all selected lines
             const prefix = format === 'bulletList' ? '* ' : '1. '
-            const blockKey = selection.getStartKey()
-            const block = currentContent.getBlockForKey(blockKey)
-            const blockText = block.getText()
 
-            // Insert prefix at the beginning of the line
-            const newText = prefix + blockText
-            const blockSelection = selection.merge({
-                anchorOffset: 0,
-                focusOffset: blockText.length,
+            // Get all blocks in selection
+            const blockMap = currentContent.getBlockMap()
+            const startBlockKey = selection.getStartKey()
+            const endBlockKey = selection.getEndKey()
+
+            let newContent = currentContent
+            let foundStart = false
+            let listNumber = 1
+
+            blockMap.forEach((block) => {
+                if (!block) {
+                    return
+                }
+
+                const blockKey = block.getKey()
+
+                // Start processing from startBlockKey
+                if (blockKey === startBlockKey) {
+                    foundStart = true
+                }
+
+                // Process blocks in selection
+                if (foundStart) {
+                    const blockText = block.getText()
+                    const actualPrefix = format === 'bulletList' ? prefix : `${listNumber}. `
+                    const newText = actualPrefix + blockText
+
+                    const blockSelection = selection.merge({
+                        anchorKey: blockKey,
+                        anchorOffset: 0,
+                        focusKey: blockKey,
+                        focusOffset: blockText.length,
+                    })
+
+                    newContent = Modifier.replaceText(
+                        newContent,
+                        blockSelection,
+                        newText,
+                    )
+
+                    listNumber++
+                }
+
+                // Stop after endBlockKey
+                if (blockKey === endBlockKey) {
+                    foundStart = false
+                }
             })
-            const contentWithPrefix = Modifier.replaceText(
-                currentContent,
-                blockSelection,
-                newText,
-            )
-            newState = EditorState.push(editorState, contentWithPrefix, 'insert-characters')
+
+            newState = EditorState.push(editorState, newContent, 'insert-characters')
             break
         }
         case 'quote': {
-            // For quote, add prefix to current line
-            const blockKey = selection.getStartKey()
-            const block = currentContent.getBlockForKey(blockKey)
-            const blockText = block.getText()
+            // For quote, add prefix to all selected lines
+            const prefix = '> '
 
-            // Insert prefix at the beginning of the line
-            const newText = '> ' + blockText
-            const blockSelection = selection.merge({
-                anchorOffset: 0,
-                focusOffset: blockText.length,
+            // Get all blocks in selection
+            const blockMap = currentContent.getBlockMap()
+            const startBlockKey = selection.getStartKey()
+            const endBlockKey = selection.getEndKey()
+
+            let newContent = currentContent
+            let foundStart = false
+
+            blockMap.forEach((block) => {
+                if (!block) {
+                    return
+                }
+
+                const blockKey = block.getKey()
+
+                // Start processing from startBlockKey
+                if (blockKey === startBlockKey) {
+                    foundStart = true
+                }
+
+                // Process blocks in selection
+                if (foundStart) {
+                    const blockText = block.getText()
+                    const newText = prefix + blockText
+
+                    const blockSelection = selection.merge({
+                        anchorKey: blockKey,
+                        anchorOffset: 0,
+                        focusKey: blockKey,
+                        focusOffset: blockText.length,
+                    })
+
+                    newContent = Modifier.replaceText(
+                        newContent,
+                        blockSelection,
+                        newText,
+                    )
+                }
+
+                // Stop after endBlockKey
+                if (blockKey === endBlockKey) {
+                    foundStart = false
+                }
             })
-            const contentWithPrefix = Modifier.replaceText(
-                currentContent,
-                blockSelection,
-                newText,
-            )
-            newState = EditorState.push(editorState, contentWithPrefix, 'insert-characters')
+
+            newState = EditorState.push(editorState, newContent, 'insert-characters')
             break
         }
         default:
@@ -453,7 +520,6 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
                 }
             }}
         >
-            {props.showToolbar && <FormattingToolbar onFormat={handleFormat}/>}
             <Editor
                 editorKey={id}
                 editorState={editorState}
@@ -479,6 +545,7 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
                     setConfirmAddUser(mention.user)
                 }}
             />
+            {props.showToolbar && <FormattingToolbar onFormat={handleFormat}/>}
             <EmojiSuggestions
                 onOpen={onEmojiPopoverOpen}
                 onClose={onEmojiPopoverClose}
