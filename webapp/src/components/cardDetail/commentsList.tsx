@@ -56,21 +56,19 @@ const CommentsList = (props: Props) => {
 
     const newCommentComponent = (
         <div className='CommentsList__new'>
-            <img
-                className='comment-avatar'
-                src={Utils.getProfilePicture(me?.id)}
-            />
-            <MarkdownEditor
-                className='newcomment'
-                text={newComment}
-                placeholderText={intl.formatMessage({id: 'CardDetail.new-comment-placeholder', defaultMessage: 'Add a comment...'})}
-                onChange={(value: string) => {
-                    if (newComment !== value) {
-                        setNewComment(value)
-                    }
-                }}
-                showToolbar={true}
-            />
+            <div className='newcomment-wrapper'>
+                <MarkdownEditor
+                    className='newcomment'
+                    text={newComment}
+                    placeholderText={intl.formatMessage({id: 'CardDetail.new-comment-placeholder', defaultMessage: 'Add a comment...'})}
+                    onChange={(value: string) => {
+                        if (newComment !== value) {
+                            setNewComment(value)
+                        }
+                    }}
+                    showToolbar={true}
+                />
+            </div>
 
             {newComment &&
             <Button
