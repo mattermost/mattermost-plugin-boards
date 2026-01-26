@@ -32,7 +32,13 @@ const Dialog = (props: Props) => {
         defaultMessage: 'Close dialog',
     })
 
-    useHotkeys('esc', () => props.onClose())
+    useHotkeys('esc', () => {
+        // Don't close dialog if ImageViewer is open
+        if (document.querySelector('.ImageViewer')) {
+            return
+        }
+        props.onClose()
+    })
 
     const isBackdropClickedRef = useRef(false)
 
