@@ -5,7 +5,7 @@
 import {useEffect, useCallback} from 'react'
 import {useIntl} from 'react-intl'
 
-import {ImageBlock, createImageBlock} from '../../blocks/imageBlock'
+import {createImageBlock} from '../../blocks/imageBlock'
 import {createTextBlock} from '../../blocks/textBlock'
 import {sendFlashMessage} from '../flashMessages'
 import {Block} from '../../blocks/block'
