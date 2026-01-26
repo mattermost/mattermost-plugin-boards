@@ -65,6 +65,7 @@ describe('components/cardDetail/comment', () => {
                     userId={comment.modifiedBy}
                     userImageUrl={userImageUrl}
                     readonly={false}
+                    canDelete={true}
                 />
             </ReduxProvider>,
         ))
@@ -81,6 +82,7 @@ describe('components/cardDetail/comment', () => {
                     userId={comment.modifiedBy}
                     userImageUrl={userImageUrl}
                     readonly={true}
+                    canDelete={false}
                 />
             </ReduxProvider>,
         ))
@@ -95,6 +97,7 @@ describe('components/cardDetail/comment', () => {
                     userId={comment.modifiedBy}
                     userImageUrl={userImageUrl}
                     readonly={false}
+                    canDelete={true}
                 />
             </ReduxProvider>,
         ))
@@ -112,11 +115,11 @@ describe('components/cardDetail/comment', () => {
             users: {
                 boardUsers: {
                     [comment.modifiedBy]: {
-                        username: 'username_1', 
+                        username: 'username_1',
                         is_guest: true
                     }
                 }
-            }, 
+            },
             teams: {
                 current: {id: 'team_id'},
             }
@@ -128,6 +131,7 @@ describe('components/cardDetail/comment', () => {
                     userId={comment.modifiedBy}
                     userImageUrl={userImageUrl}
                     readonly={false}
+                    canDelete={true}
                 />
             </ReduxProvider>,
         ))
@@ -141,7 +145,7 @@ describe('components/cardDetail/comment', () => {
             users: {
                 boardUsers: {
                     [comment.modifiedBy]: {
-                        username: 'username_1', 
+                        username: 'username_1',
                         is_guest: true
                     }
                 }
@@ -157,6 +161,7 @@ describe('components/cardDetail/comment', () => {
                     userId={comment.modifiedBy}
                     userImageUrl={userImageUrl}
                     readonly={true}
+                    canDelete={false}
                 />
             </ReduxProvider>,
         ))
@@ -184,6 +189,7 @@ describe('components/cardDetail/comment', () => {
                     userId={comment.modifiedBy}
                     userImageUrl={userImageUrl}
                     readonly={false}
+                    canDelete={true}
                 />
             </ReduxProvider>,
         ))
