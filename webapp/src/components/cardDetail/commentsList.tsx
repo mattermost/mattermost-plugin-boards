@@ -32,6 +32,7 @@ type Props = {
 
 const CommentsList = (props: Props) => {
     const [newComment, setNewComment] = useState('')
+    const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null)
     const me = useAppSelector<IUser|null>(getMe)
     const canDeleteOthersComments = useHasCurrentBoardPermissions([Permission.DeleteOthersComments])
 
@@ -46,9 +47,23 @@ const CommentsList = (props: Props) => {
             comment.parentId = cardId
             comment.boardId = boardId
             comment.title = commentText
+
+            if (replyToCommentId) {
+                comment.fields = {
+                    ...comment.fields,
+                    parentCommentId: replyToCommentId,
+                }
+            }
+
             mutator.insertBlock(boardId, comment, 'add comment')
             setNewComment('')
+            setReplyToCommentId(null)
         }
+    }
+
+    const handleReply = (commentId: string, quotedText: string) => {
+        setReplyToCommentId(commentId)
+        setNewComment(quotedText + '\n\n')
     }
 
     const {comments} = props
@@ -103,6 +118,7 @@ const CommentsList = (props: Props) => {
                         userImageUrl={Utils.getProfilePicture(comment.modifiedBy)}
                         userId={comment.modifiedBy}
                         readonly={props.readonly || !canDeleteComment}
+                        onReply={!props.readonly ? handleReply : undefined}
                     />
                 )
             })}

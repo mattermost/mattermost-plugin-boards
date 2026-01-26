@@ -31,10 +31,11 @@ type Props = {
     userId: string
     userImageUrl: string
     readonly: boolean
+    onReply?: (commentId: string, quotedText: string) => void
 }
 
 const Comment: FC<Props> = (props: Props) => {
-    const {comment, userId, userImageUrl} = props
+    const {comment, userId, userImageUrl, onReply} = props
     const intl = useIntl()
     const user = useAppSelector(getUser(userId))
     const date = new Date(comment.createAt)
@@ -42,16 +43,32 @@ const Comment: FC<Props> = (props: Props) => {
     const selectedTeam = useAppSelector(getCurrentTeam)
     const channelNamesMap =  getChannelsNameMapInTeam((window as any).store.getState(), selectedTeam!.id)
 
-    const formattedText = 
+    const formattedText =
     <Provider store={(window as any).store}>
         {messageHtmlToComponent(formatText(comment.title, {
             atMentions: true,
             team: selectedTeam,
             channelNamesMap,
         }), {
-            fetchMissingUsers: true, 
+            fetchMissingUsers: true,
         })}
     </Provider>
+
+    const handleReply = () => {
+        if (!onReply) {
+            return
+        }
+
+        const selection = window.getSelection()
+        let textToQuote = comment.title
+
+        if (selection && selection.toString().trim()) {
+            textToQuote = selection.toString().trim()
+        }
+
+        const quotedText = textToQuote.split('\n').map((line) => `> ${line}`).join('\n')
+        onReply(comment.id, quotedText)
+    }
 
     return (
         <div
@@ -71,6 +88,15 @@ const Comment: FC<Props> = (props: Props) => {
                         {Utils.relativeDisplayDateTime(date, intl)}
                     </div>
                 </Tooltip>
+
+                {!props.readonly && onReply && (
+                    <a
+                        className='comment-reply'
+                        onClick={handleReply}
+                    >
+                        ↩ Reply
+                    </a>
+                )}
 
                 {!props.readonly && (
                     <MenuWrapper>
