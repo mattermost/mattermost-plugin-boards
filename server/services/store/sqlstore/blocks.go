@@ -265,6 +265,14 @@ func (s *SQLStore) insertBlock(db sq.BaseRunner, block *model.Block, userID stri
 			"board_id",
 		)
 
+	// Preserve the original creator when updating an existing block
+	createdBy := userID
+	createAt := utils.GetMillis()
+	if existingBlock != nil {
+		createdBy = existingBlock.CreatedBy
+		createAt = existingBlock.CreateAt
+	}
+
 	insertQueryValues := map[string]interface{}{
 		"channel_id":            "",
 		"id":                    block.ID,
@@ -274,9 +282,9 @@ func (s *SQLStore) insertBlock(db sq.BaseRunner, block *model.Block, userID stri
 		"title":                 block.Title,
 		"fields":                fieldsJSON,
 		"delete_at":             block.DeleteAt,
-		"created_by":            userID,
+		"created_by":            createdBy,
 		"modified_by":           block.ModifiedBy,
-		"create_at":             utils.GetMillis(),
+		"create_at":             createAt,
 		"update_at":             block.UpdateAt,
 		"board_id":              block.BoardID,
 	}
