@@ -13,6 +13,7 @@ import {createCheckboxBlock} from './blocks/checkboxBlock'
 import {createDividerBlock} from './blocks/dividerBlock'
 import {createImageBlock} from './blocks/imageBlock'
 import {createTextBlock} from './blocks/textBlock'
+import {createMarkdownBlock} from './blocks/markdownBlock'
 import {createH1Block} from './blocks/h1Block'
 import {createH2Block} from './blocks/h2Block'
 import {createH3Block} from './blocks/h3Block'
@@ -26,6 +27,7 @@ class OctoUtils {
         case 'view': { return createBoardView(block) }
         case 'card': { return createCard(block) }
         case 'text': { return createTextBlock(block) }
+        case 'markdown': { return createMarkdownBlock(block) }
         case 'h1': { return createH1Block(block) }
         case 'h2': { return createH2Block(block) }
         case 'h3': { return createH3Block(block) }

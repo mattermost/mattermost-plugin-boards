@@ -11,6 +11,7 @@ import {createFilterClause} from '../blocks/filterClause'
 import {createFilterGroup} from '../blocks/filterGroup'
 import {ImageBlock, createImageBlock} from '../blocks/imageBlock'
 import {TextBlock, createTextBlock} from '../blocks/textBlock'
+import {MarkdownBlock, createMarkdownBlock} from '../blocks/markdownBlock'
 import {Category, CategoryBoards} from '../store/sidebar'
 import {Utils} from '../utils'
 import {CheckboxBlock, createCheckboxBlock} from '../blocks/checkboxBlock'
@@ -140,6 +141,12 @@ class TestBlockFactory {
 
     static createText(card: Card): TextBlock {
         const block = this.addToCard(createTextBlock(), card)
+        block.title = 'title'
+        return block
+    }
+
+    static createMarkdown(card: Card): MarkdownBlock {
+        const block = this.addToCard(createMarkdownBlock(), card)
         block.title = 'title'
         return block
     }

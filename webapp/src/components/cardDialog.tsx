@@ -94,6 +94,7 @@ const CardDialog = (props: Props): JSX.Element => {
         }
         TelemetryClient.trackEvent(TelemetryCategory, TelemetryActions.DeleteCard, {board: props.board.id, view: props.activeView.id, card: card.id})
         await mutator.deleteBlock(card, 'delete card')
+        // No need to cleanup when deleting the entire card
         props.onClose()
     }
 
@@ -222,6 +223,34 @@ const CardDialog = (props: Props): JSX.Element => {
         sendFlashMessage({content: intl.formatMessage({id: 'AttachmentBlock.delete', defaultMessage: 'Attachment Deleted Successfully.'}), severity: 'normal'})
     }, [card?.boardId, card?.id, card?.fields.contentOrder])
 
+    const cleanupEmptyBlocks = useCallback(async () => {
+        if (!card) {
+            return
+        }
+
+        const emptyBlocks: Block[] = []
+        const flatContents = contents.flat()
+        for (const content of flatContents) {
+            if (content.type === 'divider') {
+                continue
+            }
+            if (!content.title || content.title.trim() === '') {
+                emptyBlocks.push(content)
+            }
+        }
+
+        if (emptyBlocks.length > 0) {
+            for (const block of emptyBlocks) {
+                await mutator.deleteBlock(block, 'cleanup empty blocks')
+            }
+        }
+    }, [card, contents])
+
+    const handleClose = useCallback(async () => {
+        await cleanupEmptyBlocks()
+        props.onClose()
+    }, [cleanupEmptyBlocks, props.onClose])
+
     const attachBtn = (): React.ReactNode => {
         return (
             <BoardPermissionGate permissions={[Permission.ManageBoardCards]}>
@@ -280,7 +309,7 @@ const CardDialog = (props: Props): JSX.Element => {
             <Dialog
                 title={<div/>}
                 className='cardDialog'
-                onClose={props.onClose}
+                onClose={handleClose}
                 toolsMenu={!props.readonly && !card?.limited && menu}
                 toolbar={toolbar}
             >
@@ -303,7 +332,7 @@ const CardDialog = (props: Props): JSX.Element => {
                         comments={comments}
                         attachments={attachments}
                         readonly={props.readonly}
-                        onClose={props.onClose}
+                        onClose={handleClose}
                         onDelete={deleteBlock}
                         addAttachment={addElement}
                     />}

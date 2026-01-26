@@ -117,7 +117,21 @@ const CardDetail = (props: Props): JSX.Element|null => {
     const clientConfig = useAppSelector<ClientConfig>(getClientConfig)
     const newBoardsEditor = clientConfig?.featureFlags?.newBoardsEditor || false
 
-    useImagePaste(props.board.id, card.id, card.fields.contentOrder)
+    const [editingBlockId, setEditingBlockId] = useState<string | null>(null)
+    const [focusBlockId, setFocusBlockId] = useState<string | null>(null)
+
+    useImagePaste(props.board.id, card.id, card.fields.contentOrder, {
+        getEditingContext: () => {
+            const blockIndex = editingBlockId ? card.fields.contentOrder.indexOf(editingBlockId) : -1
+            return {
+                blockId: editingBlockId,
+                blockIndex,
+            }
+        },
+        onImageInserted: (newTextBlockId: string) => {
+            setFocusBlockId(newTextBlockId)
+        },
+    })
 
     useEffect(() => {
         if (!title) {
@@ -275,6 +289,8 @@ const CardDetail = (props: Props): JSX.Element|null => {
                                 <BlocksEditor
                                     boardId={card.boardId}
                                     blocks={blocks}
+                                    onEditingChange={setEditingBlockId}
+                                    focusBlockId={focusBlockId}
                                     onBlockCreated={async (block: any, afterBlock: any): Promise<BlockData|null> => {
                                         if (block.contentType === 'text' && block.value === '') {
                                             return null
