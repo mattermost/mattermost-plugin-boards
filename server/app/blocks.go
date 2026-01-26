@@ -97,6 +97,12 @@ func (a *App) PatchBlockAndNotify(blockID string, blockPatch *model.BlockPatch, 
 	if err != nil {
 		return nil, err
 	}
+
+	// Populate code field for card blocks before broadcasting
+	if block.Type == model.TypeCard && block.Number > 0 && board.Code != "" {
+		block.Code = fmt.Sprintf("%s-%d", board.Code, block.Number)
+	}
+
 	a.blockChangeNotifier.Enqueue(func() error {
 		// broadcast on websocket
 		a.wsAdapter.BroadcastBlockChange(board.TeamID, block)
@@ -140,6 +146,15 @@ func (a *App) PatchBlocksAndNotify(teamID string, blockPatches *model.BlockPatch
 			if err != nil {
 				return err
 			}
+
+			// Populate code field for card blocks before broadcasting
+			if newBlock.Type == model.TypeCard && newBlock.Number > 0 {
+				board, err := a.store.GetBoard(newBlock.BoardID)
+				if err == nil && board.Code != "" {
+					newBlock.Code = fmt.Sprintf("%s-%d", board.Code, newBlock.Number)
+				}
+			}
+
 			a.wsAdapter.BroadcastBlockChange(teamID, newBlock)
 			a.webhook.NotifyUpdate(newBlock)
 			if !disableNotify {
@@ -163,6 +178,11 @@ func (a *App) InsertBlockAndNotify(block *model.Block, modifiedByID string, disa
 
 	err := a.store.InsertBlock(block, modifiedByID)
 	if err == nil {
+		// Populate code field for card blocks before broadcasting
+		if block.Type == model.TypeCard && block.Number > 0 && board.Code != "" {
+			block.Code = fmt.Sprintf("%s-%d", board.Code, block.Number)
+		}
+
 		a.blockChangeNotifier.Enqueue(func() error {
 			a.wsAdapter.BroadcastBlockChange(board.TeamID, block)
 			a.metrics.IncrementBlocksInserted(1)
