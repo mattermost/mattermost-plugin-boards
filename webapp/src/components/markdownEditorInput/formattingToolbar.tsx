@@ -6,6 +6,8 @@ import {useIntl} from 'react-intl'
 
 import IconButton from '../../widgets/buttons/iconButton'
 import CompassIcon from '../../widgets/icons/compassIcon'
+import StrikethroughIcon from '../../widgets/icons/strikethrough'
+import QuoteIcon from '../../widgets/icons/quote'
 
 import './formattingToolbar.scss'
 
@@ -47,7 +49,7 @@ const FormattingToolbar = (props: Props): JSX.Element => {
             />
             <IconButton
                 onMouseDown={(e) => handleFormat(e, 'strikethrough')}
-                icon={<CompassIcon icon='format-strikethrough'/>}
+                icon={<StrikethroughIcon/>}
                 title={strikethroughText}
                 size='small'
             />
@@ -79,7 +81,7 @@ const FormattingToolbar = (props: Props): JSX.Element => {
             />
             <IconButton
                 onMouseDown={(e) => handleFormat(e, 'quote')}
-                icon={<CompassIcon icon='format-quote-close'/>}
+                icon={<QuoteIcon/>}
                 title={quoteText}
                 size='small'
             />
