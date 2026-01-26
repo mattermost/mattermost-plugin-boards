@@ -174,7 +174,10 @@ describe('components/cardDialog', () => {
             ))
         })
         const buttonElement = screen.getByRole('button', {name: 'Close dialog'})
-        userEvent.click(buttonElement)
+        await act(async () => {
+            userEvent.click(buttonElement)
+        })
+        await new Promise((resolve) => setTimeout(resolve, 100))
         expect(closeFn).toBeCalledTimes(1)
     })
     test('return cardDialog menu content', async () => {
@@ -442,6 +445,7 @@ describe('components/cardDialog', () => {
         const closeButton = screen.getByRole('button', {name: 'Close dialog'})
         await act(async () => {
             userEvent.click(closeButton)
+            await new Promise((resolve) => setTimeout(resolve, 100))
         })
 
         expect(mockedMutator.deleteBlock).toHaveBeenCalledWith(textBlock2, 'cleanup empty blocks')
@@ -494,6 +498,7 @@ describe('components/cardDialog', () => {
         const closeButton = screen.getByRole('button', {name: 'Close dialog'})
         await act(async () => {
             userEvent.click(closeButton)
+            await new Promise((resolve) => setTimeout(resolve, 100))
         })
 
         expect(mockedMutator.deleteBlock).not.toHaveBeenCalled()
