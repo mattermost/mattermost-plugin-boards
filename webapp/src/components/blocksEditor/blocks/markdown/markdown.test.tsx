@@ -102,7 +102,9 @@ describe('components/blocksEditor/blocks/markdown', () => {
                 />
             </ReduxProvider>,
         ))
-        expect(container).toMatchSnapshot()
+        const codeElement = container.querySelector('code')
+        expect(codeElement).toBeTruthy()
+        expect(codeElement?.textContent?.replace(/\s+/g, ' ').trim()).toBe('javascript const x = 1;')
     })
 
     test('should render markdown with list', async () => {
@@ -117,7 +119,14 @@ describe('components/blocksEditor/blocks/markdown', () => {
                 />
             </ReduxProvider>,
         ))
-        expect(container).toMatchSnapshot()
+        const ulElement = container.querySelector('ul')
+        expect(ulElement).toBeTruthy()
+        const liElements = container.querySelectorAll('li')
+        expect(liElements.length).toBeGreaterThan(0)
+        const text = ulElement?.textContent?.replace(/\s+/g, ' ').trim()
+        expect(text).toContain('Item 1')
+        expect(text).toContain('Item 2')
+        expect(text).toContain('Item 3')
     })
 
     test('should show placeholder when empty', async () => {

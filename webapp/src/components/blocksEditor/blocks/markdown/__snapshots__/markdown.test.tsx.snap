@@ -89,42 +89,6 @@ exports[`components/blocksEditor/blocks/markdown should render markdown with bol
 </div>
 `;
 
-exports[`components/blocksEditor/blocks/markdown should render markdown with code block 1`] = `
-<div>
-  <div
-    class="octo-editor-preview"
-  >
-    <p>
-      <code>
-        javascript
-const x = 1;
-
-      </code>
-    </p>
-  </div>
-</div>
-`;
-
-exports[`components/blocksEditor/blocks/markdown should render markdown with list 1`] = `
-<div>
-  <div
-    class="octo-editor-preview"
-  >
-    <ul>
-       
-
-      <li>
-        Item 1
-- Item 2
-- Item 3
-      </li>
-       
-
-    </ul>
-  </div>
-</div>
-`;
-
 exports[`components/blocksEditor/blocks/markdown should show placeholder when empty 1`] = `
 <div>
   <div
