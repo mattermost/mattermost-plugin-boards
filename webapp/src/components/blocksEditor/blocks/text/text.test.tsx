@@ -73,9 +73,8 @@ describe('components/blocksEditor/blocks/text', () => {
             container = result.container
         })
 
-        // Check for FormattingToolbar and its buttons
-        expect(container!.querySelector('.FormattingToolbar')).toBeTruthy()
-        expect(container!.querySelector('.icon-format-bold')).toBeTruthy()
-        expect(container!.querySelector('.icon-format-italic')).toBeTruthy()
+        // FormattingToolbar should NOT be present for text blocks (showToolbar=false)
+        expect(container!.querySelector('.FormattingToolbar')).toBeFalsy()
+        expect(container!.querySelector('.TextContent')).toBeTruthy()
     })
 })

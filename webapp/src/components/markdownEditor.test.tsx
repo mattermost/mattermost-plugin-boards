@@ -144,9 +144,8 @@ describe('components/markdownEditor', () => {
             })
         })
 
-        // Check for FormattingToolbar and its buttons
-        expect(container!.querySelector('.FormattingToolbar')).toBeTruthy()
-        expect(container!.querySelector('.icon-format-bold')).toBeTruthy()
-        expect(container!.querySelector('.icon-format-italic')).toBeTruthy()
+        // FormattingToolbar should NOT be present when showToolbar is not set
+        expect(container!.querySelector('.FormattingToolbar')).toBeFalsy()
+        expect(container!.querySelector('.MarkdownEditorInput')).toBeTruthy()
     })
 })

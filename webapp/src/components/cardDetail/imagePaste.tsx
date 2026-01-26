@@ -96,6 +96,10 @@ export default function useImagePaste(
     }, [cardId, contentOrder, boardId, options])
 
     const onDrop = useCallback((event: DragEvent): void => {
+        // Don't handle drop if ImageViewer is open (prevents duplicate blocks when dragging zoomed image)
+        if (document.querySelector('.ImageViewer')) {
+            return
+        }
         if (event.dataTransfer) {
             const items = event.dataTransfer.files
             uploadItems(items)
@@ -103,6 +107,10 @@ export default function useImagePaste(
     }, [uploadItems])
 
     const onPaste = useCallback((event: ClipboardEvent): void => {
+        // Don't handle paste if ImageViewer is open
+        if (document.querySelector('.ImageViewer')) {
+            return
+        }
         if (event.clipboardData) {
             const items = event.clipboardData.files
             uploadItems(items)

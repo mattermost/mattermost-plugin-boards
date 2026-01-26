@@ -6,6 +6,8 @@ import {useIntl} from 'react-intl'
 
 import IconButton from '../../widgets/buttons/iconButton'
 import CompassIcon from '../../widgets/icons/compassIcon'
+import StrikethroughIcon from '../../widgets/icons/strikethrough'
+import QuoteIcon from '../../widgets/icons/quote'
 
 import './formattingToolbar.scss'
 
@@ -26,55 +28,60 @@ const FormattingToolbar = (props: Props): JSX.Element => {
     const numberListText = intl.formatMessage({id: 'FormattingToolbar.numberList', defaultMessage: 'Numbered list'})
     const quoteText = intl.formatMessage({id: 'FormattingToolbar.quote', defaultMessage: 'Quote'})
 
+    const handleFormat = (e: React.MouseEvent, format: string) => {
+        e.preventDefault()
+        onFormat(format)
+    }
+
     return (
         <div className='FormattingToolbar'>
             <IconButton
-                onClick={() => onFormat('bold')}
+                onMouseDown={(e) => handleFormat(e, 'bold')}
                 icon={<CompassIcon icon='format-bold'/>}
                 title={boldText}
                 size='small'
             />
             <IconButton
-                onClick={() => onFormat('italic')}
+                onMouseDown={(e) => handleFormat(e, 'italic')}
                 icon={<CompassIcon icon='format-italic'/>}
                 title={italicText}
                 size='small'
             />
             <IconButton
-                onClick={() => onFormat('strikethrough')}
-                icon={<CompassIcon icon='format-strikethrough'/>}
+                onMouseDown={(e) => handleFormat(e, 'strikethrough')}
+                icon={<StrikethroughIcon/>}
                 title={strikethroughText}
                 size='small'
             />
             <IconButton
-                onClick={() => onFormat('code')}
+                onMouseDown={(e) => handleFormat(e, 'code')}
                 icon={<CompassIcon icon='code-tags'/>}
                 title={codeText}
                 size='small'
             />
             <div className='FormattingToolbar__separator'/>
             <IconButton
-                onClick={() => onFormat('link')}
+                onMouseDown={(e) => handleFormat(e, 'link')}
                 icon={<CompassIcon icon='link-variant'/>}
                 title={linkText}
                 size='small'
             />
             <div className='FormattingToolbar__separator'/>
             <IconButton
-                onClick={() => onFormat('bulletList')}
+                onMouseDown={(e) => handleFormat(e, 'bulletList')}
                 icon={<CompassIcon icon='format-list-bulleted'/>}
                 title={bulletListText}
                 size='small'
             />
             <IconButton
-                onClick={() => onFormat('numberList')}
+                onMouseDown={(e) => handleFormat(e, 'numberList')}
                 icon={<CompassIcon icon='format-list-numbered'/>}
                 title={numberListText}
                 size='small'
             />
             <IconButton
-                onClick={() => onFormat('quote')}
-                icon={<CompassIcon icon='format-quote-close'/>}
+                onMouseDown={(e) => handleFormat(e, 'quote')}
+                icon={<QuoteIcon/>}
                 title={quoteText}
                 size='small'
             />
