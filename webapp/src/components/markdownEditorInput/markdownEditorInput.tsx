@@ -6,7 +6,7 @@ import createEmojiPlugin from '@draft-js-plugins/emoji'
 import '@draft-js-plugins/emoji/lib/plugin.css'
 import createMentionPlugin from '@draft-js-plugins/mention'
 import '@draft-js-plugins/mention/lib/plugin.css'
-import {ContentState, DraftHandleValue, EditorState, getDefaultKeyBinding} from 'draft-js'
+import {ContentState, DraftHandleValue, EditorState, getDefaultKeyBinding, RichUtils, Modifier} from 'draft-js'
 import React, {
     ReactElement, useCallback, useEffect,
     useMemo, useRef,
@@ -277,50 +277,122 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
     const handleFormat = useCallback((format: string) => {
         const selection = editorState.getSelection()
         const currentContent = editorState.getCurrentContent()
+        let newState = editorState
+
+        // Get selected text for placeholder text
         const startKey = selection.getStartKey()
+        const endKey = selection.getEndKey()
         const startOffset = selection.getStartOffset()
         const endOffset = selection.getEndOffset()
-        const selectedText = currentContent.getBlockForKey(startKey).getText().slice(startOffset, endOffset)
 
-        let formattedText = ''
+        // Check if selection is collapsed (no text selected)
+        const isCollapsed = selection.isCollapsed()
+
+        // Get selected text (works for single and multi-line selections)
+        let selectedText = ''
+        if (!isCollapsed) {
+            const startBlock = currentContent.getBlockForKey(startKey)
+            const endBlock = currentContent.getBlockForKey(endKey)
+
+            if (startKey === endKey) {
+                // Single line selection
+                selectedText = startBlock.getText().slice(startOffset, endOffset)
+            } else {
+                // Multi-line selection - just use first line for simplicity
+                selectedText = startBlock.getText().slice(startOffset)
+            }
+        }
+
         switch (format) {
         case 'bold':
-            formattedText = `**${selectedText || 'bold text'}**`
-            break
         case 'italic':
-            formattedText = `*${selectedText || 'italic text'}*`
-            break
         case 'strikethrough':
-            formattedText = `~~${selectedText || 'strikethrough text'}~~`
+        case 'code': {
+            // For inline styles, wrap with markdown syntax
+            const markers = {
+                bold: '**',
+                italic: '*',
+                strikethrough: '~~',
+                code: '`',
+            }
+            const marker = markers[format as keyof typeof markers]
+            const placeholder = {
+                bold: 'bold text',
+                italic: 'italic text',
+                strikethrough: 'strikethrough text',
+                code: 'code',
+            }
+            const text = selectedText || placeholder[format as keyof typeof placeholder]
+            const formattedText = `${marker}${text}${marker}`
+
+            const contentWithText = Modifier.replaceText(
+                currentContent,
+                selection,
+                formattedText,
+            )
+            newState = EditorState.push(editorState, contentWithText, 'insert-characters')
             break
-        case 'code':
-            formattedText = `\`${selectedText || 'code'}\``
+        }
+        case 'link': {
+            const linkText = selectedText || 'link text'
+            const formattedText = `[${linkText}](url)`
+            const contentWithText = Modifier.replaceText(
+                currentContent,
+                selection,
+                formattedText,
+            )
+            newState = EditorState.push(editorState, contentWithText, 'insert-characters')
             break
-        case 'link':
-            formattedText = `[${selectedText || 'link text'}](url)`
-            break
+        }
         case 'bulletList':
-            formattedText = `* ${selectedText || 'list item'}`
+        case 'numberList': {
+            // For lists, add prefix to current line
+            const prefix = format === 'bulletList' ? '* ' : '1. '
+            const blockKey = selection.getStartKey()
+            const block = currentContent.getBlockForKey(blockKey)
+            const blockText = block.getText()
+
+            // Insert prefix at the beginning of the line
+            const newText = prefix + blockText
+            const blockSelection = selection.merge({
+                anchorOffset: 0,
+                focusOffset: blockText.length,
+            })
+            const contentWithPrefix = Modifier.replaceText(
+                currentContent,
+                blockSelection,
+                newText,
+            )
+            newState = EditorState.push(editorState, contentWithPrefix, 'insert-characters')
             break
-        case 'numberList':
-            formattedText = `1. ${selectedText || 'list item'}`
+        }
+        case 'quote': {
+            // For quote, add prefix to current line
+            const blockKey = selection.getStartKey()
+            const block = currentContent.getBlockForKey(blockKey)
+            const blockText = block.getText()
+
+            // Insert prefix at the beginning of the line
+            const newText = '> ' + blockText
+            const blockSelection = selection.merge({
+                anchorOffset: 0,
+                focusOffset: blockText.length,
+            })
+            const contentWithPrefix = Modifier.replaceText(
+                currentContent,
+                blockSelection,
+                newText,
+            )
+            newState = EditorState.push(editorState, contentWithPrefix, 'insert-characters')
             break
-        case 'quote':
-            formattedText = `> ${selectedText || 'quote'}`
-            break
+        }
         default:
             return
         }
 
-        const newContent = ContentState.createFromText(
-            currentContent.getPlainText().slice(0, startOffset) +
-            formattedText +
-            currentContent.getPlainText().slice(endOffset),
-        )
-        const newState = EditorState.push(editorState, newContent, 'insert-characters')
         onEditorStateChange(newState)
         ref.current?.focus()
-    }, [editorState])
+    }, [editorState, onEditorStateChange])
 
     const handleReturn = (e: any, state: EditorState): DraftHandleValue => {
         if (!e.shiftKey) {
