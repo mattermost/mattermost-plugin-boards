@@ -89,7 +89,8 @@ const CommentTreeNode: React.FC<CommentTreeNodeProps> = ({node, level, readonly,
                     comment={node.comment}
                     userImageUrl={Utils.getProfilePicture(node.comment.modifiedBy)}
                     userId={node.comment.modifiedBy}
-                    readonly={readonly || !canDeleteComment}
+                    readonly={readonly}
+                    canDelete={canDeleteComment}
                     onReply={!readonly ? onReply : undefined}
                 />
             </div>

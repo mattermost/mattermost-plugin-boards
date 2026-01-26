@@ -391,13 +391,30 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
                     const blockText = block.getText()
                     const actualPrefix = format === 'bulletList' ? prefix : `${listNumber}. `
 
-                    // Check if text already has a list prefix
+                    // Check if text already has the same type of prefix
                     const bulletRegex = /^\* /
                     const numberRegex = /^\d+\. /
-                    const hasPrefix = bulletRegex.test(blockText) || numberRegex.test(blockText)
 
-                    // Only add prefix if it doesn't already exist
-                    const newText = hasPrefix ? blockText : actualPrefix + blockText
+                    let newText: string
+                    if (format === 'bulletList') {
+                        // If already has bullet prefix, skip. If has number prefix, replace it.
+                        if (bulletRegex.test(blockText)) {
+                            newText = blockText
+                        } else if (numberRegex.test(blockText)) {
+                            newText = blockText.replace(numberRegex, prefix)
+                        } else {
+                            newText = prefix + blockText
+                        }
+                    } else {
+                        // numberList: If already has number prefix, skip. If has bullet prefix, replace it.
+                        if (numberRegex.test(blockText)) {
+                            newText = blockText
+                        } else if (bulletRegex.test(blockText)) {
+                            newText = blockText.replace(bulletRegex, actualPrefix)
+                        } else {
+                            newText = actualPrefix + blockText
+                        }
+                    }
 
                     // Create a forward selection for this block to avoid backward selection issues
                     const blockSelection = SelectionState.createEmpty(blockKey).merge({

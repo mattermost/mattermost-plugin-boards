@@ -1,7 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {FC} from 'react'
+import React, {FC, useRef} from 'react'
 import {useIntl} from 'react-intl'
 
 import {getChannelsNameMapInTeam} from 'mattermost-redux/selectors/entities/channels'
@@ -31,6 +31,7 @@ type Props = {
     userId: string
     userImageUrl: string
     readonly: boolean
+    canDelete: boolean
     onReply?: (commentId: string, quotedText: string) => void
 }
 
@@ -39,6 +40,7 @@ const Comment: FC<Props> = (props: Props) => {
     const intl = useIntl()
     const user = useAppSelector(getUser(userId))
     const date = new Date(comment.createAt)
+    const commentRef = useRef<HTMLDivElement>(null)
 
     const selectedTeam = useAppSelector(getCurrentTeam)
     const channelNamesMap =  getChannelsNameMapInTeam((window as any).store.getState(), selectedTeam!.id)
@@ -62,8 +64,17 @@ const Comment: FC<Props> = (props: Props) => {
         const selection = window.getSelection()
         let textToQuote = comment.title
 
-        if (selection && selection.toString().trim()) {
-            textToQuote = selection.toString().trim()
+        // Check if selection is within this comment
+        if (selection && !selection.isCollapsed && commentRef.current) {
+            const anchorInComment = commentRef.current.contains(selection.anchorNode)
+            const focusInComment = commentRef.current.contains(selection.focusNode)
+
+            if (anchorInComment && focusInComment) {
+                const selectedText = selection.toString().trim()
+                if (selectedText) {
+                    textToQuote = selectedText
+                }
+            }
         }
 
         const quotedText = textToQuote.split('\n').map((line) => `> ${line}`).join('\n')
@@ -74,6 +85,7 @@ const Comment: FC<Props> = (props: Props) => {
         <div
             key={comment.id}
             className='Comment comment'
+            ref={commentRef}
         >
             <div className='comment-header'>
                 <img
@@ -90,15 +102,16 @@ const Comment: FC<Props> = (props: Props) => {
                 </Tooltip>
 
                 {!props.readonly && onReply && (
-                    <a
+                    <button
+                        type='button'
                         className='comment-reply'
                         onClick={handleReply}
                     >
-                        ↩ Reply
-                    </a>
+                        {intl.formatMessage({id: 'Comment.reply', defaultMessage: '↩ Reply'})}
+                    </button>
                 )}
 
-                {!props.readonly && (
+                {!props.readonly && props.canDelete && (
                     <MenuWrapper>
                         <IconButton icon={<OptionsIcon/>}/>
                         <Menu position='left'>
