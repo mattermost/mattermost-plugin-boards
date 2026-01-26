@@ -36,24 +36,28 @@ const FormattingToolbar = (props: Props): JSX.Element => {
     return (
         <div className='FormattingToolbar'>
             <IconButton
+                onClick={() => onFormat('bold')}
                 onMouseDown={(e) => handleFormat(e, 'bold')}
                 icon={<CompassIcon icon='format-bold'/>}
                 title={boldText}
                 size='small'
             />
             <IconButton
+                onClick={() => onFormat('italic')}
                 onMouseDown={(e) => handleFormat(e, 'italic')}
                 icon={<CompassIcon icon='format-italic'/>}
                 title={italicText}
                 size='small'
             />
             <IconButton
+                onClick={() => onFormat('strikethrough')}
                 onMouseDown={(e) => handleFormat(e, 'strikethrough')}
                 icon={<StrikethroughIcon/>}
                 title={strikethroughText}
                 size='small'
             />
             <IconButton
+                onClick={() => onFormat('code')}
                 onMouseDown={(e) => handleFormat(e, 'code')}
                 icon={<CompassIcon icon='code-tags'/>}
                 title={codeText}
@@ -61,6 +65,7 @@ const FormattingToolbar = (props: Props): JSX.Element => {
             />
             <div className='FormattingToolbar__separator'/>
             <IconButton
+                onClick={() => onFormat('link')}
                 onMouseDown={(e) => handleFormat(e, 'link')}
                 icon={<CompassIcon icon='link-variant'/>}
                 title={linkText}
@@ -68,18 +73,21 @@ const FormattingToolbar = (props: Props): JSX.Element => {
             />
             <div className='FormattingToolbar__separator'/>
             <IconButton
+                onClick={() => onFormat('bulletList')}
                 onMouseDown={(e) => handleFormat(e, 'bulletList')}
                 icon={<CompassIcon icon='format-list-bulleted'/>}
                 title={bulletListText}
                 size='small'
             />
             <IconButton
+                onClick={() => onFormat('numberList')}
                 onMouseDown={(e) => handleFormat(e, 'numberList')}
                 icon={<CompassIcon icon='format-list-numbered'/>}
                 title={numberListText}
                 size='small'
             />
             <IconButton
+                onClick={() => onFormat('quote')}
                 onMouseDown={(e) => handleFormat(e, 'quote')}
                 icon={<QuoteIcon/>}
                 title={quoteText}

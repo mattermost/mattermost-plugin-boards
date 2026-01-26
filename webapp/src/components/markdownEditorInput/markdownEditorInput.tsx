@@ -6,7 +6,7 @@ import createEmojiPlugin from '@draft-js-plugins/emoji'
 import '@draft-js-plugins/emoji/lib/plugin.css'
 import createMentionPlugin from '@draft-js-plugins/mention'
 import '@draft-js-plugins/mention/lib/plugin.css'
-import {ContentState, DraftHandleValue, EditorState, getDefaultKeyBinding, Modifier} from 'draft-js'
+import {ContentState, DraftHandleValue, EditorState, getDefaultKeyBinding, Modifier, SelectionState} from 'draft-js'
 import React, {
     ReactElement, useCallback, useEffect,
     useMemo, useRef,
@@ -258,10 +258,11 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
         debouncedLoadSuggestion(value)
     }, [suggestions])
 
-    const handleFormat = useCallback((format: string) => {
-        const selection = editorState.getSelection()
-        const currentContent = editorState.getCurrentContent()
-        let newState = editorState
+    const handleFormat = useCallback((format: string, stateToUse?: EditorState) => {
+        const currentEditorState = stateToUse || editorState
+        const selection = currentEditorState.getSelection()
+        const currentContent = currentEditorState.getCurrentContent()
+        let newState = currentEditorState
 
         // Get selected text for placeholder text
         const startKey = selection.getStartKey()
@@ -275,14 +276,46 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
         // Get selected text (works for single and multi-line selections)
         let selectedText = ''
         if (!isCollapsed) {
-            const startBlock = currentContent.getBlockForKey(startKey)
-
             if (startKey === endKey) {
                 // Single line selection
+                const startBlock = currentContent.getBlockForKey(startKey)
                 selectedText = startBlock.getText().slice(startOffset, endOffset)
             } else {
-                // Multi-line selection - just use first line for simplicity
-                selectedText = startBlock.getText().slice(startOffset)
+                // Multi-line selection - collect text from all blocks
+                const blockMap = currentContent.getBlockMap()
+                let foundStart = false
+                const textParts: string[] = []
+
+                blockMap.forEach((block) => {
+                    if (!block) {
+                        return
+                    }
+
+                    const blockKey = block.getKey()
+
+                    if (blockKey === startKey) {
+                        foundStart = true
+                    }
+
+                    if (foundStart) {
+                        if (blockKey === startKey) {
+                            // First block - take from startOffset to end
+                            textParts.push(block.getText().slice(startOffset))
+                        } else if (blockKey === endKey) {
+                            // Last block - take from start to endOffset
+                            textParts.push(block.getText().slice(0, endOffset))
+                        } else {
+                            // Middle blocks - take all text
+                            textParts.push(block.getText())
+                        }
+                    }
+
+                    if (blockKey === endKey) {
+                        foundStart = false
+                    }
+                })
+
+                selectedText = textParts.join('\n')
             }
         }
 
@@ -359,12 +392,11 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
                     const actualPrefix = format === 'bulletList' ? prefix : `${listNumber}. `
                     const newText = actualPrefix + blockText
 
-                    const blockSelection = selection.merge({
-                        anchorKey: blockKey,
+                    // Create a forward selection for this block to avoid backward selection issues
+                    const blockSelection = SelectionState.createEmpty(blockKey).merge({
                         anchorOffset: 0,
-                        focusKey: blockKey,
                         focusOffset: blockText.length,
-                    })
+                    }) as SelectionState
 
                     newContent = Modifier.replaceText(
                         newContent,
@@ -413,12 +445,11 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
                     const blockText = block.getText()
                     const newText = prefix + blockText
 
-                    const blockSelection = selection.merge({
-                        anchorKey: blockKey,
+                    // Create a forward selection for this block to avoid backward selection issues
+                    const blockSelection = SelectionState.createEmpty(blockKey).merge({
                         anchorOffset: 0,
-                        focusKey: blockKey,
                         focusOffset: blockText.length,
-                    })
+                    }) as SelectionState
 
                     newContent = Modifier.replaceText(
                         newContent,
@@ -466,27 +497,27 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
 
         // Handle formatting shortcuts
         if (command === 'format-bold') {
-            handleFormat('bold')
+            handleFormat('bold', currentState)
             return 'handled'
         }
 
         if (command === 'format-italic') {
-            handleFormat('italic')
+            handleFormat('italic', currentState)
             return 'handled'
         }
 
         if (command === 'format-strikethrough') {
-            handleFormat('strikethrough')
+            handleFormat('strikethrough', currentState)
             return 'handled'
         }
 
         if (command === 'format-link') {
-            handleFormat('link')
+            handleFormat('link', currentState)
             return 'handled'
         }
 
         if (command === 'format-code') {
-            handleFormat('code')
+            handleFormat('code', currentState)
             return 'handled'
         }
 
