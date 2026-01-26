@@ -59,6 +59,7 @@ type Props = {
     id?: string
     isEditing: boolean
     saveOnEnter?: boolean
+    showToolbar?: boolean
 }
 
 const MarkdownEditorInput = (props: Props): ReactElement => {
@@ -339,7 +340,7 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
                 }
             }}
         >
-            <FormattingToolbar onFormat={handleFormat}/>
+            {props.showToolbar && <FormattingToolbar onFormat={handleFormat}/>}
             <Editor
                 editorKey={id}
                 editorState={editorState}

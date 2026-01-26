@@ -42,6 +42,7 @@ const TextContent: ContentType = {
                     onEditorCancel={() => {
                         props.onCancel()
                     }}
+                    showToolbar={false}
                 />
             </div>
         )

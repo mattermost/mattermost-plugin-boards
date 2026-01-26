@@ -69,6 +69,7 @@ const CommentsList = (props: Props) => {
                         setNewComment(value)
                     }
                 }}
+                showToolbar={true}
             />
 
             {newComment &&

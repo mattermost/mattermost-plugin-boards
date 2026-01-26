@@ -22,6 +22,7 @@ type Props = {
     onEditorCancel?: () => void
     autofocus?: boolean
     saveOnEnter?: boolean
+    showToolbar?: boolean
 }
 
 const MarkdownEditor = (props: Props): JSX.Element => {
@@ -65,6 +66,7 @@ const MarkdownEditor = (props: Props): JSX.Element => {
                 initialText={text}
                 isEditing={isEditing}
                 saveOnEnter={saveOnEnter}
+                showToolbar={props.showToolbar}
             />
         </Suspense>
     )
