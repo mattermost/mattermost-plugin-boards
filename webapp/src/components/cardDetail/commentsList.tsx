@@ -32,17 +32,8 @@ type Props = {
 
 const CommentsList = (props: Props) => {
     const [newComment, setNewComment] = useState('')
-    const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 975)
     const me = useAppSelector<IUser|null>(getMe)
     const canDeleteOthersComments = useHasCurrentBoardPermissions([Permission.DeleteOthersComments])
-
-    useEffect(() => {
-        const handleResize = () => {
-            setIsDesktop(window.innerWidth >= 975)
-        }
-        window.addEventListener('resize', handleResize)
-        return () => window.removeEventListener('resize', handleResize)
-    }, [])
 
     const onSendClicked = () => {
         const commentText = newComment
@@ -96,9 +87,9 @@ const CommentsList = (props: Props) => {
         </div>
     )
 
-    // For desktop: oldest to newest (no reverse)
-    // For mobile: newest to oldest (reverse)
-    const sortedComments = isDesktop ? comments.slice(0) : comments.slice(0).reverse()
+    // Always show comments from oldest to newest (top to bottom)
+    // New comment input is always at the bottom
+    const sortedComments = comments.slice(0)
 
     return (
         <div className='CommentsList'>
