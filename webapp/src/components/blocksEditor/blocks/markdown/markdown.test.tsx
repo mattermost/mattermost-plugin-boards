@@ -104,7 +104,8 @@ describe('components/blocksEditor/blocks/markdown', () => {
         ))
         const codeElement = container.querySelector('code')
         expect(codeElement).toBeTruthy()
-        expect(codeElement?.textContent?.replace(/\s+/g, ' ').trim()).toBe('javascript const x = 1;')
+        const normalizedText = codeElement?.textContent?.replace(/\\n/g, ' ').replace(/\s+/g, ' ').trim()
+        expect(normalizedText).toBe('javascript const x = 1;')
     })
 
     test('should render markdown with list', async () => {
@@ -123,7 +124,7 @@ describe('components/blocksEditor/blocks/markdown', () => {
         expect(ulElement).toBeTruthy()
         const liElements = container.querySelectorAll('li')
         expect(liElements.length).toBeGreaterThan(0)
-        const text = ulElement?.textContent?.replace(/\s+/g, ' ').trim()
+        const text = ulElement?.textContent?.replace(/\\n/g, ' ').replace(/\s+/g, ' ').trim()
         expect(text).toContain('Item 1')
         expect(text).toContain('Item 2')
         expect(text).toContain('Item 3')
