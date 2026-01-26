@@ -1,7 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useState, useMemo, useCallback, useEffect} from 'react'
+import React, {useState, useMemo, useCallback, useEffect, useRef} from 'react'
 import {DndProvider} from 'react-dnd'
 import {HTML5Backend} from 'react-dnd-html5-backend'
 
@@ -24,6 +24,7 @@ function BlocksEditor(props: Props) {
     const [nextType, setNextType] = useState<string>('')
     const [editing, setEditing] = useState<BlockData|null>(null)
     const [afterBlock, setAfterBlock] = useState<BlockData|null>(null)
+    const lastFocusedBlockIdRef = useRef<string | null>(null)
     const contentOrder = useMemo(() => props.blocks.filter((b) => b.id).map((b) => b.id!), [props.blocks])
 
     const setEditingWithCallback = useCallback((block: BlockData | null) => {
@@ -34,11 +35,12 @@ function BlocksEditor(props: Props) {
     }, [props.onEditingChange])
 
     useEffect(() => {
-        if (props.focusBlockId) {
+        if (props.focusBlockId && props.focusBlockId !== lastFocusedBlockIdRef.current) {
             const blockToFocus = props.blocks.find((b) => b.id === props.focusBlockId)
             if (blockToFocus) {
                 setEditingWithCallback(blockToFocus)
                 setAfterBlock(null)
+                lastFocusedBlockIdRef.current = props.focusBlockId
             }
         }
     }, [props.focusBlockId, props.blocks, setEditingWithCallback])

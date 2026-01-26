@@ -224,14 +224,15 @@ const CardDialog = (props: Props): JSX.Element => {
     }, [card?.boardId, card?.id, card?.fields.contentOrder])
 
     const cleanupEmptyBlocks = useCallback(async () => {
-        if (!card) {
+        if (!card || props.readonly) {
             return
         }
 
+        const textBlockTypes = ['text', 'markdown', 'h1', 'h2', 'h3', 'list-item', 'quote', 'checkbox']
         const emptyBlocks: Block[] = []
         const flatContents = contents.flat()
         for (const content of flatContents) {
-            if (content.type === 'divider') {
+            if (!textBlockTypes.includes(content.type)) {
                 continue
             }
             if (!content.title || content.title.trim() === '') {
@@ -244,7 +245,7 @@ const CardDialog = (props: Props): JSX.Element => {
                 await mutator.deleteBlock(block, 'cleanup empty blocks')
             }
         }
-    }, [card, contents])
+    }, [card, contents, props.readonly])
 
     const handleClose = useCallback(async () => {
         await cleanupEmptyBlocks()
