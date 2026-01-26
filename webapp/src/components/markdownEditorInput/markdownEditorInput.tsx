@@ -6,7 +6,7 @@ import createEmojiPlugin from '@draft-js-plugins/emoji'
 import '@draft-js-plugins/emoji/lib/plugin.css'
 import createMentionPlugin from '@draft-js-plugins/mention'
 import '@draft-js-plugins/mention/lib/plugin.css'
-import {ContentState, DraftHandleValue, EditorState, getDefaultKeyBinding, RichUtils, Modifier} from 'draft-js'
+import {ContentState, DraftHandleValue, EditorState, getDefaultKeyBinding, Modifier} from 'draft-js'
 import React, {
     ReactElement, useCallback, useEffect,
     useMemo, useRef,
@@ -276,7 +276,6 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
         let selectedText = ''
         if (!isCollapsed) {
             const startBlock = currentContent.getBlockForKey(startKey)
-            const endBlock = currentContent.getBlockForKey(endKey)
 
             if (startKey === endKey) {
                 // Single line selection
