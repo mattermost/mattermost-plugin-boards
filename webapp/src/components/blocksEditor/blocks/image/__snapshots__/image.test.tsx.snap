@@ -2,14 +2,52 @@
 
 exports[`components/blocksEditor/blocks/image should match Display snapshot 1`] = `
 <div>
-  <img
-    alt=""
-    class="ImageView"
-    data-testid="image"
-    role="button"
-    src="test.jpg"
-    tabindex="0"
-  />
+  <div
+    class="ImageView__container"
+  >
+    <div
+      class="ImageView__wrapper"
+    >
+      <img
+        alt=""
+        aria-label="View image in full screen"
+        class="ImageView"
+        data-testid="image"
+        src="test.jpg"
+      />
+      <div
+        aria-label="View image in full screen"
+        class="ImageView__overlay"
+        role="button"
+        tabindex="0"
+      >
+        <div
+          class="ImageView__magnify-icon"
+        >
+          <i
+            class="CompassIcon icon-magnify MagnifyIcon"
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      class="ImageView__metadata"
+    >
+      <span
+        class="ImageView__size"
+      >
+        161.1 KiB
+      </span>
+      <a
+        class="ImageView__download"
+        href="test.jpg"
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        Download
+      </a>
+    </div>
+  </div>
 </div>
 `;
 

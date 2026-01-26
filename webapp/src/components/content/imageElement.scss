@@ -1,9 +1,84 @@
+.ImageElement__container {
+    display: inline-block;
+    max-width: 100%;
+}
+
+.ImageElement__wrapper {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+}
+
 .ImageElement {
+    max-width: 100%;
+    display: block;
+}
+
+.ImageElement__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
     cursor: pointer;
+
+    &:hover {
+        opacity: 1;
+    }
 
     &:focus {
         outline: 2px solid rgba(var(--button-bg-rgb), 0.8);
         outline-offset: 2px;
+        opacity: 1;
+    }
+}
+
+.ImageElement__magnify-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: transparent;
+    transition: background-color 0.2s ease;
+
+    .CompassIcon {
+        font-size: 48px;
+        color: rgba(255, 255, 255, 0.9);
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
+
+    &:hover {
+        background-color: rgba(128, 128, 128, 0.3);
+    }
+}
+
+.ImageElement__metadata {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 4px;
+    font-size: 12px;
+    color: rgba(var(--center-channel-color-rgb), 0.56);
+
+    span {
+        white-space: nowrap;
+    }
+
+    a {
+        color: rgba(var(--link-color-rgb), 0.72);
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
     }
 }
 

@@ -20,6 +20,12 @@ import ImageElement from './imageElement'
 jest.mock('../../octoClient')
 const mockedOcto = mocked(octoClient, true)
 mockedOcto.getFileAsDataUrl.mockResolvedValue({url: 'test.jpg'})
+mockedOcto.getFileInfo.mockResolvedValue({
+    url: 'test.jpg',
+    name: 'test-image.jpg',
+    extension: '.jpg',
+    size: 165002,
+})
 
 describe('components/content/ImageElement', () => {
     const defaultBlock: ImageBlock = {
@@ -56,6 +62,12 @@ describe('components/content/ImageElement', () => {
 
     test('archived file', async () => {
         mockedOcto.getFileAsDataUrl.mockResolvedValue({
+            archived: true,
+            name: 'Filename',
+            extension: '.txt',
+            size: 165002,
+        })
+        mockedOcto.getFileInfo.mockResolvedValue({
             archived: true,
             name: 'Filename',
             extension: '.txt',

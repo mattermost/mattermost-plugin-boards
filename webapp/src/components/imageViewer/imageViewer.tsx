@@ -51,8 +51,9 @@ const ImageViewer = (props: Props): JSX.Element => {
     }, [])
 
     const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-        const target = e.target as HTMLElement
-        if (target.classList.contains('ImageViewer') || target.classList.contains('ImageViewer__backdrop')) {
+        const target = e.target
+        if (target instanceof HTMLElement &&
+            (target.classList.contains('ImageViewer') || target.classList.contains('ImageViewer__backdrop'))) {
             onClose()
         }
     }, [onClose])
