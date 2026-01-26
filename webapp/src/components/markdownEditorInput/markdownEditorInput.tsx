@@ -36,6 +36,7 @@ import {ClientConfig} from '../../config/clientConfig'
 import {getClientConfig} from '../../store/clientConfig'
 
 import Entry from './entryComponent/entryComponent'
+import FormattingToolbar from './formattingToolbar'
 
 const imageURLForUser = (window as any).Components?.imageURLForUser
 
@@ -272,6 +273,54 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
 
     const className = 'MarkdownEditorInput'
 
+    const handleFormat = useCallback((format: string) => {
+        const selection = editorState.getSelection()
+        const currentContent = editorState.getCurrentContent()
+        const startKey = selection.getStartKey()
+        const startOffset = selection.getStartOffset()
+        const endOffset = selection.getEndOffset()
+        const selectedText = currentContent.getBlockForKey(startKey).getText().slice(startOffset, endOffset)
+
+        let formattedText = ''
+        switch (format) {
+        case 'bold':
+            formattedText = `**${selectedText || 'bold text'}**`
+            break
+        case 'italic':
+            formattedText = `*${selectedText || 'italic text'}*`
+            break
+        case 'strikethrough':
+            formattedText = `~~${selectedText || 'strikethrough text'}~~`
+            break
+        case 'code':
+            formattedText = `\`${selectedText || 'code'}\``
+            break
+        case 'link':
+            formattedText = `[${selectedText || 'link text'}](url)`
+            break
+        case 'bulletList':
+            formattedText = `* ${selectedText || 'list item'}`
+            break
+        case 'numberList':
+            formattedText = `1. ${selectedText || 'list item'}`
+            break
+        case 'quote':
+            formattedText = `> ${selectedText || 'quote'}`
+            break
+        default:
+            return
+        }
+
+        const newContent = ContentState.createFromText(
+            currentContent.getPlainText().slice(0, startOffset) +
+            formattedText +
+            currentContent.getPlainText().slice(endOffset),
+        )
+        const newState = EditorState.push(editorState, newContent, 'insert-characters')
+        onEditorStateChange(newState)
+        ref.current?.focus()
+    }, [editorState])
+
     const handleReturn = (e: any, state: EditorState): DraftHandleValue => {
         if (!e.shiftKey) {
             const text = state.getCurrentContent().getPlainText()
@@ -290,6 +339,7 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
                 }
             }}
         >
+            <FormattingToolbar onFormat={handleFormat}/>
             <Editor
                 editorKey={id}
                 editorState={editorState}

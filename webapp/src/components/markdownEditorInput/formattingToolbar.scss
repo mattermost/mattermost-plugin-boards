@@ -1,0 +1,26 @@
+.FormattingToolbar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px;
+    border-bottom: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
+    background-color: rgba(var(--center-channel-color-rgb), 0.04);
+
+    .IconButton {
+        padding: 4px;
+        min-width: 28px;
+        height: 28px;
+
+        &:hover {
+            background-color: rgba(var(--button-bg-rgb), 0.08);
+        }
+    }
+
+    &__separator {
+        width: 1px;
+        height: 20px;
+        background-color: rgba(var(--center-channel-color-rgb), 0.16);
+        margin: 0 4px;
+    }
+}
+
