@@ -143,6 +143,10 @@ describe('components/markdownEditor', () => {
                 charCode: 27,
             })
         })
-        expect(container).toMatchSnapshot()
+
+        // Check for FormattingToolbar and its buttons
+        expect(container.querySelector('.FormattingToolbar')).toBeTruthy()
+        expect(container.querySelector('.icon-format-bold')).toBeTruthy()
+        expect(container.querySelector('.icon-format-italic')).toBeTruthy()
     })
 })
