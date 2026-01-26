@@ -64,7 +64,7 @@ const Comment: FC<Props> = (props: Props) => {
         const selection = window.getSelection()
         let textToQuote = comment.title
 
-        // Check if selection is within this comment
+        // Check if selection is fully within this comment
         if (selection && !selection.isCollapsed && commentRef.current) {
             const anchorInComment = commentRef.current.contains(selection.anchorNode)
             const focusInComment = commentRef.current.contains(selection.focusNode)
@@ -74,6 +74,9 @@ const Comment: FC<Props> = (props: Props) => {
                 if (selectedText) {
                     textToQuote = selectedText
                 }
+            } else {
+                // Selection is outside or partially outside this comment - clear it
+                selection.removeAllRanges()
             }
         }
 

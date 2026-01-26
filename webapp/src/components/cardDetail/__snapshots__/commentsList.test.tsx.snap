@@ -6,118 +6,140 @@ exports[`components/cardDetail/CommentsList comments show up 1`] = `
     class="CommentsList"
   >
     <div
-      class="Comment comment"
+      class="comment-thread-item "
+      style="margin-left: 0px;"
     >
       <div
-        class="comment-header"
+        class="Comment comment"
       >
-        <img
-          class="comment-avatar"
-          src="data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 100 100\\" style=\\"fill: rgb(192, 192, 192);\\"><rect width=\\"100\\" height=\\"100\\" /></svg>"
-        />
         <div
-          class="comment-username"
-        />
-        <div
-          class="octo-tooltip tooltip-top"
-          data-tooltip="a long time ago"
+          class="comment-header"
         >
+          <img
+            class="comment-avatar"
+            src="data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 100 100\\" style=\\"fill: rgb(192, 192, 192);\\"><rect width=\\"100\\" height=\\"100\\" /></svg>"
+          />
           <div
-            class="comment-date"
+            class="comment-username"
+          />
+          <div
+            class="octo-tooltip tooltip-top"
+            data-tooltip="a long time ago"
           >
-            a long time ago
+            <div
+              class="comment-date"
+            >
+              a long time ago
+            </div>
+          </div>
+          <button
+            class="comment-reply"
+            type="button"
+          >
+            ↩ Reply
+          </button>
+          <div
+            aria-label="menuwrapper"
+            class="MenuWrapper"
+            role="button"
+          >
+            <button
+              class="IconButton"
+              type="button"
+            >
+              <i
+                class="CompassIcon icon-dots-horizontal OptionsIcon"
+              />
+            </button>
           </div>
         </div>
         <div
-          aria-label="menuwrapper"
-          class="MenuWrapper"
-          role="button"
+          class="comment-markdown"
         >
-          <button
-            class="IconButton"
-            type="button"
+          <div
+            class="mocked-message-html"
           >
-            <i
-              class="CompassIcon icon-dots-horizontal OptionsIcon"
-            />
-          </button>
-        </div>
-      </div>
-      <div
-        class="comment-markdown"
-      >
-        <div
-          class="mocked-message-html"
-        >
-          Test Comment
+            Test Comment
+          </div>
         </div>
       </div>
     </div>
     <div
-      class="Comment comment"
+      class="comment-thread-item "
+      style="margin-left: 0px;"
     >
       <div
-        class="comment-header"
+        class="Comment comment"
       >
-        <img
-          class="comment-avatar"
-          src="data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 100 100\\" style=\\"fill: rgb(192, 192, 192);\\"><rect width=\\"100\\" height=\\"100\\" /></svg>"
-        />
         <div
-          class="comment-username"
-        />
-        <div
-          class="octo-tooltip tooltip-top"
-          data-tooltip="a long time ago"
+          class="comment-header"
         >
+          <img
+            class="comment-avatar"
+            src="data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 100 100\\" style=\\"fill: rgb(192, 192, 192);\\"><rect width=\\"100\\" height=\\"100\\" /></svg>"
+          />
           <div
-            class="comment-date"
+            class="comment-username"
+          />
+          <div
+            class="octo-tooltip tooltip-top"
+            data-tooltip="a long time ago"
           >
-            a long time ago
+            <div
+              class="comment-date"
+            >
+              a long time ago
+            </div>
+          </div>
+          <button
+            class="comment-reply"
+            type="button"
+          >
+            ↩ Reply
+          </button>
+          <div
+            aria-label="menuwrapper"
+            class="MenuWrapper"
+            role="button"
+          >
+            <button
+              class="IconButton"
+              type="button"
+            >
+              <i
+                class="CompassIcon icon-dots-horizontal OptionsIcon"
+              />
+            </button>
           </div>
         </div>
         <div
-          aria-label="menuwrapper"
-          class="MenuWrapper"
-          role="button"
+          class="comment-markdown"
         >
-          <button
-            class="IconButton"
-            type="button"
+          <div
+            class="mocked-message-html"
           >
-            <i
-              class="CompassIcon icon-dots-horizontal OptionsIcon"
-            />
-          </button>
-        </div>
-      </div>
-      <div
-        class="comment-markdown"
-      >
-        <div
-          class="mocked-message-html"
-        >
-          Test Comment
+            Test Comment
+          </div>
         </div>
       </div>
     </div>
     <div
       class="CommentsList__new"
     >
-      <img
-        class="comment-avatar"
-        src="data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 100 100\\" style=\\"fill: rgb(192, 192, 192);\\"><rect width=\\"100\\" height=\\"100\\" /></svg>"
-      />
       <div
-        class="MarkdownEditor octo-editor newcomment "
+        class="newcomment-wrapper"
       >
         <div
-          class="octo-editor-preview octo-placeholder"
-          data-testid="preview-element"
+          class="MarkdownEditor octo-editor newcomment "
         >
-          <p>
-            Add a comment...
-          </p>
+          <div
+            class="octo-editor-preview octo-placeholder"
+            data-testid="preview-element"
+          >
+            <p>
+              Add a comment...
+            </p>
+          </div>
         </div>
       </div>
       
@@ -135,70 +157,80 @@ exports[`components/cardDetail/CommentsList comments show up in readonly mode 1`
     class="CommentsList"
   >
     <div
-      class="Comment comment"
+      class="comment-thread-item "
+      style="margin-left: 0px;"
     >
       <div
-        class="comment-header"
+        class="Comment comment"
       >
-        <img
-          class="comment-avatar"
-          src="data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 100 100\\" style=\\"fill: rgb(192, 192, 192);\\"><rect width=\\"100\\" height=\\"100\\" /></svg>"
-        />
         <div
-          class="comment-username"
-        />
-        <div
-          class="octo-tooltip tooltip-top"
-          data-tooltip="a long time ago"
+          class="comment-header"
         >
+          <img
+            class="comment-avatar"
+            src="data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 100 100\\" style=\\"fill: rgb(192, 192, 192);\\"><rect width=\\"100\\" height=\\"100\\" /></svg>"
+          />
           <div
-            class="comment-date"
+            class="comment-username"
+          />
+          <div
+            class="octo-tooltip tooltip-top"
+            data-tooltip="a long time ago"
           >
-            a long time ago
+            <div
+              class="comment-date"
+            >
+              a long time ago
+            </div>
           </div>
         </div>
-      </div>
-      <div
-        class="comment-markdown"
-      >
         <div
-          class="mocked-message-html"
+          class="comment-markdown"
         >
-          Test Comment
+          <div
+            class="mocked-message-html"
+          >
+            Test Comment
+          </div>
         </div>
       </div>
     </div>
     <div
-      class="Comment comment"
+      class="comment-thread-item "
+      style="margin-left: 0px;"
     >
       <div
-        class="comment-header"
+        class="Comment comment"
       >
-        <img
-          class="comment-avatar"
-          src="data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 100 100\\" style=\\"fill: rgb(192, 192, 192);\\"><rect width=\\"100\\" height=\\"100\\" /></svg>"
-        />
         <div
-          class="comment-username"
-        />
-        <div
-          class="octo-tooltip tooltip-top"
-          data-tooltip="a long time ago"
+          class="comment-header"
         >
+          <img
+            class="comment-avatar"
+            src="data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 100 100\\" style=\\"fill: rgb(192, 192, 192);\\"><rect width=\\"100\\" height=\\"100\\" /></svg>"
+          />
           <div
-            class="comment-date"
+            class="comment-username"
+          />
+          <div
+            class="octo-tooltip tooltip-top"
+            data-tooltip="a long time ago"
           >
-            a long time ago
+            <div
+              class="comment-date"
+            >
+              a long time ago
+            </div>
           </div>
         </div>
-      </div>
-      <div
-        class="comment-markdown"
-      >
         <div
-          class="mocked-message-html"
+          class="comment-markdown"
         >
-          Test Comment
+          <div
+            class="mocked-message-html"
+          >
+            Test Comment
+          </div>
         </div>
       </div>
     </div>
