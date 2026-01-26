@@ -116,7 +116,7 @@ describe('components/markdownEditor', () => {
     })
 
     test('should match snapshot with on click on preview element and then click out of it', async () => {
-        let container
+        let container: HTMLElement
         await act(async () => {
             const result = render(wrapDNDIntl(
                 <ReduxProvider store={store}>
@@ -145,8 +145,8 @@ describe('components/markdownEditor', () => {
         })
 
         // Check for FormattingToolbar and its buttons
-        expect(container.querySelector('.FormattingToolbar')).toBeTruthy()
-        expect(container.querySelector('.icon-format-bold')).toBeTruthy()
-        expect(container.querySelector('.icon-format-italic')).toBeTruthy()
+        expect(container!.querySelector('.FormattingToolbar')).toBeTruthy()
+        expect(container!.querySelector('.icon-format-bold')).toBeTruthy()
+        expect(container!.querySelector('.icon-format-italic')).toBeTruthy()
     })
 })

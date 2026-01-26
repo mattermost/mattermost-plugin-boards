@@ -42,7 +42,7 @@ describe('components/blocksEditor/editor', () => {
     const store = mockStateStore([], state)
 
     test('should match snapshot', async () => {
-        let container
+        let container: HTMLElement
         await act(async () => {
             const result = render(wrapDNDIntl(
                 <ReduxProvider store={store}>
@@ -59,9 +59,9 @@ describe('components/blocksEditor/editor', () => {
         })
 
         // Check for FormattingToolbar and its buttons
-        expect(container.querySelector('.FormattingToolbar')).toBeTruthy()
-        expect(container.querySelector('.icon-format-bold')).toBeTruthy()
-        expect(container.querySelector('.icon-format-italic')).toBeTruthy()
+        expect(container!.querySelector('.FormattingToolbar')).toBeTruthy()
+        expect(container!.querySelector('.icon-format-bold')).toBeTruthy()
+        expect(container!.querySelector('.icon-format-italic')).toBeTruthy()
     })
 
     test('should match snapshot on empty', async () => {

@@ -57,7 +57,7 @@ describe('components/blocksEditor/blocks/markdown', () => {
     })
 
     test('should match Input snapshot', async () => {
-        let container
+        let container: HTMLElement
         await act(async () => {
             const Component = MarkdownBlock.Input
             const result = render(wrapDNDIntl(
@@ -74,9 +74,9 @@ describe('components/blocksEditor/blocks/markdown', () => {
         })
 
         // Check for FormattingToolbar and its buttons
-        expect(container.querySelector('.FormattingToolbar')).toBeTruthy()
-        expect(container.querySelector('.icon-format-bold')).toBeTruthy()
-        expect(container.querySelector('.icon-format-italic')).toBeTruthy()
+        expect(container!.querySelector('.FormattingToolbar')).toBeTruthy()
+        expect(container!.querySelector('.icon-format-bold')).toBeTruthy()
+        expect(container!.querySelector('.icon-format-italic')).toBeTruthy()
     })
 
     test('should render markdown with bold text', async () => {
