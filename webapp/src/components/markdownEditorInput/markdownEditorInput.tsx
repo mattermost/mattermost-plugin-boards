@@ -207,6 +207,22 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
             return 'backspace'
         }
 
+        // Formatting shortcuts (Ctrl+B, Ctrl+I, etc.)
+        if (e.ctrlKey || e.metaKey) {
+            switch (e.key.toLowerCase()) {
+            case 'b':
+                return 'format-bold'
+            case 'i':
+                return 'format-italic'
+            case 'u':
+                return 'format-strikethrough'
+            case 'k':
+                return 'format-link'
+            case 'e':
+                return 'format-code'
+            }
+        }
+
         if (getDefaultKeyBinding(e) === 'undo') {
             return 'editor-undo'
         }
@@ -217,36 +233,6 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
 
         return getDefaultKeyBinding(e as any)
     }, [isEmojiPopoverOpen, isMentionPopoverOpen])
-
-    const handleKeyCommand = useCallback((command: string, currentState: EditorState): DraftHandleValue => {
-        if (command === 'editor-blur') {
-            ref.current?.blur()
-            return 'handled'
-        }
-
-        if (command === 'editor-redo') {
-            const selectionRemovedState = EditorState.redo(currentState)
-            onEditorStateChange(EditorState.redo(selectionRemovedState))
-
-            return 'handled'
-        }
-
-        if (command === 'editor-undo') {
-            const selectionRemovedState = EditorState.undo(currentState)
-            onEditorStateChange(EditorState.undo(selectionRemovedState))
-
-            return 'handled'
-        }
-
-        if (command === 'backspace') {
-            if (props.onEditorCancel && editorState.getCurrentContent().getPlainText().length === 0) {
-                props.onEditorCancel()
-                return 'handled'
-            }
-        }
-
-        return 'not-handled'
-    }, [props.onEditorCancel, editorState])
 
     const onEditorStateBlur = useCallback(() => {
         if (confirmAddUser) {
@@ -271,8 +257,6 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
     const onSearchChange = useCallback(({value}: { value: string }) => {
         debouncedLoadSuggestion(value)
     }, [suggestions])
-
-    const className = 'MarkdownEditorInput'
 
     const handleFormat = useCallback((format: string) => {
         const selection = editorState.getSelection()
@@ -393,6 +377,64 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
         onEditorStateChange(newState)
         ref.current?.focus()
     }, [editorState, onEditorStateChange])
+
+    const handleKeyCommand = useCallback((command: string, currentState: EditorState): DraftHandleValue => {
+        if (command === 'editor-blur') {
+            ref.current?.blur()
+            return 'handled'
+        }
+
+        if (command === 'editor-redo') {
+            const selectionRemovedState = EditorState.redo(currentState)
+            onEditorStateChange(EditorState.redo(selectionRemovedState))
+
+            return 'handled'
+        }
+
+        if (command === 'editor-undo') {
+            const selectionRemovedState = EditorState.undo(currentState)
+            onEditorStateChange(EditorState.undo(selectionRemovedState))
+
+            return 'handled'
+        }
+
+        // Handle formatting shortcuts
+        if (command === 'format-bold') {
+            handleFormat('bold')
+            return 'handled'
+        }
+
+        if (command === 'format-italic') {
+            handleFormat('italic')
+            return 'handled'
+        }
+
+        if (command === 'format-strikethrough') {
+            handleFormat('strikethrough')
+            return 'handled'
+        }
+
+        if (command === 'format-link') {
+            handleFormat('link')
+            return 'handled'
+        }
+
+        if (command === 'format-code') {
+            handleFormat('code')
+            return 'handled'
+        }
+
+        if (command === 'backspace') {
+            if (props.onEditorCancel && editorState.getCurrentContent().getPlainText().length === 0) {
+                props.onEditorCancel()
+                return 'handled'
+            }
+        }
+
+        return 'not-handled'
+    }, [props.onEditorCancel, editorState, handleFormat])
+
+    const className = 'MarkdownEditorInput'
 
     const handleReturn = (e: any, state: EditorState): DraftHandleValue => {
         if (!e.shiftKey) {
