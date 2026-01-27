@@ -214,6 +214,78 @@ func TestInsertBlocks(t *testing.T) {
 		require.Error(t, err, "error")
 	})
 
+	t.Run("new card gets default property value", func(t *testing.T) {
+		boardID := testBoardID
+		block := &model.Block{
+			BoardID: boardID,
+			Type:    model.TypeCard,
+			Fields:  map[string]interface{}{},
+		}
+		board := &model.Board{
+			ID: boardID,
+			CardProperties: []map[string]interface{}{
+				{
+					"id":   "status-prop",
+					"name": "Status",
+					"type": "select",
+					"options": []interface{}{
+						map[string]interface{}{"id": "opt-default", "value": "Not Ready", "default": true},
+						map[string]interface{}{"id": "opt-done", "value": "Done"},
+					},
+				},
+			},
+		}
+		th.Store.EXPECT().GetBoard(boardID).Return(board, nil)
+		th.Store.EXPECT().GetBlock(gomock.Any()).Return(nil, model.NewErrNotFound("block not found"))
+		th.Store.EXPECT().InsertBlock(gomock.Any(), "user-id-1").Return(nil)
+		th.Store.EXPECT().GetMembersForBoard(boardID).Return([]*model.BoardMember{}, nil)
+
+		_, err := th.App.InsertBlocks([]*model.Block{block}, "user-id-1")
+		require.NoError(t, err)
+
+		// Verify default property was set
+		props := block.Fields["properties"].(map[string]interface{})
+		require.Equal(t, "opt-default", props["status-prop"])
+	})
+
+	t.Run("new card preserves explicitly set property value", func(t *testing.T) {
+		boardID := testBoardID
+		block := &model.Block{
+			BoardID: boardID,
+			Type:    model.TypeCard,
+			Fields: map[string]interface{}{
+				"properties": map[string]interface{}{
+					"status-prop": "opt-done", // explicitly set to Done
+				},
+			},
+		}
+		board := &model.Board{
+			ID: boardID,
+			CardProperties: []map[string]interface{}{
+				{
+					"id":   "status-prop",
+					"name": "Status",
+					"type": "select",
+					"options": []interface{}{
+						map[string]interface{}{"id": "opt-default", "value": "Not Ready", "default": true},
+						map[string]interface{}{"id": "opt-done", "value": "Done"},
+					},
+				},
+			},
+		}
+		th.Store.EXPECT().GetBoard(boardID).Return(board, nil)
+		th.Store.EXPECT().GetBlock(gomock.Any()).Return(nil, model.NewErrNotFound("block not found"))
+		th.Store.EXPECT().InsertBlock(gomock.Any(), "user-id-1").Return(nil)
+		th.Store.EXPECT().GetMembersForBoard(boardID).Return([]*model.BoardMember{}, nil)
+
+		_, err := th.App.InsertBlocks([]*model.Block{block}, "user-id-1")
+		require.NoError(t, err)
+
+		// Verify explicit value was NOT overwritten
+		props := block.Fields["properties"].(map[string]interface{})
+		require.Equal(t, "opt-done", props["status-prop"])
+	})
+
 	t.Run("create view within limits", func(t *testing.T) {
 		t.Skipf("The Cloud Limits feature has been disabled")
 
