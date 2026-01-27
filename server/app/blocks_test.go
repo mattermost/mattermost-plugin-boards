@@ -214,6 +214,78 @@ func TestInsertBlocks(t *testing.T) {
 		require.Error(t, err, "error")
 	})
 
+	t.Run("new card gets default property value", func(t *testing.T) {
+		boardID := testBoardID
+		block := &model.Block{
+			BoardID: boardID,
+			Type:    model.TypeCard,
+			Fields:  map[string]interface{}{},
+		}
+		board := &model.Board{
+			ID: boardID,
+			CardProperties: []map[string]interface{}{
+				{
+					"id":   "status-prop",
+					"name": "Status",
+					"type": "select",
+					"options": []interface{}{
+						map[string]interface{}{"id": "opt-default", "value": "Not Ready", "default": true},
+						map[string]interface{}{"id": "opt-done", "value": "Done"},
+					},
+				},
+			},
+		}
+		th.Store.EXPECT().GetBoard(boardID).Return(board, nil)
+		th.Store.EXPECT().GetBlock(gomock.Any()).Return(nil, model.NewErrNotFound("block not found"))
+		th.Store.EXPECT().InsertBlock(gomock.Any(), "user-id-1").Return(nil)
+		th.Store.EXPECT().GetMembersForBoard(boardID).Return([]*model.BoardMember{}, nil)
+
+		_, err := th.App.InsertBlocks([]*model.Block{block}, "user-id-1")
+		require.NoError(t, err)
+
+		// Verify default property was set
+		props := block.Fields["properties"].(map[string]interface{})
+		require.Equal(t, "opt-default", props["status-prop"])
+	})
+
+	t.Run("new card preserves explicitly set property value", func(t *testing.T) {
+		boardID := testBoardID
+		block := &model.Block{
+			BoardID: boardID,
+			Type:    model.TypeCard,
+			Fields: map[string]interface{}{
+				"properties": map[string]interface{}{
+					"status-prop": "opt-done", // explicitly set to Done
+				},
+			},
+		}
+		board := &model.Board{
+			ID: boardID,
+			CardProperties: []map[string]interface{}{
+				{
+					"id":   "status-prop",
+					"name": "Status",
+					"type": "select",
+					"options": []interface{}{
+						map[string]interface{}{"id": "opt-default", "value": "Not Ready", "default": true},
+						map[string]interface{}{"id": "opt-done", "value": "Done"},
+					},
+				},
+			},
+		}
+		th.Store.EXPECT().GetBoard(boardID).Return(board, nil)
+		th.Store.EXPECT().GetBlock(gomock.Any()).Return(nil, model.NewErrNotFound("block not found"))
+		th.Store.EXPECT().InsertBlock(gomock.Any(), "user-id-1").Return(nil)
+		th.Store.EXPECT().GetMembersForBoard(boardID).Return([]*model.BoardMember{}, nil)
+
+		_, err := th.App.InsertBlocks([]*model.Block{block}, "user-id-1")
+		require.NoError(t, err)
+
+		// Verify explicit value was NOT overwritten
+		props := block.Fields["properties"].(map[string]interface{})
+		require.Equal(t, "opt-done", props["status-prop"])
+	})
+
 	t.Run("create view within limits", func(t *testing.T) {
 		t.Skipf("The Cloud Limits feature has been disabled")
 
@@ -398,5 +470,123 @@ func TestFilterAuthorizedFilesForBoard(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, authorized, 1)
 		require.Equal(t, authorizedFile, authorized[0])
+	})
+}
+
+func TestApplyDefaultCardProperties(t *testing.T) {
+	th, tearDown := SetupTestHelper(t)
+	defer tearDown()
+
+	t.Run("should set default property when option has default=true", func(t *testing.T) {
+		board := &model.Board{
+			ID: testBoardID,
+			CardProperties: []map[string]interface{}{
+				{
+					"id":   "prop-1",
+					"name": "Status",
+					"type": "select",
+					"options": []interface{}{
+						map[string]interface{}{"id": "opt-1", "value": "New", "default": true},
+						map[string]interface{}{"id": "opt-2", "value": "Done"},
+					},
+				},
+			},
+		}
+
+		block := &model.Block{
+			Type:   model.TypeCard,
+			Fields: map[string]interface{}{},
+		}
+
+		th.App.applyDefaultCardProperties(block, board)
+
+		props := block.Fields["properties"].(map[string]interface{})
+		require.Equal(t, "opt-1", props["prop-1"])
+	})
+
+	t.Run("should not override existing property value", func(t *testing.T) {
+		board := &model.Board{
+			ID: testBoardID,
+			CardProperties: []map[string]interface{}{
+				{
+					"id":   "prop-1",
+					"name": "Status",
+					"type": "select",
+					"options": []interface{}{
+						map[string]interface{}{"id": "opt-1", "value": "New", "default": true},
+						map[string]interface{}{"id": "opt-2", "value": "Done"},
+					},
+				},
+			},
+		}
+
+		block := &model.Block{
+			Type: model.TypeCard,
+			Fields: map[string]interface{}{
+				"properties": map[string]interface{}{
+					"prop-1": "opt-2", // explicitly set to Done
+				},
+			},
+		}
+
+		th.App.applyDefaultCardProperties(block, board)
+
+		props := block.Fields["properties"].(map[string]interface{})
+		require.Equal(t, "opt-2", props["prop-1"]) // should remain opt-2
+	})
+
+	t.Run("should not set default when no option has default=true", func(t *testing.T) {
+		board := &model.Board{
+			ID: testBoardID,
+			CardProperties: []map[string]interface{}{
+				{
+					"id":   "prop-1",
+					"name": "Status",
+					"type": "select",
+					"options": []interface{}{
+						map[string]interface{}{"id": "opt-1", "value": "New"},
+						map[string]interface{}{"id": "opt-2", "value": "Done"},
+					},
+				},
+			},
+		}
+
+		block := &model.Block{
+			Type:   model.TypeCard,
+			Fields: map[string]interface{}{},
+		}
+
+		th.App.applyDefaultCardProperties(block, board)
+
+		props := block.Fields["properties"].(map[string]interface{})
+		_, exists := props["prop-1"]
+		require.False(t, exists, "should not set property when no default is marked")
+	})
+
+	t.Run("should handle nil fields", func(t *testing.T) {
+		board := &model.Board{
+			ID: testBoardID,
+			CardProperties: []map[string]interface{}{
+				{
+					"id":   "prop-1",
+					"name": "Status",
+					"type": "select",
+					"options": []interface{}{
+						map[string]interface{}{"id": "opt-1", "value": "New", "default": true},
+					},
+				},
+			},
+		}
+
+		block := &model.Block{
+			Type:   model.TypeCard,
+			Fields: nil,
+		}
+
+		th.App.applyDefaultCardProperties(block, board)
+
+		require.NotNil(t, block.Fields)
+		props := block.Fields["properties"].(map[string]interface{})
+		require.Equal(t, "opt-1", props["prop-1"])
 	})
 }
