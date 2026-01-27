@@ -9,21 +9,6 @@ import {Utils} from '../../utils'
 
 import './statusTransitionManager.scss'
 
-type Props = {
-    id: string
-    label: string
-    helpText?: string
-    value: any
-    disabled: boolean
-    config: any
-    license: any
-    setByEnv: boolean
-    onChange: (id: string, value: any) => void
-    setSaveNeeded: () => void
-    registerSaveAction: (action: () => Promise<void>) => void
-    unRegisterSaveAction: (action: () => Promise<void>) => void
-}
-
 type StatusTransitionRule = {
     id: string
     boardId: string
@@ -40,7 +25,7 @@ type TransitionMatrix = {
     }
 }
 
-const StatusTransitionManager = (_props: Props) => {
+const StatusTransitionManager = () => {
     const [boards, setBoards] = useState<Board[]>([])
     const [selectedBoardId, setSelectedBoardId] = useState<string>('')
     const [statuses, setStatuses] = useState<IPropertyOption[]>([])
