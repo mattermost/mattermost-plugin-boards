@@ -477,10 +477,7 @@ func (s *SQLStore) GetMembersForUser(userID string) ([]*model.BoardMember, error
 
 }
 
-func (s *SQLStore) GetNextCardNumber(boardID string) (int64, error) {
-	return s.getNextCardNumber(s.db, boardID)
-
-}
+// GetNextCardNumber is implemented in blocks.go
 
 func (s *SQLStore) GetNextNotificationHint(remove bool) (*model.NotificationHint, error) {
 	return s.getNextNotificationHint(s.db, remove)
