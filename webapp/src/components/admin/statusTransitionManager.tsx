@@ -40,7 +40,7 @@ type TransitionMatrix = {
     }
 }
 
-const StatusTransitionManager = (props: Props) => {
+const StatusTransitionManager = (_props: Props) => {
     const [boards, setBoards] = useState<Board[]>([])
     const [selectedBoardId, setSelectedBoardId] = useState<string>('')
     const [statuses, setStatuses] = useState<IPropertyOption[]>([])
