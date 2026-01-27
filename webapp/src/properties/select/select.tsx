@@ -2,7 +2,7 @@
 // See LICENSE.txt for license information.
 
 
-import React, {useState, useCallback, useEffect} from 'react'
+import React, {useState, useCallback, useEffect, useRef} from 'react'
 import {useIntl} from 'react-intl'
 
 import {IPropertyOption} from '../../blocks/board'
@@ -32,20 +32,30 @@ const SelectProperty = (props: PropertyProps) => {
     const [open, setOpen] = useState(false)
     const [filteredOptions, setFilteredOptions] = useState<IPropertyOption[]>(propertyTemplate.options)
     const isEditable = !props.readOnly && Boolean(board)
+    const currentRequestRef = useRef<string>('')
 
     // Check if this is a Status property (case-insensitive)
     const isStatusProperty = propertyTemplate.name.toLowerCase() === 'status'
 
     // Load status transition rules when the dropdown opens for Status properties
     useEffect(() => {
-        if (!open || !isStatusProperty || !board) {
+        if (!open || !isStatusProperty || !board || !isEditable) {
             setFilteredOptions(propertyTemplate.options)
             return
         }
 
         const loadTransitionRules = async () => {
+            // Set this request as the current one to prevent race conditions
+            const requestId = `${board.id}-${propertyValue}-${Date.now()}`
+            currentRequestRef.current = requestId
+
             try {
                 const rules = await octoClient.getStatusTransitionRules(board.id) as StatusTransitionRule[]
+
+                // Only update state if this is still the current request
+                if (currentRequestRef.current !== requestId) {
+                    return
+                }
 
                 // If no rules exist, show all options (backward compatibility)
                 if (!rules || rules.length === 0) {
@@ -84,6 +94,10 @@ const SelectProperty = (props: PropertyProps) => {
 
                 setFilteredOptions(allowedOptions)
             } catch (error) {
+                // Only update state if this is still the current request
+                if (currentRequestRef.current !== requestId) {
+                    return
+                }
                 // On error, show all options (fail-safe)
                 Utils.logError(`Failed to load status transition rules: ${error}`)
                 setFilteredOptions(propertyTemplate.options)

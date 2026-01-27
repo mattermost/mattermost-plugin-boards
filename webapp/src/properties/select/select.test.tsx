@@ -207,4 +207,54 @@ describe('properties/select', () => {
         expect(mockedMutator.insertPropertyOption).toHaveBeenCalledWith(board.id, board.cardProperties, propertyTemplate, expect.objectContaining({value: newOption}), 'add property option')
         expect(mockedMutator.changePropertyValue).toHaveBeenCalledWith(board.id, card, propertyTemplate.id, 'option-3')
     })
+
+    it('filters Status options based on transition rules', async () => {
+        const propertyTemplate = selectPropertyTemplate()
+        // Set the property name to 'Status' to trigger transition rule filtering
+        propertyTemplate.name = 'Status'
+        const currentOption = propertyTemplate.options[0] // option-1
+
+        // Mock transition rules that disallow transition from option-1 to option-2
+        const mockRules = [
+            {
+                id: 'rule-1',
+                boardId: board.id,
+                fromStatus: 'option-1',
+                toStatus: 'option-2',
+                allowed: false,
+                createAt: Date.now(),
+                updateAt: Date.now(),
+            },
+        ]
+        mockedOctoClient.getStatusTransitionRules.mockResolvedValue(mockRules)
+
+        render(wrapIntl(
+            <Select
+                property={new SelectProperty()}
+                board={{...board}}
+                card={{...card}}
+                propertyTemplate={propertyTemplate}
+                propertyValue={currentOption.id}
+                showEmptyPlaceholder={false}
+                readOnly={false}
+            />,
+        ))
+
+        // Click to open the dropdown
+        userEvent.click(screen.getByTestId(nonEditableSelectTestId))
+
+        // Wait for the async transition rules to load
+        await screen.findByRole('combobox', {name: /value selector/i})
+
+        // option-1 (current) should be visible (always allowed to keep current status)
+        // It appears twice: once in the selector and once in the menu
+        const oneElements = screen.getAllByText('one')
+        expect(oneElements.length).toBeGreaterThan(0)
+
+        // option-2 should NOT be visible (transition disallowed by rule)
+        expect(screen.queryByText('two')).not.toBeInTheDocument()
+
+        // option-3 should be visible (no rule means allowed by default)
+        expect(screen.getByText('three')).toBeInTheDocument()
+    })
 })
