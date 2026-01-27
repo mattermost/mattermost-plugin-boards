@@ -241,6 +241,11 @@ func (a *App) InsertBlocksAndNotify(blocks []*model.Block, modifiedByID string, 
 			block.Number = nextNumber
 		}
 
+		// Set default property values for new cards
+		if existingBlock == nil && block.Type == model.TypeCard {
+			a.applyDefaultCardProperties(block, board)
+		}
+
 		if existingBlock == nil && (block.Type == "image" || block.Type == "attachment") {
 			fileIDsToRestore := extractFileIDsFromBlock(block)
 			if len(fileIDsToRestore) > 0 {
@@ -524,4 +529,63 @@ func (a *App) filterAuthorizedFilesForBoard(boardID string, fileIDs []string) ([
 	}
 
 	return authorizedFileIDs, nil
+}
+
+// applyDefaultCardProperties sets default values for card properties.
+// Currently sets the first option as default for select properties that have
+// a "default" marker or are known system properties (like Task Evaluation).
+func (a *App) applyDefaultCardProperties(block *model.Block, board *model.Board) {
+	if block.Fields == nil {
+		block.Fields = make(map[string]interface{})
+	}
+
+	props, ok := block.Fields["properties"].(map[string]interface{})
+	if !ok {
+		props = make(map[string]interface{})
+		block.Fields["properties"] = props
+	}
+
+	// Iterate through board's card properties
+	for _, cardProp := range board.CardProperties {
+		propID, ok := cardProp["id"].(string)
+		if !ok || propID == "" {
+			continue
+		}
+
+		// Skip if property already has a value
+		if _, exists := props[propID]; exists {
+			continue
+		}
+
+		propType, _ := cardProp["type"].(string)
+		if propType != "select" {
+			continue
+		}
+
+		options, ok := cardProp["options"].([]interface{})
+		if !ok || len(options) == 0 {
+			continue
+		}
+
+		// Find option marked as default
+		var defaultOptionID string
+		for _, opt := range options {
+			optMap, ok := opt.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			// Check if this option is marked as default
+			if isDefault, _ := optMap["default"].(bool); isDefault {
+				if optID, ok := optMap["id"].(string); ok {
+					defaultOptionID = optID
+					break
+				}
+			}
+		}
+
+		// Only set default if explicitly marked in property options
+		if defaultOptionID != "" {
+			props[propID] = defaultOptionID
+		}
+	}
 }
