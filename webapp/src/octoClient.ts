@@ -1135,7 +1135,8 @@ class OctoClient {
         const path = `/api/v2/boards/${boardID}/status-transition-rules`
         const response = await fetch(this.getBaseURL() + path, {headers: this.headers()})
         if (response.status !== 200) {
-            return []
+            const errorText = await response.text()
+            throw new Error(`Failed to load status transition rules: ${response.status} ${errorText || response.statusText}`)
         }
         return (await this.getJson(response, [])) as any[]
     }

@@ -1,7 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useState, useEffect} from 'react'
+import React, {useState, useEffect, useRef} from 'react'
 
 import {Board, IPropertyOption} from '../../blocks/board'
 import octoClient from '../../octoClient'
@@ -49,6 +49,7 @@ const StatusTransitionManager = (_props: Props) => {
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
     const [hasChanges, setHasChanges] = useState(false)
+    const currentRequestRef = useRef<string>('')
 
     useEffect(() => {
         loadBoards()
@@ -107,6 +108,10 @@ const StatusTransitionManager = (_props: Props) => {
     }
 
     const loadBoardData = async (boardId: string) => {
+        // Set this request as the current one to prevent race conditions
+        const requestId = boardId + Date.now()
+        currentRequestRef.current = requestId
+
         try {
             setLoading(true)
             setError('')
@@ -128,9 +133,13 @@ const StatusTransitionManager = (_props: Props) => {
                 return
             }
 
-            setStatuses(statusProperty.options)
-
             const rules = await octoClient.getStatusTransitionRules(boardId)
+
+            // Only update state if this is still the current request
+            if (currentRequestRef.current !== requestId) {
+                return
+            }
+
             const newMatrix: TransitionMatrix = {}
 
             statusProperty.options.forEach(fromStatus => {
@@ -143,6 +152,7 @@ const StatusTransitionManager = (_props: Props) => {
                 })
             })
 
+            setStatuses(statusProperty.options)
             setMatrix(newMatrix)
             setHasChanges(false)
         } catch (err) {
@@ -188,7 +198,11 @@ const StatusTransitionManager = (_props: Props) => {
                 })
             })
 
-            await octoClient.saveStatusTransitionRules(selectedBoardId, rules)
+            const response = await octoClient.saveStatusTransitionRules(selectedBoardId, rules)
+            if (!response.ok) {
+                const errorText = await response.text()
+                throw new Error(`Server returned ${response.status}: ${errorText || response.statusText}`)
+            }
             setHasChanges(false)
         } catch (err) {
             setError(`Failed to save rules: ${err}`)
@@ -273,7 +287,7 @@ const StatusTransitionManager = (_props: Props) => {
                                     {statuses.map(toStatus => (
                                         <th key={toStatus.id} className='StatusTransitionManager__header-cell'>
                                             <div
-                                                className={`StatusTransitionManager__status-badge StatusTransitionManager__status-badge--${toStatus.color}`}
+                                                className={`StatusTransitionManager__status-badge propColor${toStatus.color}`}
                                             >
                                                 {toStatus.value}
                                             </div>
@@ -286,7 +300,7 @@ const StatusTransitionManager = (_props: Props) => {
                                     <tr key={fromStatus.id}>
                                         <td className='StatusTransitionManager__row-header'>
                                             <div
-                                                className={`StatusTransitionManager__status-badge StatusTransitionManager__status-badge--${fromStatus.color}`}
+                                                className={`StatusTransitionManager__status-badge propColor${fromStatus.color}`}
                                             >
                                                 {fromStatus.value}
                                             </div>
