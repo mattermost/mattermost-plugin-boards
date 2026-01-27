@@ -730,4 +730,71 @@ describe('src/cardFilter', () => {
             expect(result.length).toEqual(0)
         })
     })
+    describe('verify text field filtering with case-insensitive matching', () => {
+        const textCard = TestBlockFactory.createCard(board)
+        textCard.id = '2'
+        textCard.title = 'card2'
+        textCard.fields.properties.colorPropertyId = 'Red'
+
+        const template: IPropertyTemplate = {
+            id: 'colorPropertyId',
+            name: 'Color',
+            type: 'text',
+            options: [],
+        }
+
+        test('should match when filter value is "Red" and card value is "Red" (is condition)', () => {
+            const filterClauseIs = createFilterClause({propertyId: 'colorPropertyId', condition: 'is', values: ['Red']})
+            const result = CardFilter.isClauseMet(filterClauseIs, [template], textCard)
+            expect(result).toBeTruthy()
+        })
+
+        test('should match when filter value is "red" (lowercase) and card value is "Red" (is condition)', () => {
+            const filterClauseIs = createFilterClause({propertyId: 'colorPropertyId', condition: 'is', values: ['red']})
+            const result = CardFilter.isClauseMet(filterClauseIs, [template], textCard)
+            expect(result).toBeTruthy()
+        })
+
+        test('should match when filter value is "RED" (uppercase) and card value is "Red" (is condition)', () => {
+            const filterClauseIs = createFilterClause({propertyId: 'colorPropertyId', condition: 'is', values: ['RED']})
+            const result = CardFilter.isClauseMet(filterClauseIs, [template], textCard)
+            expect(result).toBeTruthy()
+        })
+
+        test('should match when filter value is "Red" and card value is "Red" (contains condition)', () => {
+            const filterClauseContains = createFilterClause({propertyId: 'colorPropertyId', condition: 'contains', values: ['Red']})
+            const result = CardFilter.isClauseMet(filterClauseContains, [template], textCard)
+            expect(result).toBeTruthy()
+        })
+
+        test('should match when filter value is "red" (lowercase) and card value is "Red" (contains condition)', () => {
+            const filterClauseContains = createFilterClause({propertyId: 'colorPropertyId', condition: 'contains', values: ['red']})
+            const result = CardFilter.isClauseMet(filterClauseContains, [template], textCard)
+            expect(result).toBeTruthy()
+        })
+
+        test('should match when filter value is "Red" and card value is "Red" (startsWith condition)', () => {
+            const filterClauseStartsWith = createFilterClause({propertyId: 'colorPropertyId', condition: 'startsWith', values: ['Red']})
+            const result = CardFilter.isClauseMet(filterClauseStartsWith, [template], textCard)
+            expect(result).toBeTruthy()
+        })
+
+        test('should match when filter value is "r" (lowercase) and card value is "Red" (startsWith condition)', () => {
+            const filterClauseStartsWith = createFilterClause({propertyId: 'colorPropertyId', condition: 'startsWith', values: ['r']})
+            const result = CardFilter.isClauseMet(filterClauseStartsWith, [template], textCard)
+            expect(result).toBeTruthy()
+        })
+
+        test('should match when filter value is "ed" and card value is "Red" (endsWith condition)', () => {
+            const filterClauseEndsWith = createFilterClause({propertyId: 'colorPropertyId', condition: 'endsWith', values: ['ed']})
+            const result = CardFilter.isClauseMet(filterClauseEndsWith, [template], textCard)
+            expect(result).toBeTruthy()
+        })
+
+        test('should match when filter value is "ED" (uppercase) and card value is "Red" (endsWith condition)', () => {
+            const filterClauseEndsWith = createFilterClause({propertyId: 'colorPropertyId', condition: 'endsWith', values: ['ED']})
+            const result = CardFilter.isClauseMet(filterClauseEndsWith, [template], textCard)
+            expect(result).toBeTruthy()
+        })
+    })
 })
