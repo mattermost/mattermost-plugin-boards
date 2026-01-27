@@ -111,8 +111,8 @@ func (a *App) PatchCard(cardPatch *model.CardPatch, cardID string, userID string
 
 	// Validate status transitions if properties are being updated
 	if len(cardPatch.UpdatedProperties) > 0 {
-		if err := a.validateStatusTransitions(board, currentCard, cardPatch); err != nil {
-			return nil, err
+		if validationErr := a.validateStatusTransitions(board, currentCard, cardPatch); validationErr != nil {
+			return nil, validationErr
 		}
 	}
 
@@ -184,7 +184,7 @@ func (a *App) GetCardByCode(code string) (*model.Card, *model.Board, string, err
 	return card, board, viewID, nil
 }
 
-// validateStatusTransitions checks if status property changes are allowed based on transition rules
+// validateStatusTransitions checks if status property changes are allowed based on transition rules.
 func (a *App) validateStatusTransitions(board *model.Board, currentCard *model.Card, cardPatch *model.CardPatch) error {
 	// Find status properties in the board's card properties
 	for _, cardProp := range board.CardProperties {
@@ -251,7 +251,7 @@ func (a *App) validateStatusTransitions(board *model.Board, currentCard *model.C
 	return nil
 }
 
-// getStatusOptionValue retrieves the display value for a status option ID
+// getStatusOptionValue retrieves the display value for a status option ID.
 func (a *App) getStatusOptionValue(cardProp map[string]interface{}, optionID string) string {
 	options, ok := cardProp["options"].([]interface{})
 	if !ok {

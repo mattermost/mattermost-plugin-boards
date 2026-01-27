@@ -170,4 +170,3 @@ func (a *API) handleSaveStatusTransitionRules(w http.ResponseWriter, r *http.Req
 	jsonStringResponse(w, http.StatusOK, "{}")
 	auditRec.Success()
 }
-

@@ -42,7 +42,7 @@ type StatusTransitionRule struct {
 	UpdateAt int64 `json:"updateAt"`
 }
 
-// StatusTransitionRulesFromJSON decodes a json array of status transition rules
+// StatusTransitionRulesFromJSON decodes a json array of status transition rules.
 func StatusTransitionRulesFromJSON(data io.Reader) ([]*StatusTransitionRule, error) {
 	var rules []*StatusTransitionRule
 	if err := json.NewDecoder(data).Decode(&rules); err != nil {
@@ -78,4 +78,3 @@ func (r *StatusTransitionRule) IsValid() error {
 	}
 	return nil
 }
-

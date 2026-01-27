@@ -58,7 +58,7 @@ func (s *SQLStore) blockFields(tableAlias string) []string {
 	}
 }
 
-func (s *SQLStore) getNextCardNumber(db sq.BaseRunner, boardID string) (int64, error) {
+func (s *SQLStore) getNextCardNumber(db sq.BaseRunner, _ string) (int64, error) {
 	// Use card_sequence table with auto-increment for atomic number generation
 	// This prevents race conditions and ensures unique sequential numbers
 

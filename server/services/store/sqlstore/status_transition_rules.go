@@ -83,7 +83,7 @@ func (s *SQLStore) saveStatusTransitionRules(db sq.BaseRunner, rules []*model.St
 		}
 
 		query := s.getQueryBuilder(db).
-			Insert(s.tablePrefix + "status_transition_rules").
+			Insert(s.tablePrefix+"status_transition_rules").
 			Columns(s.statusTransitionRuleFields()...).
 			Values(
 				rule.ID,
@@ -150,4 +150,3 @@ func (s *SQLStore) isStatusTransitionAllowed(db sq.BaseRunner, boardID, fromStat
 
 	return allowed, nil
 }
-
