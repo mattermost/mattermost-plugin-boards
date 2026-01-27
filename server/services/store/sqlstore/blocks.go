@@ -58,7 +58,7 @@ func (s *SQLStore) blockFields(tableAlias string) []string {
 	}
 }
 
-func (s *SQLStore) GetNextCardNumber(boardID string) (int64, error) {
+func (s *SQLStore) getNextCardNumber(db sq.BaseRunner, boardID string) (int64, error) {
 	// Use card_sequence table with auto-increment for atomic number generation
 	// This prevents race conditions and ensures unique sequential numbers
 
@@ -68,7 +68,7 @@ func (s *SQLStore) GetNextCardNumber(boardID string) (int64, error) {
 	switch s.dbType {
 	case model.PostgresDBType:
 		// PostgreSQL: INSERT and get RETURNING id
-		query := s.getQueryBuilder(s.db).
+		query := s.getQueryBuilder(db).
 			Insert(s.tablePrefix + "card_sequence").
 			Columns("id").
 			Values(sq.Expr("DEFAULT")).
@@ -78,7 +78,7 @@ func (s *SQLStore) GetNextCardNumber(boardID string) (int64, error) {
 		err = row.Scan(&nextNumber)
 	case model.MysqlDBType:
 		// MySQL: INSERT and get LAST_INSERT_ID()
-		insertQuery := s.getQueryBuilder(s.db).
+		insertQuery := s.getQueryBuilder(db).
 			Insert(s.tablePrefix + "card_sequence").
 			Columns("id").
 			Values(sq.Expr("NULL"))
@@ -89,14 +89,14 @@ func (s *SQLStore) GetNextCardNumber(boardID string) (int64, error) {
 			return 0, err
 		}
 
-		selectQuery := s.getQueryBuilder(s.db).
+		selectQuery := s.getQueryBuilder(db).
 			Select("LAST_INSERT_ID()")
 
 		row := selectQuery.QueryRow()
 		err = row.Scan(&nextNumber)
 	default:
 		// SQLite: INSERT and get last_insert_rowid()
-		insertQuery := s.getQueryBuilder(s.db).
+		insertQuery := s.getQueryBuilder(db).
 			Insert(s.tablePrefix + "card_sequence").
 			Columns("id").
 			Values(sq.Expr("NULL"))
@@ -107,7 +107,7 @@ func (s *SQLStore) GetNextCardNumber(boardID string) (int64, error) {
 			return 0, err
 		}
 
-		selectQuery := s.getQueryBuilder(s.db).
+		selectQuery := s.getQueryBuilder(db).
 			Select("last_insert_rowid()")
 
 		row := selectQuery.QueryRow()

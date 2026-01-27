@@ -235,6 +235,7 @@ func TestInsertBlocks(t *testing.T) {
 				},
 			},
 		}
+		th.Store.EXPECT().GetNextCardNumber(boardID).Return(int64(1), nil)
 		th.Store.EXPECT().GetBoard(boardID).Return(board, nil)
 		th.Store.EXPECT().GetBlock(gomock.Any()).Return(nil, model.NewErrNotFound("block not found"))
 		th.Store.EXPECT().InsertBlock(gomock.Any(), "user-id-1").Return(nil)
@@ -273,6 +274,7 @@ func TestInsertBlocks(t *testing.T) {
 				},
 			},
 		}
+		th.Store.EXPECT().GetNextCardNumber(boardID).Return(int64(1), nil)
 		th.Store.EXPECT().GetBoard(boardID).Return(board, nil)
 		th.Store.EXPECT().GetBlock(gomock.Any()).Return(nil, model.NewErrNotFound("block not found"))
 		th.Store.EXPECT().InsertBlock(gomock.Any(), "user-id-1").Return(nil)
