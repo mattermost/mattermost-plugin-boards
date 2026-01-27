@@ -20,7 +20,9 @@ func (a *App) DeleteStatusTransitionRulesForBoard(boardID string) error {
 	return a.store.DeleteStatusTransitionRulesForBoard(boardID)
 }
 
-// ReplaceStatusTransitionRules atomically replaces all status transition rules for a board.
+// ReplaceStatusTransitionRules replaces all status transition rules for a board.
+// For MySQL/PostgreSQL, this operation is atomic (wrapped in a transaction).
+// For SQLite, the delete and save operations are sequential.
 func (a *App) ReplaceStatusTransitionRules(boardID string, rules []*model.StatusTransitionRule) error {
 	return a.store.ReplaceStatusTransitionRules(boardID, rules)
 }

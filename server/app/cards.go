@@ -220,12 +220,21 @@ func (a *App) validateStatusTransitions(board *model.Board, currentCard *model.C
 			continue
 		}
 
+		// If newValue is nil/null, this is clearing the status, which is always allowed
+		if newValue == nil {
+			continue
+		}
+
 		// Convert values to strings (they should be option IDs)
 		fromStatus, ok1 := currentValue.(string)
 		toStatus, ok2 := newValue.(string)
 
-		if !ok1 || !ok2 {
-			return model.NewErrBadRequest("Status property values must be strings")
+		if !ok1 {
+			return model.NewErrBadRequest("Current status property value must be a string")
+		}
+
+		if !ok2 {
+			return model.NewErrBadRequest("New status property value must be a string")
 		}
 
 		// Skip if the value isn't actually changing
