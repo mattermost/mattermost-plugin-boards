@@ -122,6 +122,11 @@ func (s *SQLStore) getNextCardNumber(db sq.BaseRunner, _ string) (int64, error) 
 	return nextNumber, nil
 }
 
+// GetNextCardNumber generates the next sequential card number.
+func (s *SQLStore) GetNextCardNumber(boardID string) (int64, error) {
+	return s.getNextCardNumber(s.db, boardID)
+}
+
 func (s *SQLStore) getBlocks(db sq.BaseRunner, opts model.QueryBlocksOptions) ([]*model.Block, error) {
 	query := s.getQueryBuilder(db).
 		Select(s.blockFields("")...).
