@@ -51,7 +51,7 @@ func StatusTransitionRulesFromJSON(data io.Reader) ([]*StatusTransitionRule, err
 	return rules, nil
 }
 
-// Populate populates a StatusTransitionRule with default values
+// Populate populates a StatusTransitionRule with default values.
 func (r *StatusTransitionRule) Populate() {
 	if r.ID == "" {
 		r.ID = utils.NewID(utils.IDTypeNone)
@@ -65,7 +65,7 @@ func (r *StatusTransitionRule) Populate() {
 	}
 }
 
-// IsValid validates the status transition rule
+// IsValid validates the status transition rule.
 func (r *StatusTransitionRule) IsValid() error {
 	if r.BoardID == "" {
 		return NewErrBadRequest("board ID is required")
