@@ -5,6 +5,7 @@ package app
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
@@ -195,8 +196,13 @@ func (a *App) validateStatusTransitions(board *model.Board, currentCard *model.C
 		propType, _ := cardProp["type"].(string)
 		propName, _ := cardProp["name"].(string)
 
-		// Check if this is a select-type property (status properties are typically select type)
+		// Check if this is a select-type property named "Status" (case-insensitive)
 		if propType != "select" {
+			continue
+		}
+
+		// Only validate properties named "Status" (case-insensitive)
+		if strings.ToLower(propName) != "status" {
 			continue
 		}
 

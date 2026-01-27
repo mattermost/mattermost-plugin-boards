@@ -4,6 +4,9 @@
 package sqlstore
 
 import (
+	"database/sql"
+	"errors"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
@@ -138,7 +141,7 @@ func (s *SQLStore) isStatusTransitionAllowed(db sq.BaseRunner, boardID, fromStat
 	err := query.QueryRow().Scan(&allowed)
 	if err != nil {
 		// If no rule found, transition is allowed by default
-		if err.Error() == "sql: no rows in result set" {
+		if errors.Is(err, sql.ErrNoRows) {
 			return true, nil
 		}
 		s.logger.Error("isStatusTransitionAllowed ERROR", mlog.Err(err))

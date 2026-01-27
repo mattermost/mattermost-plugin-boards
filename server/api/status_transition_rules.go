@@ -4,6 +4,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -128,9 +129,9 @@ func (a *API) handleSaveStatusTransitionRules(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	rules := model.StatusTransitionRulesFromJSON(requestBody)
-	if rules == nil {
-		a.errorResponse(w, r, model.NewErrBadRequest("invalid request body"))
+	rules, err := model.StatusTransitionRulesFromJSON(bytes.NewReader(requestBody))
+	if err != nil {
+		a.errorResponse(w, r, model.NewErrBadRequest("invalid request body: "+err.Error()))
 		return
 	}
 
@@ -147,6 +148,14 @@ func (a *API) handleSaveStatusTransitionRules(w http.ResponseWriter, r *http.Req
 	auditRec.AddMeta("boardID", boardID)
 	auditRec.AddMeta("rulesCount", len(rules))
 
+	// Delete existing rules for the board before saving new ones
+	err = a.app.GetStore().DeleteStatusTransitionRulesForBoard(boardID)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	// Save the new rules
 	err = a.app.GetStore().SaveStatusTransitionRules(rules)
 	if err != nil {
 		a.errorResponse(w, r, err)

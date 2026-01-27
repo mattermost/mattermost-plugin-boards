@@ -43,10 +43,12 @@ type StatusTransitionRule struct {
 }
 
 // StatusTransitionRulesFromJSON decodes a json array of status transition rules
-func StatusTransitionRulesFromJSON(data io.Reader) []*StatusTransitionRule {
+func StatusTransitionRulesFromJSON(data io.Reader) ([]*StatusTransitionRule, error) {
 	var rules []*StatusTransitionRule
-	_ = json.NewDecoder(data).Decode(&rules)
-	return rules
+	if err := json.NewDecoder(data).Decode(&rules); err != nil {
+		return nil, err
+	}
+	return rules, nil
 }
 
 // Populate populates a StatusTransitionRule with default values
