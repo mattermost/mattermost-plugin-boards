@@ -163,6 +163,8 @@ type Store interface {
 	SaveStatusTransitionRules(rules []*model.StatusTransitionRule) error
 	// @withTransaction
 	DeleteStatusTransitionRulesForBoard(boardID string) error
+	// @withTransaction
+	ReplaceStatusTransitionRules(boardID string, rules []*model.StatusTransitionRule) error
 	IsStatusTransitionAllowed(boardID, fromStatus, toStatus string) (bool, error)
 
 	DBType() string

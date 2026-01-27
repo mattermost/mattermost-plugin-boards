@@ -1465,6 +1465,20 @@ func (mr *MockStoreMockRecorder) ReorderCategoryBoards(arg0, arg1 interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReorderCategoryBoards", reflect.TypeOf((*MockStore)(nil).ReorderCategoryBoards), arg0, arg1)
 }
 
+// ReplaceStatusTransitionRules mocks base method.
+func (m *MockStore) ReplaceStatusTransitionRules(arg0 string, arg1 []*model.StatusTransitionRule) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReplaceStatusTransitionRules", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReplaceStatusTransitionRules indicates an expected call of ReplaceStatusTransitionRules.
+func (mr *MockStoreMockRecorder) ReplaceStatusTransitionRules(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReplaceStatusTransitionRules", reflect.TypeOf((*MockStore)(nil).ReplaceStatusTransitionRules), arg0, arg1)
+}
+
 // RestoreFiles mocks base method.
 func (m *MockStore) RestoreFiles(arg0 []string) error {
 	m.ctrl.T.Helper()

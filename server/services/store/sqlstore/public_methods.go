@@ -815,6 +815,30 @@ func (s *SQLStore) ReorderCategoryBoards(categoryID string, newBoardsOrder []str
 
 }
 
+func (s *SQLStore) ReplaceStatusTransitionRules(boardID string, rules []*model.StatusTransitionRule) error {
+	if s.dbType == model.SqliteDBType {
+		return s.replaceStatusTransitionRules(s.db, boardID, rules)
+	}
+	tx, txErr := s.db.BeginTx(context.Background(), nil)
+	if txErr != nil {
+		return txErr
+	}
+	err := s.replaceStatusTransitionRules(tx, boardID, rules)
+	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			s.logger.Error("transaction rollback error", mlog.Err(rollbackErr), mlog.String("methodName", "ReplaceStatusTransitionRules"))
+		}
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
 func (s *SQLStore) RestoreFiles(fileIDs []string) error {
 	return s.restoreFiles(s.db, fileIDs)
 
