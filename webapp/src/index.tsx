@@ -29,6 +29,7 @@ import {Board} from './blocks/board'
 import {getMessages, getCurrentLanguage} from './i18n'
 import {UserSettings} from './userSettings'
 import BoardCodesManager from './components/admin/boardCodesManager'
+import StatusTransitionManager from './components/admin/statusTransitionManager'
 import {SuiteWindow} from './types/index'
 import BoardsUnfurl from './components/boardsUnfurl/boardsUnfurl'
 import RHSChannelBoards from './components/rhsChannelBoards'
@@ -204,6 +205,7 @@ export default class Plugin {
         this.registry?.registerWebSocketEventHandler('plugin_statuses_changed', (e: any) => wsClient.pluginStatusesChangedHandler(e.data))
         this.registry?.registerPostTypeComponent('custom_cloud_upgrade_nudge', CloudUpgradeNudge)
         this.registry?.registerAdminConsoleCustomSetting?.('BoardCodesManager', BoardCodesManager)
+        this.registry?.registerAdminConsoleCustomSetting?.('StatusTransitionManager', StatusTransitionManager)
         this.registry?.registerWebSocketEventHandler('preferences_changed', (e: any) => {
             let preferences
             try {

@@ -1129,6 +1129,26 @@ class OctoClient {
             headers: this.headers(),
         }))
     }
+
+    // Status Transition Rules
+    async getStatusTransitionRules(boardID: string): Promise<any[]> {
+        const path = `/api/v2/boards/${boardID}/status-transition-rules`
+        const response = await fetch(this.getBaseURL() + path, {headers: this.headers()})
+        if (response.status !== 200) {
+            return []
+        }
+        return (await this.getJson(response, [])) as any[]
+    }
+
+    async saveStatusTransitionRules(boardID: string, rules: any[]): Promise<Response> {
+        const path = `/api/v2/boards/${boardID}/status-transition-rules`
+        const body = JSON.stringify(rules)
+        return fetch(this.getBaseURL() + path, Client4.getOptions({
+            method: 'POST',
+            headers: this.headers(),
+            body,
+        }))
+    }
 }
 
 const octoClient = new OctoClient()
