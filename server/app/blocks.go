@@ -567,7 +567,7 @@ func (a *App) applyDefaultCardProperties(block *model.Block, board *model.Board)
 			continue
 		}
 
-		// Check for default option or use first option
+		// Find option marked as default
 		var defaultOptionID string
 		for _, opt := range options {
 			optMap, ok := opt.(map[string]interface{})
@@ -583,19 +583,7 @@ func (a *App) applyDefaultCardProperties(block *model.Block, board *model.Board)
 			}
 		}
 
-		// If no explicit default, use first option for known properties
-		// Currently only Task Evaluation property gets auto-default
-		if defaultOptionID == "" {
-			// Task Evaluation property ID
-			if propID == "atskeval1prp7x9jkxd1ec66ja" {
-				if firstOpt, ok := options[0].(map[string]interface{}); ok {
-					if optID, ok := firstOpt["id"].(string); ok {
-						defaultOptionID = optID
-					}
-				}
-			}
-		}
-
+		// Only set default if explicitly marked in property options
 		if defaultOptionID != "" {
 			props[propID] = defaultOptionID
 		}
