@@ -20,6 +20,11 @@ func (a *App) DeleteStatusTransitionRulesForBoard(boardID string) error {
 	return a.store.DeleteStatusTransitionRulesForBoard(boardID)
 }
 
+// ReplaceStatusTransitionRules atomically replaces all status transition rules for a board.
+func (a *App) ReplaceStatusTransitionRules(boardID string, rules []*model.StatusTransitionRule) error {
+	return a.store.ReplaceStatusTransitionRules(boardID, rules)
+}
+
 // IsStatusTransitionAllowed checks if a status transition is allowed.
 func (a *App) IsStatusTransitionAllowed(boardID, fromStatus, toStatus string) (bool, error) {
 	return a.store.IsStatusTransitionAllowed(boardID, fromStatus, toStatus)

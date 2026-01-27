@@ -117,42 +117,45 @@ func TestGetCards(t *testing.T) {
 }
 
 func TestPatchCard(t *testing.T) {
-	th, tearDown := SetupTestHelper(t)
-	defer tearDown()
-
-	board := &model.Board{
-		ID: utils.NewID(utils.IDTypeBoard),
-	}
-	userID := utils.NewID(utils.IDTypeUser)
-
-	props := makeProps(3)
-
-	card := &model.Card{
-		BoardID:      board.ID,
-		CreatedBy:    userID,
-		ModifiedBy:   userID,
-		Title:        "test card for patch",
-		ContentOrder: []string{utils.NewID(utils.IDTypeBlock), utils.NewID(utils.IDTypeBlock)},
-		Properties:   copyProps(props),
-	}
-
-	newTitle := "patched"
-	newIcon := "😀"
-	newContentOrder := reverse(card.ContentOrder)
-
-	cardPatch := &model.CardPatch{
-		Title:             &newTitle,
-		ContentOrder:      &newContentOrder,
-		Icon:              &newIcon,
-		UpdatedProperties: modifyProps(props),
-	}
-
 	t.Run("success scenario", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
+		board := &model.Board{
+			ID: utils.NewID(utils.IDTypeBoard),
+		}
+		userID := utils.NewID(utils.IDTypeUser)
+
+		props := makeProps(3)
+
+		card := &model.Card{
+			ID:           utils.NewID(utils.IDTypeBlock),
+			BoardID:      board.ID,
+			CreatedBy:    userID,
+			ModifiedBy:   userID,
+			Title:        "test card for patch",
+			ContentOrder: []string{utils.NewID(utils.IDTypeBlock), utils.NewID(utils.IDTypeBlock)},
+			Properties:   copyProps(props),
+		}
+
+		newTitle := "patched"
+		newIcon := "😀"
+		newContentOrder := reverse(card.ContentOrder)
+
+		cardPatch := &model.CardPatch{
+			Title:             &newTitle,
+			ContentOrder:      &newContentOrder,
+			Icon:              &newIcon,
+			UpdatedProperties: modifyProps(props),
+		}
+
 		expectedPatchedCard := cardPatch.Patch(card)
 		expectedPatchedBlock := model.Card2Block(expectedPatchedCard)
+		currentBlock := model.Card2Block(card)
 
 		var blockPatch *model.BlockPatch
-		th.Store.EXPECT().GetBoard(board.ID).Return(board, nil)
+		th.Store.EXPECT().GetBlock(card.ID).Return(currentBlock, nil).Times(2)
+		th.Store.EXPECT().GetBoard(board.ID).Return(board, nil).Times(2)
 		th.Store.EXPECT().PatchBlock(card.ID, gomock.AssignableToTypeOf(reflect.TypeOf(blockPatch)), userID).Return(nil)
 		th.Store.EXPECT().GetMembersForBoard(board.ID).Return([]*model.BoardMember{}, nil)
 		th.Store.EXPECT().GetBlock(card.ID).Return(expectedPatchedBlock, nil).AnyTimes()
@@ -168,8 +171,41 @@ func TestPatchCard(t *testing.T) {
 	})
 
 	t.Run("error scenario", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
+		board := &model.Board{
+			ID: utils.NewID(utils.IDTypeBoard),
+		}
+		userID := utils.NewID(utils.IDTypeUser)
+
+		props := makeProps(3)
+
+		card := &model.Card{
+			ID:           utils.NewID(utils.IDTypeBlock),
+			BoardID:      board.ID,
+			CreatedBy:    userID,
+			ModifiedBy:   userID,
+			Title:        "test card for patch",
+			ContentOrder: []string{utils.NewID(utils.IDTypeBlock), utils.NewID(utils.IDTypeBlock)},
+			Properties:   copyProps(props),
+		}
+
+		newTitle := "patched"
+		newIcon := "😀"
+		newContentOrder := reverse(card.ContentOrder)
+
+		cardPatch := &model.CardPatch{
+			Title:             &newTitle,
+			ContentOrder:      &newContentOrder,
+			Icon:              &newIcon,
+			UpdatedProperties: modifyProps(props),
+		}
+
+		currentBlock := model.Card2Block(card)
 		var blockPatch *model.BlockPatch
-		th.Store.EXPECT().GetBoard(board.ID).Return(board, nil)
+		th.Store.EXPECT().GetBlock(card.ID).Return(currentBlock, nil).Times(2)
+		th.Store.EXPECT().GetBoard(board.ID).Return(board, nil).Times(2)
 		th.Store.EXPECT().PatchBlock(card.ID, gomock.AssignableToTypeOf(reflect.TypeOf(blockPatch)), userID).Return(blockError{"error"})
 
 		patchedCard, err := th.App.PatchCard(cardPatch, card.ID, userID, false)

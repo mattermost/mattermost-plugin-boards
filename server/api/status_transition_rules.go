@@ -148,15 +148,8 @@ func (a *API) handleSaveStatusTransitionRules(w http.ResponseWriter, r *http.Req
 	auditRec.AddMeta("boardID", boardID)
 	auditRec.AddMeta("rulesCount", len(rules))
 
-	// Delete existing rules for the board before saving new ones
-	err = a.app.DeleteStatusTransitionRulesForBoard(boardID)
-	if err != nil {
-		a.errorResponse(w, r, err)
-		return
-	}
-
-	// Save the new rules
-	err = a.app.SaveStatusTransitionRules(rules)
+	// Atomically replace all rules for the board (delete + save in one transaction)
+	err = a.app.ReplaceStatusTransitionRules(boardID, rules)
 	if err != nil {
 		a.errorResponse(w, r, err)
 		return

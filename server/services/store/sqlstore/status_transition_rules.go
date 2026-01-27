@@ -64,6 +64,11 @@ func (s *SQLStore) getStatusTransitionRules(db sq.BaseRunner, boardID string) ([
 		rules = append(rules, rule)
 	}
 
+	if err := rows.Err(); err != nil {
+		s.logger.Error("getStatusTransitionRules rows iteration ERROR", mlog.Err(err))
+		return nil, err
+	}
+
 	return rules, nil
 }
 
@@ -106,6 +111,37 @@ func (s *SQLStore) saveStatusTransitionRules(db sq.BaseRunner, rules []*model.St
 
 		if _, err := query.Exec(); err != nil {
 			s.logger.Error("saveStatusTransitionRules ERROR", mlog.Err(err))
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *SQLStore) replaceStatusTransitionRules(db sq.BaseRunner, boardID string, rules []*model.StatusTransitionRule) error {
+	// Validate all rules first before making any changes
+	now := utils.GetMillis()
+	for _, rule := range rules {
+		rule.Populate()
+		rule.UpdateAt = now
+
+		if err := rule.IsValid(); err != nil {
+			return err
+		}
+
+		if rule.BoardID != boardID {
+			return model.NewErrBadRequest("rule board ID does not match")
+		}
+	}
+
+	// Delete existing rules for the board
+	if err := s.deleteStatusTransitionRulesForBoard(db, boardID); err != nil {
+		return err
+	}
+
+	// Save new rules (if any)
+	if len(rules) > 0 {
+		if err := s.saveStatusTransitionRules(db, rules); err != nil {
 			return err
 		}
 	}

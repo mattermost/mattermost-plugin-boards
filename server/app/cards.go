@@ -225,7 +225,7 @@ func (a *App) validateStatusTransitions(board *model.Board, currentCard *model.C
 		toStatus, ok2 := newValue.(string)
 
 		if !ok1 || !ok2 {
-			continue
+			return model.NewErrBadRequest("Status property values must be strings")
 		}
 
 		// Skip if the value isn't actually changing
