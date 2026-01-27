@@ -2,7 +2,7 @@
 // See LICENSE.txt for license information.
 
 
-import React, {useState, useCallback} from 'react'
+import React, {useState, useCallback, useEffect} from 'react'
 import {useIntl} from 'react-intl'
 
 import {IPropertyOption} from '../../blocks/board'
@@ -11,15 +11,87 @@ import Label from '../../widgets/label'
 import {Utils, IDType} from '../../utils'
 import mutator from '../../mutator'
 import ValueSelector from '../../widgets/valueSelector'
+import octoClient from '../../octoClient'
 
 import {PropertyProps} from '../types'
+
+type StatusTransitionRule = {
+    id: string
+    boardId: string
+    fromStatus: string
+    toStatus: string
+    allowed: boolean
+    createAt: number
+    updateAt: number
+}
 
 const SelectProperty = (props: PropertyProps) => {
     const {propertyValue, propertyTemplate, board, card} = props
     const intl = useIntl()
 
     const [open, setOpen] = useState(false)
+    const [filteredOptions, setFilteredOptions] = useState<IPropertyOption[]>(propertyTemplate.options)
     const isEditable = !props.readOnly && Boolean(board)
+
+    // Check if this is a Status property (case-insensitive)
+    const isStatusProperty = propertyTemplate.name.toLowerCase() === 'status'
+
+    // Load status transition rules when the dropdown opens for Status properties
+    useEffect(() => {
+        if (!open || !isStatusProperty || !board) {
+            setFilteredOptions(propertyTemplate.options)
+            return
+        }
+
+        const loadTransitionRules = async () => {
+            try {
+                const rules = await octoClient.getStatusTransitionRules(board.id) as StatusTransitionRule[]
+
+                // If no rules exist, show all options (backward compatibility)
+                if (!rules || rules.length === 0) {
+                    setFilteredOptions(propertyTemplate.options)
+                    return
+                }
+
+                // Get current status value
+                const currentStatusId = propertyValue as string
+
+                // If there's no current status, allow all statuses (initial selection)
+                if (!currentStatusId) {
+                    setFilteredOptions(propertyTemplate.options)
+                    return
+                }
+
+                // Filter options based on transition rules
+                const allowedOptions = propertyTemplate.options.filter((option) => {
+                    // Always allow keeping the current status
+                    if (option.id === currentStatusId) {
+                        return true
+                    }
+
+                    // Check if transition from current status to this option is allowed
+                    const rule = rules.find(
+                        (r) => r.fromStatus === currentStatusId && r.toStatus === option.id
+                    )
+
+                    // If no rule found, allow by default (backward compatibility)
+                    if (!rule) {
+                        return true
+                    }
+
+                    return rule.allowed
+                })
+
+                setFilteredOptions(allowedOptions)
+            } catch (error) {
+                // On error, show all options (fail-safe)
+                Utils.logError(`Failed to load status transition rules: ${error}`)
+                setFilteredOptions(propertyTemplate.options)
+            }
+        }
+
+        loadTransitionRules()
+    }, [open, isStatusProperty, board, propertyValue, propertyTemplate.options])
 
     const onCreate = useCallback((newValue) => {
         const option: IPropertyOption = {
@@ -61,7 +133,7 @@ const SelectProperty = (props: PropertyProps) => {
     return (
         <ValueSelector
             emptyValue={emptyDisplayValue}
-            options={propertyTemplate.options}
+            options={filteredOptions}
             value={propertyTemplate.options.find((p: IPropertyOption) => p.id === propertyValue)}
             onCreate={onCreate}
             onChange={onChange}

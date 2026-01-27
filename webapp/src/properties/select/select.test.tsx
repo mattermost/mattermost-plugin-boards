@@ -13,12 +13,15 @@ import {createCard} from '../../blocks/card'
 
 import {wrapIntl} from '../../testUtils'
 import mutator from '../../mutator'
+import octoClient from '../../octoClient'
 
 import SelectProperty from './property'
 import Select from './select'
 
 jest.mock('../../mutator')
+jest.mock('../../octoClient')
 const mockedMutator = mocked(mutator, true)
+const mockedOctoClient = mocked(octoClient, true)
 
 function selectPropertyTemplate(): IPropertyTemplate {
     return {
@@ -51,6 +54,11 @@ describe('properties/select', () => {
     const clearButton = () => screen.queryByRole('button', {name: /clear/i})
     const board = createBoard()
     const card = createCard()
+
+    beforeEach(() => {
+        // Mock octoClient.getStatusTransitionRules to return empty array (no rules)
+        mockedOctoClient.getStatusTransitionRules.mockResolvedValue([])
+    })
 
     it('shows the selected option', () => {
         const propertyTemplate = selectPropertyTemplate()
