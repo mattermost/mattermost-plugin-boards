@@ -279,6 +279,20 @@ func (mr *MockStoreMockRecorder) DeleteSubscription(blockID, subscriberID interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSubscription", reflect.TypeOf((*MockStore)(nil).DeleteSubscription), blockID, subscriberID)
 }
 
+// DeleteStatusTransitionRulesForBoard mocks base method.
+func (m *MockStore) DeleteStatusTransitionRulesForBoard(boardID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteStatusTransitionRulesForBoard", boardID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteStatusTransitionRulesForBoard indicates an expected call of DeleteStatusTransitionRulesForBoard.
+func (mr *MockStoreMockRecorder) DeleteStatusTransitionRulesForBoard(boardID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteStatusTransitionRulesForBoard", reflect.TypeOf((*MockStore)(nil).DeleteStatusTransitionRulesForBoard), boardID)
+}
+
 // DuplicateBlock mocks base method.
 func (m *MockStore) DuplicateBlock(boardID, blockID, userID string, asTemplate bool) ([]*model.Block, error) {
 	m.ctrl.T.Helper()
