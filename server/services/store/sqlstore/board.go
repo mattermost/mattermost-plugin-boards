@@ -478,6 +478,11 @@ func (s *SQLStore) deleteBoardAndChildren(db sq.BaseRunner, boardID, userID stri
 		return err
 	}
 
+	// Delete status transition rules for this board
+	if err := s.deleteStatusTransitionRulesForBoard(db, boardID); err != nil {
+		return err
+	}
+
 	if keepChildren {
 		return nil
 	}

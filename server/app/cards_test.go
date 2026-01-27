@@ -37,7 +37,9 @@ func TestCreateCard(t *testing.T) {
 	block := model.Card2Block(card)
 
 	t.Run("success scenario", func(t *testing.T) {
-		th.Store.EXPECT().GetBoard(board.ID).Return(board, nil)
+		th.Store.EXPECT().GetNextCardNumber(board.ID).Return(int64(1), nil)
+		th.Store.EXPECT().GetBoard(board.ID).Return(board, nil).Times(2)
+		th.Store.EXPECT().GetBlock(gomock.Any()).Return(nil, model.NewErrNotFound("block not found"))
 		th.Store.EXPECT().InsertBlock(gomock.AssignableToTypeOf(reflect.TypeOf(block)), userID).Return(nil)
 		th.Store.EXPECT().GetMembersForBoard(board.ID).Return([]*model.BoardMember{}, nil)
 
@@ -51,7 +53,9 @@ func TestCreateCard(t *testing.T) {
 	})
 
 	t.Run("error scenario", func(t *testing.T) {
-		th.Store.EXPECT().GetBoard(board.ID).Return(board, nil)
+		th.Store.EXPECT().GetNextCardNumber(board.ID).Return(int64(1), nil)
+		th.Store.EXPECT().GetBoard(board.ID).Return(board, nil).Times(2)
+		th.Store.EXPECT().GetBlock(gomock.Any()).Return(nil, model.NewErrNotFound("block not found"))
 		th.Store.EXPECT().InsertBlock(gomock.AssignableToTypeOf(reflect.TypeOf(block)), userID).Return(blockError{"error"})
 
 		newCard, err := th.App.CreateCard(card, board.ID, userID, false)
@@ -266,4 +270,145 @@ func modifyProps(m map[string]any) map[string]any {
 		out[k] = utils.NewID(utils.IDTypeBlock)
 	}
 	return out
+}
+
+func TestValidateStatusTransitions(t *testing.T) {
+	th, tearDown := SetupTestHelper(t)
+	defer tearDown()
+
+	boardID := utils.NewID(utils.IDTypeBoard)
+	userID := utils.NewID(utils.IDTypeUser)
+	statusPropID := utils.NewID(utils.IDTypeBlock)
+
+	// Create status options
+	statusOption1 := utils.NewID(utils.IDTypeBlock)
+	statusOption2 := utils.NewID(utils.IDTypeBlock)
+	statusOption3 := utils.NewID(utils.IDTypeBlock)
+
+	board := &model.Board{
+		ID: boardID,
+		CardProperties: []map[string]interface{}{
+			{
+				"id":   statusPropID,
+				"name": "Status",
+				"type": "select",
+				"options": []interface{}{
+					map[string]interface{}{
+						"id":    statusOption1,
+						"value": "To Do",
+						"color": "propColorDefault",
+					},
+					map[string]interface{}{
+						"id":    statusOption2,
+						"value": "In Progress",
+						"color": "propColorBlue",
+					},
+					map[string]interface{}{
+						"id":    statusOption3,
+						"value": "Done",
+						"color": "propColorGreen",
+					},
+				},
+			},
+		},
+	}
+
+	card := &model.Card{
+		ID:         utils.NewID(utils.IDTypeBlock),
+		BoardID:    boardID,
+		CreatedBy:  userID,
+		ModifiedBy: userID,
+		Title:      "test card",
+		Properties: map[string]interface{}{
+			statusPropID: statusOption1, // Currently "To Do"
+		},
+	}
+
+	t.Run("allowed transition", func(t *testing.T) {
+		// Transition from "To Do" to "In Progress" is allowed
+		cardPatch := &model.CardPatch{
+			UpdatedProperties: map[string]interface{}{
+				statusPropID: statusOption2,
+			},
+		}
+
+		th.Store.EXPECT().IsStatusTransitionAllowed(boardID, statusOption1, statusOption2).Return(true, nil)
+
+		err := th.App.validateStatusTransitions(board, card, cardPatch)
+		require.NoError(t, err)
+	})
+
+	t.Run("disallowed transition", func(t *testing.T) {
+		// Transition from "To Do" to "Done" is not allowed
+		cardPatch := &model.CardPatch{
+			UpdatedProperties: map[string]interface{}{
+				statusPropID: statusOption3,
+			},
+		}
+
+		th.Store.EXPECT().IsStatusTransitionAllowed(boardID, statusOption1, statusOption3).Return(false, nil)
+
+		err := th.App.validateStatusTransitions(board, card, cardPatch)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "can't move to")
+	})
+
+	t.Run("no current value - always allowed", func(t *testing.T) {
+		// Setting initial status is always allowed
+		cardWithoutStatus := &model.Card{
+			ID:         utils.NewID(utils.IDTypeBlock),
+			BoardID:    boardID,
+			CreatedBy:  userID,
+			ModifiedBy: userID,
+			Title:      "test card",
+			Properties: map[string]interface{}{},
+		}
+
+		cardPatch := &model.CardPatch{
+			UpdatedProperties: map[string]interface{}{
+				statusPropID: statusOption1,
+			},
+		}
+
+		// Should not call IsStatusTransitionAllowed since there's no current value
+		err := th.App.validateStatusTransitions(board, cardWithoutStatus, cardPatch)
+		require.NoError(t, err)
+	})
+
+	t.Run("same value - no validation needed", func(t *testing.T) {
+		// Keeping the same status doesn't require validation
+		cardPatch := &model.CardPatch{
+			UpdatedProperties: map[string]interface{}{
+				statusPropID: statusOption1,
+			},
+		}
+
+		// Should not call IsStatusTransitionAllowed since value isn't changing
+		err := th.App.validateStatusTransitions(board, card, cardPatch)
+		require.NoError(t, err)
+	})
+
+	t.Run("non-select property - no validation", func(t *testing.T) {
+		// Non-select properties should not be validated
+		textPropID := utils.NewID(utils.IDTypeBlock)
+		boardWithTextProp := &model.Board{
+			ID: boardID,
+			CardProperties: []map[string]interface{}{
+				{
+					"id":   textPropID,
+					"name": "Description",
+					"type": "text",
+				},
+			},
+		}
+
+		cardPatch := &model.CardPatch{
+			UpdatedProperties: map[string]interface{}{
+				textPropID: "new description",
+			},
+		}
+
+		err := th.App.validateStatusTransitions(boardWithTextProp, card, cardPatch)
+		require.NoError(t, err)
+	})
 }

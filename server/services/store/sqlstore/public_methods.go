@@ -225,6 +225,30 @@ func (s *SQLStore) DeleteNotificationHint(blockID string) error {
 
 }
 
+func (s *SQLStore) DeleteStatusTransitionRulesForBoard(boardID string) error {
+	if s.dbType == model.SqliteDBType {
+		return s.deleteStatusTransitionRulesForBoard(s.db, boardID)
+	}
+	tx, txErr := s.db.BeginTx(context.Background(), nil)
+	if txErr != nil {
+		return txErr
+	}
+	err := s.deleteStatusTransitionRulesForBoard(tx, boardID)
+	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			s.logger.Error("transaction rollback error", mlog.Err(rollbackErr), mlog.String("methodName", "DeleteStatusTransitionRulesForBoard"))
+		}
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
 func (s *SQLStore) DeleteSubscription(blockID string, subscriberID string) error {
 	return s.deleteSubscription(s.db, blockID, subscriberID)
 
@@ -363,13 +387,13 @@ func (s *SQLStore) GetBoardAndCardByID(blockID string) (*model.Board, *model.Blo
 
 }
 
-func (s *SQLStore) GetBoardCount(includeDeleted bool) (int64, error) {
-	return s.getBoardCount(s.db, includeDeleted)
+func (s *SQLStore) GetBoardByCode(code string, teamID string) (*model.Board, error) {
+	return s.getBoardByCode(s.db, code, teamID)
 
 }
 
-func (s *SQLStore) GetCardByCode(code string) (*model.Block, *model.Board, error) {
-	return s.getCardByCode(s.db, code)
+func (s *SQLStore) GetBoardCount(includeDeleted bool) (int64, error) {
+	return s.getBoardCount(s.db, includeDeleted)
 
 }
 
@@ -403,8 +427,8 @@ func (s *SQLStore) GetBoardsInTeamByIds(boardIDs []string, teamID string) ([]*mo
 
 }
 
-func (s *SQLStore) GetBoardByCode(code string, teamID string) (*model.Board, error) {
-	return s.getBoardByCode(s.db, code, teamID)
+func (s *SQLStore) GetCardByCode(code string) (*model.Block, *model.Board, error) {
+	return s.getCardByCode(s.db, code)
 
 }
 
@@ -453,6 +477,11 @@ func (s *SQLStore) GetMembersForUser(userID string) ([]*model.BoardMember, error
 
 }
 
+func (s *SQLStore) GetNextCardNumber(boardID string) (int64, error) {
+	return s.getNextCardNumber(s.db, boardID)
+
+}
+
 func (s *SQLStore) GetNextNotificationHint(remove bool) (*model.NotificationHint, error) {
 	return s.getNextNotificationHint(s.db, remove)
 
@@ -470,6 +499,11 @@ func (s *SQLStore) GetRegisteredUserCount() (int, error) {
 
 func (s *SQLStore) GetSharing(rootID string) (*model.Sharing, error) {
 	return s.getSharing(s.db, rootID)
+
+}
+
+func (s *SQLStore) GetStatusTransitionRules(boardID string) ([]*model.StatusTransitionRule, error) {
+	return s.getStatusTransitionRules(s.db, boardID)
 
 }
 
@@ -655,6 +689,11 @@ func (s *SQLStore) InsertBoardWithAdmin(board *model.Board, userID string) (*mod
 
 }
 
+func (s *SQLStore) IsStatusTransitionAllowed(boardID string, fromStatus string, toStatus string) (bool, error) {
+	return s.isStatusTransitionAllowed(s.db, boardID, fromStatus, toStatus)
+
+}
+
 func (s *SQLStore) PatchBlock(blockID string, blockPatch *model.BlockPatch, userID string) error {
 	if s.dbType == model.SqliteDBType {
 		return s.patchBlock(s.db, blockID, blockPatch, userID)
@@ -776,6 +815,11 @@ func (s *SQLStore) ReorderCategoryBoards(categoryID string, newBoardsOrder []str
 
 }
 
+func (s *SQLStore) RestoreFiles(fileIDs []string) error {
+	return s.restoreFiles(s.db, fileIDs)
+
+}
+
 func (s *SQLStore) RunDataRetention(globalRetentionDate int64, batchSize int64) (int64, error) {
 	if s.dbType == model.SqliteDBType {
 		return s.runDataRetention(s.db, globalRetentionDate, batchSize)
@@ -805,13 +849,32 @@ func (s *SQLStore) SaveFileInfo(fileInfo *mmModel.FileInfo) error {
 
 }
 
-func (s *SQLStore) RestoreFiles(fileIDs []string) error {
-	return s.restoreFiles(s.db, fileIDs)
+func (s *SQLStore) SaveMember(bm *model.BoardMember) (*model.BoardMember, error) {
+	return s.saveMember(s.db, bm)
 
 }
 
-func (s *SQLStore) SaveMember(bm *model.BoardMember) (*model.BoardMember, error) {
-	return s.saveMember(s.db, bm)
+func (s *SQLStore) SaveStatusTransitionRules(rules []*model.StatusTransitionRule) error {
+	if s.dbType == model.SqliteDBType {
+		return s.saveStatusTransitionRules(s.db, rules)
+	}
+	tx, txErr := s.db.BeginTx(context.Background(), nil)
+	if txErr != nil {
+		return txErr
+	}
+	err := s.saveStatusTransitionRules(tx, rules)
+	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			s.logger.Error("transaction rollback error", mlog.Err(rollbackErr), mlog.String("methodName", "SaveStatusTransitionRules"))
+		}
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 
 }
 
