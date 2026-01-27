@@ -20,7 +20,6 @@ import (
 	embedded "github.com/mattermost/morph/sources/embedded"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
-	mmSqlStore "github.com/mattermost/mattermost/server/public/utils/sql"
 	"github.com/mattermost/mattermost/server/v8/channels/db"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
@@ -177,12 +176,12 @@ func (bm *BoardsMigrator) Setup() error {
 	}
 
 	if bm.driverName == model.MysqlDBType {
-		bm.connString, err = mmSqlStore.ResetReadTimeout(bm.connString)
+		bm.connString, err = sqlstore.ResetReadTimeout(bm.connString)
 		if err != nil {
 			return err
 		}
 
-		bm.connString, err = mmSqlStore.AppendMultipleStatementsFlag(bm.connString)
+		bm.connString, err = sqlstore.AppendMultipleStatementsFlag(bm.connString)
 		if err != nil {
 			return err
 		}
