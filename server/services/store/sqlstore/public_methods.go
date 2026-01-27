@@ -225,11 +225,6 @@ func (s *SQLStore) DeleteNotificationHint(blockID string) error {
 
 }
 
-func (s *SQLStore) DeleteSubscription(blockID string, subscriberID string) error {
-	return s.deleteSubscription(s.db, blockID, subscriberID)
-
-}
-
 func (s *SQLStore) DeleteStatusTransitionRulesForBoard(boardID string) error {
 	if s.dbType == model.SqliteDBType {
 		return s.deleteStatusTransitionRulesForBoard(s.db, boardID)
@@ -251,6 +246,11 @@ func (s *SQLStore) DeleteStatusTransitionRulesForBoard(boardID string) error {
 	}
 
 	return nil
+
+}
+
+func (s *SQLStore) DeleteSubscription(blockID string, subscriberID string) error {
+	return s.deleteSubscription(s.db, blockID, subscriberID)
 
 }
 
@@ -387,13 +387,13 @@ func (s *SQLStore) GetBoardAndCardByID(blockID string) (*model.Board, *model.Blo
 
 }
 
-func (s *SQLStore) GetBoardCount(includeDeleted bool) (int64, error) {
-	return s.getBoardCount(s.db, includeDeleted)
+func (s *SQLStore) GetBoardByCode(code string, teamID string) (*model.Board, error) {
+	return s.getBoardByCode(s.db, code, teamID)
 
 }
 
-func (s *SQLStore) GetCardByCode(code string) (*model.Block, *model.Board, error) {
-	return s.getCardByCode(s.db, code)
+func (s *SQLStore) GetBoardCount(includeDeleted bool) (int64, error) {
+	return s.getBoardCount(s.db, includeDeleted)
 
 }
 
@@ -427,8 +427,8 @@ func (s *SQLStore) GetBoardsInTeamByIds(boardIDs []string, teamID string) ([]*mo
 
 }
 
-func (s *SQLStore) GetBoardByCode(code string, teamID string) (*model.Board, error) {
-	return s.getBoardByCode(s.db, code, teamID)
+func (s *SQLStore) GetCardByCode(code string) (*model.Block, *model.Board, error) {
+	return s.getCardByCode(s.db, code)
 
 }
 
@@ -477,6 +477,11 @@ func (s *SQLStore) GetMembersForUser(userID string) ([]*model.BoardMember, error
 
 }
 
+func (s *SQLStore) GetNextCardNumber(boardID string) (int64, error) {
+	return s.getNextCardNumber(s.db, boardID)
+
+}
+
 func (s *SQLStore) GetNextNotificationHint(remove bool) (*model.NotificationHint, error) {
 	return s.getNextNotificationHint(s.db, remove)
 
@@ -494,6 +499,11 @@ func (s *SQLStore) GetRegisteredUserCount() (int, error) {
 
 func (s *SQLStore) GetSharing(rootID string) (*model.Sharing, error) {
 	return s.getSharing(s.db, rootID)
+
+}
+
+func (s *SQLStore) GetStatusTransitionRules(boardID string) ([]*model.StatusTransitionRule, error) {
+	return s.getStatusTransitionRules(s.db, boardID)
 
 }
 
@@ -529,11 +539,6 @@ func (s *SQLStore) GetSystemSetting(key string) (string, error) {
 
 func (s *SQLStore) GetSystemSettings() (map[string]string, error) {
 	return s.getSystemSettings(s.db)
-
-}
-
-func (s *SQLStore) GetStatusTransitionRules(boardID string) ([]*model.StatusTransitionRule, error) {
-	return s.getStatusTransitionRules(s.db, boardID)
 
 }
 
@@ -604,11 +609,6 @@ func (s *SQLStore) GetUsersByTeam(teamID string, asGuestID string, showEmail boo
 
 func (s *SQLStore) GetUsersList(userIDs []string, showEmail bool, showName bool) ([]*model.User, error) {
 	return s.getUsersList(s.db, userIDs, showEmail, showName)
-
-}
-
-func (s *SQLStore) IsStatusTransitionAllowed(boardID string, fromStatus string, toStatus string) (bool, error) {
-	return s.isStatusTransitionAllowed(s.db, boardID, fromStatus, toStatus)
 
 }
 
@@ -686,6 +686,11 @@ func (s *SQLStore) InsertBoardWithAdmin(board *model.Board, userID string) (*mod
 	}
 
 	return result, resultVar1, nil
+
+}
+
+func (s *SQLStore) IsStatusTransitionAllowed(boardID string, fromStatus string, toStatus string) (bool, error) {
+	return s.isStatusTransitionAllowed(s.db, boardID, fromStatus, toStatus)
 
 }
 
@@ -810,6 +815,11 @@ func (s *SQLStore) ReorderCategoryBoards(categoryID string, newBoardsOrder []str
 
 }
 
+func (s *SQLStore) RestoreFiles(fileIDs []string) error {
+	return s.restoreFiles(s.db, fileIDs)
+
+}
+
 func (s *SQLStore) RunDataRetention(globalRetentionDate int64, batchSize int64) (int64, error) {
 	if s.dbType == model.SqliteDBType {
 		return s.runDataRetention(s.db, globalRetentionDate, batchSize)
@@ -836,11 +846,6 @@ func (s *SQLStore) RunDataRetention(globalRetentionDate int64, batchSize int64) 
 
 func (s *SQLStore) SaveFileInfo(fileInfo *mmModel.FileInfo) error {
 	return s.saveFileInfo(s.db, fileInfo)
-
-}
-
-func (s *SQLStore) RestoreFiles(fileIDs []string) error {
-	return s.restoreFiles(s.db, fileIDs)
 
 }
 

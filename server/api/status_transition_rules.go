@@ -62,7 +62,7 @@ func (a *API) handleGetStatusTransitionRules(w http.ResponseWriter, r *http.Requ
 	defer a.audit.LogRecord(audit.LevelRead, auditRec)
 	auditRec.AddMeta("boardID", boardID)
 
-	rules, err := a.app.GetStore().GetStatusTransitionRules(boardID)
+	rules, err := a.app.GetStatusTransitionRules(boardID)
 	if err != nil {
 		a.errorResponse(w, r, err)
 		return
@@ -149,14 +149,14 @@ func (a *API) handleSaveStatusTransitionRules(w http.ResponseWriter, r *http.Req
 	auditRec.AddMeta("rulesCount", len(rules))
 
 	// Delete existing rules for the board before saving new ones
-	err = a.app.GetStore().DeleteStatusTransitionRulesForBoard(boardID)
+	err = a.app.DeleteStatusTransitionRulesForBoard(boardID)
 	if err != nil {
 		a.errorResponse(w, r, err)
 		return
 	}
 
 	// Save the new rules
-	err = a.app.GetStore().SaveStatusTransitionRules(rules)
+	err = a.app.SaveStatusTransitionRules(rules)
 	if err != nil {
 		a.errorResponse(w, r, err)
 		return
