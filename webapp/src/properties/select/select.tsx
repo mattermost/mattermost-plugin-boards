@@ -136,7 +136,11 @@ const SelectProperty = (props: PropertyProps) => {
                 className={props.property.valueClassName(!isEditable)}
                 data-testid='select-non-editable'
                 tabIndex={0}
-                onClick={() => setOpen(true)}
+                onClick={() => {
+                    if (isEditable) {
+                        setOpen(true)
+                    }
+                }}
             >
                 <Label color={displayValue ? propertyColorCssClassName : 'empty'}>
                     <span className='Label-text'>{finalDisplayValue}</span>

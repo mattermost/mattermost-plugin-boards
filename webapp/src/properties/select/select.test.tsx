@@ -246,6 +246,9 @@ describe('properties/select', () => {
         // Wait for the async transition rules to load
         await screen.findByRole('combobox', {name: /value selector/i})
 
+        // Verify that the API was called to fetch transition rules
+        expect(mockedOctoClient.getStatusTransitionRules).toHaveBeenCalledWith(board.id)
+
         // option-1 (current) should be visible (always allowed to keep current status)
         // It appears twice: once in the selector and once in the menu
         const oneElements = screen.getAllByText('one')
@@ -256,5 +259,32 @@ describe('properties/select', () => {
 
         // option-3 should be visible (no rule means allowed by default)
         expect(screen.getByText('three')).toBeInTheDocument()
+    })
+
+    it('does not fetch transition rules when field is read-only', () => {
+        const propertyTemplate = selectPropertyTemplate()
+        propertyTemplate.name = 'Status'
+        const currentOption = propertyTemplate.options[0]
+
+        // Reset the mock to ensure we're tracking calls from this test only
+        mockedOctoClient.getStatusTransitionRules.mockClear()
+
+        render(wrapIntl(
+            <Select
+                property={new SelectProperty()}
+                board={{...board}}
+                card={{...card}}
+                propertyTemplate={propertyTemplate}
+                propertyValue={currentOption.id}
+                showEmptyPlaceholder={false}
+                readOnly={true}
+            />,
+        ))
+
+        // Click on the read-only field
+        userEvent.click(screen.getByTestId(nonEditableSelectTestId))
+
+        // Verify that the API was NOT called for read-only fields
+        expect(mockedOctoClient.getStatusTransitionRules).not.toHaveBeenCalled()
     })
 })
