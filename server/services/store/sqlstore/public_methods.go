@@ -230,6 +230,30 @@ func (s *SQLStore) DeleteSubscription(blockID string, subscriberID string) error
 
 }
 
+func (s *SQLStore) DeleteStatusTransitionRulesForBoard(boardID string) error {
+	if s.dbType == model.SqliteDBType {
+		return s.deleteStatusTransitionRulesForBoard(s.db, boardID)
+	}
+	tx, txErr := s.db.BeginTx(context.Background(), nil)
+	if txErr != nil {
+		return txErr
+	}
+	err := s.deleteStatusTransitionRulesForBoard(tx, boardID)
+	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			s.logger.Error("transaction rollback error", mlog.Err(rollbackErr), mlog.String("methodName", "DeleteStatusTransitionRulesForBoard"))
+		}
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
 func (s *SQLStore) DuplicateBlock(boardID string, blockID string, userID string, asTemplate bool) ([]*model.Block, error) {
 	if s.dbType == model.SqliteDBType {
 		return s.duplicateBlock(s.db, boardID, blockID, userID, asTemplate)
@@ -508,6 +532,11 @@ func (s *SQLStore) GetSystemSettings() (map[string]string, error) {
 
 }
 
+func (s *SQLStore) GetStatusTransitionRules(boardID string) ([]*model.StatusTransitionRule, error) {
+	return s.getStatusTransitionRules(s.db, boardID)
+
+}
+
 func (s *SQLStore) GetTeam(ID string) (*model.Team, error) {
 	return s.getTeam(s.db, ID)
 
@@ -575,6 +604,11 @@ func (s *SQLStore) GetUsersByTeam(teamID string, asGuestID string, showEmail boo
 
 func (s *SQLStore) GetUsersList(userIDs []string, showEmail bool, showName bool) ([]*model.User, error) {
 	return s.getUsersList(s.db, userIDs, showEmail, showName)
+
+}
+
+func (s *SQLStore) IsStatusTransitionAllowed(boardID string, fromStatus string, toStatus string) (bool, error) {
+	return s.isStatusTransitionAllowed(s.db, boardID, fromStatus, toStatus)
 
 }
 
@@ -812,6 +846,30 @@ func (s *SQLStore) RestoreFiles(fileIDs []string) error {
 
 func (s *SQLStore) SaveMember(bm *model.BoardMember) (*model.BoardMember, error) {
 	return s.saveMember(s.db, bm)
+
+}
+
+func (s *SQLStore) SaveStatusTransitionRules(rules []*model.StatusTransitionRule) error {
+	if s.dbType == model.SqliteDBType {
+		return s.saveStatusTransitionRules(s.db, rules)
+	}
+	tx, txErr := s.db.BeginTx(context.Background(), nil)
+	if txErr != nil {
+		return txErr
+	}
+	err := s.saveStatusTransitionRules(tx, rules)
+	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			s.logger.Error("transaction rollback error", mlog.Err(rollbackErr), mlog.String("methodName", "SaveStatusTransitionRules"))
+		}
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 
 }
 

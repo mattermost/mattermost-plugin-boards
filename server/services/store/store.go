@@ -157,6 +157,14 @@ type Store interface {
 	GetCardLimitTimestamp() (int64, error)
 	UpdateCardLimitTimestamp(cardLimit int) (int64, error)
 
+	// Status Transition Rules
+	GetStatusTransitionRules(boardID string) ([]*model.StatusTransitionRule, error)
+	// @withTransaction
+	SaveStatusTransitionRules(rules []*model.StatusTransitionRule) error
+	// @withTransaction
+	DeleteStatusTransitionRulesForBoard(boardID string) error
+	IsStatusTransitionAllowed(boardID, fromStatus, toStatus string) (bool, error)
+
 	DBType() string
 	DBVersion() string
 

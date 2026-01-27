@@ -182,5 +182,33 @@ func (s *SQLStore) duplicateBoard(db sq.BaseRunner, boardID string, userID strin
 		return nil, nil, err
 	}
 
-	return s.createBoardsAndBlocksWithAdmin(db, bab, userID)
+	newBab, members, err := s.createBoardsAndBlocksWithAdmin(db, bab, userID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Copy status transition rules if the board has any
+	rules, err := s.getStatusTransitionRules(db, boardID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if len(rules) > 0 && len(newBab.Boards) > 0 {
+		newBoardID := newBab.Boards[0].ID
+		newRules := make([]*model.StatusTransitionRule, len(rules))
+		for i, rule := range rules {
+			newRule := &model.StatusTransitionRule{
+				BoardID:    newBoardID,
+				FromStatus: rule.FromStatus,
+				ToStatus:   rule.ToStatus,
+				Allowed:    rule.Allowed,
+			}
+			newRules[i] = newRule
+		}
+		if err := s.saveStatusTransitionRules(db, newRules); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	return newBab, members, nil
 }
