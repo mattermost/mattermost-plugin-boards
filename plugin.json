@@ -31,16 +31,10 @@
             "help_text": "This allows board editors to share boards that can be accessed by anyone with the link."
         },
         {
-            "key": "BoardCodesManager",
+            "key": "BoardsManagement",
             "type": "custom",
-            "display_name": "Board Codes Management:",
-            "help_text": "Manage board codes for all teams. Codes are unique within a team and must be 1-10 alphanumeric characters starting with a letter."
-        },
-        {
-            "key": "StatusTransitionManager",
-            "type": "custom",
-            "display_name": "Status Transition Rules Management:",
-            "help_text": "Configure which status transitions are allowed for cards in each board. This controls the workflow and prevents invalid status changes."
+            "display_name": "Boards Management:",
+            "help_text": "Manage board codes and status transition rules for all boards. Configure board codes (unique 1-10 alphanumeric characters starting with a letter) and control which status transitions are allowed for cards in each board."
         },
         {
             "key": "Integrations",
