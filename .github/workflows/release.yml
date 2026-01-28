@@ -1,14 +1,18 @@
 name: Release Build
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Check-in tests"]
+    types:
+      - completed
     branches:
-      - 'main'
+      - main
   workflow_dispatch:
 
 jobs:
   build-and-release:
     runs-on: ubuntu-22.04
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     permissions:
       contents: write
     
