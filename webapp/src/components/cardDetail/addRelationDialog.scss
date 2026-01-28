@@ -95,9 +95,15 @@
         }
     }
 
-    &__card-icon {
-        font-size: 16px;
+    &__card-code {
+        font-size: 12px;
+        font-weight: 600;
+        color: rgba(var(--button-bg-rgb), 1);
+        background: rgba(var(--button-bg-rgb), 0.08);
+        padding: 2px 6px;
+        border-radius: 3px;
         flex-shrink: 0;
+        font-family: monospace;
     }
 
     &__card-title {

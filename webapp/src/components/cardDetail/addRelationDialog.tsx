@@ -65,9 +65,12 @@ const AddRelationDialog = (props: Props): JSX.Element => {
         }
     }
 
-    const filteredCards = searchResults.filter((c) =>
-        c.title.toLowerCase().includes(searchQuery.toLowerCase()),
-    )
+    const filteredCards = searchResults.filter((c) => {
+        const query = searchQuery.toLowerCase()
+        const titleMatch = c.title.toLowerCase().includes(query)
+        const codeMatch = c.code?.toLowerCase().includes(query)
+        return titleMatch || codeMatch
+    })
 
     const handleCreate = useCallback(async () => {
         if (!selectedCard) {
@@ -190,9 +193,11 @@ const AddRelationDialog = (props: Props): JSX.Element => {
                                     }
                                 }}
                             >
-                                <span className='AddRelationDialog__card-icon'>
-                                    {c.fields.icon || '📄'}
-                                </span>
+                                {c.code && (
+                                    <span className='AddRelationDialog__card-code'>
+                                        {c.code}
+                                    </span>
+                                )}
                                 <span className='AddRelationDialog__card-title'>
                                     {c.title || 'Untitled'}
                                 </span>
