@@ -148,6 +148,8 @@ func (a *API) handleCreateCardRelation(w http.ResponseWriter, r *http.Request) {
 
 	// Ensure the source card ID matches the URL parameter
 	newRelation.SourceCardID = cardID
+	// Set creator from the authenticated user
+	newRelation.CreatedBy = userID
 
 	// Get the card to check permissions
 	card, err := a.app.GetCardByID(cardID)
