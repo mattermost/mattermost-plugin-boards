@@ -1,13 +1,28 @@
 .CardRelations {
-    margin-top: 16px;
-    padding: 12px 0;
+    margin-top: 20px;
+    padding: 16px 0;
     border-top: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
 
     &__header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    &__title {
         font-weight: 600;
         font-size: 14px;
-        margin-bottom: 12px;
         color: rgba(var(--center-channel-color-rgb), 0.72);
+    }
+
+    &__count {
+        font-size: 12px;
+        font-weight: 500;
+        color: rgba(var(--center-channel-color-rgb), 0.56);
+        background: rgba(var(--center-channel-color-rgb), 0.08);
+        padding: 2px 8px;
+        border-radius: 10px;
     }
 
     &__loading {
@@ -16,10 +31,18 @@
         padding: 8px 0;
     }
 
+    &__empty {
+        color: rgba(var(--center-channel-color-rgb), 0.48);
+        font-size: 13px;
+        padding: 8px 0;
+        font-style: italic;
+    }
+
     &__list {
         display: flex;
         flex-direction: column;
         gap: 8px;
+        margin-bottom: 12px;
     }
 
     &__item {
@@ -28,8 +51,9 @@
         gap: 12px;
         padding: 8px 12px;
         background: rgba(var(--center-channel-color-rgb), 0.04);
-        border-radius: 4px;
+        border-radius: 6px;
         font-size: 13px;
+        transition: background 0.15s ease;
 
         &:hover {
             background: rgba(var(--center-channel-color-rgb), 0.08);
@@ -37,50 +61,101 @@
     }
 
     &__item-type {
-        font-weight: 500;
-        color: rgba(var(--center-channel-color-rgb), 0.72);
-        min-width: 100px;
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: rgba(var(--center-channel-color-rgb), 0.56);
+        background: rgba(var(--center-channel-color-rgb), 0.08);
+        padding: 4px 8px;
+        border-radius: 4px;
+        min-width: 90px;
+        text-align: center;
     }
 
     &__item-card {
         flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
         color: rgba(var(--center-channel-color-rgb), 0.88);
+        border-radius: 4px;
+        padding: 4px 8px;
+        margin: -4px -8px;
+        transition: background 0.15s ease;
+
+        &:hover {
+            background: rgba(var(--button-bg-rgb), 0.08);
+            color: rgba(var(--button-bg-rgb), 1);
+        }
+
+        &:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(var(--button-bg-rgb), 0.24);
+        }
+    }
+
+    &__item-icon {
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    &__item-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     &__item-delete {
         background: none;
         border: none;
-        color: rgba(var(--error-text-color-rgb), 1);
+        color: rgba(var(--center-channel-color-rgb), 0.48);
         cursor: pointer;
-        padding: 4px 8px;
+        padding: 4px;
         border-radius: 4px;
-        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s ease;
 
         &:hover {
             background: rgba(var(--error-text-color-rgb), 0.08);
+            color: rgba(var(--error-text-color-rgb), 1);
+        }
+
+        .CompassIcon {
+            font-size: 16px;
         }
     }
 
     &__add {
-        margin-top: 12px;
+        margin-top: 8px;
     }
 
     &__add-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
         background: none;
         border: 1px dashed rgba(var(--center-channel-color-rgb), 0.24);
         color: rgba(var(--center-channel-color-rgb), 0.64);
         cursor: pointer;
-        padding: 8px 12px;
-        border-radius: 4px;
+        padding: 10px 12px;
+        border-radius: 6px;
         font-size: 13px;
-        width: 100%;
         text-align: left;
+        transition: all 0.15s ease;
 
         &:hover {
-            border-color: rgba(var(--center-channel-color-rgb), 0.48);
-            color: rgba(var(--center-channel-color-rgb), 0.88);
-            background: rgba(var(--center-channel-color-rgb), 0.04);
+            border-color: rgba(var(--button-bg-rgb), 0.48);
+            color: rgba(var(--button-bg-rgb), 1);
+            background: rgba(var(--button-bg-rgb), 0.04);
+        }
+
+        .CompassIcon {
+            font-size: 16px;
         }
     }
 }
-
