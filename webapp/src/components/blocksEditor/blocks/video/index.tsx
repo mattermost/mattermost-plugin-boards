@@ -290,8 +290,8 @@ const Video: ContentType<FileInfo> = {
                             }}
                             autoFocus={true}
                         />
-                        <button onClick={handleUrlSubmit}>{'Add'}</button>
-                        <button onClick={handleFileSelect}>{'Upload File'}</button>
+                        <button type="button" onClick={handleUrlSubmit}>{'Add'}</button>
+                        <button type="button" onClick={handleFileSelect}>{'Upload File'}</button>
                     </div>
                 ) : (
                     <>

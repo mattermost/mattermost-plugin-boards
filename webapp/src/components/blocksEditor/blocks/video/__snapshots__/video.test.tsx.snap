@@ -101,10 +101,14 @@ exports[`components/blocksEditor/blocks/video should match Input snapshot 1`] = 
         type="text"
         value=""
       />
-      <button>
+      <button
+        type="button"
+      >
         Add
       </button>
-      <button>
+      <button
+        type="button"
+      >
         Upload File
       </button>
     </div>
@@ -125,10 +129,14 @@ exports[`components/blocksEditor/blocks/video should match Input snapshot with e
         type="text"
         value=""
       />
-      <button>
+      <button
+        type="button"
+      >
         Add
       </button>
-      <button>
+      <button
+        type="button"
+      >
         Upload File
       </button>
     </div>
