@@ -336,6 +336,7 @@ const CardDialog = (props: Props): JSX.Element => {
                         onClose={handleClose}
                         onDelete={deleteBlock}
                         addAttachment={addElement}
+                        showCard={props.showCard}
                     />}
 
                 {!card &&
