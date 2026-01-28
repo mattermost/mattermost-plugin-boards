@@ -43,10 +43,24 @@ const BotWhitelistManager = (props: Props) => {
             setError('')
             
             // Get all users including bots
+            // Note: getTeamUsers returns empty array on non-200 responses
             const allUsers = await octoClient.getTeamUsers(false)
+            
+            // Check if we got any users at all - empty result might indicate
+            // a failed request (e.g., no team context in Admin Console)
+            if (allUsers.length === 0) {
+                setError('Could not load users. This may happen if accessed outside of a team context. Please ensure the Boards plugin is properly configured.')
+                setBots([])
+                return
+            }
             
             // Filter to only bots
             const botUsers = allUsers.filter((user: IUser) => user.is_bot)
+            
+            if (botUsers.length === 0) {
+                // No error, just no bots in the system
+                setError('')
+            }
             
             setBots(botUsers)
         } catch (err) {
