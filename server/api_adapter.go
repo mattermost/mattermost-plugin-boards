@@ -5,6 +5,7 @@ package main
 
 import (
 	"database/sql"
+	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
@@ -260,6 +261,14 @@ func (a *pluginAPIAdapter) UpdatePreferencesForUser(userID string, preferences m
 func (a *pluginAPIAdapter) DeletePreferencesForUser(userID string, preferences mm_model.Preferences) error {
 	appErr := a.api.DeletePreferencesForUser(userID, preferences)
 	return normalizeAppErr(appErr)
+}
+
+//
+// Plugin IPC service.
+//
+
+func (a *pluginAPIAdapter) PluginHTTP(req *http.Request) *http.Response {
+	return a.api.PluginHTTP(req)
 }
 
 // Ensure the adapter implements ServicesAPI.
