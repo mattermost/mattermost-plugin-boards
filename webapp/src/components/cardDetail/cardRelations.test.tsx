@@ -11,7 +11,7 @@ import {Provider as ReduxProvider} from 'react-redux'
 import {wrapIntl} from '../../testUtils'
 import {TestBlockFactory} from '../../test/testBlockFactory'
 import octoClient from '../../octoClient'
-import {CardRelation} from '../../blocks/cardRelation'
+import {CardRelation, RelationType} from '../../blocks/cardRelation'
 
 import CardRelations from './cardRelations'
 
@@ -75,7 +75,7 @@ describe('components/cardDetail/CardRelations', () => {
         id: 'relation-1',
         sourceCardId: card.id,
         targetCardId: relatedCard.id,
-        relationType: 'relatesTo',
+        relationType: RelationType.RelatesTo,
         createdBy: 'user-id-1',
         createAt: Date.now(),
         updateAt: Date.now(),
