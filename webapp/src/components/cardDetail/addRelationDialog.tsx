@@ -55,7 +55,10 @@ const AddRelationDialog = (props: Props): JSX.Element => {
             setSearchResults(cards)
         } catch (err) {
             console.error('Failed to load cards:', err)
-            setError('Failed to load cards')
+            setError(intl.formatMessage({
+                id: 'AddRelationDialog.error.loadFailed',
+                defaultMessage: 'Failed to load cards',
+            }))
         } finally {
             setLoading(false)
         }
@@ -84,7 +87,10 @@ const AddRelationDialog = (props: Props): JSX.Element => {
             onClose()
         } catch (err) {
             console.error('Failed to create relation:', err)
-            setError('Failed to create relation')
+            setError(intl.formatMessage({
+                id: 'AddRelationDialog.error.createFailed',
+                defaultMessage: 'Failed to create relation',
+            }))
         } finally {
             setCreating(false)
         }
@@ -173,6 +179,15 @@ const AddRelationDialog = (props: Props): JSX.Element => {
                                 key={c.id}
                                 className={`AddRelationDialog__card ${selectedCard?.id === c.id ? 'AddRelationDialog__card--selected' : ''}`}
                                 onClick={() => setSelectedCard(c)}
+                                role='option'
+                                aria-selected={selectedCard?.id === c.id}
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault()
+                                        setSelectedCard(c)
+                                    }
+                                }}
                             >
                                 <span className='AddRelationDialog__card-icon'>
                                     {c.fields.icon || '📄'}

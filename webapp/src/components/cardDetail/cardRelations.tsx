@@ -2,7 +2,7 @@
 // See LICENSE.txt for license information.
 
 import React, {useEffect, useState, useCallback} from 'react'
-import {FormattedMessage} from 'react-intl'
+import {FormattedMessage, useIntl} from 'react-intl'
 
 import {CardRelation, getRelationTypeDisplayName, getInverseRelationType} from '../../blocks/cardRelation'
 import {Card} from '../../blocks/card'
@@ -28,6 +28,7 @@ type RelatedCardInfo = {
 
 const CardRelations = (props: Props): JSX.Element => {
     const {card, boardId, readonly} = props
+    const intl = useIntl()
     const [relations, setRelations] = useState<CardRelation[]>([])
     const [relatedCards, setRelatedCards] = useState<Map<string, RelatedCardInfo>>(new Map())
     const [loading, setLoading] = useState(true)
@@ -84,17 +85,35 @@ const CardRelations = (props: Props): JSX.Element => {
         const cardTitle = relatedCard?.title || relatedCardId
 
         setConfirmDelete({
-            heading: 'Delete Relation',
-            subText: `Are you sure you want to remove the relation with "${cardTitle}"?`,
-            confirmButtonText: 'Delete',
+            heading: intl.formatMessage({
+                id: 'CardRelations.deleteConfirm.heading',
+                defaultMessage: 'Delete Relation',
+            }),
+            subText: intl.formatMessage(
+                {
+                    id: 'CardRelations.deleteConfirm.subText',
+                    defaultMessage: 'Are you sure you want to remove the relation with "{cardTitle}"?',
+                },
+                {cardTitle},
+            ),
+            confirmButtonText: intl.formatMessage({
+                id: 'CardRelations.deleteConfirm.button',
+                defaultMessage: 'Delete',
+            }),
             onConfirm: async () => {
                 try {
                     await octoClient.deleteCardRelation(relation.id)
                     setRelations((prev) => prev.filter((r) => r.id !== relation.id))
-                    sendFlashMessage({content: 'Relation removed', severity: 'low'})
+                    sendFlashMessage({content: intl.formatMessage({
+                        id: 'CardRelations.flash.removed',
+                        defaultMessage: 'Relation removed',
+                    }), severity: 'low'})
                 } catch (error) {
                     console.error('Failed to delete relation:', error)
-                    sendFlashMessage({content: 'Failed to remove relation', severity: 'high'})
+                    sendFlashMessage({content: intl.formatMessage({
+                        id: 'CardRelations.flash.removeFailed',
+                        defaultMessage: 'Failed to remove relation',
+                    }), severity: 'high'})
                 }
                 setConfirmDelete(null)
             },
@@ -112,8 +131,11 @@ const CardRelations = (props: Props): JSX.Element => {
 
     const handleRelationCreated = useCallback(() => {
         loadRelations()
-        sendFlashMessage({content: 'Relation created', severity: 'low'})
-    }, [loadRelations])
+        sendFlashMessage({content: intl.formatMessage({
+            id: 'CardRelations.flash.created',
+            defaultMessage: 'Relation created',
+        }), severity: 'low'})
+    }, [loadRelations, intl])
 
     // Always show the section, but hide add button in readonly mode
     return (
@@ -163,7 +185,12 @@ const CardRelations = (props: Props): JSX.Element => {
                                             onClick={() => handleCardClick(relatedCardId)}
                                             role='button'
                                             tabIndex={0}
-                                            onKeyDown={(e) => e.key === 'Enter' && handleCardClick(relatedCardId)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    e.preventDefault()
+                                                    handleCardClick(relatedCardId)
+                                                }
+                                            }}
                                         >
                                             <span className='CardRelations__item-icon'>
                                                 {relatedCard?.icon || '📄'}
