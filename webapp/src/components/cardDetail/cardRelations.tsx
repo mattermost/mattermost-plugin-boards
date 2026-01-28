@@ -163,18 +163,28 @@ const CardRelations = (props: Props): JSX.Element => {
     }, [loadRelations, intl])
 
     // Helper function to get status property info
+    // Uses type-based lookup with name as secondary filter for disambiguation
     const getStatusInfo = useCallback((relatedCard: RelatedCardInfo): {value: string, color: string} | null => {
         if (!board) {
             return null
         }
 
-        // Find the Status property template
-        const statusProperty = board.cardProperties.find((prop: IPropertyTemplate) =>
-            prop.name.toLowerCase() === 'status' && prop.type === 'select'
+        // Find all select-type properties (potential status fields)
+        const selectProperties = board.cardProperties.filter((prop: IPropertyTemplate) =>
+            prop.type === 'select'
         )
 
-        if (!statusProperty) {
+        if (selectProperties.length === 0) {
             return null
+        }
+
+        // Prefer property named "Status" if multiple select properties exist,
+        // otherwise use the first select property (commonly the default status field)
+        let statusProperty = selectProperties.find((prop: IPropertyTemplate) =>
+            prop.name.toLowerCase() === 'status'
+        )
+        if (!statusProperty) {
+            statusProperty = selectProperties[0]
         }
 
         // Get the status value from the card's properties
@@ -196,19 +206,28 @@ const CardRelations = (props: Props): JSX.Element => {
     }, [board])
 
     // Helper function to get assignee info
+    // Uses type-based lookup (person/multiPerson) with name as secondary filter
     const getAssigneeInfo = useCallback((relatedCard: RelatedCardInfo): IUser | null => {
         if (!board) {
             return null
         }
 
-        // Find the assignee property (person or multiPerson type)
-        const assigneeProperty = board.cardProperties.find((prop: IPropertyTemplate) =>
-            (prop.type === 'person' || prop.type === 'multiPerson') &&
-            (prop.name.toLowerCase() === 'assignee' || prop.name.toLowerCase() === 'assigned to')
+        // Find all person-type properties (potential assignee fields)
+        const personProperties = board.cardProperties.filter((prop: IPropertyTemplate) =>
+            prop.type === 'person' || prop.type === 'multiPerson'
         )
 
-        if (!assigneeProperty) {
+        if (personProperties.length === 0) {
             return null
+        }
+
+        // Prefer property named "Assignee" or "Assigned to" if multiple person properties exist,
+        // otherwise use the first person property
+        let assigneeProperty = personProperties.find((prop: IPropertyTemplate) =>
+            prop.name.toLowerCase() === 'assignee' || prop.name.toLowerCase() === 'assigned to'
+        )
+        if (!assigneeProperty) {
+            assigneeProperty = personProperties[0]
         }
 
         // Get the assignee value from the card's properties
