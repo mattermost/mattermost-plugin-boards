@@ -3,12 +3,14 @@
 
 export enum RelationType {
     Blocks = 'blocks',
-    BlockedBy = 'blocked_by',
+    BlockedBy = 'is_blocked_by',
     RelatesTo = 'relates_to',
     Duplicates = 'duplicates',
-    DuplicatedBy = 'duplicated_by',
-    ParentOf = 'parent_of',
-    ChildOf = 'child_of',
+    DuplicatedBy = 'is_duplicated_by',
+    Clones = 'clones',
+    ClonedBy = 'is_cloned_by',
+    Causes = 'causes',
+    CausedBy = 'is_caused_by',
 }
 
 export type CardRelation = {
@@ -45,10 +47,14 @@ export function getInverseRelationType(relationType: RelationType): RelationType
         return RelationType.DuplicatedBy
     case RelationType.DuplicatedBy:
         return RelationType.Duplicates
-    case RelationType.ParentOf:
-        return RelationType.ChildOf
-    case RelationType.ChildOf:
-        return RelationType.ParentOf
+    case RelationType.Clones:
+        return RelationType.ClonedBy
+    case RelationType.ClonedBy:
+        return RelationType.Clones
+    case RelationType.Causes:
+        return RelationType.CausedBy
+    case RelationType.CausedBy:
+        return RelationType.Causes
     case RelationType.RelatesTo:
     default:
         return RelationType.RelatesTo
@@ -67,10 +73,14 @@ export function getRelationTypeDisplayName(relationType: RelationType): string {
         return 'Duplicates'
     case RelationType.DuplicatedBy:
         return 'Duplicated by'
-    case RelationType.ParentOf:
-        return 'Parent of'
-    case RelationType.ChildOf:
-        return 'Child of'
+    case RelationType.Clones:
+        return 'Clones'
+    case RelationType.ClonedBy:
+        return 'Cloned by'
+    case RelationType.Causes:
+        return 'Causes'
+    case RelationType.CausedBy:
+        return 'Caused by'
     default:
         return 'Relates to'
     }
