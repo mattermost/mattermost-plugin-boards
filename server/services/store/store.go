@@ -167,6 +167,16 @@ type Store interface {
 	ReplaceStatusTransitionRules(boardID string, rules []*model.StatusTransitionRule) error
 	IsStatusTransitionAllowed(boardID, fromStatus, toStatus string) (bool, error)
 
+	// Card Relations
+	// @withTransaction
+	CreateCardRelation(relation *model.CardRelation) (*model.CardRelation, error)
+	GetCardRelations(cardID string) ([]*model.CardRelationWithCard, error)
+	GetCardRelation(relationID string) (*model.CardRelation, error)
+	// @withTransaction
+	UpdateCardRelation(relation *model.CardRelation) (*model.CardRelation, error)
+	// @withTransaction
+	DeleteCardRelation(relationID string) error
+
 	DBType() string
 	DBVersion() string
 

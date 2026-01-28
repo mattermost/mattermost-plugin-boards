@@ -39,6 +39,7 @@ import CardDetailContentsMenu from './cardDetailContentsMenu'
 import CardDetailProperties from './cardDetailProperties'
 import useImagePaste from './imagePaste'
 import AttachmentList from './attachment'
+import CardRelations from './cardRelations'
 
 import './cardDetail.scss'
 
@@ -375,6 +376,12 @@ const CardDetail = (props: Props): JSX.Element|null => {
                                 addAttachment={addAttachment}
                             />
                         </Fragment>}
+
+                        {/* Card Relations */}
+                        <CardRelations
+                            card={props.card}
+                            readonly={props.readonly || !canEditBoardCards}
+                        />
                     </div>
 
                     {/* Right section: Properties */}

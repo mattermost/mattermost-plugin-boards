@@ -46,4 +46,6 @@ type Adapter interface {
 	BroadcastSubscriptionChange(teamID string, subscription *model.Subscription)
 	BroadcastCategoryReorder(teamID, userID string, categoryOrder []string)
 	BroadcastCategoryBoardsReorder(teamID, userID, categoryID string, boardsOrder []string)
+	BroadcastCardRelationChange(teamID string, relation *model.CardRelation)
+	BroadcastCardRelationDelete(teamID, relationID, boardID string)
 }
