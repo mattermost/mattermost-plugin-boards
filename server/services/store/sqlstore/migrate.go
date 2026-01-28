@@ -15,6 +15,7 @@ import (
 	"text/template"
 
 	sq "github.com/Masterminds/squirrel"
+	mysqlDriver "github.com/go-sql-driver/mysql"
 
 	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
@@ -46,6 +47,29 @@ const (
 
 var errChannelCreatorNotInTeam = errors.New("channel creator not found in user teams")
 
+// ResetReadTimeout removes the timeout constraint from the MySQL DSN.
+// TODO: Remove this function as MySQL support will be removed soon.
+func ResetReadTimeout(dataSource string) (string, error) {
+	config, err := mysqlDriver.ParseDSN(dataSource)
+	if err != nil {
+		return "", err
+	}
+	config.ReadTimeout = 0
+	return config.FormatDSN(), nil
+}
+
+// AppendMultipleStatementsFlag appends the multiStatements parameter to MySQL DSN
+// to enable multiple SQL statements in a single execution (needed for migrations).
+// TODO: Remove this function as MySQL support will be removed soon.
+func AppendMultipleStatementsFlag(dataSource string) (string, error) {
+	config, err := mysqlDriver.ParseDSN(dataSource)
+	if err != nil {
+		return "", err
+	}
+	config.MultiStatements = true
+	return config.FormatDSN(), nil
+}
+
 // migrations in MySQL need to run with the multiStatements flag
 // enabled, so this method creates a new connection ensuring that it's
 // enabled.
@@ -53,12 +77,12 @@ func (s *SQLStore) getMigrationConnection() (*sql.DB, error) {
 	connectionString := s.connectionString
 	if s.dbType == model.MysqlDBType {
 		var err error
-		connectionString, err = sqlUtils.ResetReadTimeout(connectionString)
+		connectionString, err = ResetReadTimeout(connectionString)
 		if err != nil {
 			return nil, err
 		}
 
-		connectionString, err = sqlUtils.AppendMultipleStatementsFlag(connectionString)
+		connectionString, err = AppendMultipleStatementsFlag(connectionString)
 		if err != nil {
 			return nil, err
 		}

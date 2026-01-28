@@ -20,8 +20,8 @@ const manifestStr = `
   "support_url": "https://github.com/mattermost/mattermost-plugin-boards/issues",
   "release_notes_url": "https://github.com/mattermost/mattermost-plugin-boards/releases",
   "icon_path": "assets/starter-template-icon.svg",
-  "version": "9.2.1",
-  "min_server_version": "7.2.0",
+  "version": "9.2.2",
+  "min_server_version": "10.7.0",
   "server": {
     "executables": {
       "darwin-amd64": "server/dist/plugin-darwin-amd64",
