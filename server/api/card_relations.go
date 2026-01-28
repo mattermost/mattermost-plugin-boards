@@ -176,6 +176,19 @@ func (a *API) handleCreateCardRelation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate that target card exists and is on the same board
+	targetCard, err := a.app.GetCardByID(newRelation.TargetCardID)
+	if err != nil {
+		message := fmt.Sprintf("could not fetch target card %s: %s", newRelation.TargetCardID, err)
+		a.errorResponse(w, r, model.NewErrBadRequest(message))
+		return
+	}
+
+	if targetCard.BoardID != card.BoardID {
+		a.errorResponse(w, r, model.NewErrBadRequest("source and target cards must be on the same board"))
+		return
+	}
+
 	auditRec := a.makeAuditRecord(r, "createCardRelation", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)
 	auditRec.AddMeta("cardID", cardID)

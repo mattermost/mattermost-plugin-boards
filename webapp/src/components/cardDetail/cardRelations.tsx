@@ -4,7 +4,7 @@
 import React, {useEffect, useState} from 'react'
 import {FormattedMessage} from 'react-intl'
 
-import {CardRelation, getRelationTypeDisplayName} from '../../blocks/cardRelation'
+import {CardRelation, getRelationTypeDisplayName, getInverseRelationType} from '../../blocks/cardRelation'
 import octoClient from '../../octoClient'
 import {Card} from '../../blocks/card'
 
@@ -84,7 +84,9 @@ const CardRelations = (props: Props): JSX.Element => {
                 {relations.map((relation) => {
                     const isSource = relation.sourceCardId === card.id
                     const relatedCardId = isSource ? relation.targetCardId : relation.sourceCardId
-                    const displayType = getRelationTypeDisplayName(relation.relationType)
+                    // If current card is the target, show the inverse relation type
+                    const relationType = isSource ? relation.relationType : getInverseRelationType(relation.relationType)
+                    const displayType = getRelationTypeDisplayName(relationType)
 
                     return (
                         <div

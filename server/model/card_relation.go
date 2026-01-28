@@ -7,7 +7,7 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 )
 
-// RelationType represents the type of relationship between cards
+// RelationType represents the type of relationship between cards.
 type RelationType string
 
 const (
@@ -22,7 +22,7 @@ const (
 	RelationTypeIsCausedBy     RelationType = "is_caused_by"
 )
 
-// GetInverseRelationType returns the inverse relation type for bidirectional relations
+// GetInverseRelationType returns the inverse relation type for bidirectional relations.
 func GetInverseRelationType(relationType RelationType) RelationType {
 	switch relationType {
 	case RelationTypeBlocks:
@@ -79,7 +79,7 @@ type CardRelation struct {
 	BoardID string `json:"boardId,omitempty"`
 }
 
-// Populate populates a CardRelation with default values
+// Populate populates a CardRelation with default values.
 func (cr *CardRelation) Populate() {
 	if cr.ID == "" {
 		cr.ID = utils.NewID(utils.IDTypeNone)

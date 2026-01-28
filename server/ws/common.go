@@ -78,9 +78,9 @@ type CategoryBoardReorderMessage struct {
 
 // UpdateCardRelationMsg is sent on card relation updates.
 type UpdateCardRelationMsg struct {
-	Action   string               `json:"action"`
-	TeamID   string               `json:"teamId"`
-	Relation *model.CardRelation  `json:"relation"`
+	Action   string              `json:"action"`
+	TeamID   string              `json:"teamId"`
+	Relation *model.CardRelation `json:"relation"`
 }
 
 // DeleteCardRelationMsg is sent on card relation deletions.

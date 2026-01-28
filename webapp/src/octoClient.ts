@@ -275,7 +275,7 @@ class OctoClient {
         const path = `/api/v2/cards/${cardID}/relations`
         const response = await fetch(this.getBaseURL() + path, {headers: this.headers()})
         if (response.status !== 200) {
-            return []
+            throw new Error('Failed to fetch card relations')
         }
         return (await this.getJson(response, [])) as any[]
     }

@@ -26,11 +26,15 @@ CREATE TABLE IF NOT EXISTS {{.prefix}}card_relations (
     CONSTRAINT fk_source_card FOREIGN KEY (source_card_id) REFERENCES {{.prefix}}blocks(id) ON DELETE CASCADE,
     CONSTRAINT fk_target_card FOREIGN KEY (target_card_id) REFERENCES {{.prefix}}blocks(id) ON DELETE CASCADE,
     {{end}}
-    
+
     {{if .mysql}}
     CONSTRAINT fk_source_card FOREIGN KEY (source_card_id) REFERENCES {{.prefix}}blocks(id) ON DELETE CASCADE,
     CONSTRAINT fk_target_card FOREIGN KEY (target_card_id) REFERENCES {{.prefix}}blocks(id) ON DELETE CASCADE,
     {{end}}
+
+    -- Note: SQLite does not support foreign key constraints in this migration framework.
+    -- Card relations are manually deleted in the application layer when a card is deleted.
+    -- See app/blocks.go DeleteBlockAndNotify for the implementation.
     
     -- Unique constraint to prevent duplicate relations
     CONSTRAINT unique_card_relation UNIQUE (source_card_id, target_card_id, relation_type)
