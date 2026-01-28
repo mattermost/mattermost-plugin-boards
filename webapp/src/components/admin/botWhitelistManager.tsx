@@ -142,43 +142,19 @@ const BotWhitelistManager = (props: Props) => {
                             No bots found in this team.
                         </div>
                     ) : (
-                        <div
-                            className='BotWhitelistManager__list'
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '4px',
-                                maxHeight: '400px',
-                                overflowY: 'auto',
-                                padding: '8px',
-                                border: '1px solid rgba(63, 67, 80, 0.16)',
-                                borderRadius: '4px',
-                            }}
-                        >
+                        <div className='BotWhitelistManager__list'>
                             {bots.map((bot) => (
                                 <label
                                     key={bot.id}
-                                    className='BotWhitelistManager__bot-item'
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
-                                        padding: '8px 12px',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer',
-                                    }}
+                                    className={`BotWhitelistManager__bot-item${props.disabled ? ' BotWhitelistManager__bot-item--disabled' : ''}`}
                                 >
                                     <input
                                         type='checkbox'
                                         checked={selectedBotIDs.includes(bot.id)}
                                         onChange={() => handleToggleBot(bot.id)}
                                         disabled={props.disabled}
-                                        style={{margin: 0, width: '16px', height: '16px'}}
                                     />
-                                    <span
-                                        className='BotWhitelistManager__bot-name'
-                                        style={{fontFamily: 'monospace', fontSize: '13px'}}
-                                    >
+                                    <span className='BotWhitelistManager__bot-name'>
                                         {bot.username}
                                     </span>
                                 </label>
