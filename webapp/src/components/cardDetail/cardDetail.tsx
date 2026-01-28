@@ -380,6 +380,7 @@ const CardDetail = (props: Props): JSX.Element|null => {
                         {/* Card Relations */}
                         <CardRelations
                             card={props.card}
+                            boardId={props.card.boardId}
                             readonly={props.readonly || !canEditBoardCards}
                         />
                     </div>

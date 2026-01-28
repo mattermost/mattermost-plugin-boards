@@ -155,18 +155,27 @@ exports[`components/cardDialog already following card 1`] = `
                 <div
                   class="CardRelations__header"
                 >
-                  Relations
+                  <span
+                    class="CardRelations__title"
+                  >
+                    Relations
+                  </span>
                 </div>
                 <div
-                  class="CardRelations__list"
-                />
+                  class="CardRelations__empty"
+                >
+                  No relations yet
+                </div>
                 <div
                   class="CardRelations__add"
                 >
                   <button
                     class="CardRelations__add-button"
                   >
-                    + Add relation
+                    <i
+                      class="CompassIcon icon-plus"
+                    />
+                    Add relation
                   </button>
                 </div>
               </div>
@@ -580,6 +589,24 @@ exports[`components/cardDialog return a cardDialog readonly 1`] = `
                   </div>
                 </div>
               </div>
+              <div
+                class="CardRelations"
+              >
+                <div
+                  class="CardRelations__header"
+                >
+                  <span
+                    class="CardRelations__title"
+                  >
+                    Relations
+                  </span>
+                </div>
+                <div
+                  class="CardRelations__empty"
+                >
+                  No relations yet
+                </div>
+              </div>
             </div>
             <div
               class="CardDetail__right-section"
@@ -896,18 +923,27 @@ exports[`components/cardDialog return cardDialog menu content 1`] = `
                 <div
                   class="CardRelations__header"
                 >
-                  Relations
+                  <span
+                    class="CardRelations__title"
+                  >
+                    Relations
+                  </span>
                 </div>
                 <div
-                  class="CardRelations__list"
-                />
+                  class="CardRelations__empty"
+                >
+                  No relations yet
+                </div>
                 <div
                   class="CardRelations__add"
                 >
                   <button
                     class="CardRelations__add-button"
                   >
-                    + Add relation
+                    <i
+                      class="CompassIcon icon-plus"
+                    />
+                    Add relation
                   </button>
                 </div>
               </div>
@@ -1129,18 +1165,27 @@ exports[`components/cardDialog return cardDialog menu content and cancel delete 
                 <div
                   class="CardRelations__header"
                 >
-                  Relations
+                  <span
+                    class="CardRelations__title"
+                  >
+                    Relations
+                  </span>
                 </div>
                 <div
-                  class="CardRelations__list"
-                />
+                  class="CardRelations__empty"
+                >
+                  No relations yet
+                </div>
                 <div
                   class="CardRelations__add"
                 >
                   <button
                     class="CardRelations__add-button"
                   >
-                    + Add relation
+                    <i
+                      class="CompassIcon icon-plus"
+                    />
+                    Add relation
                   </button>
                 </div>
               </div>
@@ -1362,18 +1407,27 @@ exports[`components/cardDialog should match snapshot 1`] = `
                 <div
                   class="CardRelations__header"
                 >
-                  Relations
+                  <span
+                    class="CardRelations__title"
+                  >
+                    Relations
+                  </span>
                 </div>
                 <div
-                  class="CardRelations__list"
-                />
+                  class="CardRelations__empty"
+                >
+                  No relations yet
+                </div>
                 <div
                   class="CardRelations__add"
                 >
                   <button
                     class="CardRelations__add-button"
                   >
-                    + Add relation
+                    <i
+                      class="CompassIcon icon-plus"
+                    />
+                    Add relation
                   </button>
                 </div>
               </div>
@@ -1553,6 +1607,24 @@ exports[`components/cardDialog should match snapshot without permissions 1`] = `
                       class="octo-block-margin"
                     />
                   </div>
+                </div>
+              </div>
+              <div
+                class="CardRelations"
+              >
+                <div
+                  class="CardRelations__header"
+                >
+                  <span
+                    class="CardRelations__title"
+                  >
+                    Relations
+                  </span>
+                </div>
+                <div
+                  class="CardRelations__empty"
+                >
+                  No relations yet
                 </div>
               </div>
             </div>

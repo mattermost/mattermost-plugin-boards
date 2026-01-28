@@ -1,132 +1,234 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useState, useCallback} from 'react'
 import {FormattedMessage} from 'react-intl'
 
 import {CardRelation, getRelationTypeDisplayName, getInverseRelationType} from '../../blocks/cardRelation'
-import octoClient from '../../octoClient'
 import {Card} from '../../blocks/card'
+import octoClient from '../../octoClient'
+import {sendFlashMessage} from '../flashMessages'
+import ConfirmationDialogBox, {ConfirmationDialogBoxProps} from '../confirmationDialogBox'
+
+import AddRelationDialog from './addRelationDialog'
 
 import './cardRelations.scss'
 
 type Props = {
     card: Card
+    boardId: string
     readonly: boolean
 }
 
+type RelatedCardInfo = {
+    id: string
+    title: string
+    icon: string
+}
+
 const CardRelations = (props: Props): JSX.Element => {
-    const {card, readonly} = props
+    const {card, boardId, readonly} = props
     const [relations, setRelations] = useState<CardRelation[]>([])
+    const [relatedCards, setRelatedCards] = useState<Map<string, RelatedCardInfo>>(new Map())
     const [loading, setLoading] = useState(true)
+    const [showAddDialog, setShowAddDialog] = useState(false)
+    const [confirmDelete, setConfirmDelete] = useState<ConfirmationDialogBoxProps | null>(null)
 
-    useEffect(() => {
-        loadRelations()
-    }, [card.id])
-
-    const loadRelations = async () => {
+    const loadRelations = useCallback(async () => {
         try {
             setLoading(true)
             const cardRelations = await octoClient.getCardRelations(card.id)
             setRelations(cardRelations || [])
+
+            // Load related card info
+            if (cardRelations && cardRelations.length > 0) {
+                const cardIds = new Set<string>()
+                cardRelations.forEach((r) => {
+                    if (r.sourceCardId !== card.id) {
+                        cardIds.add(r.sourceCardId)
+                    }
+                    if (r.targetCardId !== card.id) {
+                        cardIds.add(r.targetCardId)
+                    }
+                })
+
+                // Fetch all cards from the board and filter
+                const allBlocks = await octoClient.getAllBlocks(boardId)
+                const allCards = allBlocks.filter((b): b is Card => b.type === 'card') as Card[]
+                const cardMap = new Map<string, RelatedCardInfo>()
+                allCards.forEach((c) => {
+                    if (cardIds.has(c.id)) {
+                        cardMap.set(c.id, {
+                            id: c.id,
+                            title: c.title || 'Untitled',
+                            icon: c.fields.icon || '📄',
+                        })
+                    }
+                })
+                setRelatedCards(cardMap)
+            }
         } catch (error) {
             console.error('Failed to load card relations:', error)
         } finally {
             setLoading(false)
         }
-    }
+    }, [card.id, boardId])
 
-    const handleDeleteRelation = async (relationId: string) => {
-        if (readonly) {
-            return
-        }
+    useEffect(() => {
+        loadRelations()
+    }, [loadRelations])
 
-        try {
-            await octoClient.deleteCardRelation(relationId)
-            setRelations(relations.filter((r) => r.id !== relationId))
-        } catch (error) {
-            console.error('Failed to delete relation:', error)
-        }
-    }
+    const handleDeleteRelation = useCallback(async (relation: CardRelation) => {
+        const relatedCardId = relation.sourceCardId === card.id ? relation.targetCardId : relation.sourceCardId
+        const relatedCard = relatedCards.get(relatedCardId)
+        const cardTitle = relatedCard?.title || relatedCardId
 
-    if (loading) {
-        return (
-            <div className='CardRelations'>
-                <div className='CardRelations__header'>
+        setConfirmDelete({
+            heading: 'Delete Relation',
+            subText: `Are you sure you want to remove the relation with "${cardTitle}"?`,
+            confirmButtonText: 'Delete',
+            onConfirm: async () => {
+                try {
+                    await octoClient.deleteCardRelation(relation.id)
+                    setRelations((prev) => prev.filter((r) => r.id !== relation.id))
+                    sendFlashMessage({content: 'Relation removed', severity: 'low'})
+                } catch (error) {
+                    console.error('Failed to delete relation:', error)
+                    sendFlashMessage({content: 'Failed to remove relation', severity: 'high'})
+                }
+                setConfirmDelete(null)
+            },
+            onClose: () => setConfirmDelete(null),
+        })
+    }, [card.id, relatedCards])
+
+    const handleCardClick = useCallback((cardId: string) => {
+        // Navigate to the related card by updating URL
+        const currentUrl = new URL(window.location.href)
+        currentUrl.searchParams.set('c', cardId)
+        window.history.pushState({}, '', currentUrl.toString())
+        window.dispatchEvent(new PopStateEvent('popstate'))
+    }, [])
+
+    const handleRelationCreated = useCallback(() => {
+        loadRelations()
+        sendFlashMessage({content: 'Relation created', severity: 'low'})
+    }, [loadRelations])
+
+    // Always show the section, but hide add button in readonly mode
+    return (
+        <div className='CardRelations'>
+            <div className='CardRelations__header'>
+                <span className='CardRelations__title'>
                     <FormattedMessage
                         id='CardRelations.title'
                         defaultMessage='Relations'
                     />
-                </div>
+                </span>
+                {relations.length > 0 && (
+                    <span className='CardRelations__count'>
+                        {relations.length}
+                    </span>
+                )}
+            </div>
+
+            {loading ? (
                 <div className='CardRelations__loading'>
                     <FormattedMessage
                         id='CardRelations.loading'
                         defaultMessage='Loading...'
                     />
                 </div>
-            </div>
-        )
-    }
+            ) : (
+                <>
+                    {relations.length > 0 && (
+                        <div className='CardRelations__list'>
+                            {relations.map((relation) => {
+                                const isSource = relation.sourceCardId === card.id
+                                const relatedCardId = isSource ? relation.targetCardId : relation.sourceCardId
+                                const relationType = isSource ? relation.relationType : getInverseRelationType(relation.relationType)
+                                const displayType = getRelationTypeDisplayName(relationType)
+                                const relatedCard = relatedCards.get(relatedCardId)
 
-    if (relations.length === 0 && readonly) {
-        return <></>
-    }
-
-    return (
-        <div className='CardRelations'>
-            <div className='CardRelations__header'>
-                <FormattedMessage
-                    id='CardRelations.title'
-                    defaultMessage='Relations'
-                />
-            </div>
-            <div className='CardRelations__list'>
-                {relations.map((relation) => {
-                    const isSource = relation.sourceCardId === card.id
-                    const relatedCardId = isSource ? relation.targetCardId : relation.sourceCardId
-                    // If current card is the target, show the inverse relation type
-                    const relationType = isSource ? relation.relationType : getInverseRelationType(relation.relationType)
-                    const displayType = getRelationTypeDisplayName(relationType)
-
-                    return (
-                        <div
-                            key={relation.id}
-                            className='CardRelations__item'
-                        >
-                            <div className='CardRelations__item-type'>
-                                {displayType}
-                            </div>
-                            <div className='CardRelations__item-card'>
-                                {relatedCardId}
-                            </div>
-                            {!readonly && (
-                                <button
-                                    className='CardRelations__item-delete'
-                                    onClick={() => handleDeleteRelation(relation.id)}
-                                >
-                                    <FormattedMessage
-                                        id='CardRelations.delete'
-                                        defaultMessage='Remove'
-                                    />
-                                </button>
-                            )}
+                                return (
+                                    <div
+                                        key={relation.id}
+                                        className='CardRelations__item'
+                                    >
+                                        <div className='CardRelations__item-type'>
+                                            {displayType}
+                                        </div>
+                                        <div
+                                            className='CardRelations__item-card'
+                                            onClick={() => handleCardClick(relatedCardId)}
+                                            role='button'
+                                            tabIndex={0}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleCardClick(relatedCardId)}
+                                        >
+                                            <span className='CardRelations__item-icon'>
+                                                {relatedCard?.icon || '📄'}
+                                            </span>
+                                            <span className='CardRelations__item-title'>
+                                                {relatedCard?.title || relatedCardId}
+                                            </span>
+                                        </div>
+                                        {!readonly && (
+                                            <button
+                                                className='CardRelations__item-delete'
+                                                onClick={() => handleDeleteRelation(relation)}
+                                                aria-label='Remove relation'
+                                            >
+                                                <i className='CompassIcon icon-close'/>
+                                            </button>
+                                        )}
+                                    </div>
+                                )
+                            })}
                         </div>
-                    )
-                })}
-            </div>
-            {!readonly && (
-                <div className='CardRelations__add'>
-                    <button className='CardRelations__add-button'>
-                        <FormattedMessage
-                            id='CardRelations.add'
-                            defaultMessage='+ Add relation'
-                        />
-                    </button>
-                </div>
+                    )}
+
+                    {relations.length === 0 && (
+                        <div className='CardRelations__empty'>
+                            <FormattedMessage
+                                id='CardRelations.noRelations'
+                                defaultMessage='No relations yet'
+                            />
+                        </div>
+                    )}
+
+                    {!readonly && (
+                        <div className='CardRelations__add'>
+                            <button
+                                className='CardRelations__add-button'
+                                onClick={() => setShowAddDialog(true)}
+                            >
+                                <i className='CompassIcon icon-plus'/>
+                                <FormattedMessage
+                                    id='CardRelations.add'
+                                    defaultMessage='Add relation'
+                                />
+                            </button>
+                        </div>
+                    )}
+                </>
+            )}
+
+            {showAddDialog && (
+                <AddRelationDialog
+                    card={card}
+                    boardId={boardId}
+                    onClose={() => setShowAddDialog(false)}
+                    onRelationCreated={handleRelationCreated}
+                />
+            )}
+
+            {confirmDelete && (
+                <ConfirmationDialogBox
+                    dialogBox={confirmDelete}
+                />
             )}
         </div>
     )
 }
 
 export default CardRelations
-
