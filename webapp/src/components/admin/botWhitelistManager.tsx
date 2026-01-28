@@ -146,7 +146,7 @@ const BotWhitelistManager = (props: Props) => {
                             {bots.map((bot) => (
                                 <label
                                     key={bot.id}
-                                    className='BotWhitelistManager__bot-item'
+                                    className={`BotWhitelistManager__bot-item${props.disabled ? ' BotWhitelistManager__bot-item--disabled' : ''}`}
                                 >
                                     <input
                                         type='checkbox'

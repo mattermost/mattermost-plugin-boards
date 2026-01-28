@@ -120,8 +120,17 @@
             background: rgba(var(--center-channel-color-rgb), 0.04);
         }
 
+        &--disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+
+            &:hover {
+                background: transparent;
+            }
+        }
+
         input[type='checkbox'] {
-            cursor: pointer;
+            cursor: inherit;
             margin: 0;
             width: 16px;
             height: 16px;
