@@ -88,7 +88,7 @@ describe('components/cardDetail/CardRelations', () => {
         jest.clearAllMocks()
     })
 
-    function createStore(options?: {withRelations?: boolean}) {
+    function createStore() {
         return mockStore({
             users: {
                 boardUsers: {
