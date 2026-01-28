@@ -209,7 +209,7 @@ func (s *PluginTestStore) GetUsersByTeam(teamID string, asGuestID string, showEm
 	return nil, errTestStore
 }
 
-func (s *PluginTestStore) SearchUsersByTeam(teamID string, searchQuery string, asGuestID string, excludeBots bool, showEmail, showName bool) ([]*model.User, error) {
+func (s *PluginTestStore) SearchUsersByTeam(teamID string, searchQuery string, asGuestID string, excludeBots bool, allowedBotIDs []string, showEmail, showName bool) ([]*model.User, error) {
 	users := []*model.User{}
 	teamUsers, err := s.GetUsersByTeam(teamID, asGuestID, showEmail, showName)
 	if err != nil {
@@ -218,7 +218,17 @@ func (s *PluginTestStore) SearchUsersByTeam(teamID string, searchQuery string, a
 
 	for _, user := range teamUsers {
 		if excludeBots && user.IsBot {
-			continue
+			// Check if this bot is in the whitelist
+			isAllowed := false
+			for _, allowedID := range allowedBotIDs {
+				if user.ID == allowedID {
+					isAllowed = true
+					break
+				}
+			}
+			if !isAllowed {
+				continue
+			}
 		}
 		if strings.Contains(user.Username, searchQuery) {
 			users = append(users, user)

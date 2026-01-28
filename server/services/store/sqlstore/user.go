@@ -317,7 +317,7 @@ func (s *SQLStore) getUsersList(_ sq.BaseRunner, userIDs []string, showEmail, sh
 	return users, nil
 }
 
-func (s *SQLStore) searchUsersByTeam(db sq.BaseRunner, teamID string, searchQuery string, asGuestID string, excludeBots, showEmail, showName bool) ([]*model.User, error) {
+func (s *SQLStore) searchUsersByTeam(db sq.BaseRunner, teamID string, searchQuery string, asGuestID string, excludeBots bool, allowedBotIDs []string, showEmail, showName bool) ([]*model.User, error) {
 	// Trim whitespace from search query to avoid matching trailing/leading spaces
 	searchQuery = strings.TrimSpace(searchQuery)
 
@@ -344,8 +344,17 @@ func (s *SQLStore) searchUsersByTeam(db sq.BaseRunner, teamID string, searchQuer
 		Limit(10)
 
 	if excludeBots {
-		query = query.
-			Where(sq.Eq{"b.UserId IS NOT NULL": false})
+		// Exclude bots, but include whitelisted bots
+		if len(allowedBotIDs) > 0 {
+			query = query.
+				Where(sq.Or{
+					sq.Eq{"b.UserId IS NOT NULL": false},
+					sq.Eq{"u.id": allowedBotIDs},
+				})
+		} else {
+			query = query.
+				Where(sq.Eq{"b.UserId IS NOT NULL": false})
+		}
 	}
 
 	if asGuestID == "" {

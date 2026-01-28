@@ -62,6 +62,7 @@ type Configuration struct {
 	ShowEmailAddress         bool              `json:"show_email_address" mapstructure:"showEmailAddress"`
 	ShowFullName             bool              `json:"show_full_name" mapstructure:"showFullName"`
 	FigmaPersonalAccessToken string            `json:"figma_personal_access_token" mapstructure:"figmaPersonalAccessToken"`
+	AllowedBotUserIDs        []string          `json:"allowed_bot_user_ids" mapstructure:"allowedBotUserIds"`
 
 	AuthMode string `json:"authMode" mapstructure:"authMode"`
 
