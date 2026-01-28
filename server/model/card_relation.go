@@ -89,7 +89,7 @@ func (cr *CardRelation) Populate() {
 	}
 }
 
-// IsValid validates the card relation
+// IsValid validates the card relation.
 func (cr *CardRelation) IsValid() error {
 	if cr.ID == "" {
 		return NewErrInvalidCardRelation("id cannot be empty")
@@ -112,7 +112,7 @@ func (cr *CardRelation) IsValid() error {
 	return nil
 }
 
-// ErrInvalidCardRelation is returned when a card relation is invalid
+// ErrInvalidCardRelation is returned when a card relation is invalid.
 type ErrInvalidCardRelation struct {
 	msg string
 }
