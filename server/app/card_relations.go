@@ -8,7 +8,7 @@ import (
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )
 
-// CreateCardRelation creates a new card relation
+// CreateCardRelation creates a new card relation.
 func (a *App) CreateCardRelation(relation *model.CardRelation, boardID string) (*model.CardRelation, error) {
 	createdRelation, err := a.store.CreateCardRelation(relation)
 	if err != nil {
@@ -32,12 +32,12 @@ func (a *App) CreateCardRelation(relation *model.CardRelation, boardID string) (
 	return createdRelation, nil
 }
 
-// GetCardRelations returns all relations for a card
+// GetCardRelations returns all relations for a card.
 func (a *App) GetCardRelations(cardID string) ([]*model.CardRelationWithCard, error) {
 	return a.store.GetCardRelations(cardID)
 }
 
-// GetCardRelation returns a specific card relation
+// GetCardRelation returns a specific card relation.
 func (a *App) GetCardRelation(relationID string) (*model.CardRelation, error) {
 	return a.store.GetCardRelation(relationID)
 }
@@ -74,8 +74,8 @@ func (a *App) DeleteCardRelation(relationID string) error {
 		return err
 	}
 
-	if err := a.store.DeleteCardRelation(relationID); err != nil {
-		return err
+	if deleteErr := a.store.DeleteCardRelation(relationID); deleteErr != nil {
+		return deleteErr
 	}
 
 	// Get the board for the source card to get team ID

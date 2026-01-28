@@ -243,4 +243,3 @@ func (a *API) handleDeleteCardRelation(w http.ResponseWriter, r *http.Request) {
 	jsonStringResponse(w, http.StatusOK, "{}")
 	auditRec.Success()
 }
-

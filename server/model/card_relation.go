@@ -11,15 +11,15 @@ import (
 type RelationType string
 
 const (
-	RelationTypeBlocks          RelationType = "blocks"
-	RelationTypeIsBlockedBy     RelationType = "is_blocked_by"
-	RelationTypeRelatesTo       RelationType = "relates_to"
-	RelationTypeDuplicates      RelationType = "duplicates"
-	RelationTypeIsDuplicatedBy  RelationType = "is_duplicated_by"
-	RelationTypeClones          RelationType = "clones"
-	RelationTypeIsClonedBy      RelationType = "is_cloned_by"
-	RelationTypeCauses          RelationType = "causes"
-	RelationTypeIsCausedBy      RelationType = "is_caused_by"
+	RelationTypeBlocks         RelationType = "blocks"
+	RelationTypeIsBlockedBy    RelationType = "is_blocked_by"
+	RelationTypeRelatesTo      RelationType = "relates_to"
+	RelationTypeDuplicates     RelationType = "duplicates"
+	RelationTypeIsDuplicatedBy RelationType = "is_duplicated_by"
+	RelationTypeClones         RelationType = "clones"
+	RelationTypeIsClonedBy     RelationType = "is_cloned_by"
+	RelationTypeCauses         RelationType = "causes"
+	RelationTypeIsCausedBy     RelationType = "is_caused_by"
 )
 
 // GetInverseRelationType returns the inverse relation type for bidirectional relations
@@ -132,4 +132,3 @@ type CardRelationWithCard struct {
 	// The related card
 	Card *Card `json:"card"`
 }
-

@@ -5,6 +5,7 @@ package sqlstore
 
 import (
 	"database/sql"
+	"errors"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
@@ -102,7 +103,7 @@ func (s *SQLStore) getCardRelation(db sq.BaseRunner, relationID string) (*model.
 	row := query.QueryRow()
 	relation, err := s.cardRelationFromRow(row)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, model.NewErrNotFound("card relation ID=" + relationID)
 		}
 		s.logger.Error("getCardRelation error", mlog.Err(err))
@@ -200,4 +201,3 @@ func (s *SQLStore) deleteCardRelation(db sq.BaseRunner, relationID string) error
 
 	return nil
 }
-
