@@ -18,6 +18,7 @@ type Props = {
     card: Card
     boardId: string
     readonly: boolean
+    showCard?: (cardId?: string) => void
 }
 
 type RelatedCardInfo = {
@@ -27,7 +28,7 @@ type RelatedCardInfo = {
 }
 
 const CardRelations = (props: Props): JSX.Element => {
-    const {card, boardId, readonly} = props
+    const {card, boardId, readonly, showCard} = props
     const intl = useIntl()
     const [relations, setRelations] = useState<CardRelation[]>([])
     const [relatedCards, setRelatedCards] = useState<Map<string, RelatedCardInfo>>(new Map())
@@ -122,12 +123,10 @@ const CardRelations = (props: Props): JSX.Element => {
     }, [card.id, relatedCards])
 
     const handleCardClick = useCallback((cardId: string) => {
-        // Navigate to the related card by updating URL
-        const currentUrl = new URL(window.location.href)
-        currentUrl.searchParams.set('c', cardId)
-        window.history.pushState({}, '', currentUrl.toString())
-        window.dispatchEvent(new PopStateEvent('popstate'))
-    }, [])
+        if (showCard) {
+            showCard(cardId)
+        }
+    }, [showCard])
 
     const handleRelationCreated = useCallback(() => {
         loadRelations()

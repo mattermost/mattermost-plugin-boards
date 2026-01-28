@@ -42,9 +42,10 @@ const AddRelationDialog = (props: Props): JSX.Element => {
     const [error, setError] = useState<string | null>(null)
 
     // Load all cards from the board for selection
+    // Re-load when card.id changes to ensure current card is always excluded
     useEffect(() => {
         loadBoardCards()
-    }, [boardId])
+    }, [boardId, card.id])
 
     const loadBoardCards = async () => {
         try {

@@ -59,6 +59,7 @@ type Props = {
     onClose: () => void
     onDelete: (block: Block) => void
     addAttachment: () => void
+    showCard?: (cardId?: string) => void
 }
 
 async function addBlockNewEditor(card: Card, intl: IntlShape, title: string, fields: any, contentType: ContentBlockTypes, afterBlockId: string, dispatch: any): Promise<Block> {
@@ -382,6 +383,7 @@ const CardDetail = (props: Props): JSX.Element|null => {
                             card={props.card}
                             boardId={props.card.boardId}
                             readonly={props.readonly || !canEditBoardCards}
+                            showCard={props.showCard}
                         />
                     </div>
 
