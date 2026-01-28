@@ -6,9 +6,16 @@ import {FormattedMessage, useIntl} from 'react-intl'
 
 import {CardRelation, getRelationTypeDisplayName, getInverseRelationType} from '../../blocks/cardRelation'
 import {Card} from '../../blocks/card'
+import {IPropertyTemplate, IPropertyOption} from '../../blocks/board'
+import {IUser} from '../../user'
 import octoClient from '../../octoClient'
 import {sendFlashMessage} from '../flashMessages'
 import ConfirmationDialogBox, {ConfirmationDialogBoxProps} from '../confirmationDialogBox'
+import {useAppSelector} from '../../store/hooks'
+import {getBoard} from '../../store/boards'
+import {getBoardUsers} from '../../store/users'
+import {Utils} from '../../utils'
+import Label from '../../widgets/label'
 
 import AddRelationDialog from './addRelationDialog'
 
@@ -26,6 +33,7 @@ type RelatedCardInfo = {
     title: string
     icon: string
     code?: string
+    properties: Record<string, string | string[]>
 }
 
 const CardRelations = (props: Props): JSX.Element => {
@@ -36,6 +44,10 @@ const CardRelations = (props: Props): JSX.Element => {
     const [loading, setLoading] = useState(true)
     const [showAddDialog, setShowAddDialog] = useState(false)
     const [confirmDelete, setConfirmDelete] = useState<ConfirmationDialogBoxProps | null>(null)
+
+    // Get board data and users from Redux store
+    const board = useAppSelector(getBoard(boardId))
+    const boardUsers = useAppSelector<{[key: string]: IUser}>(getBoardUsers)
 
     const loadRelations = useCallback(async () => {
         try {
@@ -66,6 +78,7 @@ const CardRelations = (props: Props): JSX.Element => {
                             title: c.title || 'Untitled',
                             icon: c.fields.icon || '📄',
                             code: c.code,
+                            properties: c.fields.properties || {},
                         })
                     }
                 })
@@ -149,6 +162,70 @@ const CardRelations = (props: Props): JSX.Element => {
         }), severity: 'low'})
     }, [loadRelations, intl])
 
+    // Helper function to get status property info
+    const getStatusInfo = useCallback((relatedCard: RelatedCardInfo): {value: string, color: string} | null => {
+        if (!board) {
+            return null
+        }
+
+        // Find the Status property template
+        const statusProperty = board.cardProperties.find((prop: IPropertyTemplate) =>
+            prop.name.toLowerCase() === 'status' && prop.type === 'select'
+        )
+
+        if (!statusProperty) {
+            return null
+        }
+
+        // Get the status value from the card's properties
+        const statusValue = relatedCard.properties[statusProperty.id]
+        if (!statusValue || typeof statusValue !== 'string') {
+            return null
+        }
+
+        // Find the option that matches the status value
+        const statusOption = statusProperty.options.find((opt: IPropertyOption) => opt.id === statusValue)
+        if (!statusOption) {
+            return null
+        }
+
+        return {
+            value: statusOption.value,
+            color: statusOption.color || 'propColorDefault',
+        }
+    }, [board])
+
+    // Helper function to get assignee info
+    const getAssigneeInfo = useCallback((relatedCard: RelatedCardInfo): IUser | null => {
+        if (!board) {
+            return null
+        }
+
+        // Find the assignee property (person or multiPerson type)
+        const assigneeProperty = board.cardProperties.find((prop: IPropertyTemplate) =>
+            (prop.type === 'person' || prop.type === 'multiPerson') &&
+            (prop.name.toLowerCase() === 'assignee' || prop.name.toLowerCase() === 'assigned to')
+        )
+
+        if (!assigneeProperty) {
+            return null
+        }
+
+        // Get the assignee value from the card's properties
+        const assigneeValue = relatedCard.properties[assigneeProperty.id]
+        if (!assigneeValue) {
+            return null
+        }
+
+        // Handle both single person and multi-person properties
+        const userId = Array.isArray(assigneeValue) ? assigneeValue[0] : assigneeValue
+        if (!userId || typeof userId !== 'string') {
+            return null
+        }
+
+        return boardUsers[userId] || null
+    }, [board, boardUsers])
+
     // Always show the section, but hide add button in readonly mode
     return (
         <div className='CardRelations'>
@@ -184,6 +261,10 @@ const CardRelations = (props: Props): JSX.Element => {
                                 const displayType = getRelationTypeDisplayName(relationType)
                                 const relatedCard = relatedCards.get(relatedCardId)
 
+                                // Get status and assignee info for the related card
+                                const statusInfo = relatedCard ? getStatusInfo(relatedCard) : null
+                                const assigneeInfo = relatedCard ? getAssigneeInfo(relatedCard) : null
+
                                 return (
                                     <div
                                         key={relation.id}
@@ -213,6 +294,23 @@ const CardRelations = (props: Props): JSX.Element => {
                                                 {relatedCard?.title || relatedCardId}
                                             </span>
                                         </div>
+                                        {statusInfo && (
+                                            <div className='CardRelations__item-status'>
+                                                <Label color={statusInfo.color}>
+                                                    <span className='Label-text'>{statusInfo.value}</span>
+                                                </Label>
+                                            </div>
+                                        )}
+                                        {assigneeInfo && (
+                                            <div className='CardRelations__item-assignee'>
+                                                <img
+                                                    src={Utils.getProfilePicture(assigneeInfo.id)}
+                                                    alt={Utils.getUserDisplayName(assigneeInfo, 'username')}
+                                                    title={Utils.getUserDisplayName(assigneeInfo, 'username')}
+                                                    className='CardRelations__item-avatar'
+                                                />
+                                            </div>
+                                        )}
                                         {!readonly && (
                                             <button
                                                 className='CardRelations__item-delete'

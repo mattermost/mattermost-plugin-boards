@@ -113,6 +113,36 @@
         white-space: nowrap;
     }
 
+    &__item-status {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        margin-left: 8px;
+
+        .Label {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+    }
+
+    &__item-assignee {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        margin-left: 8px;
+    }
+
+    &__item-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid rgba(var(--center-channel-bg-rgb), 1);
+        background: rgba(var(--center-channel-color-rgb), 0.08);
+    }
+
     &__item-delete {
         background: none;
         border: none;
