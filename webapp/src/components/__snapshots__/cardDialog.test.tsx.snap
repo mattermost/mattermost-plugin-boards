@@ -149,6 +149,27 @@ exports[`components/cardDialog already following card 1`] = `
                   </div>
                 </div>
               </div>
+              <div
+                class="CardRelations"
+              >
+                <div
+                  class="CardRelations__header"
+                >
+                  Relations
+                </div>
+                <div
+                  class="CardRelations__list"
+                />
+                <div
+                  class="CardRelations__add"
+                >
+                  <button
+                    class="CardRelations__add-button"
+                  >
+                    + Add relation
+                  </button>
+                </div>
+              </div>
             </div>
             <div
               class="CardDetail__right-section"
@@ -869,6 +890,27 @@ exports[`components/cardDialog return cardDialog menu content 1`] = `
                   </div>
                 </div>
               </div>
+              <div
+                class="CardRelations"
+              >
+                <div
+                  class="CardRelations__header"
+                >
+                  Relations
+                </div>
+                <div
+                  class="CardRelations__list"
+                />
+                <div
+                  class="CardRelations__add"
+                >
+                  <button
+                    class="CardRelations__add-button"
+                  >
+                    + Add relation
+                  </button>
+                </div>
+              </div>
             </div>
             <div
               class="CardDetail__right-section"
@@ -1081,6 +1123,27 @@ exports[`components/cardDialog return cardDialog menu content and cancel delete 
                   </div>
                 </div>
               </div>
+              <div
+                class="CardRelations"
+              >
+                <div
+                  class="CardRelations__header"
+                >
+                  Relations
+                </div>
+                <div
+                  class="CardRelations__list"
+                />
+                <div
+                  class="CardRelations__add"
+                >
+                  <button
+                    class="CardRelations__add-button"
+                  >
+                    + Add relation
+                  </button>
+                </div>
+              </div>
             </div>
             <div
               class="CardDetail__right-section"
@@ -1291,6 +1354,27 @@ exports[`components/cardDialog should match snapshot 1`] = `
                       </span>
                     </button>
                   </div>
+                </div>
+              </div>
+              <div
+                class="CardRelations"
+              >
+                <div
+                  class="CardRelations__header"
+                >
+                  Relations
+                </div>
+                <div
+                  class="CardRelations__list"
+                />
+                <div
+                  class="CardRelations__add"
+                >
+                  <button
+                    class="CardRelations__add-button"
+                  >
+                    + Add relation
+                  </button>
                 </div>
               </div>
             </div>
