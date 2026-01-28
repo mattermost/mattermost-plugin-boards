@@ -4,7 +4,7 @@
 import React, {useEffect, useState} from 'react'
 import {FormattedMessage} from 'react-intl'
 
-import {CardRelation, RelationType, getRelationTypeDisplayName} from '../../blocks/cardRelation'
+import {CardRelation, getRelationTypeDisplayName} from '../../blocks/cardRelation'
 import octoClient from '../../octoClient'
 import {Card} from '../../blocks/card'
 
