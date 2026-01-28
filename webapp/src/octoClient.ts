@@ -271,6 +271,40 @@ class OctoClient {
         return (await this.getJson(response, {})) as {cardId: string; boardId: string; viewId: string; teamId: string}
     }
 
+    async getCardRelations(cardID: string): Promise<any[]> {
+        const path = `/api/v2/cards/${cardID}/relations`
+        const response = await fetch(this.getBaseURL() + path, {headers: this.headers()})
+        if (response.status !== 200) {
+            throw new Error('Failed to fetch card relations')
+        }
+        return (await this.getJson(response, [])) as any[]
+    }
+
+    async createCardRelation(cardID: string, relation: any): Promise<any> {
+        const path = `/api/v2/cards/${cardID}/relations`
+        const body = JSON.stringify(relation)
+        const response = await fetch(this.getBaseURL() + path, Client4.getOptions({
+            method: 'POST',
+            headers: this.headers(),
+            body,
+        }))
+        if (response.status !== 200) {
+            throw new Error('Failed to create card relation')
+        }
+        return (await this.getJson(response, {})) as any
+    }
+
+    async deleteCardRelation(relationID: string): Promise<void> {
+        const path = `/api/v2/relations/${relationID}`
+        const response = await fetch(this.getBaseURL() + path, Client4.getOptions({
+            method: 'DELETE',
+            headers: this.headers(),
+        }))
+        if (response.status !== 200) {
+            throw new Error('Failed to delete card relation')
+        }
+    }
+
     async exportBoardArchive(boardID: string): Promise<Response> {
         const path = `/api/v2/boards/${boardID}/archive/export`
         return fetch(this.getBaseURL() + path, {headers: this.headers()})

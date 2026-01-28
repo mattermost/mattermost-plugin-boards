@@ -1,0 +1,86 @@
+.CardRelations {
+    margin-top: 16px;
+    padding: 12px 0;
+    border-top: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
+
+    &__header {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 12px;
+        color: rgba(var(--center-channel-color-rgb), 0.72);
+    }
+
+    &__loading {
+        color: rgba(var(--center-channel-color-rgb), 0.56);
+        font-size: 13px;
+        padding: 8px 0;
+    }
+
+    &__list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    &__item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px;
+        background: rgba(var(--center-channel-color-rgb), 0.04);
+        border-radius: 4px;
+        font-size: 13px;
+
+        &:hover {
+            background: rgba(var(--center-channel-color-rgb), 0.08);
+        }
+    }
+
+    &__item-type {
+        font-weight: 500;
+        color: rgba(var(--center-channel-color-rgb), 0.72);
+        min-width: 100px;
+    }
+
+    &__item-card {
+        flex: 1;
+        color: rgba(var(--center-channel-color-rgb), 0.88);
+    }
+
+    &__item-delete {
+        background: none;
+        border: none;
+        color: rgba(var(--error-text-color-rgb), 1);
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+
+        &:hover {
+            background: rgba(var(--error-text-color-rgb), 0.08);
+        }
+    }
+
+    &__add {
+        margin-top: 12px;
+    }
+
+    &__add-button {
+        background: none;
+        border: 1px dashed rgba(var(--center-channel-color-rgb), 0.24);
+        color: rgba(var(--center-channel-color-rgb), 0.64);
+        cursor: pointer;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        width: 100%;
+        text-align: left;
+
+        &:hover {
+            border-color: rgba(var(--center-channel-color-rgb), 0.48);
+            color: rgba(var(--center-channel-color-rgb), 0.88);
+            background: rgba(var(--center-channel-color-rgb), 0.04);
+        }
+    }
+}
+

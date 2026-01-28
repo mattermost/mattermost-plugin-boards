@@ -330,6 +330,14 @@ func (a *App) DeleteBlockAndNotify(blockID string, modifiedBy string, disableNot
 		return nil
 	}
 
+	// If this is a card, delete all its relations first
+	if block.Type == model.TypeCard {
+		if deleteRelErr := a.DeleteCardRelationsByCard(blockID); deleteRelErr != nil {
+			a.logger.Error("Failed to delete card relations", mlog.String("cardID", blockID), mlog.Err(deleteRelErr))
+			// Continue with block deletion even if relation deletion fails
+		}
+	}
+
 	err = a.store.DeleteBlock(blockID, modifiedBy)
 	if err != nil {
 		return err

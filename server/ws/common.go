@@ -75,3 +75,18 @@ type CategoryBoardReorderMessage struct {
 	BoardOrder []string `json:"BoardOrder"`
 	TeamID     string   `json:"teamId"`
 }
+
+// UpdateCardRelationMsg is sent on card relation updates.
+type UpdateCardRelationMsg struct {
+	Action   string              `json:"action"`
+	TeamID   string              `json:"teamId"`
+	Relation *model.CardRelation `json:"relation"`
+}
+
+// DeleteCardRelationMsg is sent on card relation deletions.
+type DeleteCardRelationMsg struct {
+	Action     string `json:"action"`
+	TeamID     string `json:"teamId"`
+	RelationID string `json:"relationId"`
+	BoardID    string `json:"boardId"`
+}

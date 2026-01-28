@@ -676,3 +676,36 @@ func (pa *PluginAdapter) BroadcastCardLimitTimestampChange(cardLimitTimestamp in
 
 	pa.sendMessageToAll(websocketActionUpdateCardLimitTimestamp, utils.StructToMap(message))
 }
+
+func (pa *PluginAdapter) BroadcastCardRelationChange(teamID string, relation *model.CardRelation) {
+	pa.logger.Debug("BroadcastCardRelationChange",
+		mlog.String("teamID", teamID),
+		mlog.String("boardID", relation.BoardID),
+		mlog.String("relationID", relation.ID),
+	)
+
+	message := UpdateCardRelationMsg{
+		Action:   websocketActionUpdateCardRelation,
+		TeamID:   teamID,
+		Relation: relation,
+	}
+
+	pa.sendBoardMessage(teamID, relation.BoardID, utils.StructToMap(message))
+}
+
+func (pa *PluginAdapter) BroadcastCardRelationDelete(teamID, relationID, boardID string) {
+	pa.logger.Debug("BroadcastCardRelationDelete",
+		mlog.String("teamID", teamID),
+		mlog.String("boardID", boardID),
+		mlog.String("relationID", relationID),
+	)
+
+	message := DeleteCardRelationMsg{
+		Action:     websocketActionDeleteCardRelation,
+		TeamID:     teamID,
+		RelationID: relationID,
+		BoardID:    boardID,
+	}
+
+	pa.sendBoardMessage(teamID, boardID, utils.StructToMap(message))
+}

@@ -96,6 +96,21 @@ func (mr *MockStoreMockRecorder) CreateBoardsAndBlocksWithAdmin(arg0, arg1 inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBoardsAndBlocksWithAdmin", reflect.TypeOf((*MockStore)(nil).CreateBoardsAndBlocksWithAdmin), arg0, arg1)
 }
 
+// CreateCardRelation mocks base method.
+func (m *MockStore) CreateCardRelation(arg0 *model.CardRelation) (*model.CardRelation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateCardRelation", arg0)
+	ret0, _ := ret[0].(*model.CardRelation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateCardRelation indicates an expected call of CreateCardRelation.
+func (mr *MockStoreMockRecorder) CreateCardRelation(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCardRelation", reflect.TypeOf((*MockStore)(nil).CreateCardRelation), arg0)
+}
+
 // CreateCategory mocks base method.
 func (m *MockStore) CreateCategory(arg0 model.Category) error {
 	m.ctrl.T.Helper()
@@ -221,6 +236,20 @@ func (m *MockStore) DeleteBoardsAndBlocks(arg0 *model.DeleteBoardsAndBlocks, arg
 func (mr *MockStoreMockRecorder) DeleteBoardsAndBlocks(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBoardsAndBlocks", reflect.TypeOf((*MockStore)(nil).DeleteBoardsAndBlocks), arg0, arg1)
+}
+
+// DeleteCardRelation mocks base method.
+func (m *MockStore) DeleteCardRelation(arg0 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteCardRelation", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteCardRelation indicates an expected call of DeleteCardRelation.
+func (mr *MockStoreMockRecorder) DeleteCardRelation(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteCardRelation", reflect.TypeOf((*MockStore)(nil).DeleteCardRelation), arg0)
 }
 
 // DeleteCategory mocks base method.
@@ -734,6 +763,36 @@ func (m *MockStore) GetCardLimitTimestamp() (int64, error) {
 func (mr *MockStoreMockRecorder) GetCardLimitTimestamp() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardLimitTimestamp", reflect.TypeOf((*MockStore)(nil).GetCardLimitTimestamp))
+}
+
+// GetCardRelation mocks base method.
+func (m *MockStore) GetCardRelation(arg0 string) (*model.CardRelation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCardRelation", arg0)
+	ret0, _ := ret[0].(*model.CardRelation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCardRelation indicates an expected call of GetCardRelation.
+func (mr *MockStoreMockRecorder) GetCardRelation(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardRelation", reflect.TypeOf((*MockStore)(nil).GetCardRelation), arg0)
+}
+
+// GetCardRelations mocks base method.
+func (m *MockStore) GetCardRelations(arg0 string) ([]*model.CardRelationWithCard, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCardRelations", arg0)
+	ret0, _ := ret[0].([]*model.CardRelationWithCard)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCardRelations indicates an expected call of GetCardRelations.
+func (mr *MockStoreMockRecorder) GetCardRelations(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardRelations", reflect.TypeOf((*MockStore)(nil).GetCardRelations), arg0)
 }
 
 // GetCardsCount mocks base method.
@@ -1708,6 +1767,21 @@ func (m *MockStore) UpdateCardLimitTimestamp(arg0 int) (int64, error) {
 func (mr *MockStoreMockRecorder) UpdateCardLimitTimestamp(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCardLimitTimestamp", reflect.TypeOf((*MockStore)(nil).UpdateCardLimitTimestamp), arg0)
+}
+
+// UpdateCardRelation mocks base method.
+func (m *MockStore) UpdateCardRelation(arg0 *model.CardRelation) (*model.CardRelation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateCardRelation", arg0)
+	ret0, _ := ret[0].(*model.CardRelation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateCardRelation indicates an expected call of UpdateCardRelation.
+func (mr *MockStoreMockRecorder) UpdateCardRelation(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCardRelation", reflect.TypeOf((*MockStore)(nil).UpdateCardRelation), arg0)
 }
 
 // UpdateCategory mocks base method.

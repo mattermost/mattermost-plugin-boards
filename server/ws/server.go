@@ -765,3 +765,64 @@ func (ws *Server) BroadcastSubscriptionChange(workspaceID string, subscription *
 func (ws *Server) BroadcastCardLimitTimestampChange(cardLimitTimestamp int64) {
 	// not implemented for standalone server.
 }
+
+func (ws *Server) BroadcastCardRelationChange(teamID string, relation *model.CardRelation) {
+	message := UpdateCardRelationMsg{
+		Action:   websocketActionUpdateCardRelation,
+		TeamID:   teamID,
+		Relation: relation,
+	}
+
+	listeners := ws.getListenersForTeamAndBoard(teamID, relation.BoardID)
+	ws.logger.Trace("listener(s) for teamID and boardID",
+		mlog.Int("listener_count", len(listeners)),
+		mlog.String("teamID", teamID),
+		mlog.String("boardID", relation.BoardID),
+	)
+
+	for _, listener := range listeners {
+		ws.logger.Debug("Broadcast card relation change",
+			mlog.String("teamID", teamID),
+			mlog.String("boardID", relation.BoardID),
+			mlog.String("relationID", relation.ID),
+			mlog.Stringer("remoteAddr", listener.conn.RemoteAddr()),
+		)
+
+		err := listener.WriteJSON(message)
+		if err != nil {
+			ws.logger.Error("broadcast error", mlog.Err(err))
+			listener.conn.Close()
+		}
+	}
+}
+
+func (ws *Server) BroadcastCardRelationDelete(teamID, relationID, boardID string) {
+	message := DeleteCardRelationMsg{
+		Action:     websocketActionDeleteCardRelation,
+		TeamID:     teamID,
+		RelationID: relationID,
+		BoardID:    boardID,
+	}
+
+	listeners := ws.getListenersForTeamAndBoard(teamID, boardID)
+	ws.logger.Trace("listener(s) for teamID and boardID",
+		mlog.Int("listener_count", len(listeners)),
+		mlog.String("teamID", teamID),
+		mlog.String("boardID", boardID),
+	)
+
+	for _, listener := range listeners {
+		ws.logger.Debug("Broadcast card relation delete",
+			mlog.String("teamID", teamID),
+			mlog.String("boardID", boardID),
+			mlog.String("relationID", relationID),
+			mlog.Stringer("remoteAddr", listener.conn.RemoteAddr()),
+		)
+
+		err := listener.WriteJSON(message)
+		if err != nil {
+			ws.logger.Error("broadcast error", mlog.Err(err))
+			listener.conn.Close()
+		}
+	}
+}
