@@ -3,10 +3,12 @@
 
 import React, {useEffect, useState, useCallback} from 'react'
 import {FormattedMessage, useIntl} from 'react-intl'
+import {useHistory, useRouteMatch, generatePath} from 'react-router-dom'
 
 import {CardRelation, getRelationTypeDisplayName, getInverseRelationType} from '../../blocks/cardRelation'
 import {Card} from '../../blocks/card'
 import octoClient from '../../octoClient'
+import {Utils} from '../../utils'
 import {sendFlashMessage} from '../flashMessages'
 import ConfirmationDialogBox, {ConfirmationDialogBoxProps} from '../confirmationDialogBox'
 
@@ -29,6 +31,8 @@ type RelatedCardInfo = {
 const CardRelations = (props: Props): JSX.Element => {
     const {card, boardId, readonly} = props
     const intl = useIntl()
+    const history = useHistory()
+    const match = useRouteMatch<{boardId: string, viewId?: string, cardId?: string, teamId?: string}>()
     const [relations, setRelations] = useState<CardRelation[]>([])
     const [relatedCards, setRelatedCards] = useState<Map<string, RelatedCardInfo>>(new Map())
     const [loading, setLoading] = useState(true)
@@ -122,12 +126,11 @@ const CardRelations = (props: Props): JSX.Element => {
     }, [card.id, relatedCards])
 
     const handleCardClick = useCallback((cardId: string) => {
-        // Navigate to the related card by updating URL
-        const currentUrl = new URL(window.location.href)
-        currentUrl.searchParams.set('c', cardId)
-        window.history.pushState({}, '', currentUrl.toString())
-        window.dispatchEvent(new PopStateEvent('popstate'))
-    }, [])
+        // Navigate to the related card using react-router
+        const params = {...match.params, cardId}
+        const newPath = generatePath(Utils.getBoardPagePath(match.path), params)
+        history.push(newPath)
+    }, [match, history])
 
     const handleRelationCreated = useCallback(() => {
         loadRelations()
