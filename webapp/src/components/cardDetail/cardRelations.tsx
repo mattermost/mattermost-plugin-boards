@@ -125,6 +125,17 @@ const CardRelations = (props: Props): JSX.Element => {
     const handleCardClick = useCallback((cardId: string) => {
         if (showCard) {
             showCard(cardId)
+        } else {
+            // Fallback: update URL directly when showCard prop is not provided
+            const currentUrl = new URL(window.location.href)
+            const pathParts = currentUrl.pathname.split('/')
+            // Replace last segment (cardId) or append if not present
+            if (pathParts.length > 0) {
+                pathParts[pathParts.length - 1] = cardId
+                currentUrl.pathname = pathParts.join('/')
+            }
+            window.history.pushState({}, '', currentUrl.toString())
+            window.dispatchEvent(new PopStateEvent('popstate'))
         }
     }, [showCard])
 
