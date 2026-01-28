@@ -86,6 +86,50 @@ exports[`components/blocksEditor/blocks/video should match Display snapshot for 
 </div>
 `;
 
+exports[`components/blocksEditor/blocks/video should match Display snapshot for file upload with fileId 1`] = `
+<div>
+  <div
+    class="VideoElement__container"
+  >
+    <div
+      class="VideoElement__wrapper"
+    >
+      <video
+        class="VideoElement__preview"
+        data-testid="video"
+      >
+        <source
+          src="test.mp4"
+        />
+      </video>
+      <div
+        aria-label="Play video in full screen"
+        class="VideoElement__overlay"
+        role="button"
+        tabindex="0"
+      >
+        <div
+          class="VideoElement__play-icon"
+        >
+          <i
+            class="CompassIcon icon-play PlayIcon"
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      class="VideoElement__metadata"
+    >
+      <span
+        class="VideoElement__source"
+      >
+        test-video.mp4
+      </span>
+    </div>
+  </div>
+</div>
+`;
+
 exports[`components/blocksEditor/blocks/video should match Display snapshot with empty value 1`] = `<div />`;
 
 exports[`components/blocksEditor/blocks/video should match Input snapshot 1`] = `

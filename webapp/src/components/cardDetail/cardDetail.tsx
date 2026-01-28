@@ -300,9 +300,16 @@ const CardDetail = (props: Props): JSX.Element|null => {
                                         let newBlock: Block
                                         if (block.contentType === 'checkbox') {
                                             newBlock = await addBlockNewEditor(card, intl, block.value.value, {value: block.value.checked}, block.contentType, afterBlock?.id, dispatch)
-                                        } else if (block.contentType === 'image' || block.contentType === 'attachment' || block.contentType === 'video') {
+                                        } else if (block.contentType === 'image' || block.contentType === 'attachment') {
                                             const newFileId = await octoClient.uploadFile(card.boardId, block.value.file)
                                             newBlock = await addBlockNewEditor(card, intl, '', {fileId: newFileId, filename: block.value.filename}, block.contentType, afterBlock?.id, dispatch)
+                                        } else if (block.contentType === 'video') {
+                                            if (block.value.sourceType === 'file') {
+                                                const newFileId = await octoClient.uploadFile(card.boardId, block.value.file)
+                                                newBlock = await addBlockNewEditor(card, intl, '', {fileId: newFileId, filename: block.value.filename, sourceType: 'file'}, block.contentType, afterBlock?.id, dispatch)
+                                            } else {
+                                                newBlock = await addBlockNewEditor(card, intl, '', {sourceType: block.value.sourceType, videoId: block.value.videoId, videoUrl: block.value.videoUrl}, block.contentType, afterBlock?.id, dispatch)
+                                            }
                                         } else {
                                             newBlock = await addBlockNewEditor(card, intl, block.value, {}, block.contentType, afterBlock?.id, dispatch)
                                         }

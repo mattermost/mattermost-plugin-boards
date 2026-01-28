@@ -15,6 +15,7 @@ type VideoSourceType = 'file' | 'youtube' | 'gdrive'
 
 type FileInfo = {
     file?: string|File
+    fileId?: string
     filename?: string
     width?: number
     align?: 'left'|'center'|'right'
@@ -65,14 +66,15 @@ const Video: ContentType<FileInfo> = {
         useEffect(() => {
             if (sourceType === 'file' && !videoDataUrl) {
                 const loadVideo = async () => {
-                    if (props.value && props.value.file && typeof props.value.file === 'string') {
-                        const fileURL = await octoClient.getFileAsDataUrl(props.currentBoardId || '', props.value.file)
+                    const fileId = props.value?.fileId || (typeof props.value?.file === 'string' ? props.value.file : undefined)
+                    if (fileId) {
+                        const fileURL = await octoClient.getFileAsDataUrl(props.currentBoardId || '', fileId)
                         setVideoDataUrl(fileURL.url || '')
                     }
                 }
                 loadVideo()
             }
-        }, [props.value, props.value?.file, props.currentBoardId, sourceType])
+        }, [props.value, props.value?.file, props.value?.fileId, props.currentBoardId, sourceType])
 
         const handleVideoClick = useCallback((e: React.MouseEvent) => {
             e.stopPropagation()

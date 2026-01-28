@@ -33,6 +33,23 @@ describe('components/blocksEditor/blocks/video', () => {
         expect(container).toMatchSnapshot()
     })
 
+    test('should match Display snapshot for file upload with fileId', async () => {
+        const mockedOcto = mocked(octoClient, true)
+        mockedOcto.getFileAsDataUrl.mockResolvedValue({url: 'test.mp4'})
+        const Component = VideoBlock.Display
+        const {container} = render(
+            <Component
+                onChange={jest.fn()}
+                value={{fileId: 'test-file-id', filename: 'test-video.mp4', sourceType: 'file'}}
+                onCancel={jest.fn()}
+                onSave={jest.fn()}
+            />,
+        )
+        await screen.findByTestId('video')
+        expect(container).toMatchSnapshot()
+        expect(mockedOcto.getFileAsDataUrl).toHaveBeenCalledWith('', 'test-file-id')
+    })
+
     test('should match Display snapshot for YouTube', async () => {
         const Component = VideoBlock.Display
         const {container} = render(
