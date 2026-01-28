@@ -25,6 +25,7 @@ type RelatedCardInfo = {
     id: string
     title: string
     icon: string
+    code?: string
 }
 
 const CardRelations = (props: Props): JSX.Element => {
@@ -64,6 +65,7 @@ const CardRelations = (props: Props): JSX.Element => {
                             id: c.id,
                             title: c.title || 'Untitled',
                             icon: c.fields.icon || '📄',
+                            code: c.code,
                         })
                     }
                 })
@@ -202,9 +204,11 @@ const CardRelations = (props: Props): JSX.Element => {
                                                 }
                                             }}
                                         >
-                                            <span className='CardRelations__item-icon'>
-                                                {relatedCard?.icon || '📄'}
-                                            </span>
+                                            {relatedCard?.code && (
+                                                <span className='CardRelations__item-code'>
+                                                    {relatedCard.code}
+                                                </span>
+                                            )}
                                             <span className='CardRelations__item-title'>
                                                 {relatedCard?.title || relatedCardId}
                                             </span>

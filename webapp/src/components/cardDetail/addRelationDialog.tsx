@@ -104,6 +104,7 @@ const AddRelationDialog = (props: Props): JSX.Element => {
         <Dialog
             onClose={onClose}
             toolsMenu={null}
+            size='small'
         >
             <div className='AddRelationDialog'>
                 <div className='AddRelationDialog__header'>
