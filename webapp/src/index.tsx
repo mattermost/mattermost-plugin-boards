@@ -29,6 +29,7 @@ import {Board} from './blocks/board'
 import {getMessages, getCurrentLanguage} from './i18n'
 import {UserSettings} from './userSettings'
 import BoardsManagement from './components/admin/boardsManagement'
+import BotWhitelistManager from './components/admin/botWhitelistManager'
 import {SuiteWindow} from './types/index'
 import BoardsUnfurl from './components/boardsUnfurl/boardsUnfurl'
 import RHSChannelBoards from './components/rhsChannelBoards'
@@ -204,6 +205,7 @@ export default class Plugin {
         this.registry?.registerWebSocketEventHandler('plugin_statuses_changed', (e: any) => wsClient.pluginStatusesChangedHandler(e.data))
         this.registry?.registerPostTypeComponent('custom_cloud_upgrade_nudge', CloudUpgradeNudge)
         this.registry?.registerAdminConsoleCustomSetting?.('BoardsManagement', BoardsManagement)
+        this.registry?.registerAdminConsoleCustomSetting?.('AllowedBotUserIDs', BotWhitelistManager)
         this.registry?.registerWebSocketEventHandler('preferences_changed', (e: any) => {
             let preferences
             try {

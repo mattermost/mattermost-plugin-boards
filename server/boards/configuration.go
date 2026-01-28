@@ -23,12 +23,18 @@ import (
 type configuration struct {
 	EnablePublicSharedBoards bool
 	FigmaPersonalAccessToken string
+	AllowedBotUserIDs        []string
 }
 
 // Clone shallow copies the configuration. Your implementation may require a deep copy if
 // your configuration has reference types.
 func (c *configuration) Clone() *configuration {
 	var clone = *c
+	// Deep copy the slice
+	if c.AllowedBotUserIDs != nil {
+		clone.AllowedBotUserIDs = make([]string, len(c.AllowedBotUserIDs))
+		copy(clone.AllowedBotUserIDs, c.AllowedBotUserIDs)
+	}
 	return &clone
 }
 
@@ -97,9 +103,22 @@ func (b *BoardsApp) OnConfigurationChange() error {
 		b.logger.Warn("Figma token not found in config")
 	}
 
+	allowedBotUserIDs := []string{}
+	// Mattermost converts plugin setting keys to lowercase
+	// So "AllowedBotUserIDs" becomes "allowedbotuserids"
+	if botIDs, ok := mmconfig.PluginSettings.Plugins[PluginName]["allowedbotuserids"].([]interface{}); ok {
+		for _, id := range botIDs {
+			if strID, ok := id.(string); ok {
+				allowedBotUserIDs = append(allowedBotUserIDs, strID)
+			}
+		}
+		b.logger.Info("Allowed bot user IDs loaded from config", mlog.Int("count", len(allowedBotUserIDs)))
+	}
+
 	configuration := &configuration{
 		EnablePublicSharedBoards: enableShareBoards,
 		FigmaPersonalAccessToken: figmaToken,
+		AllowedBotUserIDs:        allowedBotUserIDs,
 	}
 	b.setConfiguration(configuration)
 	b.server.Config().EnablePublicSharedBoards = enableShareBoards
@@ -129,6 +148,8 @@ func (b *BoardsApp) OnConfigurationChange() error {
 	b.server.Config().MaxFileSize = maxFileSize
 	b.server.Config().FigmaPersonalAccessToken = figmaToken
 	b.logger.Info("Figma token set in server config", mlog.Int("tokenLength", len(figmaToken)))
+	b.server.Config().AllowedBotUserIDs = allowedBotUserIDs
+	b.logger.Info("Allowed bot user IDs set in server config", mlog.Int("count", len(allowedBotUserIDs)))
 
 	b.server.UpdateAppConfig()
 	b.wsPluginAdapter.BroadcastConfigChange(*b.server.App().GetClientConfig())
