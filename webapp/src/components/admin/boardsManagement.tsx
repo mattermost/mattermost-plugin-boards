@@ -313,23 +313,26 @@ const BoardsManagement = (props: Props) => {
         }
     }
 
+    // Wrap in focalboard-body to apply styles (webpack loader prefixes all selectors with .focalboard-body)
     if (loading) {
-        return <div className='BoardsManagement loading'>Loading boards...</div>
+        return <div className='focalboard-body'><div className='BoardsManagement loading'>Loading boards...</div></div>
     }
 
     if (error && boards.length === 0) {
-        return <div className='BoardsManagement error'>{error}</div>
+        return <div className='focalboard-body'><div className='BoardsManagement error'>{error}</div></div>
     }
 
     if (boards.length === 0) {
         return (
-            <div className='BoardsManagement'>
-                <div className='BoardsManagement__header'>
-                    <h3 className='BoardsManagement__title'>Boards Management</h3>
-                    <p className='BoardsManagement__help-text'>{props.helpText}</p>
-                </div>
-                <div className='BoardsManagement__empty'>
-                    No boards found
+            <div className='focalboard-body'>
+                <div className='BoardsManagement'>
+                    <div className='BoardsManagement__header'>
+                        <h3 className='BoardsManagement__title'>Boards Management</h3>
+                        <p className='BoardsManagement__help-text'>{props.helpText}</p>
+                    </div>
+                    <div className='BoardsManagement__empty'>
+                        No boards found
+                    </div>
                 </div>
             </div>
         )
@@ -338,155 +341,157 @@ const BoardsManagement = (props: Props) => {
     const activeBoardData = boards.find(b => b.board.id === activeTab)
 
     return (
-        <div className='BoardsManagement'>
-            <div className='BoardsManagement__header'>
-                <h3 className='BoardsManagement__title'>Boards Management</h3>
-                <p className='BoardsManagement__help-text'>{props.helpText}</p>
-            </div>
-
-            {error && (
-                <div className='BoardsManagement__error'>
-                    {error}
+        <div className='focalboard-body'>
+            <div className='BoardsManagement'>
+                <div className='BoardsManagement__header'>
+                    <h3 className='BoardsManagement__title'>Boards Management</h3>
+                    <p className='BoardsManagement__help-text'>{props.helpText}</p>
                 </div>
-            )}
 
-            <div className='BoardsManagement__tabs'>
-                {boards.map(({board}) => (
-                    <button
-                        key={board.id}
-                        type='button'
-                        className={`BoardsManagement__tab ${activeTab === board.id ? 'active' : ''}`}
-                        onClick={() => setActiveTab(board.id)}
-                        disabled={saving}
-                    >
-                        {board.icon && <span className='BoardsManagement__tab-icon'>{board.icon}</span>}
-                        {board.title}
-                    </button>
-                ))}
-            </div>
-
-            {activeBoardData && (
-                <div className='BoardsManagement__content'>
-                    {/* Board Code Section */}
-                    <div className='BoardsManagement__section'>
-                        <h4 className='BoardsManagement__section-title'>Board Code</h4>
-                        <p className='BoardsManagement__section-help'>
-                            Set a unique alphanumeric code for this board (1-10 characters, starting with a letter).
-                        </p>
-                        <div className='BoardsManagement__code-input'>
-                            {activeBoardData.isEditingCode ? (
-                                <div className='BoardsManagement__code-edit'>
-                                    <input
-                                        type='text'
-                                        value={activeBoardData.code}
-                                        onChange={(e) => handleCodeChange(activeBoardData.board.id, e.target.value.toUpperCase())}
-                                        maxLength={10}
-                                        className={activeBoardData.codeError ? 'error' : ''}
-                                        disabled={props.disabled || saving}
-                                        placeholder='Enter code'
-                                        aria-label='Board code'
-                                    />
-                                    <button
-                                        type='button'
-                                        onClick={() => handleCancelCodeClick(activeBoardData.board.id)}
-                                        disabled={props.disabled || saving}
-                                        className='BoardsManagement__button BoardsManagement__button--secondary'
-                                    >
-                                        Cancel
-                                    </button>
-                                    {activeBoardData.codeError && (
-                                        <span className='BoardsManagement__error-text'>{activeBoardData.codeError}</span>
-                                    )}
-                                    <p className='BoardsManagement__hint'>
-                                        Changes will be saved when you click the Save button at the bottom of the page.
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className='BoardsManagement__code-display'>
-                                    <span className='BoardsManagement__code-value'>
-                                        {activeBoardData.code || <em>Not set</em>}
-                                    </span>
-                                    <button
-                                        type='button'
-                                        onClick={() => handleEditCodeClick(activeBoardData.board.id)}
-                                        disabled={props.disabled || saving}
-                                        className='BoardsManagement__button BoardsManagement__button--link'
-                                    >
-                                        Edit
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                {error && (
+                    <div className='BoardsManagement__error'>
+                        {error}
                     </div>
+                )}
 
-                    {/* Status Transitions Section */}
-                    {activeBoardData.statuses.length > 0 ? (
+                <div className='BoardsManagement__tabs'>
+                    {boards.map(({board}) => (
+                        <button
+                            key={board.id}
+                            type='button'
+                            className={`BoardsManagement__tab ${activeTab === board.id ? 'active' : ''}`}
+                            onClick={() => setActiveTab(board.id)}
+                            disabled={saving}
+                        >
+                            {board.icon && <span className='BoardsManagement__tab-icon'>{board.icon}</span>}
+                            {board.title}
+                        </button>
+                    ))}
+                </div>
+
+                {activeBoardData && (
+                    <div className='BoardsManagement__content'>
+                        {/* Board Code Section */}
                         <div className='BoardsManagement__section'>
-                            <h4 className='BoardsManagement__section-title'>Status Transition Rules</h4>
+                            <h4 className='BoardsManagement__section-title'>Board Code</h4>
                             <p className='BoardsManagement__section-help'>
-                                Configure which status transitions are allowed for cards in this board.
-                                Check a box to allow transitioning from the row status to the column status.
+                            Set a unique alphanumeric code for this board (1-10 characters, starting with a letter).
                             </p>
-                            {activeBoardData.rulesLoadError && (
-                                <div className='BoardsManagement__warning'>
-                                    ⚠️ Failed to load existing rules. Editing is disabled to prevent accidental overwrites.
-                                    Please refresh the page to try again.
-                                </div>
-                            )}
-                            <div className='BoardsManagement__matrix-wrapper'>
-                                <table className='BoardsManagement__matrix'>
-                                    <thead>
-                                        <tr>
-                                            <th className='BoardsManagement__corner'>From → To</th>
-                                            {activeBoardData.statuses.map(toStatus => (
-                                                <th key={toStatus.id} className='BoardsManagement__header-cell'>
-                                                    <div className={`BoardsManagement__status-badge propColor${toStatus.color}`}>
-                                                        {toStatus.value}
-                                                    </div>
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {activeBoardData.statuses.map(fromStatus => (
-                                            <tr key={fromStatus.id}>
-                                                <td className='BoardsManagement__row-header'>
-                                                    <div className={`BoardsManagement__status-badge propColor${fromStatus.color}`}>
-                                                        {fromStatus.value}
-                                                    </div>
-                                                </td>
-                                                {activeBoardData.statuses.map(toStatus => (
-                                                    <td key={toStatus.id} className='BoardsManagement__cell'>
-                                                        <input
-                                                            type='checkbox'
-                                                            checked={activeBoardData.transitionMatrix[fromStatus.id]?.[toStatus.id] ?? true}
-                                                            onChange={(e) => handleMatrixChange(
-                                                                activeBoardData.board.id,
-                                                                fromStatus.id,
-                                                                toStatus.id,
-                                                                e.target.checked
-                                                            )}
-                                                            disabled={props.disabled || saving || activeBoardData.rulesLoadError}
-                                                            aria-label={`Allow transition from ${fromStatus.value} to ${toStatus.value}`}
-                                                        />
-                                                    </td>
-                                                ))}
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                            <div className='BoardsManagement__code-input'>
+                                {activeBoardData.isEditingCode ? (
+                                    <div className='BoardsManagement__code-edit'>
+                                        <input
+                                            type='text'
+                                            value={activeBoardData.code}
+                                            onChange={(e) => handleCodeChange(activeBoardData.board.id, e.target.value.toUpperCase())}
+                                            maxLength={10}
+                                            className={activeBoardData.codeError ? 'error' : ''}
+                                            disabled={props.disabled || saving}
+                                            placeholder='Enter code'
+                                            aria-label='Board code'
+                                        />
+                                        <button
+                                            type='button'
+                                            onClick={() => handleCancelCodeClick(activeBoardData.board.id)}
+                                            disabled={props.disabled || saving}
+                                            className='BoardsManagement__button BoardsManagement__button--secondary'
+                                        >
+                                        Cancel
+                                        </button>
+                                        {activeBoardData.codeError && (
+                                            <span className='BoardsManagement__error-text'>{activeBoardData.codeError}</span>
+                                        )}
+                                        <p className='BoardsManagement__hint'>
+                                        Changes will be saved when you click the Save button at the bottom of the page.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className='BoardsManagement__code-display'>
+                                        <span className='BoardsManagement__code-value'>
+                                            {activeBoardData.code || <em>Not set</em>}
+                                        </span>
+                                        <button
+                                            type='button'
+                                            onClick={() => handleEditCodeClick(activeBoardData.board.id)}
+                                            disabled={props.disabled || saving}
+                                            className='BoardsManagement__button BoardsManagement__button--link'
+                                        >
+                                        Edit
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
-                    ) : (
-                        <div className='BoardsManagement__section'>
-                            <h4 className='BoardsManagement__section-title'>Status Transition Rules</h4>
-                            <p className='BoardsManagement__section-help BoardsManagement__section-help--muted'>
+
+                        {/* Status Transitions Section */}
+                        {activeBoardData.statuses.length > 0 ? (
+                            <div className='BoardsManagement__section'>
+                                <h4 className='BoardsManagement__section-title'>Status Transition Rules</h4>
+                                <p className='BoardsManagement__section-help'>
+                                Configure which status transitions are allowed for cards in this board.
+                                Check a box to allow transitioning from the row status to the column status.
+                                </p>
+                                {activeBoardData.rulesLoadError && (
+                                    <div className='BoardsManagement__warning'>
+                                    ⚠️ Failed to load existing rules. Editing is disabled to prevent accidental overwrites.
+                                    Please refresh the page to try again.
+                                    </div>
+                                )}
+                                <div className='BoardsManagement__matrix-wrapper'>
+                                    <table className='BoardsManagement__matrix'>
+                                        <thead>
+                                            <tr>
+                                                <th className='BoardsManagement__corner'>From → To</th>
+                                                {activeBoardData.statuses.map(toStatus => (
+                                                    <th key={toStatus.id} className='BoardsManagement__header-cell'>
+                                                        <div className={`BoardsManagement__status-badge propColor${toStatus.color}`}>
+                                                            {toStatus.value}
+                                                        </div>
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {activeBoardData.statuses.map(fromStatus => (
+                                                <tr key={fromStatus.id}>
+                                                    <td className='BoardsManagement__row-header'>
+                                                        <div className={`BoardsManagement__status-badge propColor${fromStatus.color}`}>
+                                                            {fromStatus.value}
+                                                        </div>
+                                                    </td>
+                                                    {activeBoardData.statuses.map(toStatus => (
+                                                        <td key={toStatus.id} className='BoardsManagement__cell'>
+                                                            <input
+                                                                type='checkbox'
+                                                                checked={activeBoardData.transitionMatrix[fromStatus.id]?.[toStatus.id] ?? true}
+                                                                onChange={(e) => handleMatrixChange(
+                                                                    activeBoardData.board.id,
+                                                                    fromStatus.id,
+                                                                    toStatus.id,
+                                                                    e.target.checked
+                                                                )}
+                                                                disabled={props.disabled || saving || activeBoardData.rulesLoadError}
+                                                                aria-label={`Allow transition from ${fromStatus.value} to ${toStatus.value}`}
+                                                            />
+                                                        </td>
+                                                    ))}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className='BoardsManagement__section'>
+                                <h4 className='BoardsManagement__section-title'>Status Transition Rules</h4>
+                                <p className='BoardsManagement__section-help BoardsManagement__section-help--muted'>
                                 This board has no Status property or no status options defined.
-                            </p>
-                        </div>
-                    )}
-                </div>
-            )}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
         </div>
     )
 }
