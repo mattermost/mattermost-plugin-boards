@@ -304,10 +304,12 @@ const CardDetail = (props: Props): JSX.Element|null => {
                                             const newFileId = await octoClient.uploadFile(card.boardId, block.value.file)
                                             newBlock = await addBlockNewEditor(card, intl, '', {fileId: newFileId, filename: block.value.filename}, block.contentType, afterBlock?.id, dispatch)
                                         } else if (block.contentType === 'video') {
+                                            // Handle video blocks - file upload or URL (YouTube/GDrive)
                                             if (block.value.sourceType === 'file') {
                                                 const newFileId = await octoClient.uploadFile(card.boardId, block.value.file)
                                                 newBlock = await addBlockNewEditor(card, intl, '', {fileId: newFileId, filename: block.value.filename, sourceType: 'file'}, block.contentType, afterBlock?.id, dispatch)
                                             } else {
+                                                // YouTube or Google Drive URL
                                                 newBlock = await addBlockNewEditor(card, intl, '', {sourceType: block.value.sourceType, videoId: block.value.videoId, videoUrl: block.value.videoUrl}, block.contentType, afterBlock?.id, dispatch)
                                             }
                                         } else {

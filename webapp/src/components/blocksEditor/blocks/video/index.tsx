@@ -66,6 +66,7 @@ const Video: ContentType<FileInfo> = {
         useEffect(() => {
             if (sourceType === 'file' && !videoDataUrl) {
                 const loadVideo = async () => {
+                    // Support both 'fileId' (from saved blocks) and 'file' (legacy)
                     const fileId = props.value?.fileId || (typeof props.value?.file === 'string' ? props.value.file : undefined)
                     if (fileId) {
                         const fileURL = await octoClient.getFileAsDataUrl(props.currentBoardId || '', fileId)
