@@ -79,7 +79,7 @@ describe('components/cardDetail/CardRelations', () => {
         createdBy: 'user-id-1',
         createAt: Date.now(),
         updateAt: Date.now(),
-        deleteAt: 0,
+        boardId: board.id,
     }
 
     const mockStore = configureStore([])
