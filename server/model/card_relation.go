@@ -74,6 +74,9 @@ type CardRelation struct {
 	// The creation time in milliseconds since the current epoch
 	// required: true
 	CreateAt int64 `json:"createAt"`
+
+	// The id of the board (used for websocket broadcasts)
+	BoardID string `json:"boardId,omitempty"`
 }
 
 // Populate populates a CardRelation with default values

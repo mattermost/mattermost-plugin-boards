@@ -25,6 +25,8 @@ const (
 	websocketActionUpdateCardLimitTimestamp = "UPDATE_CARD_LIMIT_TIMESTAMP"
 	websocketActionReorderCategories        = "REORDER_CATEGORIES"
 	websocketActionReorderCategoryBoards    = "REORDER_CATEGORY_BOARDS"
+	websocketActionUpdateCardRelation       = "UPDATE_CARD_RELATION"
+	websocketActionDeleteCardRelation       = "DELETE_CARD_RELATION"
 )
 
 type Store interface {

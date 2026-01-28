@@ -99,6 +99,30 @@ func (s *SQLStore) CreateBoardsAndBlocksWithAdmin(bab *model.BoardsAndBlocks, us
 
 }
 
+func (s *SQLStore) CreateCardRelation(relation *model.CardRelation) (*model.CardRelation, error) {
+	if s.dbType == model.SqliteDBType {
+		return s.createCardRelation(s.db, relation)
+	}
+	tx, txErr := s.db.BeginTx(context.Background(), nil)
+	if txErr != nil {
+		return nil, txErr
+	}
+	result, err := s.createCardRelation(tx, relation)
+	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			s.logger.Error("transaction rollback error", mlog.Err(rollbackErr), mlog.String("methodName", "CreateCardRelation"))
+		}
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+
+}
+
 func (s *SQLStore) CreateCategory(category model.Category) error {
 	if s.dbType == model.SqliteDBType {
 		return s.createCategory(s.db, category)
@@ -198,6 +222,30 @@ func (s *SQLStore) DeleteBoardsAndBlocks(dbab *model.DeleteBoardsAndBlocks, user
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			s.logger.Error("transaction rollback error", mlog.Err(rollbackErr), mlog.String("methodName", "DeleteBoardsAndBlocks"))
+		}
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func (s *SQLStore) DeleteCardRelation(relationID string) error {
+	if s.dbType == model.SqliteDBType {
+		return s.deleteCardRelation(s.db, relationID)
+	}
+	tx, txErr := s.db.BeginTx(context.Background(), nil)
+	if txErr != nil {
+		return txErr
+	}
+	err := s.deleteCardRelation(tx, relationID)
+	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			s.logger.Error("transaction rollback error", mlog.Err(rollbackErr), mlog.String("methodName", "DeleteCardRelation"))
 		}
 		return err
 	}
@@ -437,6 +485,16 @@ func (s *SQLStore) GetCardLimitTimestamp() (int64, error) {
 
 }
 
+func (s *SQLStore) GetCardRelation(relationID string) (*model.CardRelation, error) {
+	return s.getCardRelation(s.db, relationID)
+
+}
+
+func (s *SQLStore) GetCardRelations(cardID string) ([]*model.CardRelationWithCard, error) {
+	return s.getCardRelations(s.db, cardID)
+
+}
+
 func (s *SQLStore) GetCardsCount() (int64, error) {
 	return s.getCardsCount(s.db)
 
@@ -477,7 +535,10 @@ func (s *SQLStore) GetMembersForUser(userID string) ([]*model.BoardMember, error
 
 }
 
-// GetNextCardNumber is implemented in blocks.go
+func (s *SQLStore) GetNextCardNumber(boardID string) (int64, error) {
+	return s.getNextCardNumber(s.db, boardID)
+
+}
 
 func (s *SQLStore) GetNextNotificationHint(remove bool) (*model.NotificationHint, error) {
 	return s.getNextNotificationHint(s.db, remove)
@@ -984,6 +1045,30 @@ func (s *SQLStore) UndeleteBoard(boardID string, modifiedBy string) error {
 
 func (s *SQLStore) UpdateCardLimitTimestamp(cardLimit int) (int64, error) {
 	return s.updateCardLimitTimestamp(s.db, cardLimit)
+
+}
+
+func (s *SQLStore) UpdateCardRelation(relation *model.CardRelation) (*model.CardRelation, error) {
+	if s.dbType == model.SqliteDBType {
+		return s.updateCardRelation(s.db, relation)
+	}
+	tx, txErr := s.db.BeginTx(context.Background(), nil)
+	if txErr != nil {
+		return nil, txErr
+	}
+	result, err := s.updateCardRelation(tx, relation)
+	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			s.logger.Error("transaction rollback error", mlog.Err(rollbackErr), mlog.String("methodName", "UpdateCardRelation"))
+		}
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 
 }
 
