@@ -28,7 +28,7 @@ const CardRelations = (props: Props): JSX.Element => {
         try {
             setLoading(true)
             const cardRelations = await octoClient.getCardRelations(card.id)
-            setRelations(cardRelations)
+            setRelations(cardRelations || [])
         } catch (error) {
             console.error('Failed to load card relations:', error)
         } finally {
