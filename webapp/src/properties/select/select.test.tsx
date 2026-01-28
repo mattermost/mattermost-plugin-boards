@@ -13,12 +13,15 @@ import {createCard} from '../../blocks/card'
 
 import {wrapIntl} from '../../testUtils'
 import mutator from '../../mutator'
+import octoClient from '../../octoClient'
 
 import SelectProperty from './property'
 import Select from './select'
 
 jest.mock('../../mutator')
+jest.mock('../../octoClient')
 const mockedMutator = mocked(mutator, true)
+const mockedOctoClient = mocked(octoClient, true)
 
 function selectPropertyTemplate(): IPropertyTemplate {
     return {
@@ -51,6 +54,11 @@ describe('properties/select', () => {
     const clearButton = () => screen.queryByRole('button', {name: /clear/i})
     const board = createBoard()
     const card = createCard()
+
+    beforeEach(() => {
+        // Mock octoClient.getStatusTransitionRules to return empty array (no rules)
+        mockedOctoClient.getStatusTransitionRules.mockResolvedValue([])
+    })
 
     it('shows the selected option', () => {
         const propertyTemplate = selectPropertyTemplate()
@@ -198,5 +206,85 @@ describe('properties/select', () => {
 
         expect(mockedMutator.insertPropertyOption).toHaveBeenCalledWith(board.id, board.cardProperties, propertyTemplate, expect.objectContaining({value: newOption}), 'add property option')
         expect(mockedMutator.changePropertyValue).toHaveBeenCalledWith(board.id, card, propertyTemplate.id, 'option-3')
+    })
+
+    it('filters Status options based on transition rules', async () => {
+        const propertyTemplate = selectPropertyTemplate()
+        // Set the property name to 'Status' to trigger transition rule filtering
+        propertyTemplate.name = 'Status'
+        const currentOption = propertyTemplate.options[0] // option-1
+
+        // Mock transition rules that disallow transition from option-1 to option-2
+        const mockRules = [
+            {
+                id: 'rule-1',
+                boardId: board.id,
+                fromStatus: 'option-1',
+                toStatus: 'option-2',
+                allowed: false,
+                createAt: Date.now(),
+                updateAt: Date.now(),
+            },
+        ]
+        mockedOctoClient.getStatusTransitionRules.mockResolvedValue(mockRules)
+
+        render(wrapIntl(
+            <Select
+                property={new SelectProperty()}
+                board={{...board}}
+                card={{...card}}
+                propertyTemplate={propertyTemplate}
+                propertyValue={currentOption.id}
+                showEmptyPlaceholder={false}
+                readOnly={false}
+            />,
+        ))
+
+        // Click to open the dropdown
+        userEvent.click(screen.getByTestId(nonEditableSelectTestId))
+
+        // Wait for the async transition rules to load
+        await screen.findByRole('combobox', {name: /value selector/i})
+
+        // Verify that the API was called to fetch transition rules
+        expect(mockedOctoClient.getStatusTransitionRules).toHaveBeenCalledWith(board.id)
+
+        // option-1 (current) should be visible (always allowed to keep current status)
+        // It appears twice: once in the selector and once in the menu
+        const oneElements = screen.getAllByText('one')
+        expect(oneElements.length).toBeGreaterThan(0)
+
+        // option-2 should NOT be visible (transition disallowed by rule)
+        expect(screen.queryByText('two')).not.toBeInTheDocument()
+
+        // option-3 should be visible (no rule means allowed by default)
+        expect(screen.getByText('three')).toBeInTheDocument()
+    })
+
+    it('does not fetch transition rules when field is read-only', () => {
+        const propertyTemplate = selectPropertyTemplate()
+        propertyTemplate.name = 'Status'
+        const currentOption = propertyTemplate.options[0]
+
+        // Reset the mock to ensure we're tracking calls from this test only
+        mockedOctoClient.getStatusTransitionRules.mockClear()
+
+        render(wrapIntl(
+            <Select
+                property={new SelectProperty()}
+                board={{...board}}
+                card={{...card}}
+                propertyTemplate={propertyTemplate}
+                propertyValue={currentOption.id}
+                showEmptyPlaceholder={false}
+                readOnly={true}
+            />,
+        ))
+
+        // Click on the read-only field
+        userEvent.click(screen.getByTestId(nonEditableSelectTestId))
+
+        // Verify that the API was NOT called for read-only fields
+        expect(mockedOctoClient.getStatusTransitionRules).not.toHaveBeenCalled()
     })
 })
