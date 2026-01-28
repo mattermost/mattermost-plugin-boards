@@ -1,18 +1,88 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`components/blocksEditor/blocks/video should match Display snapshot 1`] = `
+exports[`components/blocksEditor/blocks/video should match Display snapshot for YouTube 1`] = `
 <div>
-  <video
-    class="VideoView"
-    controls=""
-    data-testid="video"
-    height="240"
-    width="320"
+  <div
+    class="VideoElement__container"
   >
-    <source
-      src="test.jpg"
-    />
-  </video>
+    <div
+      class="VideoElement__wrapper"
+    >
+      <img
+        alt="Video thumbnail"
+        class="VideoElement__thumbnail"
+        data-testid="video-thumbnail"
+        src="https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
+      />
+      <div
+        aria-label="Play video in full screen"
+        class="VideoElement__overlay"
+        role="button"
+        tabindex="0"
+      >
+        <div
+          class="VideoElement__play-icon"
+        >
+          <i
+            class="CompassIcon icon-play PlayIcon"
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      class="VideoElement__metadata"
+    >
+      <span
+        class="VideoElement__source"
+      >
+        YouTube
+      </span>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`components/blocksEditor/blocks/video should match Display snapshot for file upload 1`] = `
+<div>
+  <div
+    class="VideoElement__container"
+  >
+    <div
+      class="VideoElement__wrapper"
+    >
+      <video
+        class="VideoElement__preview"
+        data-testid="video"
+      >
+        <source
+          src="test.jpg"
+        />
+      </video>
+      <div
+        aria-label="Play video in full screen"
+        class="VideoElement__overlay"
+        role="button"
+        tabindex="0"
+      >
+        <div
+          class="VideoElement__play-icon"
+        >
+          <i
+            class="CompassIcon icon-play PlayIcon"
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      class="VideoElement__metadata"
+    >
+      <span
+        class="VideoElement__source"
+      >
+        test-filename
+      </span>
+    </div>
+  </div>
 </div>
 `;
 
@@ -20,22 +90,48 @@ exports[`components/blocksEditor/blocks/video should match Display snapshot with
 
 exports[`components/blocksEditor/blocks/video should match Input snapshot 1`] = `
 <div>
-  <input
-    accept="video/*"
-    class="Video"
-    data-testid="video-input"
-    type="file"
-  />
+  <div
+    class="VideoInput"
+  >
+    <div
+      class="VideoInput__url"
+    >
+      <input
+        placeholder="Paste YouTube or Google Drive URL..."
+        type="text"
+        value=""
+      />
+      <button>
+        Add
+      </button>
+      <button>
+        Upload File
+      </button>
+    </div>
+  </div>
 </div>
 `;
 
 exports[`components/blocksEditor/blocks/video should match Input snapshot with empty input 1`] = `
 <div>
-  <input
-    accept="video/*"
-    class="Video"
-    data-testid="video-input"
-    type="file"
-  />
+  <div
+    class="VideoInput"
+  >
+    <div
+      class="VideoInput__url"
+    >
+      <input
+        placeholder="Paste YouTube or Google Drive URL..."
+        type="text"
+        value=""
+      />
+      <button>
+        Add
+      </button>
+      <button>
+        Upload File
+      </button>
+    </div>
+  </div>
 </div>
 `;

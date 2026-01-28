@@ -2,6 +2,154 @@
     display: none;
 }
 
-.VideoView {
-    max-width: 400px;
+.VideoInput {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+
+    &__url {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+
+        input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+            border-radius: 4px;
+            font-size: 14px;
+
+            &:focus {
+                outline: none;
+                border-color: var(--button-bg);
+            }
+        }
+
+        button {
+            padding: 8px 16px;
+            background: var(--button-bg);
+            color: var(--button-color);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+
+            &:hover {
+                background: var(--button-bg-hover);
+            }
+        }
+    }
+
+    &__url-button {
+        padding: 8px;
+        background: transparent;
+        color: var(--button-bg);
+        border: 1px solid var(--button-bg);
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+
+        &:hover {
+            background: rgba(var(--button-bg-rgb), 0.08);
+        }
+    }
+}
+
+.VideoElement {
+    &__container {
+        max-width: 560px;
+        margin: 8px 0;
+    }
+
+    &__wrapper {
+        position: relative;
+        width: 100%;
+        padding-bottom: 56.25%; // 16:9 aspect ratio
+        background: #000;
+        border-radius: 4px;
+        overflow: hidden;
+        cursor: pointer;
+    }
+
+    &__thumbnail,
+    &__preview {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    &__gdrive-placeholder {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+
+        .GDriveIcon {
+            font-size: 64px;
+            color: white;
+            opacity: 0.8;
+        }
+    }
+
+    &__overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+
+        &:hover,
+        &:focus {
+            opacity: 1;
+        }
+    }
+
+    &__play-icon {
+        width: 64px;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        transition: transform 0.2s ease;
+
+        .PlayIcon {
+            font-size: 32px;
+            color: #000;
+            margin-left: 4px; // Optical centering for play icon
+        }
+
+        &:hover {
+            transform: scale(1.1);
+        }
+    }
+
+    &__metadata {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 8px;
+        font-size: 12px;
+        color: rgba(var(--center-channel-color-rgb), 0.64);
+    }
+
+    &__source {
+        font-weight: 600;
+    }
 }
