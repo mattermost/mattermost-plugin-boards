@@ -57,15 +57,21 @@ func (s *SQLStore) cardRelationsFromRows(rows *sql.Rows) ([]*model.CardRelation,
 		relations = append(relations, relation)
 	}
 
+	if err := rows.Err(); err != nil {
+		s.logger.Error("cardRelationsFromRows iteration error", mlog.Err(err))
+		return nil, err
+	}
+
 	return relations, nil
 }
 
 func (s *SQLStore) createCardRelation(db sq.BaseRunner, relation *model.CardRelation) (*model.CardRelation, error) {
+	// Populate first to generate ID/CreateAt, then validate
+	relation.Populate()
+
 	if err := relation.IsValid(); err != nil {
 		return nil, err
 	}
-
-	relation.Populate()
 
 	query := s.getQueryBuilder(db).
 		Insert(s.tablePrefix+"card_relations").

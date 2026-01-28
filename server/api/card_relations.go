@@ -140,6 +140,12 @@ func (a *API) handleCreateCardRelation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check for nil after unmarshal (e.g., body was "null")
+	if newRelation == nil {
+		a.errorResponse(w, r, model.NewErrBadRequest("relation cannot be null"))
+		return
+	}
+
 	// Ensure the source card ID matches the URL parameter
 	newRelation.SourceCardID = cardID
 
@@ -156,9 +162,17 @@ func (a *API) handleCreateCardRelation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate the relation
-	if err = newRelation.IsValid(); err != nil {
-		a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
+	// Basic validation for user-provided fields (full validation happens in store after Populate)
+	if newRelation.TargetCardID == "" {
+		a.errorResponse(w, r, model.NewErrBadRequest("target card id cannot be empty"))
+		return
+	}
+	if newRelation.RelationType == "" {
+		a.errorResponse(w, r, model.NewErrBadRequest("relation type cannot be empty"))
+		return
+	}
+	if newRelation.SourceCardID == newRelation.TargetCardID {
+		a.errorResponse(w, r, model.NewErrBadRequest("source and target card cannot be the same"))
 		return
 	}
 

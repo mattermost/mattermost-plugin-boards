@@ -42,7 +42,7 @@ func (a *App) GetCardRelation(relationID string) (*model.CardRelation, error) {
 	return a.store.GetCardRelation(relationID)
 }
 
-// UpdateCardRelation updates an existing card relation
+// UpdateCardRelation updates an existing card relation.
 func (a *App) UpdateCardRelation(relation *model.CardRelation) (*model.CardRelation, error) {
 	updatedRelation, err := a.store.UpdateCardRelation(relation)
 	if err != nil {
@@ -66,7 +66,7 @@ func (a *App) UpdateCardRelation(relation *model.CardRelation) (*model.CardRelat
 	return updatedRelation, nil
 }
 
-// DeleteCardRelation deletes a card relation
+// DeleteCardRelation deletes a card relation.
 func (a *App) DeleteCardRelation(relationID string) error {
 	// Get relation first to broadcast deletion
 	relation, err := a.store.GetCardRelation(relationID)
@@ -79,11 +79,11 @@ func (a *App) DeleteCardRelation(relationID string) error {
 	}
 
 	// Get the board for the source card to get team ID
-	board, _, err := a.store.GetBoardAndCardByID(relation.SourceCardID)
-	if err != nil {
+	board, _, boardErr := a.store.GetBoardAndCardByID(relation.SourceCardID)
+	if boardErr != nil {
 		a.logger.Warn("DeleteCardRelation: could not get board for source card",
 			mlog.String("cardID", relation.SourceCardID),
-			mlog.Err(err))
+			mlog.Err(boardErr))
 	} else if board != nil {
 		a.blockChangeNotifier.Enqueue(func() error {
 			a.wsAdapter.BroadcastCardRelationDelete(board.TeamID, relationID, board.ID)
@@ -94,7 +94,7 @@ func (a *App) DeleteCardRelation(relationID string) error {
 	return nil
 }
 
-// DeleteCardRelationsByCard deletes all relations involving a card
+// DeleteCardRelationsByCard deletes all relations involving a card.
 func (a *App) DeleteCardRelationsByCard(cardID string) error {
 	relations, err := a.store.GetCardRelations(cardID)
 	if err != nil {
