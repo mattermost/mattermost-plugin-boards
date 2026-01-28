@@ -7,7 +7,6 @@ import {Board, IPropertyOption} from '../../blocks/board'
 import {BoardView} from '../../blocks/boardView'
 import octoClient from '../../octoClient'
 import {Utils} from '../../utils'
-import {Archiver} from '../../archiver'
 
 import './boardsManagement.scss'
 
@@ -30,11 +29,13 @@ type BoardWithData = {
     board: Board
     views: BoardView[]
     code: string
-    cardCount: number
+    originalCode: string  // Track original value for dirty check
     isEditingCode: boolean
+    isCodeDirty: boolean  // Track if code actually changed
     codeError: string
     statuses: IPropertyOption[]
     transitionMatrix: TransitionMatrix
+    rulesLoadError: boolean  // Track if rules failed to load
     hasStatusChanges: boolean
 }
 
@@ -81,6 +82,18 @@ const BoardsManagement = (props: Props) => {
         }
     }, [boards])
 
+    // Initialize a full transition matrix with all transitions allowed by default
+    const initializeTransitionMatrix = (statuses: IPropertyOption[]): TransitionMatrix => {
+        const matrix: TransitionMatrix = {}
+        statuses.forEach(fromStatus => {
+            matrix[fromStatus.id] = {}
+            statuses.forEach(toStatus => {
+                matrix[fromStatus.id][toStatus.id] = true
+            })
+        })
+        return matrix
+    }
+
     const loadBoards = async () => {
         try {
             setLoading(true)
@@ -122,48 +135,43 @@ const BoardsManagement = (props: Props) => {
             // Load data for each board
             const boardsWithData: BoardWithData[] = await Promise.all(
                 uniqueBoards.map(async (board) => {
-                    let cardCount = 0
-                    try {
-                        const cards = await octoClient.getCardsForBoard(board.id, 0, -1)
-                        cardCount = cards.length
-                    } catch (cardErr) {
-                        Utils.logError(`Failed to load cards for board ${board.id}: ${cardErr}`)
-                    }
-
                     // Load status property and transition rules
                     const statusProperty = board.cardProperties.find(
                         prop => prop.type === 'select' && prop.name.toLowerCase() === 'status'
                     )
                     const statuses = statusProperty?.options || []
-                    let transitionMatrix: TransitionMatrix = {}
+
+                    // Initialize with all transitions allowed by default
+                    const transitionMatrix = initializeTransitionMatrix(statuses)
+                    let rulesLoadError = false
 
                     if (statuses.length > 0) {
                         try {
                             const rules = await octoClient.getStatusTransitionRules(board.id)
-                            transitionMatrix = {}
-                            statuses.forEach(fromStatus => {
-                                transitionMatrix[fromStatus.id] = {}
-                                statuses.forEach(toStatus => {
-                                    const rule = rules.find(
-                                        r => r.fromStatus === fromStatus.id && r.toStatus === toStatus.id
-                                    )
-                                    transitionMatrix[fromStatus.id][toStatus.id] = rule ? rule.allowed : true
-                                })
+                            // Apply loaded rules on top of the default matrix
+                            rules.forEach(rule => {
+                                if (transitionMatrix[rule.fromStatus] && transitionMatrix[rule.fromStatus][rule.toStatus] !== undefined) {
+                                    transitionMatrix[rule.fromStatus][rule.toStatus] = rule.allowed
+                                }
                             })
                         } catch (err) {
                             Utils.logError(`Failed to load status transition rules for board ${board.id}: ${err}`)
+                            rulesLoadError = true
                         }
                     }
 
+                    const currentCode = board.code || ''
                     return {
                         board,
                         views: [],
-                        code: board.code || '',
-                        cardCount,
+                        code: currentCode,
+                        originalCode: currentCode,
                         isEditingCode: false,
+                        isCodeDirty: false,
                         codeError: '',
                         statuses,
                         transitionMatrix,
+                        rulesLoadError,
                         hasStatusChanges: false
                     }
                 })
@@ -199,11 +207,11 @@ const BoardsManagement = (props: Props) => {
 
     const handleCodeChange = (boardId: string, newCode: string) => {
         const validationError = validateCode(newCode)
-        setBoards(prev => prev.map(b =>
-            b.board.id === boardId
-                ? {...b, code: newCode, codeError: validationError}
-                : b
-        ))
+        setBoards(prev => prev.map(b => {
+            if (b.board.id !== boardId) return b
+            const isDirty = newCode !== b.originalCode
+            return {...b, code: newCode, codeError: validationError, isCodeDirty: isDirty}
+        }))
         props.setSaveNeeded()
     }
 
@@ -218,7 +226,7 @@ const BoardsManagement = (props: Props) => {
     const handleCancelCodeClick = (boardId: string) => {
         setBoards(prev => prev.map(b =>
             b.board.id === boardId
-                ? {...b, code: b.board.code || '', isEditingCode: false, codeError: ''}
+                ? {...b, code: b.originalCode, isEditingCode: false, isCodeDirty: false, codeError: ''}
                 : b
         ))
     }
@@ -247,8 +255,8 @@ const BoardsManagement = (props: Props) => {
             setError('')
 
             for (const boardData of boards) {
-                // Save board code if it was edited
-                if (boardData.isEditingCode) {
+                // Save board code only if it was actually changed (dirty)
+                if (boardData.isCodeDirty) {
                     const validationError = validateCode(boardData.code)
                     if (validationError) {
                         setError(`Board "${boardData.board.title}": ${validationError}`)
@@ -257,13 +265,20 @@ const BoardsManagement = (props: Props) => {
 
                     const response = await octoClient.patchBoard(boardData.board.id, {code: boardData.code})
                     if (!response.ok) {
-                        setError(`Failed to save code for board "${boardData.board.title}"`)
+                        const errorText = await response.text().catch(() => '')
+                        setError(`Failed to save code for board "${boardData.board.title}" (${response.status}): ${errorText || 'Unknown error'}`)
                         return
                     }
                 }
 
                 // Save status transition rules if they were changed
+                // Block save if rules failed to load to prevent accidental overwrites
                 if (boardData.hasStatusChanges && boardData.statuses.length > 0) {
+                    if (boardData.rulesLoadError) {
+                        setError(`Cannot save status transitions for board "${boardData.board.title}": Failed to load existing rules. Please refresh and try again.`)
+                        return
+                    }
+
                     const rules: StatusTransitionRule[] = []
                     Object.keys(boardData.transitionMatrix).forEach(fromStatusId => {
                         Object.keys(boardData.transitionMatrix[fromStatusId]).forEach(toStatusId => {
@@ -281,7 +296,8 @@ const BoardsManagement = (props: Props) => {
 
                     const response = await octoClient.saveStatusTransitionRules(boardData.board.id, rules)
                     if (!response.ok) {
-                        setError(`Failed to save status transitions for board "${boardData.board.title}"`)
+                        const errorText = await response.text().catch(() => '')
+                        setError(`Failed to save status transitions for board "${boardData.board.title}" (${response.status}): ${errorText || 'Unknown error'}`)
                         return
                     }
                 }
@@ -411,6 +427,12 @@ const BoardsManagement = (props: Props) => {
                                 Configure which status transitions are allowed for cards in this board.
                                 Check a box to allow transitioning from the row status to the column status.
                             </p>
+                            {activeBoardData.rulesLoadError && (
+                                <div className='BoardsManagement__warning'>
+                                    ⚠️ Failed to load existing rules. Editing is disabled to prevent accidental overwrites.
+                                    Please refresh the page to try again.
+                                </div>
+                            )}
                             <div className='BoardsManagement__matrix-wrapper'>
                                 <table className='BoardsManagement__matrix'>
                                     <thead>
@@ -444,7 +466,7 @@ const BoardsManagement = (props: Props) => {
                                                                 toStatus.id,
                                                                 e.target.checked
                                                             )}
-                                                            disabled={props.disabled || saving}
+                                                            disabled={props.disabled || saving || activeBoardData.rulesLoadError}
                                                             aria-label={`Allow transition from ${fromStatus.value} to ${toStatus.value}`}
                                                         />
                                                     </td>
@@ -470,4 +492,3 @@ const BoardsManagement = (props: Props) => {
 }
 
 export default BoardsManagement
-

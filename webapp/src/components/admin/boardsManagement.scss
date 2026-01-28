@@ -338,3 +338,13 @@
     }
 }
 
+
+    &__warning {
+        margin: 12px 0;
+        padding: 12px 16px;
+        background: rgba(255, 188, 66, 0.12);
+        border: 1px solid rgba(255, 188, 66, 0.4);
+        border-radius: 4px;
+        color: #946200;
+        font-size: 13px;
+    }
