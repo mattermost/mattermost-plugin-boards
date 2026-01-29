@@ -205,6 +205,7 @@ const GitHubIssueLink = (props: Props): JSX.Element => {
                 <div className='GitHubIssueLink__search'>
                     {!showSearch ? (
                         <button
+                            type='button'
                             className='GitHubIssueLink__search-button'
                             onClick={() => setShowSearch(true)}
                         >
@@ -226,7 +227,12 @@ const GitHubIssueLink = (props: Props): JSX.Element => {
                                         defaultMessage: 'Search GitHub issues...',
                                     })}
                                     value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onChange={(e) => {
+                                        setSearchQuery(e.target.value)
+                                        if (e.target.value === '') {
+                                            setSearchResults([])
+                                        }
+                                    }}
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
                                             handleSearch()
@@ -267,7 +273,7 @@ const GitHubIssueLink = (props: Props): JSX.Element => {
                                 <div className='GitHubIssueLink__search-results'>
                                     {searchResults.map((issue) => (
                                         <div
-                                            key={issue.number}
+                                            key={`${issue.repository_url || ''}-${issue.number}`}
                                             className='GitHubIssueLink__search-result'
                                             onClick={() => handleLinkIssue(issue)}
                                             role='button'

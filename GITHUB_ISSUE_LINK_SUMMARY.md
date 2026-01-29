@@ -86,7 +86,7 @@ import GitHubIssueLink from './githubIssueLink'
 // After CardRelations component:
 <GitHubIssueLink
     card={props.card}
-    readonly={props.readonly || \!canEditBoardCards}
+    readonly={props.readonly || !canEditBoardCards}
 />
 ```
 
