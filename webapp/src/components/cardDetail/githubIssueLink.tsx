@@ -271,9 +271,9 @@ const GitHubIssueLink = (props: Props): JSX.Element => {
 
                             {!searching && searchResults.length > 0 && (
                                 <div className='GitHubIssueLink__search-results'>
-                                    {searchResults.map((issue) => (
+                                    {searchResults.map((issue, index) => (
                                         <div
-                                            key={`${issue.repository_url || ''}-${issue.number}`}
+                                            key={`issue-${issue.number}-${index}`}
                                             className='GitHubIssueLink__search-result'
                                             onClick={() => handleLinkIssue(issue)}
                                             role='button'
