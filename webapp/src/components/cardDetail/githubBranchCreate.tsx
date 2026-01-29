@@ -62,10 +62,10 @@ const GitHubBranchCreate = (props: Props): JSX.Element | null => {
     useEffect(() => {
         setShowForm(false)
         setSelectedRepo(null)
-        setBranchName(getDefaultBranchName())
+        setBranchName('')
         setCreatedBranch(null)
         onBranchCreated?.(null)
-    }, [card.id]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [card.id, onBranchCreated])
 
     const loadConnectionStatus = async () => {
         try {
