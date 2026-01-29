@@ -10,6 +10,7 @@ import (
 
 	"github.com/mattermost/mattermost-plugin-boards/server/auth"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/config"
+	"github.com/mattermost/mattermost-plugin-boards/server/services/github"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/metrics"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/notify"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/permissions"
@@ -71,6 +72,8 @@ type App struct {
 	permissions         permissions.PermissionsService
 	blockChangeNotifier *utils.CallbackQueue
 	servicesAPI         servicesAPI
+	githubService       *github.Service
+	githubServiceMux    sync.Mutex
 
 	cardLimitMux sync.RWMutex
 	cardLimit    int
@@ -88,6 +91,22 @@ func (a *App) GetFigmaToken() string {
 	token := a.config.FigmaPersonalAccessToken
 	a.logger.Debug("GetFigmaToken called", mlog.Int("tokenLength", len(token)), mlog.Bool("isEmpty", token == ""))
 	return token
+}
+
+// GetGitHubService returns the GitHub service instance.
+// It lazily initializes the service if servicesAPI is available.
+// Thread-safe via mutex.
+func (a *App) GetGitHubService() *github.Service {
+	a.githubServiceMux.Lock()
+	defer a.githubServiceMux.Unlock()
+
+	if a.githubService == nil && a.servicesAPI != nil {
+		// Check if servicesAPI implements the required interface
+		if githubAPI, ok := a.servicesAPI.(github.ServicesAPI); ok {
+			a.githubService = github.New(githubAPI)
+		}
+	}
+	return a.githubService
 }
 
 func New(config *config.Configuration, wsAdapter ws.Adapter, services Services) *App {
