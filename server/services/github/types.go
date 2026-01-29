@@ -29,7 +29,7 @@ type Issue struct {
 	User      User      `json:"user"`
 	Labels    []Label   `json:"labels"`
 	Assignees []User    `json:"assignees"`
-	Milestone Milestone `json:"milestone,omitempty"`
+	Milestone *Milestone `json:"milestone,omitempty"`
 }
 
 // User represents a GitHub user.
@@ -64,7 +64,7 @@ type PRDetails struct {
 	HTMLURL     string    `json:"html_url"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
-	MergedAt    time.Time `json:"merged_at,omitempty"`
+	MergedAt    *time.Time `json:"merged_at,omitempty"`
 	User        User      `json:"user"`
 	Head        PRBranch  `json:"head"`
 	Base        PRBranch  `json:"base"`
