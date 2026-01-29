@@ -64,3 +64,18 @@ export interface GitHubConnectedResponse {
     github_username?: string
 }
 
+export interface CreateGitHubBranchRequest {
+    owner: string
+    repo: string
+    branch_name: string
+    base_branch?: string
+}
+
+export interface GitHubBranch {
+    ref: string
+    url: string
+    object: {
+        sha: string
+        type: string
+    }
+}

@@ -27,6 +27,7 @@ func (a *API) registerGitHubRoutes(r *mux.Router) {
 	r.HandleFunc("/github/repositories", a.sessionRequired(a.handleGetGitHubRepositories)).Methods("GET")
 	r.HandleFunc("/github/issues", a.sessionRequired(a.handleCreateGitHubIssue)).Methods("POST")
 	r.HandleFunc("/github/issues", a.sessionRequired(a.handleSearchGitHubIssues)).Methods("GET")
+	r.HandleFunc("/github/branches", a.sessionRequired(a.handleCreateGitHubBranch)).Methods("POST")
 }
 
 func (a *API) handleGetGitHubConnected(w http.ResponseWriter, r *http.Request) {
@@ -329,5 +330,116 @@ func (a *API) handleSearchGitHubIssues(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonBytesResponse(w, http.StatusOK, data)
+	auditRec.Success()
+}
+
+func (a *API) handleCreateGitHubBranch(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation POST /github/branches createGitHubBranch
+	//
+	// Create a new GitHub branch
+	//
+	// ---
+	// consumes:
+	// - application/json
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: body
+	//   in: body
+	//   required: true
+	//   schema:
+	//     type: object
+	//     required:
+	//       - owner
+	//       - repo
+	//       - branch_name
+	//     properties:
+	//       owner:
+	//         type: string
+	//       repo:
+	//         type: string
+	//       branch_name:
+	//         type: string
+	//       base_branch:
+	//         type: string
+	//         description: Optional base branch (defaults to repo's default branch)
+	// security:
+	// - BearerAuth: []
+	// responses:
+	//   '201':
+	//     description: branch created
+	//     schema:
+	//       type: object
+	//       properties:
+	//         ref:
+	//           type: string
+	//         url:
+	//           type: string
+	//   '400':
+	//     description: bad request
+	//   '500':
+	//     description: internal error
+	//     schema:
+	//       "$ref": "#/definitions/ErrorResponse"
+
+	// Limit request body size
+	r.Body = http.MaxBytesReader(w, r.Body, MaxGitHubRequestSize)
+
+	requestBody, err := io.ReadAll(r.Body)
+	if err != nil {
+		if strings.HasSuffix(err.Error(), "http: request body too large") {
+			a.errorResponse(w, r, model.ErrRequestEntityTooLarge)
+			return
+		}
+		a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
+		return
+	}
+
+	var req github.CreateBranchRequest
+	if unmarshalErr := json.Unmarshal(requestBody, &req); unmarshalErr != nil {
+		a.errorResponse(w, r, model.NewErrBadRequest(unmarshalErr.Error()))
+		return
+	}
+
+	if req.Owner == "" || req.Repo == "" || req.BranchName == "" {
+		a.errorResponse(w, r, model.NewErrBadRequest("owner, repo, and branch_name are required"))
+		return
+	}
+
+	userID := getUserID(r)
+
+	auditRec := a.makeAuditRecord(r, "createGitHubBranch", audit.Fail)
+	defer a.audit.LogRecord(audit.LevelModify, auditRec)
+	auditRec.AddMeta("owner", req.Owner)
+	auditRec.AddMeta("repo", req.Repo)
+	auditRec.AddMeta("branchName", req.BranchName)
+
+	githubService := a.app.GetGitHubService()
+	if githubService == nil {
+		a.errorResponse(w, r, model.NewErrNotImplemented("GitHub service not available"))
+		return
+	}
+
+	branch, err := githubService.CreateBranch(userID, req)
+	if err != nil {
+		a.logger.Error("Failed to create GitHub branch",
+			mlog.String("userID", userID),
+			mlog.String("owner", req.Owner),
+			mlog.String("repo", req.Repo),
+			mlog.String("branchName", req.BranchName),
+			mlog.Err(err),
+		)
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	data, err := json.Marshal(branch)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	jsonBytesResponse(w, http.StatusCreated, data)
+	auditRec.AddMeta("branchRef", branch.Ref)
 	auditRec.Success()
 }

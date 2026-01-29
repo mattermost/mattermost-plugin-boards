@@ -104,3 +104,26 @@ type ErrorResponse struct {
 	Error   string `json:"error"`
 	Message string `json:"message,omitempty"`
 }
+
+// CreateBranchRequest represents a request to create a new GitHub branch.
+type CreateBranchRequest struct {
+	Owner      string `json:"owner"`
+	Repo       string `json:"repo"`
+	BranchName string `json:"branch_name"`
+	BaseBranch string `json:"base_branch,omitempty"` // defaults to repo's default branch
+}
+
+// Branch represents a GitHub branch reference.
+type Branch struct {
+	Ref    string `json:"ref"`
+	URL    string `json:"url"`
+	Object struct {
+		SHA  string `json:"sha"`
+		Type string `json:"type"`
+	} `json:"object"`
+}
+
+// TokenResponse represents the OAuth token response from GitHub plugin.
+type TokenResponse struct {
+	Token string `json:"token"`
+}
