@@ -22,7 +22,8 @@ type Props = {
 }
 
 const GitHubIssueLink = (props: Props): JSX.Element => {
-    const {card, readonly} = props
+    const {readonly} = props
+    // TODO: Use props.card to persist linked issue to card properties
     const intl = useIntl()
 
     const [connectionStatus, setConnectionStatus] = useState<GitHubConnectedResponse | null>(null)
