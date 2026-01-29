@@ -7,6 +7,7 @@ package model
 
 import (
 	"database/sql"
+	"net/http"
 
 	"github.com/gorilla/mux"
 
@@ -89,4 +90,7 @@ type ServicesAPI interface {
 	GetPreferencesForUser(userID string) (mm_model.Preferences, error)
 	UpdatePreferencesForUser(userID string, preferences mm_model.Preferences) error
 	DeletePreferencesForUser(userID string, preferences mm_model.Preferences) error
+
+	// Plugin IPC service
+	PluginHTTP(req *http.Request) *http.Response
 }
