@@ -11,15 +11,17 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )
 
 // Static errors for GitHub service.
 var (
-	ErrNoResponse   = errors.New("no response from GitHub plugin")
-	ErrPluginError  = errors.New("GitHub plugin error")
-	ErrPluginStatus = errors.New("GitHub plugin returned error status")
+	ErrNoResponse    = errors.New("no response from GitHub plugin")
+	ErrPluginError   = errors.New("GitHub plugin error")
+	ErrPluginStatus  = errors.New("GitHub plugin returned error status")
+	ErrGitHubAPICall = errors.New("GitHub API error")
 )
 
 const (
@@ -33,10 +35,19 @@ const (
 	endpointGetIssue     = "/plugins/github/api/v1/issue/%s/%s/%d"
 	endpointSearchIssues = "/plugins/github/api/v1/search/issues"
 	endpointGetPR        = "/plugins/github/api/v1/pr/%s/%s/%d"
+	endpointToken        = "/plugins/github/api/v1/token" //nolint:gosec // G101: This is an endpoint path, not a credential
+
+	// GitHub API endpoints (direct).
+	githubAPIBase = "https://api.github.com"
+	githubAPIRefs = "/repos/%s/%s/git/refs"
+	githubAPIRef  = "/repos/%s/%s/git/refs/heads/%s"
+	githubAPIRepo = "/repos/%s/%s"
 
 	// Headers for IPC communication.
 	headerUserID      = "Mattermost-User-ID"
+	headerPluginID    = "Mattermost-Plugin-ID"
 	headerContentType = "Content-Type"
+	headerAuthBearer  = "Authorization"
 	contentTypeJSON   = "application/json"
 )
 
@@ -51,13 +62,17 @@ type ServicesAPI interface {
 
 // Service provides GitHub plugin IPC functionality.
 type Service struct {
-	api ServicesAPI
+	api        ServicesAPI
+	httpClient *http.Client
 }
 
 // New creates a new GitHub service instance.
 func New(api ServicesAPI) *Service {
 	return &Service{
 		api: api,
+		httpClient: &http.Client{
+			Timeout: 30 * time.Second,
+		},
 	}
 }
 
@@ -265,6 +280,179 @@ func (s *Service) GetPRDetails(userID, owner, repo string, number int) (*PRDetai
 	}
 
 	return &pr, nil
+}
+
+// GetUserToken retrieves the OAuth token for a user from the GitHub plugin.
+// This is an IPC endpoint that requires the plugin ID header.
+func (s *Service) GetUserToken(userID string) (string, error) {
+	reqURL := fmt.Sprintf("%s?userID=%s", endpointToken, url.QueryEscape(userID))
+
+	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// IPC endpoint requires plugin ID header instead of user ID
+	req.Header.Set(headerPluginID, "focalboard")
+
+	resp := s.api.PluginHTTP(req)
+	if resp == nil {
+		return "", ErrNoResponse
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", s.handleErrorResponse(resp)
+	}
+
+	var tokenResp TokenResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+		return "", fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return tokenResp.Token, nil
+}
+
+// CreateBranch creates a new branch in a GitHub repository.
+// It uses the user's OAuth token to call GitHub API directly.
+func (s *Service) CreateBranch(userID string, req CreateBranchRequest) (*Branch, error) {
+	// Get user's OAuth token
+	token, err := s.GetUserToken(userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user token: %w", err)
+	}
+
+	// Get base branch SHA
+	baseBranch := req.BaseBranch
+	if baseBranch == "" {
+		// Get default branch from repo
+		var defaultBranch string
+		defaultBranch, err = s.getDefaultBranch(token, req.Owner, req.Repo)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get default branch: %w", err)
+		}
+		baseBranch = defaultBranch
+	}
+
+	// Get the SHA of the base branch
+	baseSHA, err := s.getBranchSHA(token, req.Owner, req.Repo, baseBranch)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get base branch SHA: %w", err)
+	}
+
+	// Create the new branch
+	branch, err := s.createRef(token, req.Owner, req.Repo, req.BranchName, baseSHA)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create branch: %w", err)
+	}
+
+	return branch, nil
+}
+
+// getDefaultBranch retrieves the default branch name for a repository.
+func (s *Service) getDefaultBranch(token, owner, repo string) (string, error) {
+	reqURL := fmt.Sprintf("%s%s", githubAPIBase, fmt.Sprintf(githubAPIRepo, owner, repo))
+
+	httpReq, err := http.NewRequest(http.MethodGet, reqURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	httpReq.Header.Set(headerAuthBearer, "Bearer "+token)
+	httpReq.Header.Set(headerContentType, contentTypeJSON)
+
+	client := s.httpClient
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return "", fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("%w: status %d: %s", ErrGitHubAPICall, resp.StatusCode, string(body))
+	}
+
+	var repoInfo RepoInfo
+	if err := json.NewDecoder(resp.Body).Decode(&repoInfo); err != nil {
+		return "", fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return repoInfo.DefaultBranch, nil
+}
+
+// getBranchSHA retrieves the SHA of a branch.
+func (s *Service) getBranchSHA(token, owner, repo, branch string) (string, error) {
+	reqURL := fmt.Sprintf("%s%s", githubAPIBase, fmt.Sprintf(githubAPIRef, owner, repo, branch))
+
+	httpReq, err := http.NewRequest(http.MethodGet, reqURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	httpReq.Header.Set(headerAuthBearer, "Bearer "+token)
+	httpReq.Header.Set(headerContentType, contentTypeJSON)
+
+	client := s.httpClient
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return "", fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("%w: status %d: %s", ErrGitHubAPICall, resp.StatusCode, string(body))
+	}
+
+	var ref Branch
+	if err := json.NewDecoder(resp.Body).Decode(&ref); err != nil {
+		return "", fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return ref.Object.SHA, nil
+}
+
+// createRef creates a new git reference (branch) in the repository.
+func (s *Service) createRef(token, owner, repo, branchName, sha string) (*Branch, error) {
+	reqURL := fmt.Sprintf("%s%s", githubAPIBase, fmt.Sprintf(githubAPIRefs, owner, repo))
+
+	payload := map[string]string{
+		"ref": "refs/heads/" + branchName,
+		"sha": sha,
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	httpReq, err := http.NewRequest(http.MethodPost, reqURL, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	httpReq.Header.Set(headerAuthBearer, "Bearer "+token)
+	httpReq.Header.Set(headerContentType, contentTypeJSON)
+
+	client := s.httpClient
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		respBody, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("%w: status %d: %s", ErrGitHubAPICall, resp.StatusCode, string(respBody))
+	}
+
+	var branch Branch
+	if err := json.NewDecoder(resp.Body).Decode(&branch); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &branch, nil
 }
 
 // handleErrorResponse processes error responses from the GitHub plugin.

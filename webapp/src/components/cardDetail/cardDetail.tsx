@@ -40,6 +40,9 @@ import CardDetailProperties from './cardDetailProperties'
 import useImagePaste from './imagePaste'
 import AttachmentList from './attachment'
 import CardRelations from './cardRelations'
+import GitHubIssueLink from './githubIssueLink'
+import GitHubBranchCreate from './githubBranchCreate'
+import GitHubPRStatus from './githubPRStatus'
 
 import './cardDetail.scss'
 
@@ -393,6 +396,20 @@ const CardDetail = (props: Props): JSX.Element|null => {
                             boardId={props.card.boardId}
                             readonly={props.readonly || !canEditBoardCards}
                             showCard={props.showCard}
+                        />
+
+                        {/* GitHub Integration */}
+                        <GitHubIssueLink
+                            card={props.card}
+                            readonly={props.readonly || !canEditBoardCards}
+                        />
+                        <GitHubBranchCreate
+                            card={props.card}
+                            readonly={props.readonly || !canEditBoardCards}
+                        />
+                        <GitHubPRStatus
+                            card={props.card}
+                            readonly={props.readonly || !canEditBoardCards}
                         />
                     </div>
 

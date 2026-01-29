@@ -24,6 +24,11 @@ jest.mock('../octoClient')
 jest.mock('../utils')
 jest.mock('draft-js/lib/generateRandomKey', () => () => '123')
 
+// Mock GitHub integration components to avoid snapshot changes
+jest.mock('./cardDetail/githubIssueLink', () => () => null)
+jest.mock('./cardDetail/githubBranchCreate', () => () => null)
+jest.mock('./cardDetail/githubPRStatus', () => () => null)
+
 const mockedUtils = mocked(Utils, true)
 const mockedMutator = mocked(mutator, true)
 const mockedOctoClient = mocked(octoClient, true)

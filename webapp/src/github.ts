@@ -64,3 +64,43 @@ export interface GitHubConnectedResponse {
     github_username?: string
 }
 
+export interface CreateGitHubBranchRequest {
+    owner: string
+    repo: string
+    branch_name: string
+    base_branch?: string
+}
+
+export interface GitHubBranch {
+    ref: string
+    url: string
+    object: {
+        sha: string
+        type: string
+    }
+}
+
+export interface GitHubPRBranch {
+    ref: string
+    sha: string
+    repo: GitHubRepository
+}
+
+export interface GitHubPRDetails {
+    number: number
+    title: string
+    body: string
+    state: string
+    html_url: string
+    created_at: string
+    updated_at: string
+    merged_at?: string
+    user: GitHubUser
+    head: GitHubPRBranch
+    base: GitHubPRBranch
+    mergeable: boolean
+    merged: boolean
+    labels: GitHubLabel[]
+    assignees: GitHubUser[]
+    requested_reviewers: GitHubUser[]
+}
