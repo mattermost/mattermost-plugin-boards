@@ -112,18 +112,35 @@ func (s *Service) GetConnectedStatus(userID string) (*ConnectedResponse, error) 
 
 	req.Header.Set(headerUserID, userID)
 
+	s.api.GetLogger().Debug("GitHub GetConnectedStatus request",
+		mlog.String("userID", userID),
+		mlog.String("endpoint", endpointConnected),
+	)
+
 	resp := s.api.PluginHTTP(req)
 	if resp == nil {
+		s.api.GetLogger().Error("GitHub GetConnectedStatus: no response from plugin")
 		return nil, ErrNoResponse
 	}
 	defer resp.Body.Close()
 
+	// Read body for logging
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	s.api.GetLogger().Debug("GitHub GetConnectedStatus response",
+		mlog.Int("statusCode", resp.StatusCode),
+		mlog.String("body", string(body)),
+	)
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, s.handleErrorResponse(resp)
+		return nil, fmt.Errorf("%w: status %d: %s", ErrPluginStatus, resp.StatusCode, string(body))
 	}
 
 	var connResp ConnectedResponse
-	if err := json.NewDecoder(resp.Body).Decode(&connResp); err != nil {
+	if err := json.Unmarshal(body, &connResp); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
