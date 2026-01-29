@@ -73,6 +73,7 @@ type App struct {
 	blockChangeNotifier *utils.CallbackQueue
 	servicesAPI         servicesAPI
 	githubService       *github.Service
+	githubServiceMux    sync.Mutex
 
 	cardLimitMux sync.RWMutex
 	cardLimit    int
@@ -94,7 +95,11 @@ func (a *App) GetFigmaToken() string {
 
 // GetGitHubService returns the GitHub service instance.
 // It lazily initializes the service if servicesAPI is available.
+// Thread-safe via mutex.
 func (a *App) GetGitHubService() *github.Service {
+	a.githubServiceMux.Lock()
+	defer a.githubServiceMux.Unlock()
+
 	if a.githubService == nil && a.servicesAPI != nil {
 		// Check if servicesAPI implements the required interface
 		if githubAPI, ok := a.servicesAPI.(github.ServicesAPI); ok {

@@ -88,6 +88,33 @@ func (s *Service) IsUserConnected(userID string) (bool, error) {
 	return connResp.Connected, nil
 }
 
+// GetConnectedStatus returns the full connection status including username.
+func (s *Service) GetConnectedStatus(userID string) (*ConnectedResponse, error) {
+	req, err := http.NewRequest(http.MethodGet, endpointConnected, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set(headerUserID, userID)
+
+	resp := s.api.PluginHTTP(req)
+	if resp == nil {
+		return nil, ErrNoResponse
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, s.handleErrorResponse(resp)
+	}
+
+	var connResp ConnectedResponse
+	if err := json.NewDecoder(resp.Body).Decode(&connResp); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &connResp, nil
+}
+
 // GetRepositories retrieves the list of repositories for a user in a channel.
 func (s *Service) GetRepositories(userID, channelID string) ([]Repository, error) {
 	reqURL := endpointRepos

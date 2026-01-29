@@ -65,7 +65,7 @@ func (a *API) handleGetGitHubConnected(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	connected, err := githubService.IsUserConnected(userID)
+	response, err := githubService.GetConnectedStatus(userID)
 	if err != nil {
 		a.logger.Error("Failed to check GitHub connection",
 			mlog.String("userID", userID),
@@ -73,11 +73,6 @@ func (a *API) handleGetGitHubConnected(w http.ResponseWriter, r *http.Request) {
 		)
 		a.errorResponse(w, r, err)
 		return
-	}
-
-	// Get the full response with username if connected
-	response := github.ConnectedResponse{
-		Connected: connected,
 	}
 
 	data, err := json.Marshal(response)
