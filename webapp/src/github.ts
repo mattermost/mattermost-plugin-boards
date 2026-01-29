@@ -30,13 +30,9 @@ export interface GitHubLabel {
 }
 
 export interface GitHubMilestone {
-    id: number
     number: number
     title: string
-    description: string
     state: string
-    html_url: string
-    due_on: string | null
 }
 
 export interface GitHubIssue {
