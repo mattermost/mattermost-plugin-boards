@@ -34,7 +34,8 @@ const parsePRUrl = (url: string): {owner: string; repo: string; number: number} 
 }
 
 const GitHubPRStatus = (props: Props): JSX.Element => {
-    const {card, readonly} = props
+    // card is available for future use (e.g., auto-detect PR by branch name)
+    const {readonly} = props
     const intl = useIntl()
 
     const [connectionStatus, setConnectionStatus] = useState<GitHubConnectedResponse | null>(null)
