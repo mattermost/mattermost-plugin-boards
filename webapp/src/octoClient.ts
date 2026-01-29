@@ -21,6 +21,7 @@ import {Constants} from './constants'
 import {BoardsCloudLimits} from './boardsCloudLimits'
 import {TopBoardResponse} from './insights'
 import {BoardSiteStatistics} from './statistics'
+import {GitHubRepository, GitHubIssue, CreateGitHubIssueRequest, GitHubConnectedResponse} from './github'
 
 //
 // OctoClient is the client interface to the server APIs
@@ -1183,6 +1184,65 @@ class OctoClient {
             headers: this.headers(),
             body,
         }))
+    }
+
+    // GitHub Integration
+    async getGitHubConnected(): Promise<GitHubConnectedResponse | undefined> {
+        const path = '/api/v2/github/connected'
+        const response = await fetch(this.getBaseURL() + path, {
+            method: 'GET',
+            headers: this.headers(),
+        })
+
+        if (response.status !== 200) {
+            return undefined
+        }
+
+        return (await this.getJson(response, {})) as GitHubConnectedResponse
+    }
+
+    async getGitHubRepositories(): Promise<GitHubRepository[]> {
+        const path = '/api/v2/github/repositories'
+        const response = await fetch(this.getBaseURL() + path, {
+            method: 'GET',
+            headers: this.headers(),
+        })
+
+        if (response.status !== 200) {
+            return []
+        }
+
+        return (await this.getJson(response, [])) as GitHubRepository[]
+    }
+
+    async createGitHubIssue(request: CreateGitHubIssueRequest): Promise<GitHubIssue | undefined> {
+        const path = '/api/v2/github/issues'
+        const body = JSON.stringify(request)
+        const response = await fetch(this.getBaseURL() + path, Client4.getOptions({
+            method: 'POST',
+            headers: this.headers(),
+            body,
+        }))
+
+        if (response.status !== 200) {
+            return undefined
+        }
+
+        return (await this.getJson(response, {})) as GitHubIssue
+    }
+
+    async searchGitHubIssues(query: string): Promise<GitHubIssue[]> {
+        const path = `/api/v2/github/issues?q=${encodeURIComponent(query)}`
+        const response = await fetch(this.getBaseURL() + path, {
+            method: 'GET',
+            headers: this.headers(),
+        })
+
+        if (response.status !== 200) {
+            return []
+        }
+
+        return (await this.getJson(response, [])) as GitHubIssue[]
     }
 }
 
