@@ -28,14 +28,14 @@ const (
 	// GitHubPluginID is the ID of the GitHub plugin.
 	GitHubPluginID = "github"
 
-	// API endpoints for the GitHub plugin.
-	endpointConnected    = "/plugins/github/api/v1/connected"
-	endpointRepos        = "/plugins/github/api/v1/repositories"
-	endpointCreateIssue  = "/plugins/github/api/v1/issue"
-	endpointGetIssue     = "/plugins/github/api/v1/issue/%s/%s/%d"
-	endpointSearchIssues = "/plugins/github/api/v1/search/issues"
-	endpointGetPR        = "/plugins/github/api/v1/pr/%s/%s/%d"
-	endpointToken        = "/plugins/github/api/v1/token" //nolint:gosec // G101: This is an endpoint path, not a credential
+	// API endpoints for the GitHub plugin (without /plugins/ prefix - PluginHTTP adds it).
+	endpointConnected    = "/github/api/v1/connected"
+	endpointRepos        = "/github/api/v1/repositories"
+	endpointCreateIssue  = "/github/api/v1/issue"
+	endpointGetIssue     = "/github/api/v1/issue"
+	endpointSearchIssues = "/github/api/v1/searchissues"
+	endpointGetPR        = "/github/api/v1/pr"
+	endpointToken        = "/github/api/v1/token" //nolint:gosec // G101: This is an endpoint path, not a credential
 
 	// GitHub API endpoints (direct).
 	githubAPIBase = "https://api.github.com"
@@ -214,7 +214,7 @@ func (s *Service) CreateIssue(userID string, req CreateIssueRequest) (*Issue, er
 
 // GetIssue retrieves a specific GitHub issue.
 func (s *Service) GetIssue(userID, owner, repo string, number int) (*Issue, error) {
-	reqURL := fmt.Sprintf(endpointGetIssue, url.PathEscape(owner), url.PathEscape(repo), number)
+	reqURL := fmt.Sprintf("%s?owner=%s&repo=%s&number=%d", endpointGetIssue, url.QueryEscape(owner), url.QueryEscape(repo), number)
 
 	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
@@ -272,7 +272,7 @@ func (s *Service) SearchIssues(userID, term string) ([]Issue, error) {
 
 // GetPRDetails retrieves details for a specific pull request.
 func (s *Service) GetPRDetails(userID, owner, repo string, number int) (*PRDetails, error) {
-	reqURL := fmt.Sprintf(endpointGetPR, url.PathEscape(owner), url.PathEscape(repo), number)
+	reqURL := fmt.Sprintf("%s?owner=%s&repo=%s&number=%d", endpointGetPR, url.QueryEscape(owner), url.QueryEscape(repo), number)
 
 	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
