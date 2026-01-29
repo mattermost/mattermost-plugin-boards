@@ -1,0 +1,23 @@
+# Clawdbot configuration for mattermost-plugin-boards
+# Pre-commit checks run locally before pushing to avoid CI failures
+
+pre_commit:
+  # Go formatting (auto-fix)
+  - gofmt -w server/
+
+  # Go linting
+  - make server-lint
+
+  # Go unit tests
+  - make server-test
+
+  # Webapp linting
+  - cd webapp && npm run lint
+
+  # Webapp tests
+  - cd webapp && npm run test
+
+# Timeouts (seconds)
+timeouts:
+  pre_commit: 600   # 10 min for all checks
+  auggie: 900       # 15 min for Auggie work
