@@ -435,4 +435,3 @@ func TestGetPRDetails(t *testing.T) {
 		assert.Contains(t, err.Error(), "not_found")
 	})
 }
-

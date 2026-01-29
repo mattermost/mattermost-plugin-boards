@@ -19,16 +19,16 @@ type Repository struct {
 
 // Issue represents a GitHub issue.
 type Issue struct {
-	Number    int       `json:"number"`
-	Title     string    `json:"title"`
-	Body      string    `json:"body"`
-	State     string    `json:"state"`
-	HTMLURL   string    `json:"html_url"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	User      User      `json:"user"`
-	Labels    []Label   `json:"labels"`
-	Assignees []User    `json:"assignees"`
+	Number    int        `json:"number"`
+	Title     string     `json:"title"`
+	Body      string     `json:"body"`
+	State     string     `json:"state"`
+	HTMLURL   string     `json:"html_url"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	User      User       `json:"user"`
+	Labels    []Label    `json:"labels"`
+	Assignees []User     `json:"assignees"`
 	Milestone *Milestone `json:"milestone,omitempty"`
 }
 
@@ -57,22 +57,22 @@ type Milestone struct {
 
 // PRDetails represents GitHub pull request details.
 type PRDetails struct {
-	Number      int       `json:"number"`
-	Title       string    `json:"title"`
-	Body        string    `json:"body"`
-	State       string    `json:"state"`
-	HTMLURL     string    `json:"html_url"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
-	MergedAt    *time.Time `json:"merged_at,omitempty"`
-	User        User      `json:"user"`
-	Head        PRBranch  `json:"head"`
-	Base        PRBranch  `json:"base"`
-	Mergeable   bool      `json:"mergeable"`
-	Merged      bool      `json:"merged"`
-	Labels      []Label   `json:"labels"`
-	Assignees   []User    `json:"assignees"`
-	RequestedReviewers []User `json:"requested_reviewers"`
+	Number             int        `json:"number"`
+	Title              string     `json:"title"`
+	Body               string     `json:"body"`
+	State              string     `json:"state"`
+	HTMLURL            string     `json:"html_url"`
+	CreatedAt          time.Time  `json:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at"`
+	MergedAt           *time.Time `json:"merged_at,omitempty"`
+	User               User       `json:"user"`
+	Head               PRBranch   `json:"head"`
+	Base               PRBranch   `json:"base"`
+	Mergeable          bool       `json:"mergeable"`
+	Merged             bool       `json:"merged"`
+	Labels             []Label    `json:"labels"`
+	Assignees          []User     `json:"assignees"`
+	RequestedReviewers []User     `json:"requested_reviewers"`
 }
 
 // PRBranch represents a branch in a pull request.
@@ -95,7 +95,7 @@ type CreateIssueRequest struct {
 
 // ConnectedResponse represents the response from the connected endpoint.
 type ConnectedResponse struct {
-	Connected bool   `json:"connected"`
+	Connected      bool   `json:"connected"`
 	GitHubUsername string `json:"github_username,omitempty"`
 }
 
@@ -104,4 +104,3 @@ type ErrorResponse struct {
 	Error   string `json:"error"`
 	Message string `json:"message,omitempty"`
 }
-

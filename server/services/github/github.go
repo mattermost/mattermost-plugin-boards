@@ -6,12 +6,20 @@ package github
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
+)
+
+// Static errors for GitHub service.
+var (
+	ErrNoResponse   = errors.New("no response from GitHub plugin")
+	ErrPluginError  = errors.New("GitHub plugin error")
+	ErrPluginStatus = errors.New("GitHub plugin returned error status")
 )
 
 const (
@@ -64,7 +72,7 @@ func (s *Service) IsUserConnected(userID string) (bool, error) {
 
 	resp := s.api.PluginHTTP(req)
 	if resp == nil {
-		return false, fmt.Errorf("no response from GitHub plugin")
+		return false, ErrNoResponse
 	}
 	defer resp.Body.Close()
 
@@ -96,7 +104,7 @@ func (s *Service) GetRepositories(userID, channelID string) ([]Repository, error
 
 	resp := s.api.PluginHTTP(req)
 	if resp == nil {
-		return nil, fmt.Errorf("no response from GitHub plugin")
+		return nil, ErrNoResponse
 	}
 	defer resp.Body.Close()
 
@@ -129,7 +137,7 @@ func (s *Service) CreateIssue(userID string, req CreateIssueRequest) (*Issue, er
 
 	resp := s.api.PluginHTTP(httpReq)
 	if resp == nil {
-		return nil, fmt.Errorf("no response from GitHub plugin")
+		return nil, ErrNoResponse
 	}
 	defer resp.Body.Close()
 
@@ -158,7 +166,7 @@ func (s *Service) GetIssue(userID, owner, repo string, number int) (*Issue, erro
 
 	resp := s.api.PluginHTTP(req)
 	if resp == nil {
-		return nil, fmt.Errorf("no response from GitHub plugin")
+		return nil, ErrNoResponse
 	}
 	defer resp.Body.Close()
 
@@ -187,7 +195,7 @@ func (s *Service) SearchIssues(userID, term string) ([]Issue, error) {
 
 	resp := s.api.PluginHTTP(req)
 	if resp == nil {
-		return nil, fmt.Errorf("no response from GitHub plugin")
+		return nil, ErrNoResponse
 	}
 	defer resp.Body.Close()
 
@@ -216,7 +224,7 @@ func (s *Service) GetPRDetails(userID, owner, repo string, number int) (*PRDetai
 
 	resp := s.api.PluginHTTP(req)
 	if resp == nil {
-		return nil, fmt.Errorf("no response from GitHub plugin")
+		return nil, ErrNoResponse
 	}
 	defer resp.Body.Close()
 
@@ -236,18 +244,17 @@ func (s *Service) GetPRDetails(userID, owner, repo string, number int) (*PRDetai
 func (s *Service) handleErrorResponse(resp *http.Response) error {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("GitHub plugin returned status %d (failed to read body: %w)", resp.StatusCode, err)
+		return fmt.Errorf("%w: status %d (failed to read body: %w)", ErrPluginStatus, resp.StatusCode, err)
 	}
 
 	var errResp ErrorResponse
 	if err := json.Unmarshal(body, &errResp); err != nil {
-		return fmt.Errorf("GitHub plugin returned status %d: %s", resp.StatusCode, string(body))
+		return fmt.Errorf("%w: status %d: %s", ErrPluginStatus, resp.StatusCode, string(body))
 	}
 
 	if errResp.Message != "" {
-		return fmt.Errorf("GitHub plugin error: %s - %s", errResp.Error, errResp.Message)
+		return fmt.Errorf("%w: %s - %s", ErrPluginError, errResp.Error, errResp.Message)
 	}
 
-	return fmt.Errorf("GitHub plugin error: %s", errResp.Error)
+	return fmt.Errorf("%w: %s", ErrPluginError, errResp.Error)
 }
-

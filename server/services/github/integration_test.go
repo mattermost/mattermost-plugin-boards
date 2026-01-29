@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// mockModelServicesAPI implements model.ServicesAPI for testing
+// mockModelServicesAPI implements model.ServicesAPI for testing.
 type mockModelServicesAPI struct {
 	model.ServicesAPI
 	pluginHTTPFunc func(req *http.Request) *http.Response
@@ -35,7 +35,7 @@ func (m *mockModelServicesAPI) GetLogger() mlog.LoggerIFace {
 }
 
 // TestServiceWithModelServicesAPI verifies that the GitHub service can be
-// instantiated with model.ServicesAPI interface
+// instantiated with model.ServicesAPI interface.
 func TestServiceWithModelServicesAPI(t *testing.T) {
 	mockAPI := &mockModelServicesAPI{
 		pluginHTTPFunc: func(req *http.Request) *http.Response {
@@ -51,4 +51,3 @@ func TestServiceWithModelServicesAPI(t *testing.T) {
 	assert.NotNil(t, service)
 	assert.NotNil(t, service.api)
 }
-
