@@ -129,6 +129,7 @@ func NewBoardsApp(api model.ServicesAPI, manifest *mm_model.Manifest) (*BoardsAp
 		WSAdapter:          wsPluginAdapter,
 		NotifyBackends:     notifyBackends,
 		PermissionsService: permissionsService,
+		ServicesAPI:        api,
 		IsPlugin:           true,
 	}
 
