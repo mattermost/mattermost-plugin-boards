@@ -18,10 +18,11 @@ import './githubBranchCreate.scss'
 type Props = {
     card: Card
     readonly: boolean
+    onBranchCreated?: (branch: GitHubBranch | null) => void
 }
 
-const GitHubBranchCreate = (props: Props): JSX.Element => {
-    const {card, readonly} = props
+const GitHubBranchCreate = (props: Props): JSX.Element | null => {
+    const {card, readonly, onBranchCreated} = props
     const intl = useIntl()
 
     const [connectionStatus, setConnectionStatus] = useState<GitHubConnectedResponse | null>(null)
@@ -125,6 +126,7 @@ const GitHubBranchCreate = (props: Props): JSX.Element => {
 
             if (branch) {
                 setCreatedBranch(branch)
+                onBranchCreated?.(branch)
                 setShowForm(false)
                 sendFlashMessage({
                     content: intl.formatMessage({
@@ -156,35 +158,9 @@ const GitHubBranchCreate = (props: Props): JSX.Element => {
         }
     }
 
-    if (loading) {
-        return (
-            <div className='GitHubBranchCreate'>
-                <div className='GitHubBranchCreate__loading'>
-                    <FormattedMessage
-                        id='GitHubBranchCreate.loading'
-                        defaultMessage='Loading GitHub connection...'
-                    />
-                </div>
-            </div>
-        )
-    }
-
-    if (!connectionStatus?.connected) {
-        return (
-            <div className='GitHubBranchCreate'>
-                <div className='GitHubBranchCreate__disconnected'>
-                    <div className='GitHubBranchCreate__disconnected-icon'>
-                        <CompassIcon icon='source-branch'/>
-                    </div>
-                    <div className='GitHubBranchCreate__disconnected-text'>
-                        <FormattedMessage
-                            id='GitHubBranchCreate.notConnected'
-                            defaultMessage='Connect your GitHub account to create branches'
-                        />
-                    </div>
-                </div>
-            </div>
-        )
+    // Don't show anything while loading or if not connected to GitHub
+    if (loading || !connectionStatus?.connected) {
+        return null
     }
 
     return (

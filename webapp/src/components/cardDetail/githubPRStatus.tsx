@@ -17,6 +17,7 @@ import './githubPRStatus.scss'
 type Props = {
     card: Card
     readonly: boolean
+    hasBranch?: boolean
 }
 
 // Parse PR URL to extract owner, repo, and number
@@ -33,9 +34,9 @@ const parsePRUrl = (url: string): {owner: string; repo: string; number: number} 
     return null
 }
 
-const GitHubPRStatus = (props: Props): JSX.Element => {
+const GitHubPRStatus = (props: Props): JSX.Element | null => {
     // card is available for future use (e.g., auto-detect PR by branch name)
-    const {readonly} = props
+    const {readonly, hasBranch} = props
     const intl = useIntl()
 
     const [connectionStatus, setConnectionStatus] = useState<GitHubConnectedResponse | null>(null)
@@ -123,35 +124,9 @@ const GitHubPRStatus = (props: Props): JSX.Element => {
         return pr.state
     }
 
-    if (loading) {
-        return (
-            <div className='GitHubPRStatus'>
-                <div className='GitHubPRStatus__loading'>
-                    <FormattedMessage
-                        id='GitHubPRStatus.loading'
-                        defaultMessage='Loading GitHub connection...'
-                    />
-                </div>
-            </div>
-        )
-    }
-
-    if (!connectionStatus?.connected) {
-        return (
-            <div className='GitHubPRStatus'>
-                <div className='GitHubPRStatus__disconnected'>
-                    <div className='GitHubPRStatus__disconnected-icon'>
-                        <CompassIcon icon='source-pull'/>
-                    </div>
-                    <div className='GitHubPRStatus__disconnected-text'>
-                        <FormattedMessage
-                            id='GitHubPRStatus.notConnected'
-                            defaultMessage='Connect your GitHub account to track PRs'
-                        />
-                    </div>
-                </div>
-            </div>
-        )
+    // Don't show anything while loading, if not connected, or if no branch has been created
+    if (loading || !connectionStatus?.connected || !hasBranch) {
+        return null
     }
 
     return (
