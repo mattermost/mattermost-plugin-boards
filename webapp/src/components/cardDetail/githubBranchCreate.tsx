@@ -160,9 +160,32 @@ const GitHubBranchCreate = (props: Props): JSX.Element | null => {
         }
     }
 
-    // Don't show anything while loading or if not connected to GitHub
-    if (loading || !connectionStatus?.connected) {
+    // Don't show anything while loading
+    if (loading) {
         return null
+    }
+
+    // Show connect prompt if not connected to GitHub
+    if (!connectionStatus?.connected) {
+        return (
+            <div className='GitHubBranchCreate'>
+                <div className='GitHubBranchCreate__header'>
+                    <div className='GitHubBranchCreate__title'>
+                        <CompassIcon icon='source-branch'/>
+                        <FormattedMessage
+                            id='GitHubBranchCreate.title'
+                            defaultMessage='GitHub Branch'
+                        />
+                    </div>
+                </div>
+                <div className='GitHubBranchCreate__connect-prompt'>
+                    <FormattedMessage
+                        id='GitHubBranchCreate.connectPrompt'
+                        defaultMessage='Run /github connect in Mattermost to create branches'
+                    />
+                </div>
+            </div>
+        )
     }
 
     return (
