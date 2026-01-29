@@ -4,7 +4,8 @@
     border-top: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
 
     &__loading,
-    &__empty {
+    &__empty,
+    &__connect-prompt {
         color: rgba(var(--center-channel-color-rgb), 0.56);
         font-size: 13px;
         padding: 8px 0;
