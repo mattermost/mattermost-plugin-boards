@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )
@@ -60,13 +61,17 @@ type ServicesAPI interface {
 
 // Service provides GitHub plugin IPC functionality.
 type Service struct {
-	api ServicesAPI
+	api        ServicesAPI
+	httpClient *http.Client
 }
 
 // New creates a new GitHub service instance.
 func New(api ServicesAPI) *Service {
 	return &Service{
 		api: api,
+		httpClient: &http.Client{
+			Timeout: 30 * time.Second,
+		},
 	}
 }
 
@@ -354,7 +359,7 @@ func (s *Service) getDefaultBranch(token, owner, repo string) (string, error) {
 	httpReq.Header.Set(headerAuthBearer, "Bearer "+token)
 	httpReq.Header.Set(headerContentType, contentTypeJSON)
 
-	client := &http.Client{}
+	client := s.httpClient
 	resp, err := client.Do(httpReq)
 	if err != nil {
 		return "", fmt.Errorf("failed to send request: %w", err)
@@ -366,7 +371,7 @@ func (s *Service) getDefaultBranch(token, owner, repo string) (string, error) {
 		return "", fmt.Errorf("GitHub API error: status %d: %s", resp.StatusCode, string(body))
 	}
 
-	var repoInfo Repository
+	var repoInfo RepoInfo
 	if err := json.NewDecoder(resp.Body).Decode(&repoInfo); err != nil {
 		return "", fmt.Errorf("failed to decode response: %w", err)
 	}
@@ -386,7 +391,7 @@ func (s *Service) getBranchSHA(token, owner, repo, branch string) (string, error
 	httpReq.Header.Set(headerAuthBearer, "Bearer "+token)
 	httpReq.Header.Set(headerContentType, contentTypeJSON)
 
-	client := &http.Client{}
+	client := s.httpClient
 	resp, err := client.Do(httpReq)
 	if err != nil {
 		return "", fmt.Errorf("failed to send request: %w", err)
@@ -428,7 +433,7 @@ func (s *Service) createRef(token, owner, repo, branchName, sha string) (*Branch
 	httpReq.Header.Set(headerAuthBearer, "Bearer "+token)
 	httpReq.Header.Set(headerContentType, contentTypeJSON)
 
-	client := &http.Client{}
+	client := s.httpClient
 	resp, err := client.Do(httpReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)

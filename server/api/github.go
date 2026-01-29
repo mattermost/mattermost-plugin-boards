@@ -5,10 +5,10 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
@@ -208,7 +208,8 @@ func (a *API) handleCreateGitHubIssue(w http.ResponseWriter, r *http.Request) {
 
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
-		if strings.HasSuffix(err.Error(), "http: request body too large") {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
 			a.errorResponse(w, r, model.ErrRequestEntityTooLarge)
 			return
 		}
@@ -389,7 +390,8 @@ func (a *API) handleCreateGitHubBranch(w http.ResponseWriter, r *http.Request) {
 
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
-		if strings.HasSuffix(err.Error(), "http: request body too large") {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
 			a.errorResponse(w, r, model.ErrRequestEntityTooLarge)
 			return
 		}

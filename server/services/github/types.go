@@ -127,3 +127,8 @@ type Branch struct {
 type TokenResponse struct {
 	Token string `json:"token"`
 }
+
+// RepoInfo represents minimal repository info for default branch lookup.
+type RepoInfo struct {
+	DefaultBranch string `json:"default_branch"`
+}

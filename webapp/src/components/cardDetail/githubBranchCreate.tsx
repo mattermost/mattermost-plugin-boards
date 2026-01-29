@@ -38,11 +38,15 @@ const GitHubBranchCreate = (props: Props): JSX.Element => {
     const getDefaultBranchName = useCallback(() => {
         if (card.code) {
             // Convert card code to lowercase and create branch-friendly slug
-            const slug = card.title
+            let slug = card.title
                 .toLowerCase()
                 .replace(/[^a-z0-9]+/g, '-')
                 .replace(/^-|-$/g, '')
                 .substring(0, 40)
+            // Fallback if slug is empty (title was blank or all non-alphanumerics)
+            if (!slug) {
+                slug = 'task'
+            }
             return `${card.code.toLowerCase()}/${slug}`
         }
         return ''
