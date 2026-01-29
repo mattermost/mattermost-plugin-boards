@@ -58,12 +58,14 @@ const GitHubBranchCreate = (props: Props): JSX.Element | null => {
         loadConnectionStatus()
     }, [])
 
-    // Set default branch name when card changes
+    // Reset all state when card changes to prevent data leaking between cards
     useEffect(() => {
-        if (!branchName) {
-            setBranchName(getDefaultBranchName())
-        }
-    }, [card.code, card.title, getDefaultBranchName, branchName])
+        setShowForm(false)
+        setSelectedRepo(null)
+        setBranchName(getDefaultBranchName())
+        setCreatedBranch(null)
+        onBranchCreated?.(null)
+    }, [card.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const loadConnectionStatus = async () => {
         try {

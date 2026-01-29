@@ -35,8 +35,7 @@ const parsePRUrl = (url: string): {owner: string; repo: string; number: number} 
 }
 
 const GitHubPRStatus = (props: Props): JSX.Element | null => {
-    // card is available for future use (e.g., auto-detect PR by branch name)
-    const {readonly, hasBranch} = props
+    const {card, readonly, hasBranch} = props
     const intl = useIntl()
 
     const [connectionStatus, setConnectionStatus] = useState<GitHubConnectedResponse | null>(null)
@@ -51,6 +50,14 @@ const GitHubPRStatus = (props: Props): JSX.Element | null => {
     useEffect(() => {
         loadConnectionStatus()
     }, [])
+
+    // Reset all state when card changes to prevent data leaking between cards
+    useEffect(() => {
+        setShowForm(false)
+        setPrUrl('')
+        setPrDetails(null)
+        setError(null)
+    }, [card.id])
 
     const loadConnectionStatus = async () => {
         try {

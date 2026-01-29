@@ -123,8 +123,11 @@ const CardDetail = (props: Props): JSX.Element|null => {
     const clientConfig = useAppSelector<ClientConfig>(getClientConfig)
     const newBoardsEditor = clientConfig?.featureFlags?.newBoardsEditor || false
 
-    // GitHub integration state
+    // GitHub integration state - reset when card changes
     const [githubBranch, setGithubBranch] = useState<GitHubBranch | null>(null)
+    useEffect(() => {
+        setGithubBranch(null)
+    }, [card.id])
 
     const [editingBlockId, setEditingBlockId] = useState<string | null>(null)
     const [focusBlockId, setFocusBlockId] = useState<string | null>(null)
