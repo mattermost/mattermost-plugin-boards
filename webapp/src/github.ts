@@ -79,3 +79,28 @@ export interface GitHubBranch {
         type: string
     }
 }
+
+export interface GitHubPRBranch {
+    ref: string
+    sha: string
+    repo: GitHubRepository
+}
+
+export interface GitHubPRDetails {
+    number: number
+    title: string
+    body: string
+    state: string
+    html_url: string
+    created_at: string
+    updated_at: string
+    merged_at?: string
+    user: GitHubUser
+    head: GitHubPRBranch
+    base: GitHubPRBranch
+    mergeable: boolean
+    merged: boolean
+    labels: GitHubLabel[]
+    assignees: GitHubUser[]
+    requested_reviewers: GitHubUser[]
+}

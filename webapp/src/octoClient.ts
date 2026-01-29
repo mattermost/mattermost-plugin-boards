@@ -21,7 +21,7 @@ import {Constants} from './constants'
 import {BoardsCloudLimits} from './boardsCloudLimits'
 import {TopBoardResponse} from './insights'
 import {BoardSiteStatistics} from './statistics'
-import {GitHubRepository, GitHubIssue, CreateGitHubIssueRequest, GitHubConnectedResponse, CreateGitHubBranchRequest, GitHubBranch} from './github'
+import {GitHubRepository, GitHubIssue, CreateGitHubIssueRequest, GitHubConnectedResponse, CreateGitHubBranchRequest, GitHubBranch, GitHubPRDetails} from './github'
 
 //
 // OctoClient is the client interface to the server APIs
@@ -1260,6 +1260,20 @@ class OctoClient {
         }
 
         return (await this.getJson(response, {})) as GitHubBranch
+    }
+
+    async getGitHubPR(owner: string, repo: string, number: number): Promise<GitHubPRDetails | undefined> {
+        const path = `/api/v2/github/pr/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/${number}`
+        const response = await fetch(this.getBaseURL() + path, {
+            method: 'GET',
+            headers: this.headers(),
+        })
+
+        if (response.status !== 200) {
+            return undefined
+        }
+
+        return (await this.getJson(response, {})) as GitHubPRDetails
     }
 }
 

@@ -5,6 +5,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -28,6 +29,7 @@ func (a *API) registerGitHubRoutes(r *mux.Router) {
 	r.HandleFunc("/github/issues", a.sessionRequired(a.handleCreateGitHubIssue)).Methods("POST")
 	r.HandleFunc("/github/issues", a.sessionRequired(a.handleSearchGitHubIssues)).Methods("GET")
 	r.HandleFunc("/github/branches", a.sessionRequired(a.handleCreateGitHubBranch)).Methods("POST")
+	r.HandleFunc("/github/pr/{owner}/{repo}/{number}", a.sessionRequired(a.handleGetGitHubPR)).Methods("GET")
 }
 
 func (a *API) handleGetGitHubConnected(w http.ResponseWriter, r *http.Request) {
@@ -441,5 +443,93 @@ func (a *API) handleCreateGitHubBranch(w http.ResponseWriter, r *http.Request) {
 
 	jsonBytesResponse(w, http.StatusCreated, data)
 	auditRec.AddMeta("branchRef", branch.Ref)
+	auditRec.Success()
+}
+
+func (a *API) handleGetGitHubPR(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation GET /github/pr/{owner}/{repo}/{number} getGitHubPR
+	//
+	// Get details of a GitHub pull request
+	//
+	// ---
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   required: true
+	//   type: string
+	// - name: repo
+	//   in: path
+	//   required: true
+	//   type: string
+	// - name: number
+	//   in: path
+	//   required: true
+	//   type: integer
+	// security:
+	// - BearerAuth: []
+	// responses:
+	//   '200':
+	//     description: success
+	//     schema:
+	//       type: object
+	//   '400':
+	//     description: bad request
+	//   '500':
+	//     description: internal error
+	//     schema:
+	//       "$ref": "#/definitions/ErrorResponse"
+
+	vars := mux.Vars(r)
+	owner := vars["owner"]
+	repo := vars["repo"]
+	numberStr := vars["number"]
+
+	if owner == "" || repo == "" || numberStr == "" {
+		a.errorResponse(w, r, model.NewErrBadRequest("owner, repo, and number are required"))
+		return
+	}
+
+	var number int
+	if _, err := fmt.Sscanf(numberStr, "%d", &number); err != nil {
+		a.errorResponse(w, r, model.NewErrBadRequest("invalid PR number"))
+		return
+	}
+
+	userID := getUserID(r)
+
+	auditRec := a.makeAuditRecord(r, "getGitHubPR", audit.Fail)
+	defer a.audit.LogRecord(audit.LevelRead, auditRec)
+	auditRec.AddMeta("owner", owner)
+	auditRec.AddMeta("repo", repo)
+	auditRec.AddMeta("number", number)
+
+	githubService := a.app.GetGitHubService()
+	if githubService == nil {
+		a.errorResponse(w, r, model.NewErrNotImplemented("GitHub service not available"))
+		return
+	}
+
+	pr, err := githubService.GetPRDetails(userID, owner, repo, number)
+	if err != nil {
+		a.logger.Error("Failed to get GitHub PR",
+			mlog.String("userID", userID),
+			mlog.String("owner", owner),
+			mlog.String("repo", repo),
+			mlog.Int("number", number),
+			mlog.Err(err),
+		)
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	data, err := json.Marshal(pr)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	jsonBytesResponse(w, http.StatusOK, data)
 	auditRec.Success()
 }
