@@ -32,6 +32,8 @@ import {sendFlashMessage} from '../flashMessages'
 
 import CardSkeleton from '../../svg/card-skeleton'
 
+import {GitHubBranch} from '../../github'
+
 import CommentsList from './commentsList'
 import {CardDetailProvider} from './cardDetailContext'
 import CardDetailContents from './cardDetailContents'
@@ -40,7 +42,6 @@ import CardDetailProperties from './cardDetailProperties'
 import useImagePaste from './imagePaste'
 import AttachmentList from './attachment'
 import CardRelations from './cardRelations'
-import GitHubIssueLink from './githubIssueLink'
 import GitHubBranchCreate from './githubBranchCreate'
 import GitHubPRStatus from './githubPRStatus'
 
@@ -121,6 +122,12 @@ const CardDetail = (props: Props): JSX.Element|null => {
 
     const clientConfig = useAppSelector<ClientConfig>(getClientConfig)
     const newBoardsEditor = clientConfig?.featureFlags?.newBoardsEditor || false
+
+    // GitHub integration state - reset when card changes
+    const [githubBranch, setGithubBranch] = useState<GitHubBranch | null>(null)
+    useEffect(() => {
+        setGithubBranch(null)
+    }, [card.id])
 
     const [editingBlockId, setEditingBlockId] = useState<string | null>(null)
     const [focusBlockId, setFocusBlockId] = useState<string | null>(null)
@@ -397,23 +404,9 @@ const CardDetail = (props: Props): JSX.Element|null => {
                             readonly={props.readonly || !canEditBoardCards}
                             showCard={props.showCard}
                         />
-
-                        {/* GitHub Integration */}
-                        <GitHubIssueLink
-                            card={props.card}
-                            readonly={props.readonly || !canEditBoardCards}
-                        />
-                        <GitHubBranchCreate
-                            card={props.card}
-                            readonly={props.readonly || !canEditBoardCards}
-                        />
-                        <GitHubPRStatus
-                            card={props.card}
-                            readonly={props.readonly || !canEditBoardCards}
-                        />
                     </div>
 
-                    {/* Right section: Properties */}
+                    {/* Right section: Properties and GitHub Integration */}
                     <div className='CardDetail__right-section'>
                         <CardDetailProperties
                             board={props.board}
@@ -422,6 +415,18 @@ const CardDetail = (props: Props): JSX.Element|null => {
                             activeView={props.activeView}
                             views={props.views}
                             readonly={props.readonly}
+                        />
+
+                        {/* GitHub Integration */}
+                        <GitHubBranchCreate
+                            card={props.card}
+                            readonly={props.readonly || !canEditBoardCards}
+                            onBranchCreated={setGithubBranch}
+                        />
+                        <GitHubPRStatus
+                            card={props.card}
+                            readonly={props.readonly || !canEditBoardCards}
+                            hasBranch={githubBranch !== null}
                         />
                     </div>
                 </div>}
