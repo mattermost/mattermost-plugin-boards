@@ -336,4 +336,3 @@ func (a *API) handleSearchGitHubIssues(w http.ResponseWriter, r *http.Request) {
 	jsonBytesResponse(w, http.StatusOK, data)
 	auditRec.Success()
 }
-
