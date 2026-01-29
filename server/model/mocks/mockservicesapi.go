@@ -6,6 +6,7 @@ package mocks
 
 import (
 	sql "database/sql"
+	http "net/http"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -402,6 +403,20 @@ func (m *MockServicesAPI) KVSetWithOptions(arg0 string, arg1 []byte, arg2 model.
 func (mr *MockServicesAPIMockRecorder) KVSetWithOptions(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KVSetWithOptions", reflect.TypeOf((*MockServicesAPI)(nil).KVSetWithOptions), arg0, arg1, arg2)
+}
+
+// PluginHTTP mocks base method.
+func (m *MockServicesAPI) PluginHTTP(arg0 *http.Request) *http.Response {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PluginHTTP", arg0)
+	ret0, _ := ret[0].(*http.Response)
+	return ret0
+}
+
+// PluginHTTP indicates an expected call of PluginHTTP.
+func (mr *MockServicesAPIMockRecorder) PluginHTTP(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginHTTP", reflect.TypeOf((*MockServicesAPI)(nil).PluginHTTP), arg0)
 }
 
 // PublishPluginClusterEvent mocks base method.
