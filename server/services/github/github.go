@@ -18,9 +18,10 @@ import (
 
 // Static errors for GitHub service.
 var (
-	ErrNoResponse   = errors.New("no response from GitHub plugin")
-	ErrPluginError  = errors.New("GitHub plugin error")
-	ErrPluginStatus = errors.New("GitHub plugin returned error status")
+	ErrNoResponse    = errors.New("no response from GitHub plugin")
+	ErrPluginError   = errors.New("GitHub plugin error")
+	ErrPluginStatus  = errors.New("GitHub plugin returned error status")
+	ErrGitHubAPICall = errors.New("GitHub API error")
 )
 
 const (
@@ -34,13 +35,13 @@ const (
 	endpointGetIssue     = "/plugins/github/api/v1/issue/%s/%s/%d"
 	endpointSearchIssues = "/plugins/github/api/v1/search/issues"
 	endpointGetPR        = "/plugins/github/api/v1/pr/%s/%s/%d"
-	endpointToken        = "/plugins/github/api/v1/token"
+	endpointToken        = "/plugins/github/api/v1/token" //nolint:gosec // G101: This is an endpoint path, not a credential
 
 	// GitHub API endpoints (direct).
-	githubAPIBase  = "https://api.github.com"
-	githubAPIRefs  = "/repos/%s/%s/git/refs"
-	githubAPIRef   = "/repos/%s/%s/git/refs/heads/%s"
-	githubAPIRepo  = "/repos/%s/%s"
+	githubAPIBase = "https://api.github.com"
+	githubAPIRefs = "/repos/%s/%s/git/refs"
+	githubAPIRef  = "/repos/%s/%s/git/refs/heads/%s"
+	githubAPIRepo = "/repos/%s/%s"
 
 	// Headers for IPC communication.
 	headerUserID      = "Mattermost-User-ID"
@@ -325,7 +326,8 @@ func (s *Service) CreateBranch(userID string, req CreateBranchRequest) (*Branch,
 	baseBranch := req.BaseBranch
 	if baseBranch == "" {
 		// Get default branch from repo
-		defaultBranch, err := s.getDefaultBranch(token, req.Owner, req.Repo)
+		var defaultBranch string
+		defaultBranch, err = s.getDefaultBranch(token, req.Owner, req.Repo)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get default branch: %w", err)
 		}
@@ -368,7 +370,7 @@ func (s *Service) getDefaultBranch(token, owner, repo string) (string, error) {
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("GitHub API error: status %d: %s", resp.StatusCode, string(body))
+		return "", fmt.Errorf("%w: status %d: %s", ErrGitHubAPICall, resp.StatusCode, string(body))
 	}
 
 	var repoInfo RepoInfo
@@ -400,7 +402,7 @@ func (s *Service) getBranchSHA(token, owner, repo, branch string) (string, error
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("GitHub API error: status %d: %s", resp.StatusCode, string(body))
+		return "", fmt.Errorf("%w: status %d: %s", ErrGitHubAPICall, resp.StatusCode, string(body))
 	}
 
 	var ref Branch
@@ -442,7 +444,7 @@ func (s *Service) createRef(token, owner, repo, branchName, sha string) (*Branch
 
 	if resp.StatusCode != http.StatusCreated {
 		respBody, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("GitHub API error: status %d: %s", resp.StatusCode, string(respBody))
+		return nil, fmt.Errorf("%w: status %d: %s", ErrGitHubAPICall, resp.StatusCode, string(respBody))
 	}
 
 	var branch Branch
