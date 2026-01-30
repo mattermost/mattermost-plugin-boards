@@ -111,7 +111,7 @@ const SidebarCategory = (props: Props) => {
         // Issue 3: If on settings page, navigate to board page (not settings)
         const isOnSettingsPage = match.path.includes('/settings')
         if (isOnSettingsPage) {
-            const params = {...match.params, boardId: boardId || ''}
+            const params = {...match.params, boardId: boardId || '', teamId: match.params.teamId || ''}
             const newPath = generatePath('/team/:teamId/:boardId', params)
             history.push(newPath)
         } else {

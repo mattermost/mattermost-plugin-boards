@@ -486,5 +486,4 @@ const GitHubPRStatus = (props: Props): JSX.Element | null => {
     )
 }
 
-export {GITHUB_PRS_PROPERTY_ID}
 export default GitHubPRStatus

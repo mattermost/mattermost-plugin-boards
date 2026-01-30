@@ -6,7 +6,7 @@ import {FormattedMessage, useIntl} from 'react-intl'
 import {ActionMeta} from 'react-select'
 
 import {Board} from '../../blocks/board'
-import {BoardView, IViewType} from '../../blocks/boardView'
+import {BoardView, IViewType, ViewVisibility} from '../../blocks/boardView'
 import {IUser} from '../../user'
 import mutator from '../../mutator'
 import Menu from '../../widgets/menu'
@@ -91,7 +91,7 @@ const ViewsSection = (props: Props): JSX.Element => {
             return
         }
 
-        const updatedView = {...view, fields: {...view.fields, visibility: newVisibility}}
+        const updatedView = {...view, fields: {...view.fields, visibility: newVisibility as ViewVisibility}}
         await mutator.updateBlock(
             view.boardId,
             updatedView,

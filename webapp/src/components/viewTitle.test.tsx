@@ -65,7 +65,7 @@ describe('components/viewTitle', () => {
     })
 
     test('should match snapshot', async () => {
-        let container
+        let container: HTMLElement | undefined
         await act(async () => {
             const result = render(wrapIntl(
                 <ReduxProvider store={store}>
@@ -81,7 +81,7 @@ describe('components/viewTitle', () => {
     })
 
     test('should match snapshot readonly', async () => {
-        let container
+        let container: HTMLElement | undefined
         await act(async () => {
             const result = render(wrapIntl(
                 <ReduxProvider store={store}>
@@ -99,7 +99,7 @@ describe('components/viewTitle', () => {
     test('show description', async () => {
         board.description = 'description'
         board.showDescription = true
-        let container
+        let container: HTMLElement | undefined
         await act(async () => {
             const result = render(wrapIntl(
                 <ReduxProvider store={store}>
@@ -120,7 +120,7 @@ describe('components/viewTitle', () => {
     test('hide description', async () => {
         board.description = ''
         board.showDescription = false
-        let container
+        let container: HTMLElement | undefined
         await act(async () => {
             const result = render(wrapIntl(
                 <ReduxProvider store={store}>
@@ -140,7 +140,7 @@ describe('components/viewTitle', () => {
 
     test('add random icon', async () => {
         board.icon = ''
-        let container
+        let container: HTMLElement | undefined
         await act(async () => {
             const result = render(wrapIntl(
                 <ReduxProvider store={store}>
