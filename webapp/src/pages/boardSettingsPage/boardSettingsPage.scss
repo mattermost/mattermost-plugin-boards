@@ -1,0 +1,117 @@
+@import '../../styles/z-index';
+
+.BoardSettingsPage {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+
+    &.error {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        color: rgb(var(--error-text-rgb));
+    }
+
+    &__wrapper {
+        display: flex;
+        flex-direction: row;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    &__content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        background: rgb(var(--center-channel-bg-rgb));
+        padding: 0;
+        position: relative;
+    }
+
+    &__header {
+        padding: 24px 32px 16px;
+        border-bottom: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
+        background: rgb(var(--center-channel-bg-rgb));
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            color: rgb(var(--center-channel-color-rgb));
+        }
+    }
+
+    &__breadcrumb {
+        margin-top: 8px;
+    }
+
+    &__back-button {
+        background: transparent;
+        border: none;
+        color: rgb(var(--link-color-rgb));
+        cursor: pointer;
+        font-size: 14px;
+        padding: 0;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    &__sections {
+        flex: 1;
+        padding: 24px 32px 100px;
+        overflow-y: auto;
+    }
+
+    &__section {
+        margin-bottom: 32px;
+        padding-bottom: 32px;
+        border-bottom: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 0 16px 0;
+            color: rgb(var(--center-channel-color-rgb));
+        }
+    }
+
+    &__placeholder {
+        color: rgba(var(--center-channel-color-rgb), 0.64);
+        font-size: 14px;
+        font-style: italic;
+        margin: 0;
+    }
+
+    &__footer {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        left: 240px; // Account for sidebar width
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        padding: 16px 32px;
+        background: rgb(var(--center-channel-bg-rgb));
+        border-top: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+        z-index: 10;
+    }
+}
+
+// Adjust for when sidebar is hidden or in plugin mode
+.focalboard-plugin-root .BoardSettingsPage__footer {
+    left: 0;
+}
+

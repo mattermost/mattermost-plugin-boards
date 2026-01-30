@@ -15,6 +15,7 @@ import {createBrowserHistory, History} from 'history'
 
 import {IAppWindow} from './types'
 import BoardPage from './pages/boardPage/boardPage'
+import BoardSettingsPage from './pages/boardSettingsPage/boardSettingsPage'
 import WelcomePage from './pages/welcome/welcomePage'
 import ErrorPage from './pages/errorPage'
 import TaskRedirect from './pages/taskRedirect'
@@ -195,6 +196,13 @@ const FocalboardRouter = (props: Props): JSX.Element => {
                 </FBRoute>
                 <FBRoute path={['/workspace/:workspaceId/shared/:boardId?/:viewId?/:cardId?', '/workspace/:workspaceId/:boardId?/:viewId?/:cardId?']}>
                     <WorkspaceToTeamRedirect/>
+                </FBRoute>
+                <FBRoute
+                    loginRequired={true}
+                    exact={true}
+                    path='/team/:teamId/:boardId/settings'
+                >
+                    <BoardSettingsPage/>
                 </FBRoute>
                 <FBRoute
                     loginRequired={true}

@@ -14,6 +14,7 @@ import mutator from '../../mutator'
 import IconButton from '../../widgets/buttons/iconButton'
 import DeleteIcon from '../../widgets/icons/delete'
 import OptionsIcon from '../../widgets/icons/options'
+import SettingsIcon from '../../widgets/icons/settings'
 import Menu from '../../widgets/menu'
 import MenuWrapper from '../../widgets/menuWrapper'
 import BoardPermissionGate from '../permissions/boardPermissionGate'
@@ -154,6 +155,12 @@ const SidebarBoardItem = (props: Props) => {
         history.push(newPath)
     }
 
+    const handleBoardSettings = useCallback(() => {
+        const params = {teamId: match.params.teamId || teamID, boardId: board.id}
+        const newPath = generatePath('/team/:teamId/:boardId/settings', params)
+        history.push(newPath)
+    }, [board.id, match.params.teamId, teamID, history])
+
     const handleHideBoard = async () => {
         if (!me) {
             return
@@ -280,25 +287,15 @@ const SidebarBoardItem = (props: Props) => {
                                         icon={<CompassIcon icon='export-variant'/>}
                                         onClick={() => Archiver.exportBoardArchive(board)}
                                     />
-                                    <Menu.Text
-                                        id='hideBoard'
-                                        name={intl.formatMessage({id: 'HideBoard.MenuOption', defaultMessage: 'Hide board'})}
-                                        icon={<CloseIcon/>}
-                                        onClick={() => handleHideBoard()}
-                                    />
                                     <BoardPermissionGate
                                         boardId={board.id}
-                                        permissions={[Permission.DeleteBoard]}
+                                        permissions={[Permission.ManageBoardType]}
                                     >
                                         <Menu.Text
-                                            key={`deleteBlock-${board.id}`}
-                                            id='deleteBlock'
-                                            className='text-danger'
-                                            name={intl.formatMessage({id: 'Sidebar.delete-board', defaultMessage: 'Delete board'})}
-                                            icon={<DeleteIcon/>}
-                                            onClick={() => {
-                                                props.onDeleteRequest(board)
-                                            }}
+                                            id='boardSettings'
+                                            name={intl.formatMessage({id: 'Sidebar.board-settings', defaultMessage: 'Board Settings'})}
+                                            icon={<SettingsIcon/>}
+                                            onClick={handleBoardSettings}
                                         />
                                     </BoardPermissionGate>
                                 </Menu>
