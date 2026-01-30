@@ -34,12 +34,14 @@ const BoardSettingsPage = (): JSX.Element => {
     const board = useAppSelector(getCurrentBoard)
     const me = useAppSelector(getMe)
     const hiddenBoardIDs = useAppSelector(getHiddenBoardIDs)
-    const category = useAppSelector(getCategoryOfBoard(currentBoardId))
-    const [boardTemplateSelectorOpen, setBoardTemplateSelectorOpen] = useState(false)
 
     const teamId = match.params.teamId || currentTeam?.id || ''
     const boardId = match.params.boardId || currentBoardId || ''
     const isHidden = hiddenBoardIDs.includes(boardId)
+
+    // Use route boardId (not currentBoardId) for consistent category resolution
+    const category = useAppSelector(getCategoryOfBoard(boardId))
+    const [boardTemplateSelectorOpen, setBoardTemplateSelectorOpen] = useState(false)
 
     // Initialize team and board data (same as BoardPage)
     useEffect(() => {

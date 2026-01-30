@@ -1,7 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useState, useCallback} from 'react'
+import React, {useState, useCallback, useRef, useEffect} from 'react'
 import {FormattedMessage, useIntl} from 'react-intl'
 
 import {Board} from '../../blocks/board'
@@ -28,13 +28,25 @@ const BoardSettingsFooter = (props: Props): JSX.Element => {
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
     const [isProcessing, setIsProcessing] = useState(false)
 
+    // Guard against state updates after unmount (hide/delete navigate away)
+    const mountedRef = useRef(true)
+    useEffect(() => {
+        return () => {
+            mountedRef.current = false
+        }
+    }, [])
+
     const handleHideBoard = useCallback(async () => {
         setIsProcessing(true)
         try {
             await props.onHideBoard()
-            setShowHideConfirmation(false)
+            if (mountedRef.current) {
+                setShowHideConfirmation(false)
+            }
         } finally {
-            setIsProcessing(false)
+            if (mountedRef.current) {
+                setIsProcessing(false)
+            }
         }
     }, [props])
 
@@ -43,7 +55,9 @@ const BoardSettingsFooter = (props: Props): JSX.Element => {
         try {
             await props.onShowBoard()
         } finally {
-            setIsProcessing(false)
+            if (mountedRef.current) {
+                setIsProcessing(false)
+            }
         }
     }, [props])
 
@@ -51,9 +65,13 @@ const BoardSettingsFooter = (props: Props): JSX.Element => {
         setIsProcessing(true)
         try {
             await props.onDeleteBoard()
-            setShowDeleteConfirmation(false)
+            if (mountedRef.current) {
+                setShowDeleteConfirmation(false)
+            }
         } finally {
-            setIsProcessing(false)
+            if (mountedRef.current) {
+                setIsProcessing(false)
+            }
         }
     }, [props])
 

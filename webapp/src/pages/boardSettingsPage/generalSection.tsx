@@ -13,7 +13,7 @@ import './generalSection.scss'
 
 type Props = {
     board: Board
-    onBoardChange: (board: Board) => void
+    onBoardChange: (board: Board) => Promise<void> | void
 }
 
 const GeneralSection = (props: Props): JSX.Element => {
@@ -37,7 +37,11 @@ const GeneralSection = (props: Props): JSX.Element => {
 
     const handleTitleSave = useCallback(() => {
         if (title !== board.title) {
-            props.onBoardChange({...board, title})
+            Promise.resolve(props.onBoardChange({...board, title})).catch((err) => {
+                // eslint-disable-next-line no-console
+                console.error('Failed to update board title:', err)
+                setTitle(board.title)
+            })
         }
     }, [title, board, props])
 
@@ -47,7 +51,11 @@ const GeneralSection = (props: Props): JSX.Element => {
 
     const handleCodeSave = useCallback(() => {
         if (code !== (board.code || '')) {
-            props.onBoardChange({...board, code})
+            Promise.resolve(props.onBoardChange({...board, code})).catch((err) => {
+                // eslint-disable-next-line no-console
+                console.error('Failed to update board code:', err)
+                setCode(board.code || '')
+            })
         }
     }, [code, board, props])
 
@@ -57,7 +65,11 @@ const GeneralSection = (props: Props): JSX.Element => {
 
     const handleDescriptionSave = useCallback(() => {
         if (description !== (board.description || '')) {
-            props.onBoardChange({...board, description})
+            Promise.resolve(props.onBoardChange({...board, description})).catch((err) => {
+                // eslint-disable-next-line no-console
+                console.error('Failed to update board description:', err)
+                setDescription(board.description || '')
+            })
         }
     }, [description, board, props])
 
