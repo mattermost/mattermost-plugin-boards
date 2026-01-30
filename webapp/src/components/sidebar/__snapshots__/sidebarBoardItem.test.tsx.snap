@@ -314,6 +314,37 @@ exports[`components/sidebarBoardItem sidebar board item 1`] = `
                       />
                     </div>
                   </div>
+                  <div>
+                    <div
+                      aria-label="Delete board"
+                      class="MenuOption TextOption menu-option text-danger"
+                      role="button"
+                    >
+                      <div
+                        class="d-flex"
+                      >
+                        <div
+                          class="menu-option__icon"
+                        >
+                          <i
+                            class="CompassIcon icon-trash-can-outline DeleteIcon trash-can-outline"
+                          />
+                        </div>
+                      </div>
+                      <div
+                        class="menu-option__content"
+                      >
+                        <div
+                          class="menu-name"
+                        >
+                          Delete board
+                        </div>
+                      </div>
+                      <div
+                        class="noicon"
+                      />
+                    </div>
+                  </div>
                 </div>
                 <div
                   class="menu-spacer hideOnWidescreen"
@@ -550,6 +581,37 @@ exports[`components/sidebarBoardItem sidebar board item for guest 1`] = `
                           class="menu-name"
                         >
                           Board Settings
+                        </div>
+                      </div>
+                      <div
+                        class="noicon"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <div
+                      aria-label="Delete board"
+                      class="MenuOption TextOption menu-option text-danger"
+                      role="button"
+                    >
+                      <div
+                        class="d-flex"
+                      >
+                        <div
+                          class="menu-option__icon"
+                        >
+                          <i
+                            class="CompassIcon icon-trash-can-outline DeleteIcon trash-can-outline"
+                          />
+                        </div>
+                      </div>
+                      <div
+                        class="menu-option__content"
+                      >
+                        <div
+                          class="menu-name"
+                        >
+                          Delete board
                         </div>
                       </div>
                       <div
