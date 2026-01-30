@@ -101,7 +101,7 @@ exports[`components/viewHeader/dateFilter handles calendar click event 1`] = `
             },
           ],
           "viewType": "board",
-          "visibility": undefined,
+          "visibility": "everyone",
           "visibleOptionIds": Array [],
           "visiblePropertyIds": Array [],
         },

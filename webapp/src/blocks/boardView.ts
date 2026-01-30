@@ -13,6 +13,8 @@ type KanbanCalculationFields = {
     propertyId: string
 }
 
+type ViewVisibility = 'everyone' | 'owner-only'
+
 type BoardViewFields = {
     viewType: IViewType
     groupById?: string
@@ -28,7 +30,7 @@ type BoardViewFields = {
     columnCalculations: Record<string, string>
     kanbanCalculations: Record<string, KanbanCalculationFields>
     defaultTemplateId: string
-    visibility?: 'everyone' | 'owner-only'
+    visibility?: ViewVisibility
 }
 
 type BoardView = Block & {
@@ -54,7 +56,7 @@ function createBoardView(block?: Block): BoardView {
             columnCalculations: {...(block?.fields.columnCalculations) || {}},
             kanbanCalculations: {...(block?.fields.kanbanCalculations) || {}},
             defaultTemplateId: block?.fields.defaultTemplateId || '',
-            visibility: block?.fields.visibility,
+            visibility: block?.fields.visibility || 'everyone',
         },
     }
 }
@@ -66,4 +68,4 @@ function sortBoardViewsAlphabetically(views: BoardView[]): BoardView[] {
     }).sort((v1, v2) => v1.title.localeCompare(v2.title)).map((v) => v.view)
 }
 
-export {BoardView, IViewType, ISortOption, sortBoardViewsAlphabetically, createBoardView, KanbanCalculationFields}
+export {BoardView, IViewType, ISortOption, ViewVisibility, sortBoardViewsAlphabetically, createBoardView, KanbanCalculationFields}
