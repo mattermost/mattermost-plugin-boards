@@ -8,6 +8,8 @@ import {useHistory, useRouteMatch} from 'react-router-dom'
 import {useAppDispatch, useAppSelector} from '../../store/hooks'
 import {getCurrentBoardId, getCurrentBoard, setCurrent as setCurrentBoard, fetchBoardMembers, updateBoards} from '../../store/boards'
 import {getCurrentTeam, setTeam} from '../../store/teams'
+import {getCurrentBoardViews} from '../../store/views'
+import {getBoardUsersList} from '../../store/users'
 import {Permission} from '../../constants'
 import {useHasPermissions} from '../../hooks/permissions'
 import {initialLoad, loadBoardData} from '../../store/initialLoad'
@@ -21,6 +23,7 @@ import Sidebar from '../../components/sidebar/sidebar'
 import BoardTemplateSelector from '../../components/boardTemplateSelector/boardTemplateSelector'
 
 import GeneralSection from './generalSection'
+import ViewsSection from './viewsSection'
 import BoardSettingsFooter from './boardSettingsFooter'
 
 import './boardSettingsPage.scss'
@@ -34,6 +37,8 @@ const BoardSettingsPage = (): JSX.Element => {
     const board = useAppSelector(getCurrentBoard)
     const me = useAppSelector(getMe)
     const hiddenBoardIDs = useAppSelector(getHiddenBoardIDs)
+    const views = useAppSelector(getCurrentBoardViews)
+    const boardUsers = useAppSelector(getBoardUsersList)
 
     const teamId = match.params.teamId || currentTeam?.id || ''
     const boardId = match.params.boardId || currentBoardId || ''
@@ -223,12 +228,11 @@ const BoardSettingsPage = (): JSX.Element => {
                                     defaultMessage='Views Management'
                                 />
                             </h2>
-                            <p className='BoardSettingsPage__placeholder'>
-                                <FormattedMessage
-                                    id='BoardSettings.views-coming-soon'
-                                    defaultMessage='Coming soon: Table of views with management options'
-                                />
-                            </p>
+                            <ViewsSection
+                                board={board}
+                                views={views}
+                                boardUsers={boardUsers}
+                            />
                         </div>
 
                         {/* Section 3: Card Properties and Options (IT-371) */}
