@@ -132,3 +132,32 @@ type TokenResponse struct {
 type RepoInfo struct {
 	DefaultBranch string `json:"default_branch"`
 }
+
+// --- Internal types for GitHub API responses ---
+
+// ghRepository is the raw GitHub API repository response.
+type ghRepository struct {
+	ID            int64  `json:"id"`
+	Name          string `json:"name"`
+	FullName      string `json:"full_name"`
+	Owner         User   `json:"owner"`
+	Private       bool   `json:"private"`
+	HTMLURL       string `json:"html_url"`
+	Description   string `json:"description"`
+	DefaultBranch string `json:"default_branch"`
+}
+
+// ghCreateIssueRequest is the GitHub API request body for creating an issue.
+type ghCreateIssueRequest struct {
+	Title     string   `json:"title"`
+	Body      string   `json:"body"`
+	Labels    []string `json:"labels,omitempty"`
+	Assignees []string `json:"assignees,omitempty"`
+	Milestone *int     `json:"milestone,omitempty"`
+}
+
+// ghSearchResult is the GitHub API search response.
+type ghSearchResult struct {
+	TotalCount int     `json:"total_count"`
+	Items      []Issue `json:"items"`
+}
