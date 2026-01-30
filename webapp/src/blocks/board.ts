@@ -128,6 +128,7 @@ function createBoard(board?: Board): Board {
                 name: o.name,
                 type: o.type,
                 options: o.options ? o.options.map((option) => ({...option})) : [],
+                ...(o.sortRule ? {sortRule: o.sortRule} : {}),
             }
         })
     }

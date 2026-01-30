@@ -313,8 +313,12 @@ function sortCards(cards: Card[], lastCommentByCard: {[key: string]: CommentBloc
 
                         if (sortRule === 'byOrder') {
                             // Sort by the position of the option in the options list
-                            const aIndex = template.options.findIndex((o) => o.id === aOptionId)
-                            const bIndex = template.options.findIndex((o) => o.id === bOptionId)
+                            // Use Infinity for unknown/deleted options so they sort to the end
+                            const optionsLength = template.options.length
+                            const aRawIndex = template.options.findIndex((o) => o.id === aOptionId)
+                            const bRawIndex = template.options.findIndex((o) => o.id === bOptionId)
+                            const aIndex = aRawIndex === -1 ? optionsLength : aRawIndex
+                            const bIndex = bRawIndex === -1 ? optionsLength : bRawIndex
                             result = aIndex - bIndex
                         } else {
                             // For 'default', 'byValue', and 'asNumber', get the option values
