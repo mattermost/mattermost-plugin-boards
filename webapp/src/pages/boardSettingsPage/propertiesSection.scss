@@ -1,0 +1,16 @@
+.PropertiesSection {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    &__list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    &__add {
+        margin-top: 8px;
+    }
+}
+

@@ -1,0 +1,81 @@
+.ViewsSection {
+    width: 100%;
+
+    &__table {
+        width: 100%;
+        border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    &__table-header {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1.5fr 1fr;
+        gap: 16px;
+        padding: 12px 16px;
+        background: rgba(var(--center-channel-color-rgb), 0.04);
+        border-bottom: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        color: rgba(var(--center-channel-color-rgb), 0.72);
+    }
+
+    &__table-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1.5fr 1fr;
+        gap: 16px;
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
+        align-items: center;
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        &:hover {
+            background: rgba(var(--center-channel-color-rgb), 0.04);
+        }
+    }
+
+    &__table-cell {
+        display: flex;
+        align-items: center;
+        min-height: 32px;
+
+        &--name {
+            font-weight: 500;
+            color: rgb(var(--center-channel-color-rgb));
+        }
+
+        &--type,
+        &--visibility {
+            .MenuWrapper {
+                width: 100%;
+            }
+
+            .Button {
+                width: 100%;
+                justify-content: flex-start;
+                padding: 6px 12px;
+                background: rgba(var(--center-channel-color-rgb), 0.04);
+                border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+                border-radius: 4px;
+                font-size: 14px;
+                color: rgb(var(--center-channel-color-rgb));
+
+                &:hover {
+                    background: rgba(var(--center-channel-color-rgb), 0.08);
+                }
+            }
+        }
+
+        &--owner {
+            .Person,
+            .MultiPerson {
+                width: 100%;
+            }
+        }
+    }
+}
+

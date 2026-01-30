@@ -88,10 +88,13 @@ type BoardsAndBlocksPatch = {
 
 type PropertyTypeEnum = 'text' | 'number' | 'select' | 'multiSelect' | 'date' | 'person' | 'multiPerson' | 'file' | 'checkbox' | 'url' | 'email' | 'phone' | 'createdTime' | 'createdBy' | 'updatedTime' | 'updatedBy' | 'unknown'
 
+type PropertySortRule = 'default' | 'byOrder' | 'byValue' | 'asNumber'
+
 interface IPropertyOption {
     id: string
     value: string
     color: string
+    hideIfEmpty?: boolean
 }
 
 // A template for card properties attached to a board
@@ -100,6 +103,7 @@ interface IPropertyTemplate {
     name: string
     type: PropertyTypeEnum
     options: IPropertyOption[]
+    sortRule?: PropertySortRule
 }
 
 function createBoard(board?: Board): Board {
@@ -124,6 +128,7 @@ function createBoard(board?: Board): Board {
                 name: o.name,
                 type: o.type,
                 options: o.options ? o.options.map((option) => ({...option})) : [],
+                ...(o.sortRule ? {sortRule: o.sortRule} : {}),
             }
         })
     }
@@ -324,6 +329,7 @@ export {
     BoardsAndBlocks,
     BoardsAndBlocksPatch,
     PropertyTypeEnum,
+    PropertySortRule,
     IPropertyOption,
     IPropertyTemplate,
     BoardGroup,

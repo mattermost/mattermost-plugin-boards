@@ -304,12 +304,38 @@ function sortCards(cards: Card[], lastCommentByCard: {[key: string]: CommentBloc
                         return titleOrCreatedOrder(a, b)
                     }
 
-                    if (template.type === 'select' || template.type === 'multiSelect') {
-                        aValue = template.options.find((o) => o.id === (Array.isArray(aValue) ? aValue[0] : aValue))?.value || ''
-                        bValue = template.options.find((o) => o.id === (Array.isArray(bValue) ? bValue[0] : bValue))?.value || ''
-                    }
+                    // Get the sort rule for this property (default to 'default' if not set)
+                    const sortRule = template.sortRule || 'default'
 
-                    if (template.type === 'multiPerson') {
+                    if (template.type === 'select' || template.type === 'multiSelect') {
+                        const aOptionId = Array.isArray(aValue) ? aValue[0] : aValue
+                        const bOptionId = Array.isArray(bValue) ? bValue[0] : bValue
+
+                        if (sortRule === 'byOrder') {
+                            // Sort by the position of the option in the options list
+                            // Use Infinity for unknown/deleted options so they sort to the end
+                            const optionsLength = template.options.length
+                            const aRawIndex = template.options.findIndex((o) => o.id === aOptionId)
+                            const bRawIndex = template.options.findIndex((o) => o.id === bOptionId)
+                            const aIndex = aRawIndex === -1 ? optionsLength : aRawIndex
+                            const bIndex = bRawIndex === -1 ? optionsLength : bRawIndex
+                            result = aIndex - bIndex
+                        } else {
+                            // For 'default', 'byValue', and 'asNumber', get the option values
+                            aValue = template.options.find((o) => o.id === aOptionId)?.value || ''
+                            bValue = template.options.find((o) => o.id === bOptionId)?.value || ''
+
+                            if (sortRule === 'asNumber') {
+                                // Extract numeric part from the value
+                                const aNum = parseFloat((aValue as string).replace(/[^\d.-]/g, ''))
+                                const bNum = parseFloat((bValue as string).replace(/[^\d.-]/g, ''))
+                                result = (isNaN(aNum) ? Infinity : aNum) - (isNaN(bNum) ? Infinity : bNum)
+                            } else {
+                                // 'default' or 'byValue' - alphabetical sort
+                                result = (aValue as string).localeCompare(bValue as string)
+                            }
+                        }
+                    } else if (template.type === 'multiPerson') {
                         aValue = Array.isArray(aValue) && aValue.length !== 0 && Object.keys(usersById).length > 0 ? aValue.map((id) => {
                             if (usersById[id] !== undefined) {
                                 return usersById[id].username
@@ -323,9 +349,19 @@ function sortCards(cards: Card[], lastCommentByCard: {[key: string]: CommentBloc
                             }
                             return ''
                         }).toString() : bValue
-                    }
 
-                    result = (aValue as string).localeCompare(bValue as string)
+                        result = (aValue as string).localeCompare(bValue as string)
+                    } else {
+                        // For other text-based properties, apply sort rule
+                        if (sortRule === 'asNumber') {
+                            const aNum = parseFloat((aValue as string).replace(/[^\d.-]/g, ''))
+                            const bNum = parseFloat((bValue as string).replace(/[^\d.-]/g, ''))
+                            result = (isNaN(aNum) ? Infinity : aNum) - (isNaN(bNum) ? Infinity : bNum)
+                        } else {
+                            // 'default' or 'byValue' - alphabetical sort
+                            result = (aValue as string).localeCompare(bValue as string)
+                        }
+                    }
                 }
 
                 if (result === 0) {
