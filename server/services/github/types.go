@@ -137,6 +137,12 @@ type RepoInfo struct {
 	DefaultBranch string `json:"default_branch"`
 }
 
+// BranchInfo represents a simplified branch information.
+type BranchInfo struct {
+	Name string `json:"name"`
+	SHA  string `json:"sha"`
+}
+
 // --- Internal types for GitHub API responses ---
 
 // ghRepository is the raw GitHub API repository response.

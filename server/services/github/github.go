@@ -47,6 +47,7 @@ const (
 	githubAPIRefs         = "/repos/%s/%s/git/refs"
 	githubAPIRef          = "/repos/%s/%s/git/refs/heads/%s"
 	githubAPIRepo         = "/repos/%s/%s"
+	githubAPIBranches     = "/repos/%s/%s/branches"
 
 	// Headers.
 	headerPluginID    = "Mattermost-Plugin-ID"
@@ -213,6 +214,69 @@ func (s *Service) GetRepositories(userID, channelID string) ([]Repository, error
 	}
 
 	return repos, nil
+}
+
+// GetBranches retrieves the list of branches for a GitHub repository.
+// It paginates through all results to handle repos with more than 100 branches.
+func (s *Service) GetBranches(userID, owner, repo string) ([]BranchInfo, error) {
+	token, err := s.GetUserToken(userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user token: %w", err)
+	}
+	if token == "" {
+		return nil, ErrNotConnected
+	}
+
+	const perPage = 100
+	var allBranches []BranchInfo
+
+	for page := 1; ; page++ {
+		reqURL := fmt.Sprintf("%s"+githubAPIBranches+"?per_page=%d&page=%d", githubAPIBase, owner, repo, perPage, page)
+
+		req, err := http.NewRequest(http.MethodGet, reqURL, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create request: %w", err)
+		}
+
+		s.setGitHubHeaders(req, token)
+
+		resp, err := s.httpClient.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("failed to call GitHub API: %w", err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			ghErr := s.handleGitHubError(resp)
+			resp.Body.Close()
+			return nil, ghErr
+		}
+
+		var ghBranches []struct {
+			Name   string `json:"name"`
+			Commit struct {
+				SHA string `json:"sha"`
+			} `json:"commit"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&ghBranches); err != nil {
+			resp.Body.Close()
+			return nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+		resp.Body.Close()
+
+		for _, b := range ghBranches {
+			allBranches = append(allBranches, BranchInfo{
+				Name: b.Name,
+				SHA:  b.Commit.SHA,
+			})
+		}
+
+		// If we got fewer results than per_page, we've reached the last page.
+		if len(ghBranches) < perPage {
+			break
+		}
+	}
+
+	return allBranches, nil
 }
 
 // CreateIssue creates a new GitHub issue.

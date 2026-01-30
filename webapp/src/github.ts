@@ -104,3 +104,8 @@ export interface GitHubPRDetails {
     assignees: GitHubUser[]
     requested_reviewers: GitHubUser[]
 }
+
+export interface GitHubBranchInfo {
+    name: string
+    sha: string
+}

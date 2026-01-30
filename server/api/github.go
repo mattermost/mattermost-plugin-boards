@@ -26,6 +26,7 @@ func (a *API) registerGitHubRoutes(r *mux.Router) {
 	// GitHub integration APIs
 	r.HandleFunc("/github/connected", a.sessionRequired(a.handleGetGitHubConnected)).Methods("GET")
 	r.HandleFunc("/github/repositories", a.sessionRequired(a.handleGetGitHubRepositories)).Methods("GET")
+	r.HandleFunc("/github/repositories/{owner}/{repo}/branches", a.sessionRequired(a.handleGetGitHubBranches)).Methods("GET")
 	r.HandleFunc("/github/issues", a.sessionRequired(a.handleCreateGitHubIssue)).Methods("POST")
 	r.HandleFunc("/github/issues", a.sessionRequired(a.handleSearchGitHubIssues)).Methods("GET")
 	r.HandleFunc("/github/branches", a.sessionRequired(a.handleCreateGitHubBranch)).Methods("POST")
@@ -141,6 +142,83 @@ func (a *API) handleGetGitHubRepositories(w http.ResponseWriter, r *http.Request
 	}
 
 	data, err := json.Marshal(repos)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	jsonBytesResponse(w, http.StatusOK, data)
+	auditRec.Success()
+}
+
+func (a *API) handleGetGitHubBranches(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation GET /github/repositories/{owner}/{repo}/branches getGitHubBranches
+	//
+	// Get the list of branches for a GitHub repository
+	//
+	// ---
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: Repository owner
+	//   required: true
+	//   type: string
+	// - name: repo
+	//   in: path
+	//   description: Repository name
+	//   required: true
+	//   type: string
+	// security:
+	// - BearerAuth: []
+	// responses:
+	//   '200':
+	//     description: success
+	//     schema:
+	//       type: array
+	//       items:
+	//         type: object
+	//   '500':
+	//     description: internal error
+	//     schema:
+	//       "$ref": "#/definitions/ErrorResponse"
+
+	vars := mux.Vars(r)
+	owner := vars["owner"]
+	repo := vars["repo"]
+
+	if owner == "" || repo == "" {
+		a.errorResponse(w, r, model.NewErrBadRequest("owner and repo are required"))
+		return
+	}
+
+	userID := getUserID(r)
+
+	auditRec := a.makeAuditRecord(r, "getGitHubBranches", audit.Fail)
+	defer a.audit.LogRecord(audit.LevelRead, auditRec)
+	auditRec.AddMeta("owner", owner)
+	auditRec.AddMeta("repo", repo)
+
+	githubService := a.app.GetGitHubService()
+	if githubService == nil {
+		a.errorResponse(w, r, model.NewErrNotImplemented("GitHub service not available"))
+		return
+	}
+
+	branches, err := githubService.GetBranches(userID, owner, repo)
+	if err != nil {
+		a.logger.Error("Failed to get GitHub branches",
+			mlog.String("userID", userID),
+			mlog.String("owner", owner),
+			mlog.String("repo", repo),
+			mlog.Err(err),
+		)
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	data, err := json.Marshal(branches)
 	if err != nil {
 		a.errorResponse(w, r, err)
 		return
