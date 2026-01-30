@@ -47,9 +47,8 @@ const GeneralSection = (props: Props): JSX.Element => {
 
     const handleCodeChange = useCallback((newCode: string) => {
         // Enforce max 10 characters on frontend (Issue 1)
-        if (newCode.length <= 10) {
-            setCode(newCode)
-        }
+        // Always allow edits (including reducing over-length existing codes); truncate to 10
+        setCode(newCode.slice(0, 10))
     }, [])
 
     const handleCodeSave = useCallback(() => {

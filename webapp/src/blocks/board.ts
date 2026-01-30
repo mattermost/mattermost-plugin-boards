@@ -130,6 +130,7 @@ function createBoard(board?: Board): Board {
                 type: o.type,
                 options: o.options ? o.options.map((option) => ({...option})) : [],
                 ...(o.sortRule ? {sortRule: o.sortRule} : {}),
+                ...(o.hideIfEmpty !== undefined ? {hideIfEmpty: o.hideIfEmpty} : {}),
             }
         })
     }
