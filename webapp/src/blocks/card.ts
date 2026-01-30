@@ -9,6 +9,12 @@ type CardFields = {
     isTemplate?: boolean
     properties: Record<string, string | string[]>
     contentOrder: Array<string | string[]>
+    githubBranch?: {
+        ref: string       // e.g. 'refs/heads/fb-123/my-feature'
+        url: string       // GitHub API URL
+        repo: string      // e.g. 'owner/repo-name'
+        createdAt: string // ISO timestamp
+    }
 }
 
 type Card = Block & {
@@ -36,6 +42,7 @@ function createCard(block?: Block): Card {
             properties: {...(block?.fields.properties || {})},
             contentOrder,
             isTemplate: block?.fields.isTemplate || false,
+            githubBranch: block?.fields.githubBranch || undefined,
         },
     }
 }
