@@ -83,9 +83,9 @@ const BoardSettingsPage = (): JSX.Element => {
     }, [history, teamId, boardId])
 
     const handleSave = useCallback(() => {
-        // Navigate back after save
-        handleCancel()
-    }, [handleCancel])
+        // Stay on the settings page after save (Issue 7)
+        // No navigation needed
+    }, [])
 
     const handleBoardChange = useCallback(async (updatedBoard: Board) => {
         // Update board using mutator

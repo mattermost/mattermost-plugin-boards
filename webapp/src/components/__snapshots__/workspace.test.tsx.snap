@@ -275,42 +275,23 @@ exports[`src/components/workspace return workspace and showcard 1`] = `
               class="ViewTitle"
             >
               <div
-                class="add-buttons add-visible"
-              >
-                <button
-                  type="button"
-                >
-                  <i
-                    class="CompassIcon icon-eye-off-outline"
-                  />
-                  <span>
-                    hide description
-                  </span>
-                </button>
-              </div>
-              <div
                 class="title"
               >
                 <div
                   class="IconSelector"
                 >
                   <div
-                    aria-label="menuwrapper"
-                    class="MenuWrapper"
-                    role="button"
+                    class="octo-icon size-m readonly"
                   >
-                    <div
-                      class="octo-icon size-m"
-                    >
-                      <span>
-                        i
-                      </span>
-                    </div>
+                    <span>
+                      i
+                    </span>
                   </div>
                 </div>
                 <input
-                  class="Editable title"
+                  class="Editable readonly title"
                   placeholder="Untitled board"
+                  readonly=""
                   spellcheck="true"
                   title="board title"
                   value="board title"
@@ -776,9 +757,6 @@ exports[`src/components/workspace return workspace readonly and showcard 1`] = `
             <div
               class="ViewTitle"
             >
-              <div
-                class="add-buttons add-visible"
-              />
               <div
                 class="title"
               >
@@ -1314,42 +1292,23 @@ exports[`src/components/workspace should match snapshot 1`] = `
               class="ViewTitle"
             >
               <div
-                class="add-buttons add-visible"
-              >
-                <button
-                  type="button"
-                >
-                  <i
-                    class="CompassIcon icon-eye-off-outline"
-                  />
-                  <span>
-                    hide description
-                  </span>
-                </button>
-              </div>
-              <div
                 class="title"
               >
                 <div
                   class="IconSelector"
                 >
                   <div
-                    aria-label="menuwrapper"
-                    class="MenuWrapper"
-                    role="button"
+                    class="octo-icon size-m readonly"
                   >
-                    <div
-                      class="octo-icon size-m"
-                    >
-                      <span>
-                        i
-                      </span>
-                    </div>
+                    <span>
+                      i
+                    </span>
                   </div>
                 </div>
                 <input
-                  class="Editable title"
+                  class="Editable readonly title"
                   placeholder="Untitled board"
+                  readonly=""
                   spellcheck="true"
                   title="board title"
                   value="board title"
@@ -1815,9 +1774,6 @@ exports[`src/components/workspace should match snapshot with readonly 1`] = `
             <div
               class="ViewTitle"
             >
-              <div
-                class="add-buttons add-visible"
-              />
               <div
                 class="title"
               >

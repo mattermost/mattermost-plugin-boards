@@ -135,6 +135,33 @@ exports[`components/viewHeader/viewHeaderSortMenu return sort menu 1`] = `
           </div>
           <div>
             <div
+              aria-label="GitHub PRs"
+              class="MenuOption TextOption menu-option"
+              role="button"
+            >
+              <div
+                class="d-flex"
+              >
+                <div
+                  class="noicon"
+                />
+              </div>
+              <div
+                class="menu-option__content"
+              >
+                <div
+                  class="menu-name"
+                >
+                  GitHub PRs
+                </div>
+              </div>
+              <div
+                class="noicon"
+              />
+            </div>
+          </div>
+          <div>
+            <div
               aria-label="Property 1"
               class="MenuOption TextOption menu-option"
               role="button"

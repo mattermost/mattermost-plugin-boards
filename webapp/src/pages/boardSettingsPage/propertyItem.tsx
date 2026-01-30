@@ -57,6 +57,10 @@ const PropertyItem = (props: Props): JSX.Element => {
         props.onUpdate({...property, options})
     }, [property, props])
 
+    const handlePropertyUpdate = useCallback((updates: Partial<IPropertyTemplate>) => {
+        props.onUpdate({...property, ...updates})
+    }, [property, props])
+
     const propertyType = propsRegistry.get(property.type)
     const hasOptions = property.type === 'select' || property.type === 'multiSelect'
 
@@ -141,6 +145,7 @@ const PropertyItem = (props: Props): JSX.Element => {
                         <PropertyOptionsEditor
                             property={property}
                             onUpdate={handleOptionsUpdate}
+                            onPropertyUpdate={handlePropertyUpdate}
                         />
                     )}
                 </div>

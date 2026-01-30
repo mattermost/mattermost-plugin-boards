@@ -2,16 +2,11 @@
 // See LICENSE.txt for license information.
 
 import React, {useState, useCallback} from 'react'
-import {FormattedMessage, useIntl} from 'react-intl'
+import {useIntl} from 'react-intl'
 
-import {BlockIcons} from '../blockIcons'
 import {Board} from '../blocks/board'
 import mutator from '../mutator'
-import Button from '../widgets/buttons/button'
 import Editable from '../widgets/editable'
-import CompassIcon from '../widgets/icons/compassIcon'
-import {Permission} from '../constants'
-import {useHasCurrentBoardPermissions} from '../hooks/permissions'
 
 import BoardIconSelector from './boardIconSelector'
 import {MarkdownEditor} from './markdownEditor'
@@ -29,72 +24,21 @@ const ViewTitle = (props: Props) => {
     const onEditTitleSave = useCallback(() => mutator.changeBoardTitle(board.id, board.title, title), [board.id, board.title, title])
     const onEditTitleCancel = useCallback(() => setTitle(board.title), [board.title])
     const onDescriptionBlur = useCallback((text) => mutator.changeBoardDescription(board.id, board.id, board.description, text), [board.id, board.description])
-    const onAddRandomIcon = useCallback(() => {
-        const newIcon = BlockIcons.shared.randomIcon()
-        mutator.changeBoardIcon(board.id, board.icon, newIcon)
-    }, [board.id, board.icon])
-    const onShowDescription = useCallback(() => mutator.showBoardDescription(board.id, Boolean(board.showDescription), true), [board.id, board.showDescription])
-    const onHideDescription = useCallback(() => mutator.showBoardDescription(board.id, Boolean(board.showDescription), false), [board.id, board.showDescription])
-    const canEditBoardProperties = useHasCurrentBoardPermissions([Permission.ManageBoardProperties])
 
-    const readonly = props.readonly || !canEditBoardProperties
+    // Issue 2: Force readonly to true - editing is now done in Settings only
+    const readonly = true
 
     const intl = useIntl()
 
+    // Issue 2: Hide description if empty
+    const hasDescription = board.description && board.description.trim().length > 0
+
     return (
         <div className='ViewTitle'>
-            <div className='add-buttons add-visible'>
-                {!readonly && !board.icon &&
-                    <Button
-                        emphasis='default'
-                        size='xsmall'
-                        onClick={onAddRandomIcon}
-                        icon={
-                            <CompassIcon
-                                icon='emoticon-outline'
-                            />}
-                    >
-                        <FormattedMessage
-                            id='TableComponent.add-icon'
-                            defaultMessage='Add icon'
-                        />
-                    </Button>
-                }
-                {!readonly && board.showDescription &&
-                    <Button
-                        emphasis='default'
-                        size='xsmall'
-                        onClick={onHideDescription}
-                        icon={
-                            <CompassIcon
-                                icon='eye-off-outline'
-                            />}
-                    >
-                        <FormattedMessage
-                            id='ViewTitle.hide-description'
-                            defaultMessage='hide description'
-                        />
-                    </Button>
-                }
-                {!readonly && !board.showDescription &&
-                    <Button
-                        emphasis='default'
-                        size='xsmall'
-                        onClick={onShowDescription}
-                        icon={
-                            <CompassIcon
-                                icon='eye-outline'
-                            />}
-                    >
-                        <FormattedMessage
-                            id='ViewTitle.show-description'
-                            defaultMessage='show description'
-                        />
-                    </Button>
-                }
-            </div>
+            {/* Issue 2: Remove add-buttons section - editing is now done in Settings only */}
 
             <div className='title'>
+                {/* Issue 2: Icon is hidden if empty (BoardIconSelector returns null) */}
                 <BoardIconSelector
                     board={board}
                     readonly={readonly}
@@ -112,7 +56,8 @@ const ViewTitle = (props: Props) => {
                 />
             </div>
 
-            {board.showDescription &&
+            {/* Issue 2: Only show description if it has content */}
+            {hasDescription &&
                 <div className='description'>
                     <MarkdownEditor
                         text={board.description}

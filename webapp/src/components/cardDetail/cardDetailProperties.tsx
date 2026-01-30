@@ -7,12 +7,10 @@ import {FormattedMessage, useIntl} from 'react-intl'
 import {Board, IPropertyTemplate} from '../../blocks/board'
 import {Card} from '../../blocks/card'
 import {BoardView} from '../../blocks/boardView'
-
 import mutator from '../../mutator'
 import Button from '../../widgets/buttons/button'
 import MenuWrapper from '../../widgets/menuWrapper'
 import PropertyMenu, {PropertyTypes} from '../../widgets/propertyMenu'
-
 import Calculations from '../calculations/calculations'
 import PropertyValueElement from '../propertyValueElement'
 import ConfirmationDialogBox, {ConfirmationDialogBoxProps} from '../confirmationDialogBox'
@@ -24,6 +22,8 @@ import {Permission} from '../../constants'
 import {useHasCurrentBoardPermissions} from '../../hooks/permissions'
 import propRegistry from '../../properties'
 import {PropertyType} from '../../properties/types'
+
+import {GITHUB_PRS_PROPERTY_ID} from './githubPRStatus'
 
 type Props = {
     board: Board
@@ -143,12 +143,19 @@ const CardDetailProperties = (props: Props) => {
     }
 
     // Separate properties into visible and hidden based on hideIfEmpty setting
+    // Issue 6: hideIfEmpty now applies to entire property, not individual options
+    // Issue 9: Exclude GitHub PRs property — it's force-hidden and rendered separately by GitHubPRStatus
     const visibleProperties: IPropertyTemplate[] = []
     const hiddenProperties: IPropertyTemplate[] = []
 
     board.cardProperties.forEach((propertyTemplate: IPropertyTemplate) => {
+        // Skip GitHub PRs property — it's rendered by GitHubPRStatus component, not as a regular property
+        if (propertyTemplate.id === GITHUB_PRS_PROPERTY_ID) {
+            return
+        }
+
         const isEmpty = isPropertyEmpty(propertyTemplate)
-        const shouldHide = isEmpty && propertyTemplate.options.some((opt) => opt.hideIfEmpty)
+        const shouldHide = isEmpty && propertyTemplate.hideIfEmpty
 
         if (shouldHide) {
             hiddenProperties.push(propertyTemplate)

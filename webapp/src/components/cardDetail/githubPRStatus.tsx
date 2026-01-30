@@ -15,7 +15,8 @@ import Label from '../../widgets/label'
 import './githubPRStatus.scss'
 
 // Well-known property ID for GitHub PRs JSON data (synced by external cron)
-const GITHUB_PRS_PROPERTY_ID = 'agithubprs1prp7x9jkxd1ec66j'
+// Exported so it can be used in other components (Issue 9)
+export const GITHUB_PRS_PROPERTY_ID = 'agithubprs1prp7x9jkxd1ec66j'
 
 // PR status as synced by the cron
 type PRStatus = 'NEW' | 'CI' | 'FAILED' | 'READY' | 'MERGED'
@@ -485,5 +486,4 @@ const GitHubPRStatus = (props: Props): JSX.Element | null => {
     )
 }
 
-export {GITHUB_PRS_PROPERTY_ID}
 export default GitHubPRStatus

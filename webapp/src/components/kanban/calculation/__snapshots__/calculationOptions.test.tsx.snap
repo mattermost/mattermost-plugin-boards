@@ -416,6 +416,13 @@ exports[`components/kanban/calculations/KanbanCalculationOptions with submenu op
               class="drops active"
             >
               <span>
+                GitHub PRs
+              </span>
+            </div>
+            <div
+              class="drops "
+            >
+              <span>
                 Property 1
               </span>
             </div>

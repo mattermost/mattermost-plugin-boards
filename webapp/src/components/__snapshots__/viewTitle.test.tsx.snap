@@ -6,40 +6,18 @@ exports[`components/viewTitle add random icon 1`] = `
     class="ViewTitle"
   >
     <div
-      class="add-buttons add-visible"
-    >
-      <button
-        type="button"
-      >
-        <i
-          class="CompassIcon icon-emoticon-outline"
-        />
-        <span>
-          Add icon
-        </span>
-      </button>
-      <button
-        type="button"
-      >
-        <i
-          class="CompassIcon icon-eye-outline"
-        />
-        <span>
-          show description
-        </span>
-      </button>
-    </div>
-    <div
       class="title"
     >
       <input
-        class="Editable title"
+        class="Editable readonly title"
         placeholder="Untitled board"
+        readonly=""
         spellcheck="true"
         title="board title"
         value="board title"
       />
     </div>
+    
   </div>
 </div>
 `;
@@ -50,47 +28,29 @@ exports[`components/viewTitle hide description 1`] = `
     class="ViewTitle"
   >
     <div
-      class="add-buttons add-visible"
-    >
-      <button
-        type="button"
-      >
-        <i
-          class="CompassIcon icon-eye-outline"
-        />
-        <span>
-          show description
-        </span>
-      </button>
-    </div>
-    <div
       class="title"
     >
       <div
         class="IconSelector"
       >
         <div
-          aria-label="menuwrapper"
-          class="MenuWrapper"
-          role="button"
+          class="octo-icon size-m readonly"
         >
-          <div
-            class="octo-icon size-m"
-          >
-            <span>
-              i
-            </span>
-          </div>
+          <span>
+            i
+          </span>
         </div>
       </div>
       <input
-        class="Editable title"
+        class="Editable readonly title"
         placeholder="Untitled board"
+        readonly=""
         spellcheck="true"
         title="board title"
         value="board title"
       />
     </div>
+    
   </div>
 </div>
 `;
@@ -101,42 +61,23 @@ exports[`components/viewTitle should match snapshot 1`] = `
     class="ViewTitle"
   >
     <div
-      class="add-buttons add-visible"
-    >
-      <button
-        type="button"
-      >
-        <i
-          class="CompassIcon icon-eye-off-outline"
-        />
-        <span>
-          hide description
-        </span>
-      </button>
-    </div>
-    <div
       class="title"
     >
       <div
         class="IconSelector"
       >
         <div
-          aria-label="menuwrapper"
-          class="MenuWrapper"
-          role="button"
+          class="octo-icon size-m readonly"
         >
-          <div
-            class="octo-icon size-m"
-          >
-            <span>
-              i
-            </span>
-          </div>
+          <span>
+            i
+          </span>
         </div>
       </div>
       <input
-        class="Editable title"
+        class="Editable readonly title"
         placeholder="Untitled board"
+        readonly=""
         spellcheck="true"
         title="board title"
         value="board title"
@@ -163,9 +104,6 @@ exports[`components/viewTitle should match snapshot readonly 1`] = `
   <div
     class="ViewTitle"
   >
-    <div
-      class="add-buttons add-visible"
-    />
     <div
       class="title"
     >
@@ -211,42 +149,23 @@ exports[`components/viewTitle show description 1`] = `
     class="ViewTitle"
   >
     <div
-      class="add-buttons add-visible"
-    >
-      <button
-        type="button"
-      >
-        <i
-          class="CompassIcon icon-eye-off-outline"
-        />
-        <span>
-          hide description
-        </span>
-      </button>
-    </div>
-    <div
       class="title"
     >
       <div
         class="IconSelector"
       >
         <div
-          aria-label="menuwrapper"
-          class="MenuWrapper"
-          role="button"
+          class="octo-icon size-m readonly"
         >
-          <div
-            class="octo-icon size-m"
-          >
-            <span>
-              i
-            </span>
-          </div>
+          <span>
+            i
+          </span>
         </div>
       </div>
       <input
-        class="Editable title"
+        class="Editable readonly title"
         placeholder="Untitled board"
+        readonly=""
         spellcheck="true"
         title="board title"
         value="board title"

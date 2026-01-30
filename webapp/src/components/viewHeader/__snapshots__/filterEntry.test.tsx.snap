@@ -83,6 +83,33 @@ exports[`components/viewHeader/filterEntry return filterEntry 1`] = `
             </div>
             <div>
               <div
+                aria-label="GitHub PRs"
+                class="MenuOption TextOption menu-option"
+                role="button"
+              >
+                <div
+                  class="d-flex"
+                >
+                  <div
+                    class="noicon"
+                  />
+                </div>
+                <div
+                  class="menu-option__content"
+                >
+                  <div
+                    class="menu-name"
+                  >
+                    GitHub PRs
+                  </div>
+                </div>
+                <div
+                  class="noicon"
+                />
+              </div>
+            </div>
+            <div>
+              <div
                 aria-label="Property 1"
                 class="MenuOption TextOption menu-option"
                 role="button"
@@ -538,6 +565,33 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on diffe
             </div>
             <div>
               <div
+                aria-label="GitHub PRs"
+                class="MenuOption TextOption menu-option"
+                role="button"
+              >
+                <div
+                  class="d-flex"
+                >
+                  <div
+                    class="noicon"
+                  />
+                </div>
+                <div
+                  class="menu-option__content"
+                >
+                  <div
+                    class="menu-name"
+                  >
+                    GitHub PRs
+                  </div>
+                </div>
+                <div
+                  class="noicon"
+                />
+              </div>
+            </div>
+            <div>
+              <div
                 aria-label="Property 1"
                 class="MenuOption TextOption menu-option"
                 role="button"
@@ -770,6 +824,33 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on diffe
                     class="menu-name"
                   >
                     Status
+                  </div>
+                </div>
+                <div
+                  class="noicon"
+                />
+              </div>
+            </div>
+            <div>
+              <div
+                aria-label="GitHub PRs"
+                class="MenuOption TextOption menu-option"
+                role="button"
+              >
+                <div
+                  class="d-flex"
+                >
+                  <div
+                    class="noicon"
+                  />
+                </div>
+                <div
+                  class="menu-option__content"
+                >
+                  <div
+                    class="menu-name"
+                  >
+                    GitHub PRs
                   </div>
                 </div>
                 <div
@@ -1853,6 +1934,33 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on statu
                     class="menu-name"
                   >
                     Status
+                  </div>
+                </div>
+                <div
+                  class="noicon"
+                />
+              </div>
+            </div>
+            <div>
+              <div
+                aria-label="GitHub PRs"
+                class="MenuOption TextOption menu-option"
+                role="button"
+              >
+                <div
+                  class="d-flex"
+                >
+                  <div
+                    class="noicon"
+                  />
+                </div>
+                <div
+                  class="menu-option__content"
+                >
+                  <div
+                    class="menu-name"
+                  >
+                    GitHub PRs
                   </div>
                 </div>
                 <div

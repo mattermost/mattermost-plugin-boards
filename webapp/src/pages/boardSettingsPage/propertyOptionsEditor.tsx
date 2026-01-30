@@ -18,6 +18,7 @@ import './propertyOptionsEditor.scss'
 type Props = {
     property: IPropertyTemplate
     onUpdate: (options: IPropertyOption[]) => void
+    onPropertyUpdate: (updates: Partial<IPropertyTemplate>) => void
 }
 
 const PropertyOptionsEditor = (props: Props): JSX.Element => {
@@ -81,6 +82,21 @@ const PropertyOptionsEditor = (props: Props): JSX.Element => {
                 />
             </div>
 
+            {/* Issue 6: Hide if empty checkbox now applies to entire property */}
+            <div className='PropertyOptionsEditor__property-settings'>
+                <label>
+                    <input
+                        type='checkbox'
+                        checked={property.hideIfEmpty || false}
+                        onChange={(e) => props.onPropertyUpdate({hideIfEmpty: e.target.checked})}
+                    />
+                    <FormattedMessage
+                        id='PropertyOptionsEditor.hide-property-if-empty'
+                        defaultMessage='Hide this property if empty'
+                    />
+                </label>
+            </div>
+
             <div className='PropertyOptionsEditor__list'>
                 {property.options.map((option, index) => (
                     <div
@@ -114,20 +130,6 @@ const PropertyOptionsEditor = (props: Props): JSX.Element => {
                                 onChange={(newValue) => handleUpdateOption(option.id, {value: newValue})}
                                 saveOnEsc={true}
                             />
-                        </div>
-
-                        <div className='PropertyOptionsEditor__option-hide'>
-                            <label>
-                                <input
-                                    type='checkbox'
-                                    checked={option.hideIfEmpty || false}
-                                    onChange={(e) => handleUpdateOption(option.id, {hideIfEmpty: e.target.checked})}
-                                />
-                                <FormattedMessage
-                                    id='PropertyOptionsEditor.hide-if-empty'
-                                    defaultMessage='Hide if empty'
-                                />
-                            </label>
                         </div>
 
                         <div className='PropertyOptionsEditor__option-actions'>

@@ -104,6 +104,7 @@ interface IPropertyTemplate {
     type: PropertyTypeEnum
     options: IPropertyOption[]
     sortRule?: PropertySortRule
+    hideIfEmpty?: boolean  // Issue 6: Hide entire property if empty (not per-option)
 }
 
 function createBoard(board?: Board): Board {
@@ -129,7 +130,20 @@ function createBoard(board?: Board): Board {
                 type: o.type,
                 options: o.options ? o.options.map((option) => ({...option})) : [],
                 ...(o.sortRule ? {sortRule: o.sortRule} : {}),
+                ...(o.hideIfEmpty !== undefined ? {hideIfEmpty: o.hideIfEmpty} : {}),
             }
+        })
+    }
+
+    // Issue 9: Ensure GitHub PRs property exists (force-hidden, managed by external cron)
+    const GITHUB_PRS_PROPERTY_ID = 'agithubprs1prp7x9jkxd1ec66j'
+    const hasGitHubPRsProperty = cardProperties.some((prop) => prop.id === GITHUB_PRS_PROPERTY_ID)
+    if (!hasGitHubPRsProperty) {
+        cardProperties.push({
+            id: GITHUB_PRS_PROPERTY_ID,
+            name: 'GitHub PRs',
+            type: 'text',
+            options: [],
         })
     }
 

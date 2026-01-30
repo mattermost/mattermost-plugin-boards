@@ -15,10 +15,36 @@
         margin-bottom: 8px;
     }
 
+    &__name-code-wrapper {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+
+        @media (max-width: 768px) {
+            flex-direction: column;
+        }
+    }
+
     &__input-wrapper {
         display: flex;
         align-items: center;
         gap: 12px;
+        flex: 1;
+        min-width: 250px;
+    }
+
+    &__code-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 120px;
+    }
+
+    &__code-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: rgba(var(--center-channel-color-rgb), 0.72);
     }
 
     &__input {
@@ -45,6 +71,11 @@
             flex: 1;
             font-size: 16px;
             font-weight: 600;
+        }
+
+        &--code {
+            max-width: 120px;
+            font-family: monospace;
         }
     }
 

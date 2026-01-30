@@ -15,43 +15,23 @@ exports[`components/centerPanel Clicking on the Hidden card count should open a 
           class="ViewTitle"
         >
           <div
-            class="add-buttons add-visible"
-          >
-            <button
-              class="Button emphasis--default size--xsmall"
-              type="button"
-            >
-              <i
-                class="CompassIcon icon-eye-off-outline"
-              />
-              <span>
-                hide description
-              </span>
-            </button>
-          </div>
-          <div
             class="title"
           >
             <div
               class="IconSelector"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="octo-icon size-m readonly"
               >
-                <div
-                  class="octo-icon size-m"
-                >
-                  <span>
-                    i
-                  </span>
-                </div>
+                <span>
+                  i
+                </span>
               </div>
             </div>
             <input
-              class="Editable title"
+              class="Editable readonly title"
               placeholder="Untitled board"
+              readonly=""
               spellcheck="true"
               title="board title"
               value="board title"
@@ -653,43 +633,23 @@ exports[`components/centerPanel return centerPanel and click on card to show car
           class="ViewTitle"
         >
           <div
-            class="add-buttons add-visible"
-          >
-            <button
-              class="Button emphasis--default size--xsmall"
-              type="button"
-            >
-              <i
-                class="CompassIcon icon-eye-off-outline"
-              />
-              <span>
-                hide description
-              </span>
-            </button>
-          </div>
-          <div
             class="title"
           >
             <div
               class="IconSelector"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="octo-icon size-m readonly"
               >
-                <div
-                  class="octo-icon size-m"
-                >
-                  <span>
-                    i
-                  </span>
-                </div>
+                <span>
+                  i
+                </span>
               </div>
             </div>
             <input
-              class="Editable title"
+              class="Editable readonly title"
               placeholder="Untitled board"
+              readonly=""
               spellcheck="true"
               title="board title"
               value="board title"
@@ -1175,43 +1135,23 @@ exports[`components/centerPanel return centerPanel and click on new card to edit
           class="ViewTitle"
         >
           <div
-            class="add-buttons add-visible"
-          >
-            <button
-              class="Button emphasis--default size--xsmall"
-              type="button"
-            >
-              <i
-                class="CompassIcon icon-eye-off-outline"
-              />
-              <span>
-                hide description
-              </span>
-            </button>
-          </div>
-          <div
             class="title"
           >
             <div
               class="IconSelector"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="octo-icon size-m readonly"
               >
-                <div
-                  class="octo-icon size-m"
-                >
-                  <span>
-                    i
-                  </span>
-                </div>
+                <span>
+                  i
+                </span>
               </div>
             </div>
             <input
-              class="Editable title"
+              class="Editable readonly title"
               placeholder="Untitled board"
+              readonly=""
               spellcheck="true"
               title="board title"
               value="board title"
@@ -1763,9 +1703,6 @@ exports[`components/centerPanel return centerPanel and press touch 1 with readon
           class="ViewTitle"
         >
           <div
-            class="add-buttons add-visible"
-          />
-          <div
             class="title"
           >
             <div
@@ -2129,43 +2066,23 @@ exports[`components/centerPanel return centerPanel and press touch ctrl+d for on
           class="ViewTitle"
         >
           <div
-            class="add-buttons add-visible"
-          >
-            <button
-              class="Button emphasis--default size--xsmall"
-              type="button"
-            >
-              <i
-                class="CompassIcon icon-eye-off-outline"
-              />
-              <span>
-                hide description
-              </span>
-            </button>
-          </div>
-          <div
             class="title"
           >
             <div
               class="IconSelector"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="octo-icon size-m readonly"
               >
-                <div
-                  class="octo-icon size-m"
-                >
-                  <span>
-                    i
-                  </span>
-                </div>
+                <span>
+                  i
+                </span>
               </div>
             </div>
             <input
-              class="Editable title"
+              class="Editable readonly title"
               placeholder="Untitled board"
+              readonly=""
               spellcheck="true"
               title="board title"
               value="board title"
@@ -2717,43 +2634,23 @@ exports[`components/centerPanel return centerPanel and press touch del for one c
           class="ViewTitle"
         >
           <div
-            class="add-buttons add-visible"
-          >
-            <button
-              class="Button emphasis--default size--xsmall"
-              type="button"
-            >
-              <i
-                class="CompassIcon icon-eye-off-outline"
-              />
-              <span>
-                hide description
-              </span>
-            </button>
-          </div>
-          <div
             class="title"
           >
             <div
               class="IconSelector"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="octo-icon size-m readonly"
               >
-                <div
-                  class="octo-icon size-m"
-                >
-                  <span>
-                    i
-                  </span>
-                </div>
+                <span>
+                  i
+                </span>
               </div>
             </div>
             <input
-              class="Editable title"
+              class="Editable readonly title"
               placeholder="Untitled board"
+              readonly=""
               spellcheck="true"
               title="board title"
               value="board title"
@@ -3305,43 +3202,23 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
           class="ViewTitle"
         >
           <div
-            class="add-buttons add-visible"
-          >
-            <button
-              class="Button emphasis--default size--xsmall"
-              type="button"
-            >
-              <i
-                class="CompassIcon icon-eye-off-outline"
-              />
-              <span>
-                hide description
-              </span>
-            </button>
-          </div>
-          <div
             class="title"
           >
             <div
               class="IconSelector"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="octo-icon size-m readonly"
               >
-                <div
-                  class="octo-icon size-m"
-                >
-                  <span>
-                    i
-                  </span>
-                </div>
+                <span>
+                  i
+                </span>
               </div>
             </div>
             <input
-              class="Editable title"
+              class="Editable readonly title"
               placeholder="Untitled board"
+              readonly=""
               spellcheck="true"
               title="board title"
               value="board title"
@@ -3893,43 +3770,23 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
           class="ViewTitle"
         >
           <div
-            class="add-buttons add-visible"
-          >
-            <button
-              class="Button emphasis--default size--xsmall"
-              type="button"
-            >
-              <i
-                class="CompassIcon icon-eye-off-outline"
-              />
-              <span>
-                hide description
-              </span>
-            </button>
-          </div>
-          <div
             class="title"
           >
             <div
               class="IconSelector"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="octo-icon size-m readonly"
               >
-                <div
-                  class="octo-icon size-m"
-                >
-                  <span>
-                    i
-                  </span>
-                </div>
+                <span>
+                  i
+                </span>
               </div>
             </div>
             <input
-              class="Editable title"
+              class="Editable readonly title"
               placeholder="Untitled board"
+              readonly=""
               spellcheck="true"
               title="board title"
               value="board title"
@@ -4481,43 +4338,23 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
           class="ViewTitle"
         >
           <div
-            class="add-buttons add-visible"
-          >
-            <button
-              class="Button emphasis--default size--xsmall"
-              type="button"
-            >
-              <i
-                class="CompassIcon icon-eye-off-outline"
-              />
-              <span>
-                hide description
-              </span>
-            </button>
-          </div>
-          <div
             class="title"
           >
             <div
               class="IconSelector"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="octo-icon size-m readonly"
               >
-                <div
-                  class="octo-icon size-m"
-                >
-                  <span>
-                    i
-                  </span>
-                </div>
+                <span>
+                  i
+                </span>
               </div>
             </div>
             <input
-              class="Editable title"
+              class="Editable readonly title"
               placeholder="Untitled board"
+              readonly=""
               spellcheck="true"
               title="board title"
               value="board title"
@@ -5069,43 +4906,23 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
           class="ViewTitle"
         >
           <div
-            class="add-buttons add-visible"
-          >
-            <button
-              class="Button emphasis--default size--xsmall"
-              type="button"
-            >
-              <i
-                class="CompassIcon icon-eye-off-outline"
-              />
-              <span>
-                hide description
-              </span>
-            </button>
-          </div>
-          <div
             class="title"
           >
             <div
               class="IconSelector"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="octo-icon size-m readonly"
               >
-                <div
-                  class="octo-icon size-m"
-                >
-                  <span>
-                    i
-                  </span>
-                </div>
+                <span>
+                  i
+                </span>
               </div>
             </div>
             <input
-              class="Editable title"
+              class="Editable readonly title"
               placeholder="Untitled board"
+              readonly=""
               spellcheck="true"
               title="board title"
               value="board title"
@@ -5657,43 +5474,23 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
           class="ViewTitle"
         >
           <div
-            class="add-buttons add-visible"
-          >
-            <button
-              class="Button emphasis--default size--xsmall"
-              type="button"
-            >
-              <i
-                class="CompassIcon icon-eye-off-outline"
-              />
-              <span>
-                hide description
-              </span>
-            </button>
-          </div>
-          <div
             class="title"
           >
             <div
               class="IconSelector"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="octo-icon size-m readonly"
               >
-                <div
-                  class="octo-icon size-m"
-                >
-                  <span>
-                    i
-                  </span>
-                </div>
+                <span>
+                  i
+                </span>
               </div>
             </div>
             <input
-              class="Editable title"
+              class="Editable readonly title"
               placeholder="Untitled board"
+              readonly=""
               spellcheck="true"
               title="board title"
               value="board title"
@@ -6245,43 +6042,23 @@ exports[`components/centerPanel return centerPanel and select one card and click
           class="ViewTitle"
         >
           <div
-            class="add-buttons add-visible"
-          >
-            <button
-              class="Button emphasis--default size--xsmall"
-              type="button"
-            >
-              <i
-                class="CompassIcon icon-eye-off-outline"
-              />
-              <span>
-                hide description
-              </span>
-            </button>
-          </div>
-          <div
             class="title"
           >
             <div
               class="IconSelector"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="octo-icon size-m readonly"
               >
-                <div
-                  class="octo-icon size-m"
-                >
-                  <span>
-                    i
-                  </span>
-                </div>
+                <span>
+                  i
+                </span>
               </div>
             </div>
             <input
-              class="Editable title"
+              class="Editable readonly title"
               placeholder="Untitled board"
+              readonly=""
               spellcheck="true"
               title="board title"
               value="board title"
@@ -6833,43 +6610,23 @@ exports[`components/centerPanel return centerPanel and select one card and click
           class="ViewTitle"
         >
           <div
-            class="add-buttons add-visible"
-          >
-            <button
-              class="Button emphasis--default size--xsmall"
-              type="button"
-            >
-              <i
-                class="CompassIcon icon-eye-off-outline"
-              />
-              <span>
-                hide description
-              </span>
-            </button>
-          </div>
-          <div
             class="title"
           >
             <div
               class="IconSelector"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="octo-icon size-m readonly"
               >
-                <div
-                  class="octo-icon size-m"
-                >
-                  <span>
-                    i
-                  </span>
-                </div>
+                <span>
+                  i
+                </span>
               </div>
             </div>
             <input
-              class="Editable title"
+              class="Editable readonly title"
               placeholder="Untitled board"
+              readonly=""
               spellcheck="true"
               title="board title"
               value="board title"
@@ -7421,43 +7178,23 @@ exports[`components/centerPanel should match snapshot for Gallery 1`] = `
           class="ViewTitle"
         >
           <div
-            class="add-buttons add-visible"
-          >
-            <button
-              class="Button emphasis--default size--xsmall"
-              type="button"
-            >
-              <i
-                class="CompassIcon icon-eye-off-outline"
-              />
-              <span>
-                hide description
-              </span>
-            </button>
-          </div>
-          <div
             class="title"
           >
             <div
               class="IconSelector"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="octo-icon size-m readonly"
               >
-                <div
-                  class="octo-icon size-m"
-                >
-                  <span>
-                    i
-                  </span>
-                </div>
+                <span>
+                  i
+                </span>
               </div>
             </div>
             <input
-              class="Editable title"
+              class="Editable readonly title"
               placeholder="Untitled board"
+              readonly=""
               spellcheck="true"
               title="board title"
               value="board title"
@@ -7675,43 +7412,23 @@ exports[`components/centerPanel should match snapshot for Kanban 1`] = `
           class="ViewTitle"
         >
           <div
-            class="add-buttons add-visible"
-          >
-            <button
-              class="Button emphasis--default size--xsmall"
-              type="button"
-            >
-              <i
-                class="CompassIcon icon-eye-off-outline"
-              />
-              <span>
-                hide description
-              </span>
-            </button>
-          </div>
-          <div
             class="title"
           >
             <div
               class="IconSelector"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="octo-icon size-m readonly"
               >
-                <div
-                  class="octo-icon size-m"
-                >
-                  <span>
-                    i
-                  </span>
-                </div>
+                <span>
+                  i
+                </span>
               </div>
             </div>
             <input
-              class="Editable title"
+              class="Editable readonly title"
               placeholder="Untitled board"
+              readonly=""
               spellcheck="true"
               title="board title"
               value="board title"
@@ -8168,43 +7885,23 @@ exports[`components/centerPanel should match snapshot for Kanban, not shared 1`]
           class="ViewTitle"
         >
           <div
-            class="add-buttons add-visible"
-          >
-            <button
-              class="Button emphasis--default size--xsmall"
-              type="button"
-            >
-              <i
-                class="CompassIcon icon-eye-off-outline"
-              />
-              <span>
-                hide description
-              </span>
-            </button>
-          </div>
-          <div
             class="title"
           >
             <div
               class="IconSelector"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="octo-icon size-m readonly"
               >
-                <div
-                  class="octo-icon size-m"
-                >
-                  <span>
-                    i
-                  </span>
-                </div>
+                <span>
+                  i
+                </span>
               </div>
             </div>
             <input
-              class="Editable title"
+              class="Editable readonly title"
               placeholder="Untitled board"
+              readonly=""
               spellcheck="true"
               title="board title"
               value="board title"
@@ -8661,43 +8358,23 @@ exports[`components/centerPanel should match snapshot for Table 1`] = `
           class="ViewTitle"
         >
           <div
-            class="add-buttons add-visible"
-          >
-            <button
-              class="Button emphasis--default size--xsmall"
-              type="button"
-            >
-              <i
-                class="CompassIcon icon-eye-off-outline"
-              />
-              <span>
-                hide description
-              </span>
-            </button>
-          </div>
-          <div
             class="title"
           >
             <div
               class="IconSelector"
             >
               <div
-                aria-label="menuwrapper"
-                class="MenuWrapper"
-                role="button"
+                class="octo-icon size-m readonly"
               >
-                <div
-                  class="octo-icon size-m"
-                >
-                  <span>
-                    i
-                  </span>
-                </div>
+                <span>
+                  i
+                </span>
               </div>
             </div>
             <input
-              class="Editable title"
+              class="Editable readonly title"
               placeholder="Untitled board"
+              readonly=""
               spellcheck="true"
               title="board title"
               value="board title"
