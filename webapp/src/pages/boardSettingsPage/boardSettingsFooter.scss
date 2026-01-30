@@ -19,5 +19,39 @@
         gap: 12px;
         justify-content: flex-end;
     }
+
+    &__save-button--saving {
+        pointer-events: none;
+        opacity: 0.85;
+    }
+
+    &__saving-dots {
+        display: inline-flex;
+        margin-left: 2px;
+        gap: 2px;
+        align-items: center;
+    }
+
+    &__dot {
+        display: inline-block;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background-color: currentColor;
+        animation: savingDotPulse 1.2s ease-in-out infinite;
+
+        &:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        &:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+    }
+}
+
+@keyframes savingDotPulse {
+    0%, 80%, 100% { opacity: 0.2; }
+    40% { opacity: 1; }
 }
 

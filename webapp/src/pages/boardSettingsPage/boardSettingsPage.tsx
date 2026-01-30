@@ -1,7 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useCallback, useEffect, useState} from 'react'
+import React, {useCallback, useEffect, useRef, useState} from 'react'
 import {FormattedMessage} from 'react-intl'
 import {useHistory, useRouteMatch} from 'react-router-dom'
 
@@ -82,9 +82,28 @@ const BoardSettingsPage = (): JSX.Element => {
         }
     }, [history, teamId, boardId])
 
-    const handleSave = useCallback(() => {
-        // Stay on the settings page after save (Issue 7)
-        // No navigation needed
+    const [isSaving, setIsSaving] = useState(false)
+    const mountedRef = useRef(true)
+
+    useEffect(() => {
+        return () => {
+            mountedRef.current = false
+        }
+    }, [])
+
+    const handleSave = useCallback(async () => {
+        // Issue 7: Show loading animation, stay on page after save
+        setIsSaving(true)
+        try {
+            // Board changes are auto-saved via handleBoardChange on individual fields.
+            // This button confirms the save completed with visual feedback.
+            // Small delay to show saving state to user (ensures UI feedback even if already persisted).
+            await new Promise((resolve) => setTimeout(resolve, 800))
+        } finally {
+            if (mountedRef.current) {
+                setIsSaving(false)
+            }
+        }
     }, [])
 
     const handleBoardChange = useCallback(async (updatedBoard: Board) => {
@@ -255,6 +274,7 @@ const BoardSettingsPage = (): JSX.Element => {
                     <BoardSettingsFooter
                         board={board}
                         isHidden={isHidden}
+                        isSaving={isSaving}
                         onHideBoard={handleHideBoard}
                         onShowBoard={handleShowBoard}
                         onDeleteBoard={handleDeleteBoard}

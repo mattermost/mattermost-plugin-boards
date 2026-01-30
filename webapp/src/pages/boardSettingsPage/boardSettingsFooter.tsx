@@ -13,6 +13,7 @@ import './boardSettingsFooter.scss'
 type Props = {
     board: Board
     isHidden: boolean
+    isSaving: boolean
     onHideBoard: () => Promise<void>
     onShowBoard: () => Promise<void>
     onDeleteBoard: () => Promise<void>
@@ -21,7 +22,7 @@ type Props = {
 }
 
 const BoardSettingsFooter = (props: Props): JSX.Element => {
-    const {board, isHidden} = props
+    const {board, isHidden, isSaving} = props
     const intl = useIntl()
 
     const [showHideConfirmation, setShowHideConfirmation] = useState(false)
@@ -137,12 +138,27 @@ const BoardSettingsFooter = (props: Props): JSX.Element => {
                         filled={true}
                         size='medium'
                         onClick={props.onSave}
-                        disabled={isProcessing}
+                        disabled={isProcessing || isSaving}
+                        className={isSaving ? 'BoardSettingsFooter__save-button--saving' : ''}
                     >
-                        <FormattedMessage
-                            id='BoardSettings.save'
-                            defaultMessage='Save'
-                        />
+                        {isSaving ? (
+                            <>
+                                <FormattedMessage
+                                    id='BoardSettings.saving'
+                                    defaultMessage='Saving'
+                                />
+                                <span className='BoardSettingsFooter__saving-dots'>
+                                    <span className='BoardSettingsFooter__dot'/>
+                                    <span className='BoardSettingsFooter__dot'/>
+                                    <span className='BoardSettingsFooter__dot'/>
+                                </span>
+                            </>
+                        ) : (
+                            <FormattedMessage
+                                id='BoardSettings.save'
+                                defaultMessage='Save'
+                            />
+                        )}
                     </Button>
                 </div>
             </div>

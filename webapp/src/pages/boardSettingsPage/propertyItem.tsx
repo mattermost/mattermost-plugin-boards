@@ -117,29 +117,47 @@ const PropertyItem = (props: Props): JSX.Element => {
 
             {isExpanded && (
                 <div className='PropertyItem__details'>
-                    <div className='PropertyItem__field'>
-                        <label className='PropertyItem__label'>
+                    {/* Hide if empty — available for ALL property types (Issue 6) */}
+                    <div className='PropertyItem__field PropertyItem__field--checkbox'>
+                        <label className='PropertyItem__checkbox-label'>
+                            <input
+                                type='checkbox'
+                                checked={property.hideIfEmpty || false}
+                                onChange={(e) => handlePropertyUpdate({hideIfEmpty: e.target.checked})}
+                            />
                             <FormattedMessage
-                                id='PropertyItem.sortRule'
-                                defaultMessage='Sort Rule'
+                                id='PropertyItem.hideIfEmpty'
+                                defaultMessage='Hide this property if empty'
                             />
                         </label>
-                        <MenuWrapper>
-                            <button className='PropertyItem__dropdown'>
-                                {currentSortRuleName}
-                            </button>
-                            <Menu>
-                                {sortRuleOptions.map((option) => (
-                                    <Menu.Text
-                                        key={option.id}
-                                        id={option.id}
-                                        name={option.name}
-                                        onClick={() => handleSortRuleChange(option.id as PropertySortRule)}
-                                    />
-                                ))}
-                            </Menu>
-                        </MenuWrapper>
                     </div>
+
+                    {/* Sort rule — only for select/multiSelect (reviewer feedback) */}
+                    {hasOptions && (
+                        <div className='PropertyItem__field'>
+                            <label className='PropertyItem__label'>
+                                <FormattedMessage
+                                    id='PropertyItem.sortRule'
+                                    defaultMessage='Sort Rule'
+                                />
+                            </label>
+                            <MenuWrapper>
+                                <button className='PropertyItem__dropdown'>
+                                    {currentSortRuleName}
+                                </button>
+                                <Menu>
+                                    {sortRuleOptions.map((option) => (
+                                        <Menu.Text
+                                            key={option.id}
+                                            id={option.id}
+                                            name={option.name}
+                                            onClick={() => handleSortRuleChange(option.id as PropertySortRule)}
+                                        />
+                                    ))}
+                                </Menu>
+                            </MenuWrapper>
+                        </div>
+                    )}
 
                     {hasOptions && (
                         <PropertyOptionsEditor
