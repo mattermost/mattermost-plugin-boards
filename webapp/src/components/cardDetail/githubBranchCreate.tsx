@@ -40,6 +40,7 @@ const GitHubBranchCreate = (props: Props): JSX.Element | null => {
     const [baseBranch, setBaseBranch] = useState<string>('')
     const [showBaseBranchPicker, setShowBaseBranchPicker] = useState(false)
     const [showBranchPicker, setShowBranchPicker] = useState(false)
+    const [chooseExistingMode, setChooseExistingMode] = useState(false)
 
     // Generate default branch name from card code
     const getDefaultBranchName = useCallback(() => {
@@ -170,11 +171,98 @@ const GitHubBranchCreate = (props: Props): JSX.Element | null => {
         setBaseBranch('')
         setShowBaseBranchPicker(false)
         setShowBranchPicker(false)
+        setChooseExistingMode(false)
     }
 
-    const handleCreateBranch = async () => {
+    // Check if the current branch name matches an existing branch
+    const isExistingBranch = useCallback(
+        (name: string): GitHubBranchInfo | undefined => {
+            return branches.find((b) => b.name === name.trim())
+        },
+        [branches],
+    )
+
+    const connectExistingBranch = async (existingBranch: GitHubBranchInfo) => {
+        if (!selectedRepo) {
+            return
+        }
+
+        try {
+            setCreating(true)
+
+            // Build a GitHubBranch object from the existing branch info
+            const branch: GitHubBranch = {
+                ref: `refs/heads/${existingBranch.name}`,
+                url: `https://api.github.com/repos/${selectedRepo.owner}/${selectedRepo.name}/git/refs/heads/${encodeURIComponent(existingBranch.name)}`,
+                object: {sha: existingBranch.sha, type: 'commit'},
+            }
+
+            // Save branch info to card fields
+            const blockPatch = {
+                updatedFields: {
+                    githubBranch: {
+                        ref: branch.ref,
+                        url: branch.url,
+                        repo: selectedRepo.full_name,
+                        connectedAt: new Date().toISOString(),
+                    },
+                },
+            }
+
+            try {
+                await octoClient.patchBlock(card.boardId, card.id, blockPatch)
+            } catch (saveError) {
+                console.error('Failed to save branch to card:', saveError)
+                sendFlashMessage({
+                    content: intl.formatMessage({
+                        id: 'GitHubBranchCreate.connectSaveError',
+                        defaultMessage: 'Failed to connect branch to card. Try refreshing.',
+                    }),
+                    severity: 'low',
+                })
+                return
+            }
+
+            setCreatedBranch(branch)
+            onBranchCreated?.(branch)
+            setShowForm(false)
+            setChooseExistingMode(false)
+
+            sendFlashMessage({
+                content: intl.formatMessage({
+                    id: 'GitHubBranchCreate.connectSuccess',
+                    defaultMessage: 'Branch "{branchName}" connected successfully',
+                }, {branchName: existingBranch.name}),
+                severity: 'high',
+            })
+        } catch (error) {
+            console.error('Failed to connect branch:', error)
+            sendFlashMessage({
+                content: intl.formatMessage({
+                    id: 'GitHubBranchCreate.connectError',
+                    defaultMessage: 'Failed to connect branch',
+                }),
+                severity: 'low',
+            })
+        } finally {
+            setCreating(false)
+        }
+    }
+
+    const handleCreateOrConnectBranch = async () => {
         if (!selectedRepo || !branchName.trim()) {
             return
+        }
+
+        // In "choose existing" mode, check if branch name matches an existing branch
+        if (chooseExistingMode) {
+            const existing = isExistingBranch(branchName)
+            if (existing) {
+                // Connect existing branch — no GitHub API create call
+                await connectExistingBranch(existing)
+                return
+            }
+            // Name was edited and no longer matches — fall through to create
         }
 
         try {
@@ -215,6 +303,7 @@ const GitHubBranchCreate = (props: Props): JSX.Element | null => {
                 setCreatedBranch(branch)
                 onBranchCreated?.(branch)
                 setShowForm(false)
+                setChooseExistingMode(false)
 
                 sendFlashMessage({
                     content: intl.formatMessage({
@@ -394,11 +483,18 @@ const GitHubBranchCreate = (props: Props): JSX.Element | null => {
                                                 <button
                                                     type='button'
                                                     className='GitHubBranchCreate__choose-existing-link'
-                                                    onClick={() => setShowBranchPicker(!showBranchPicker)}
+                                                    onClick={() => {
+                                                        const newState = !showBranchPicker
+                                                        setShowBranchPicker(newState)
+                                                        if (!newState) {
+                                                            // Closing picker — exit choose existing mode if branch was not selected
+                                                            setChooseExistingMode(false)
+                                                        }
+                                                    }}
                                                 >
                                                     <FormattedMessage
-                                                        id='GitHubBranchCreate.chooseExisting'
-                                                        defaultMessage='choose existing'
+                                                        id={showBranchPicker ? 'GitHubBranchCreate.newBranch' : 'GitHubBranchCreate.chooseExisting'}
+                                                        defaultMessage={showBranchPicker ? 'new branch' : 'choose existing'}
                                                     />
                                                 </button>
                                             )}
@@ -412,10 +508,17 @@ const GitHubBranchCreate = (props: Props): JSX.Element | null => {
                                                 defaultMessage: 'e.g., feature/my-branch',
                                             })}
                                             value={branchName}
-                                            onChange={(e) => setBranchName(e.target.value)}
+                                            onChange={(e) => {
+                                                setBranchName(e.target.value)
+                                                // Update chooseExistingMode based on whether typed name matches an existing branch
+                                                if (chooseExistingMode) {
+                                                    const exists = branches.some((b) => b.name === e.target.value.trim())
+                                                    setChooseExistingMode(exists)
+                                                }
+                                            }}
                                             onKeyDown={(e) => {
                                                 if (e.key === 'Enter' && !creating) {
-                                                    handleCreateBranch()
+                                                    handleCreateOrConnectBranch()
                                                 } else if (e.key === 'Escape') {
                                                     handleCloseForm()
                                                 }
@@ -439,6 +542,7 @@ const GitHubBranchCreate = (props: Props): JSX.Element | null => {
                                                             onClick={() => {
                                                                 setBranchName(branch.name)
                                                                 setShowBranchPicker(false)
+                                                                setChooseExistingMode(true)
                                                             }}
                                                         >
                                                             {branch.name}
@@ -501,20 +605,34 @@ const GitHubBranchCreate = (props: Props): JSX.Element | null => {
                                             />
                                         </Button>
                                         <Button
-                                            onClick={handleCreateBranch}
+                                            onClick={handleCreateOrConnectBranch}
                                             filled={true}
                                             disabled={!selectedRepo || !branchName.trim() || creating}
                                         >
                                             {creating ? (
-                                                <FormattedMessage
-                                                    id='GitHubBranchCreate.creating'
-                                                    defaultMessage='Creating...'
-                                                />
+                                                chooseExistingMode && isExistingBranch(branchName) ? (
+                                                    <FormattedMessage
+                                                        id='GitHubBranchCreate.connecting'
+                                                        defaultMessage='Connecting...'
+                                                    />
+                                                ) : (
+                                                    <FormattedMessage
+                                                        id='GitHubBranchCreate.creating'
+                                                        defaultMessage='Creating...'
+                                                    />
+                                                )
                                             ) : (
-                                                <FormattedMessage
-                                                    id='GitHubBranchCreate.create'
-                                                    defaultMessage='Create Branch'
-                                                />
+                                                chooseExistingMode && isExistingBranch(branchName) ? (
+                                                    <FormattedMessage
+                                                        id='GitHubBranchCreate.connect'
+                                                        defaultMessage='Connect Branch'
+                                                    />
+                                                ) : (
+                                                    <FormattedMessage
+                                                        id='GitHubBranchCreate.create'
+                                                        defaultMessage='Create Branch'
+                                                    />
+                                                )
                                             )}
                                         </Button>
                                     </div>
