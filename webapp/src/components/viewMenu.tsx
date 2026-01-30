@@ -1,13 +1,13 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useCallback, useState} from 'react'
+import React, {useCallback} from 'react'
 import {injectIntl, IntlShape} from 'react-intl'
 import {generatePath, useHistory, useRouteMatch} from 'react-router-dom'
 
-import {Board, IPropertyTemplate} from '../blocks/board'
-import {BoardView, createBoardView, IViewType, ViewVisibility} from '../blocks/boardView'
-import {Constants, Permission} from '../constants'
+import {Board} from '../blocks/board'
+import {BoardView, createBoardView, IViewType} from '../blocks/boardView'
+import {Permission} from '../constants'
 import mutator from '../mutator'
 import TelemetryClient, {TelemetryActions, TelemetryCategory} from '../telemetry/telemetryClient'
 import {Block} from '../blocks/block'
@@ -24,8 +24,6 @@ import {useAppSelector} from '../store/hooks'
 import {getMe} from '../store/users'
 
 import BoardPermissionGate from './permissions/boardPermissionGate'
-import ViewVisibilityDialog from './viewVisibilityDialog'
-import RootPortal from './rootPortal'
 import './viewMenu.scss'
 
 type Props = {
@@ -34,14 +32,13 @@ type Props = {
     views: BoardView[]
     intl: IntlShape
     readonly: boolean
+    onRequestAddView?: (viewType: IViewType) => void
 }
 
 const ViewMenu = (props: Props) => {
     const history = useHistory()
     const match = useRouteMatch()
     const me = useAppSelector(getMe)
-    const [showVisibilityDialog, setShowVisibilityDialog] = useState(false)
-    const [pendingViewType, setPendingViewType] = useState<IViewType | null>(null)
 
     const showView = useCallback((viewId) => {
         let newPath = generatePath(Utils.getBoardPagePath(match.path), {...match.params, viewId: viewId || ''})
@@ -98,97 +95,21 @@ const ViewMenu = (props: Props) => {
         }
     }, [props.views, showView])
 
-    const createViewWithVisibility = useCallback((viewType: IViewType, visibility: ViewVisibility) => {
-        const {board, activeView, intl} = props
-        Utils.log(`addview-${viewType}`)
-
-        TelemetryClient.trackEvent(TelemetryCategory, TelemetryActions.CreateBoardView, {board: board.id, view: activeView.id})
-        const view = createBoardView()
-
-        // Set view title based on type
-        switch (viewType) {
-        case 'board':
-            view.title = intl.formatMessage({id: 'View.NewBoardTitle', defaultMessage: 'Board view'})
-            break
-        case 'table':
-            view.title = intl.formatMessage({id: 'View.NewTableTitle', defaultMessage: 'Table view'})
-            view.fields.visiblePropertyIds = board.cardProperties.map((o: IPropertyTemplate) => o.id)
-            view.fields.columnWidths = {}
-            view.fields.columnWidths[Constants.titleColumnId] = Constants.defaultTitleColumnWidth
-            break
-        case 'gallery':
-            view.title = intl.formatMessage({id: 'View.NewGalleryTitle', defaultMessage: 'Gallery view'})
-            view.fields.visiblePropertyIds = [Constants.titleColumnId]
-            break
-        case 'calendar':
-            view.title = intl.formatMessage({id: 'View.NewCalendarTitle', defaultMessage: 'Calendar view'})
-            view.parentId = board.id
-            view.fields.visiblePropertyIds = [Constants.titleColumnId]
-            view.fields.dateDisplayPropertyId = board.cardProperties.find((o: IPropertyTemplate) => o.type === 'date')?.id
-            break
-        }
-
-        view.fields.viewType = viewType
-        view.boardId = board.id
-        view.fields.visibility = visibility === 'everyone' ? 'everyone' : 'owner-only'
-
-        const oldViewId = activeView.id
-
-        mutator.insertBlock(
-            view.boardId,
-            view,
-            'add view',
-            async (block: Block) => {
-                // This delay is needed because WSClient has a default 100 ms notification delay before updates
-                setTimeout(() => {
-                    showView(block.id)
-                }, 120)
-            },
-            async () => {
-                showView(oldViewId)
-            })
-    }, [props.activeView, props.board, props.intl, showView])
-
     const handleAddViewBoard = useCallback(() => {
-        setPendingViewType('board')
-        setShowVisibilityDialog(true)
-    }, [])
+        props.onRequestAddView?.('board')
+    }, [props.onRequestAddView])
 
     const handleAddViewTable = useCallback(() => {
-        setPendingViewType('table')
-        setShowVisibilityDialog(true)
-    }, [])
+        props.onRequestAddView?.('table')
+    }, [props.onRequestAddView])
 
     const handleAddViewGallery = useCallback(() => {
-        setPendingViewType('gallery')
-        setShowVisibilityDialog(true)
-    }, [])
+        props.onRequestAddView?.('gallery')
+    }, [props.onRequestAddView])
 
     const handleAddViewCalendar = useCallback(() => {
-        setPendingViewType('calendar')
-        setShowVisibilityDialog(true)
-    }, [])
-
-    const handleVisibilityPublic = useCallback(() => {
-        if (pendingViewType) {
-            createViewWithVisibility(pendingViewType, 'everyone')
-        }
-        setShowVisibilityDialog(false)
-        setPendingViewType(null)
-    }, [pendingViewType, createViewWithVisibility])
-
-    const handleVisibilityPersonal = useCallback(() => {
-        if (pendingViewType) {
-            createViewWithVisibility(pendingViewType, 'owner-only')
-        }
-        setShowVisibilityDialog(false)
-        setPendingViewType(null)
-    }, [pendingViewType, createViewWithVisibility])
-
-    const handleVisibilityCancel = useCallback(() => {
-        setShowVisibilityDialog(false)
-        setPendingViewType(null)
-    }, [])
+        props.onRequestAddView?.('calendar')
+    }, [props.onRequestAddView])
 
     const {views, intl} = props
 
@@ -300,17 +221,6 @@ const ViewMenu = (props: Props) => {
                 </BoardPermissionGate>
                 }
             </Menu>
-            {showVisibilityDialog &&
-                <RootPortal>
-                    <ViewVisibilityDialog
-                        dialogBox={{
-                            onPublic: handleVisibilityPublic,
-                            onPersonal: handleVisibilityPersonal,
-                            onClose: handleVisibilityCancel,
-                        }}
-                    />
-                </RootPortal>
-            }
         </div>
     )
 }
