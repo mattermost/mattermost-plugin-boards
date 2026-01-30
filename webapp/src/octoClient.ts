@@ -21,7 +21,7 @@ import {Constants} from './constants'
 import {BoardsCloudLimits} from './boardsCloudLimits'
 import {TopBoardResponse} from './insights'
 import {BoardSiteStatistics} from './statistics'
-import {GitHubRepository, GitHubIssue, CreateGitHubIssueRequest, GitHubConnectedResponse, CreateGitHubBranchRequest, GitHubBranch, GitHubPRDetails} from './github'
+import {GitHubRepository, GitHubIssue, CreateGitHubIssueRequest, GitHubConnectedResponse, CreateGitHubBranchRequest, GitHubBranch, GitHubPRDetails, GitHubBranchInfo} from './github'
 
 //
 // OctoClient is the client interface to the server APIs
@@ -1213,6 +1213,20 @@ class OctoClient {
         }
 
         return (await this.getJson(response, [])) as GitHubRepository[]
+    }
+
+    async getGitHubBranches(owner: string, repo: string): Promise<GitHubBranchInfo[]> {
+        const path = `/api/v2/github/repositories/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches`
+        const response = await fetch(this.getBaseURL() + path, {
+            method: 'GET',
+            headers: this.headers(),
+        })
+
+        if (response.status !== 200) {
+            return []
+        }
+
+        return (await this.getJson(response, [])) as GitHubBranchInfo[]
     }
 
     async createGitHubIssue(request: CreateGitHubIssueRequest): Promise<GitHubIssue | undefined> {

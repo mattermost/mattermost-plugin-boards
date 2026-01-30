@@ -18,7 +18,8 @@ export enum UserSettingKey {
     RandomIcons = 'randomIcons',
     MobileWarningClosed = 'mobileWarningClosed',
     WelcomePageViewed = 'welcomePageViewed',
-    NameFormat = 'nameFormat'
+    NameFormat = 'nameFormat',
+    LastGitHubRepo = 'lastGitHubRepo'
 }
 
 export class UserSettings {
@@ -155,6 +156,14 @@ export class UserSettings {
 
     static set nameFormat(newValue: string | null) {
         UserSettings.set(UserSettingKey.NameFormat, newValue)
+    }
+
+    static get lastGitHubRepo(): string | null {
+        return UserSettings.get(UserSettingKey.LastGitHubRepo)
+    }
+
+    static set lastGitHubRepo(newValue: string | null) {
+        UserSettings.set(UserSettingKey.LastGitHubRepo, newValue)
     }
 }
 
