@@ -1,0 +1,75 @@
+.PropertyOptionsEditor {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    &__header {
+        font-weight: 600;
+        font-size: 14px;
+        color: rgba(var(--center-channel-color-rgb), 0.72);
+    }
+
+    &__list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    &__option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        border: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
+        border-radius: 4px;
+        background: rgba(var(--center-channel-bg-rgb), 1);
+
+        &:hover {
+            background: rgba(var(--center-channel-color-rgb), 0.04);
+        }
+    }
+
+    &__option-color {
+        min-width: 100px;
+    }
+
+    &__color-select {
+        padding: 4px 8px;
+        border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+        border-radius: 4px;
+        font-size: 12px;
+        width: 100%;
+    }
+
+    &__option-value {
+        flex: 1;
+        min-width: 150px;
+    }
+
+    &__option-hide {
+        min-width: 120px;
+
+        label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            color: rgba(var(--center-channel-color-rgb), 0.72);
+
+            input[type='checkbox'] {
+                cursor: pointer;
+            }
+        }
+    }
+
+    &__option-actions {
+        display: flex;
+        gap: 4px;
+    }
+
+    &__add {
+        margin-top: 8px;
+    }
+}
+

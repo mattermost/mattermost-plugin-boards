@@ -64,6 +64,23 @@
         width: 100%;
     }
 
+    .CardDetailProperties__display-more {
+        margin: 8px 0;
+        padding: 8px;
+        text-align: center;
+        color: rgba(var(--center-channel-color-rgb), 0.56);
+        cursor: pointer;
+        border-top: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
+        border-bottom: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
+        font-size: 14px;
+        user-select: none;
+
+        &:hover {
+            background-color: rgba(var(--center-channel-color-rgb), 0.04);
+            color: rgba(var(--center-channel-color-rgb), 0.72);
+        }
+    }
+
 
 
     .octo-propertyvalue {

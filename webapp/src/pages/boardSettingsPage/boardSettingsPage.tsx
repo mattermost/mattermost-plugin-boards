@@ -24,6 +24,7 @@ import BoardTemplateSelector from '../../components/boardTemplateSelector/boardT
 
 import GeneralSection from './generalSection'
 import ViewsSection from './viewsSection'
+import PropertiesSection from './propertiesSection'
 import BoardSettingsFooter from './boardSettingsFooter'
 
 import './boardSettingsPage.scss'
@@ -243,12 +244,10 @@ const BoardSettingsPage = (): JSX.Element => {
                                     defaultMessage='Card Properties and Options'
                                 />
                             </h2>
-                            <p className='BoardSettingsPage__placeholder'>
-                                <FormattedMessage
-                                    id='BoardSettings.properties-coming-soon'
-                                    defaultMessage='Coming soon: Card properties management'
-                                />
-                            </p>
+                            <PropertiesSection
+                                board={board}
+                                onBoardChange={handleBoardChange}
+                            />
                         </div>
                     </div>
 

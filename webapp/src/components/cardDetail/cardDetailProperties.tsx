@@ -37,6 +37,7 @@ type Props = {
 const CardDetailProperties = (props: Props) => {
     const {board, card, cards, views, activeView} = props
     const [newTemplateId, setNewTemplateId] = useState('')
+    const [showHiddenProperties, setShowHiddenProperties] = useState(false)
     const canEditBoardProperties = useHasCurrentBoardPermissions([Permission.ManageBoardProperties])
     const canEditBoardCards = useHasCurrentBoardPermissions([Permission.ManageBoardCards])
     const intl = useIntl()
@@ -129,37 +130,79 @@ const CardDetailProperties = (props: Props) => {
         setShowConfirmationDialog(true)
     }
 
+    // Helper function to check if a property value is empty
+    const isPropertyEmpty = (propertyTemplate: IPropertyTemplate): boolean => {
+        const value = card.fields.properties[propertyTemplate.id]
+        if (value === undefined || value === null || value === '') {
+            return true
+        }
+        if (Array.isArray(value) && value.length === 0) {
+            return true
+        }
+        return false
+    }
+
+    // Separate properties into visible and hidden based on hideIfEmpty setting
+    const visibleProperties: IPropertyTemplate[] = []
+    const hiddenProperties: IPropertyTemplate[] = []
+
+    board.cardProperties.forEach((propertyTemplate: IPropertyTemplate) => {
+        const isEmpty = isPropertyEmpty(propertyTemplate)
+        const shouldHide = isEmpty && propertyTemplate.options.some((opt) => opt.hideIfEmpty)
+
+        if (shouldHide) {
+            hiddenProperties.push(propertyTemplate)
+        } else {
+            visibleProperties.push(propertyTemplate)
+        }
+    })
+
+    const renderPropertyRow = (propertyTemplate: IPropertyTemplate) => (
+        <div
+            key={propertyTemplate.id + '-' + propertyTemplate.type}
+            className='octo-propertyrow'
+        >
+            {(props.readonly || !canEditBoardProperties) && <div className='octo-propertyname octo-propertyname--readonly'>{propertyTemplate.name}</div>}
+            {!props.readonly && canEditBoardProperties &&
+                <MenuWrapper isOpen={propertyTemplate.id === newTemplateId}>
+                    <div className='octo-propertyname'><Button>{propertyTemplate.name}</Button></div>
+                    <PropertyMenu
+                        propertyId={propertyTemplate.id}
+                        propertyName={propertyTemplate.name}
+                        propertyType={propRegistry.get(propertyTemplate.type)}
+                        onTypeAndNameChanged={(newType: PropertyType, newName: string) => onPropertyChangeSetAndOpenConfirmationDialog(newType, newName, propertyTemplate)}
+                        onDelete={() => onPropertyDeleteSetAndOpenConfirmationDialog(propertyTemplate)}
+                    />
+                </MenuWrapper>
+            }
+            <PropertyValueElement
+                readOnly={props.readonly || !canEditBoardCards}
+                card={card}
+                board={board}
+                propertyTemplate={propertyTemplate}
+                showEmptyPlaceholder={true}
+            />
+        </div>
+    )
+
     return (
         <div className='octo-propertylist CardDetailProperties'>
-            {board.cardProperties.map((propertyTemplate: IPropertyTemplate) => {
-                return (
+            {visibleProperties.map(renderPropertyRow)}
+
+            {hiddenProperties.length > 0 && (
+                <>
                     <div
-                        key={propertyTemplate.id + '-' + propertyTemplate.type}
-                        className='octo-propertyrow'
+                        className='CardDetailProperties__display-more'
+                        onClick={() => setShowHiddenProperties(!showHiddenProperties)}
                     >
-                        {(props.readonly || !canEditBoardProperties) && <div className='octo-propertyname octo-propertyname--readonly'>{propertyTemplate.name}</div>}
-                        {!props.readonly && canEditBoardProperties &&
-                            <MenuWrapper isOpen={propertyTemplate.id === newTemplateId}>
-                                <div className='octo-propertyname'><Button>{propertyTemplate.name}</Button></div>
-                                <PropertyMenu
-                                    propertyId={propertyTemplate.id}
-                                    propertyName={propertyTemplate.name}
-                                    propertyType={propRegistry.get(propertyTemplate.type)}
-                                    onTypeAndNameChanged={(newType: PropertyType, newName: string) => onPropertyChangeSetAndOpenConfirmationDialog(newType, newName, propertyTemplate)}
-                                    onDelete={() => onPropertyDeleteSetAndOpenConfirmationDialog(propertyTemplate)}
-                                />
-                            </MenuWrapper>
-                        }
-                        <PropertyValueElement
-                            readOnly={props.readonly || !canEditBoardCards}
-                            card={card}
-                            board={board}
-                            propertyTemplate={propertyTemplate}
-                            showEmptyPlaceholder={true}
+                        <FormattedMessage
+                            id='CardDetail.display-more'
+                            defaultMessage='-- Display More --'
                         />
                     </div>
-                )
-            })}
+                    {showHiddenProperties && hiddenProperties.map(renderPropertyRow)}
+                </>
+            )}
 
             {showConfirmationDialog && (
                 <ConfirmationDialogBox
