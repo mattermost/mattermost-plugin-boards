@@ -58,14 +58,28 @@ const GitHubBranchCreate = (props: Props): JSX.Element | null => {
         loadConnectionStatus()
     }, [])
 
+    // Load saved branch from card fields on mount
+    useEffect(() => {
+        if (card.fields.githubBranch) {
+            setCreatedBranch({
+                ref: card.fields.githubBranch.ref,
+                url: card.fields.githubBranch.url,
+                object: {sha: '', type: 'commit'},
+            })
+        }
+    }, [card.id, card.fields.githubBranch])
+
     // Reset all state when card changes to prevent data leaking between cards
     useEffect(() => {
         setShowForm(false)
         setSelectedRepo(null)
         setBranchName('')
-        setCreatedBranch(null)
-        onBranchCreated?.(null)
-    }, [card.id, onBranchCreated])
+        // Only clear if card doesn't have a saved branch
+        if (!card.fields.githubBranch) {
+            setCreatedBranch(null)
+            onBranchCreated?.(null)
+        }
+    }, [card.id, card.fields.githubBranch, onBranchCreated])
 
     const loadConnectionStatus = async () => {
         try {
@@ -130,6 +144,20 @@ const GitHubBranchCreate = (props: Props): JSX.Element | null => {
                 setCreatedBranch(branch)
                 onBranchCreated?.(branch)
                 setShowForm(false)
+
+                // Save branch info to card fields
+                const blockPatch = {
+                    updatedFields: {
+                        githubBranch: {
+                            ref: branch.ref,
+                            url: branch.url,
+                            repo: selectedRepo.full_name,
+                            createdAt: new Date().toISOString(),
+                        },
+                    },
+                }
+                await octoClient.patchBlock(card.boardId, card.id, blockPatch)
+
                 sendFlashMessage({
                     content: intl.formatMessage({
                         id: 'GitHubBranchCreate.success',
