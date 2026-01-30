@@ -12,7 +12,6 @@ import {Board} from '../../blocks/board'
 import {BoardView, IViewType} from '../../blocks/boardView'
 import mutator from '../../mutator'
 import IconButton from '../../widgets/buttons/iconButton'
-import DeleteIcon from '../../widgets/icons/delete'
 import OptionsIcon from '../../widgets/icons/options'
 import SettingsIcon from '../../widgets/icons/settings'
 import Menu from '../../widgets/menu'
@@ -39,7 +38,6 @@ import DuplicateIcon from '../../widgets/icons/duplicate'
 import {Utils} from '../../utils'
 
 import AddIcon from '../../widgets/icons/add'
-import CloseIcon from '../../widgets/icons/close'
 import {getMe} from '../../store/users'
 import octoClient from '../../octoClient'
 import {getCurrentBoardId} from '../../store/boards'
@@ -286,6 +284,12 @@ const SidebarBoardItem = (props: Props) => {
                                         name={intl.formatMessage({id: 'ViewHeader.export-board-archive', defaultMessage: 'Export board archive'})}
                                         icon={<CompassIcon icon='export-variant'/>}
                                         onClick={() => Archiver.exportBoardArchive(board)}
+                                    />
+                                    <Menu.Text
+                                        id='hideBoard'
+                                        name={intl.formatMessage({id: 'HideBoard.MenuOption', defaultMessage: 'Hide board'})}
+                                        icon={<CompassIcon icon='eye-off-outline'/>}
+                                        onClick={handleHideBoard}
                                     />
                                     <BoardPermissionGate
                                         boardId={board.id}

@@ -2,11 +2,11 @@
 // See LICENSE.txt for license information.
 
 import React, {useCallback, useState} from 'react'
-import {FormattedMessage, useIntl} from 'react-intl'
+import {FormattedMessage} from 'react-intl'
 import {useHistory, useRouteMatch} from 'react-router-dom'
 
 import {useAppSelector} from '../../store/hooks'
-import {getCurrentBoardId, getBoard} from '../../store/boards'
+import {getCurrentBoardId} from '../../store/boards'
 import {getCurrentTeam} from '../../store/teams'
 import {Permission} from '../../constants'
 import {useHasPermissions} from '../../hooks/permissions'
@@ -16,13 +16,11 @@ import Sidebar from '../../components/sidebar/sidebar'
 import './boardSettingsPage.scss'
 
 const BoardSettingsPage = (): JSX.Element => {
-    const intl = useIntl()
     const history = useHistory()
     const match = useRouteMatch<{teamId: string, boardId: string}>()
     const currentBoardId = useAppSelector(getCurrentBoardId)
-    const board = useAppSelector(getBoard(currentBoardId || ''))
     const currentTeam = useAppSelector(getCurrentTeam)
-    const [boardTemplateSelectorOpen, setBoardTemplateSelectorOpen] = useState(false)
+    const [, setBoardTemplateSelectorOpen] = useState(false)
 
     const teamId = match.params.teamId || currentTeam?.id || ''
     const boardId = match.params.boardId || currentBoardId || ''
