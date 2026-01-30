@@ -6,17 +6,22 @@ import {FormattedMessage} from 'react-intl'
 import {useHistory, useRouteMatch} from 'react-router-dom'
 
 import {useAppDispatch, useAppSelector} from '../../store/hooks'
-import {getCurrentBoardId, setCurrent as setCurrentBoard, fetchBoardMembers} from '../../store/boards'
+import {getCurrentBoardId, getCurrentBoard, setCurrent as setCurrentBoard, fetchBoardMembers, updateBoards} from '../../store/boards'
 import {getCurrentTeam, setTeam} from '../../store/teams'
 import {Permission} from '../../constants'
 import {useHasPermissions} from '../../hooks/permissions'
 import {initialLoad, loadBoardData} from '../../store/initialLoad'
 import {getMe} from '../../store/users'
+import {getCategoryOfBoard, getHiddenBoardIDs, updateBoardCategories} from '../../store/sidebar'
 import octoClient from '../../octoClient'
 import {UserSettings} from '../../userSettings'
-import Button from '../../widgets/buttons/button'
+import mutator from '../../mutator'
+import {Board} from '../../blocks/board'
 import Sidebar from '../../components/sidebar/sidebar'
 import BoardTemplateSelector from '../../components/boardTemplateSelector/boardTemplateSelector'
+
+import GeneralSection from './generalSection'
+import BoardSettingsFooter from './boardSettingsFooter'
 
 import './boardSettingsPage.scss'
 
@@ -26,11 +31,15 @@ const BoardSettingsPage = (): JSX.Element => {
     const dispatch = useAppDispatch()
     const currentBoardId = useAppSelector(getCurrentBoardId)
     const currentTeam = useAppSelector(getCurrentTeam)
+    const board = useAppSelector(getCurrentBoard)
     const me = useAppSelector(getMe)
+    const hiddenBoardIDs = useAppSelector(getHiddenBoardIDs)
+    const category = useAppSelector(getCategoryOfBoard(currentBoardId))
     const [boardTemplateSelectorOpen, setBoardTemplateSelectorOpen] = useState(false)
 
     const teamId = match.params.teamId || currentTeam?.id || ''
     const boardId = match.params.boardId || currentBoardId || ''
+    const isHidden = hiddenBoardIDs.includes(boardId)
 
     // Initialize team and board data (same as BoardPage)
     useEffect(() => {
@@ -66,10 +75,59 @@ const BoardSettingsPage = (): JSX.Element => {
     }, [history, teamId, boardId])
 
     const handleSave = useCallback(() => {
-        // TODO: Implement save logic in subtasks
-        // For now, just navigate back
+        // Navigate back after save
         handleCancel()
     }, [handleCancel])
+
+    const handleBoardChange = useCallback(async (updatedBoard: Board) => {
+        // Update board using mutator
+        if (!board) {
+            return
+        }
+        await mutator.updateBoard(updatedBoard, board, 'update board settings')
+        dispatch(updateBoards([updatedBoard]))
+    }, [board, dispatch])
+
+    const handleHideBoard = useCallback(async () => {
+        if (!category || !me) {
+            return
+        }
+        await octoClient.hideBoard(category.id, boardId)
+        dispatch(updateBoardCategories([
+            {
+                boardID: boardId,
+                categoryID: category.id,
+                hidden: true,
+            },
+        ]))
+        // Navigate back after hiding
+        handleCancel()
+    }, [category, boardId, me, dispatch, handleCancel])
+
+    const handleShowBoard = useCallback(async () => {
+        if (!category || !me) {
+            return
+        }
+        await octoClient.unhideBoard(category.id, boardId)
+        dispatch(updateBoardCategories([
+            {
+                boardID: boardId,
+                categoryID: category.id,
+                hidden: false,
+            },
+        ]))
+    }, [category, boardId, me, dispatch])
+
+    const handleDeleteBoard = useCallback(async () => {
+        if (!board) {
+            return
+        }
+        await mutator.deleteBoard(board, 'delete board')
+        // Navigate to team page after deletion
+        if (teamId) {
+            history.push(`/team/${teamId}`)
+        }
+    }, [board, teamId, history])
 
     // Redirect if user doesn't have permission
     if (!hasAdminPermission) {
@@ -79,6 +137,31 @@ const BoardSettingsPage = (): JSX.Element => {
                     id='BoardSettings.no-permission'
                     defaultMessage='You do not have permission to access board settings.'
                 />
+            </div>
+        )
+    }
+
+    // Show loading state if board is not loaded yet
+    if (!board) {
+        return (
+            <div className='BoardSettingsPage'>
+                <div className='BoardSettingsPage__wrapper'>
+                    <Sidebar
+                        onBoardTemplateSelectorOpen={() => setBoardTemplateSelectorOpen(true)}
+                        onBoardTemplateSelectorClose={() => setBoardTemplateSelectorOpen(false)}
+                        activeBoardId={boardId}
+                    />
+                    <div className='BoardSettingsPage__content'>
+                        <div className='BoardSettingsPage__header'>
+                            <h1>
+                                <FormattedMessage
+                                    id='BoardSettings.title'
+                                    defaultMessage='Board Settings'
+                                />
+                            </h1>
+                        </div>
+                    </div>
+                </div>
             </div>
         )
     }
@@ -124,12 +207,10 @@ const BoardSettingsPage = (): JSX.Element => {
                                     defaultMessage='General'
                                 />
                             </h2>
-                            <p className='BoardSettingsPage__placeholder'>
-                                <FormattedMessage
-                                    id='BoardSettings.coming-soon'
-                                    defaultMessage='Coming soon: Board name, icon, code, and description settings'
-                                />
-                            </p>
+                            <GeneralSection
+                                board={board}
+                                onBoardChange={handleBoardChange}
+                            />
                         </div>
 
                         {/* Section 2: Views Management (IT-370) */}
@@ -165,29 +246,16 @@ const BoardSettingsPage = (): JSX.Element => {
                         </div>
                     </div>
 
-                    {/* Fixed footer with Save/Cancel buttons */}
-                    <div className='BoardSettingsPage__footer'>
-                        <Button
-                            emphasis='tertiary'
-                            size='medium'
-                            onClick={handleCancel}
-                        >
-                            <FormattedMessage
-                                id='BoardSettings.cancel'
-                                defaultMessage='Cancel'
-                            />
-                        </Button>
-                        <Button
-                            filled={true}
-                            size='medium'
-                            onClick={handleSave}
-                        >
-                            <FormattedMessage
-                                id='BoardSettings.save'
-                                defaultMessage='Save'
-                            />
-                        </Button>
-                    </div>
+                    {/* Fixed footer with actions */}
+                    <BoardSettingsFooter
+                        board={board}
+                        isHidden={isHidden}
+                        onHideBoard={handleHideBoard}
+                        onShowBoard={handleShowBoard}
+                        onDeleteBoard={handleDeleteBoard}
+                        onCancel={handleCancel}
+                        onSave={handleSave}
+                    />
                 </div>
             </div>
 

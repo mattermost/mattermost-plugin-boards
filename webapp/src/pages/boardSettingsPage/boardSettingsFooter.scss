@@ -1,0 +1,23 @@
+.BoardSettingsFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 32px;
+    background: rgb(var(--center-channel-bg-rgb));
+    border-top: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+
+    &__actions {
+        display: flex;
+        gap: 12px;
+        flex: 1;
+    }
+
+    &__main-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+}
+
