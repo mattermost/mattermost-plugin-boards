@@ -50,6 +50,29 @@ exports[`components/viewHeader/viewHeaderPropertiesMenu return properties menu 1
           </div>
           <div>
             <div
+              aria-label="GitHub PRs"
+              class="MenuOption SwitchOption menu-option"
+              role="button"
+            >
+              <div
+                class="noicon"
+              />
+              <div
+                class="menu-name"
+              >
+                GitHub PRs
+              </div>
+              <div
+                class="Switch override-main size--small"
+              >
+                <div
+                  class="octo-switch-inner"
+                />
+              </div>
+            </div>
+          </div>
+          <div>
+            <div
               aria-label="Property 1"
               class="MenuOption SwitchOption menu-option"
               role="button"
@@ -239,6 +262,29 @@ exports[`components/viewHeader/viewHeaderPropertiesMenu return properties menu w
                 class="menu-name"
               >
                 Status
+              </div>
+              <div
+                class="Switch override-main size--small"
+              >
+                <div
+                  class="octo-switch-inner"
+                />
+              </div>
+            </div>
+          </div>
+          <div>
+            <div
+              aria-label="GitHub PRs"
+              class="MenuOption SwitchOption menu-option"
+              role="button"
+            >
+              <div
+                class="noicon"
+              />
+              <div
+                class="menu-name"
+              >
+                GitHub PRs
               </div>
               <div
                 class="Switch override-main size--small"

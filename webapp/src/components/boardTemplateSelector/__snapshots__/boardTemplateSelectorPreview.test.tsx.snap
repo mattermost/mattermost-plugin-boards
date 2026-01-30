@@ -14,9 +14,6 @@ exports[`components/boardTemplateSelector/boardTemplateSelectorPreview should ma
         class="ViewTitle"
       >
         <div
-          class="add-buttons add-visible"
-        />
-        <div
           class="title"
         >
           <div

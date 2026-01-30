@@ -103,6 +103,33 @@ exports[`components/viewHeader/filterComponent return filterComponent 1`] = `
                 </div>
                 <div>
                   <div
+                    aria-label="GitHub PRs"
+                    class="MenuOption TextOption menu-option"
+                    role="button"
+                  >
+                    <div
+                      class="d-flex"
+                    >
+                      <div
+                        class="noicon"
+                      />
+                    </div>
+                    <div
+                      class="menu-option__content"
+                    >
+                      <div
+                        class="menu-name"
+                      >
+                        GitHub PRs
+                      </div>
+                    </div>
+                    <div
+                      class="noicon"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div
                     aria-label="Property 1"
                     class="MenuOption TextOption menu-option"
                     role="button"
@@ -366,6 +393,33 @@ exports[`components/viewHeader/filterComponent return filterComponent and add Fi
                         class="menu-name"
                       >
                         Status
+                      </div>
+                    </div>
+                    <div
+                      class="noicon"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div
+                    aria-label="GitHub PRs"
+                    class="MenuOption TextOption menu-option"
+                    role="button"
+                  >
+                    <div
+                      class="d-flex"
+                    >
+                      <div
+                        class="noicon"
+                      />
+                    </div>
+                    <div
+                      class="menu-option__content"
+                    >
+                      <div
+                        class="menu-name"
+                      >
+                        GitHub PRs
                       </div>
                     </div>
                     <div
@@ -883,6 +937,33 @@ exports[`components/viewHeader/filterComponent return filterComponent and filter
                         class="menu-name"
                       >
                         Status
+                      </div>
+                    </div>
+                    <div
+                      class="noicon"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div
+                    aria-label="GitHub PRs"
+                    class="MenuOption TextOption menu-option"
+                    role="button"
+                  >
+                    <div
+                      class="d-flex"
+                    >
+                      <div
+                        class="noicon"
+                      />
+                    </div>
+                    <div
+                      class="menu-option__content"
+                    >
+                      <div
+                        class="menu-name"
+                      >
+                        GitHub PRs
                       </div>
                     </div>
                     <div

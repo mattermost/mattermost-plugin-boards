@@ -26,26 +26,26 @@ const mockedMutator = mocked(mutator, true)
 
 const board = TestBlockFactory.createBoard()
 const activeView = TestBlockFactory.createBoardView(board)
-board.cardProperties[1].type = 'checkbox'
-board.cardProperties[2].type = 'text'
-board.cardProperties[3].type = 'date'
+board.cardProperties[2].type = 'checkbox'
+board.cardProperties[3].type = 'text'
+board.cardProperties[4].type = 'date'
 const statusFilter: FilterClause = {
     propertyId: board.cardProperties[0].id,
     condition: 'includes',
     values: ['Status'],
 }
 const booleanFilter: FilterClause = {
-    propertyId: board.cardProperties[1].id,
+    propertyId: board.cardProperties[2].id,
     condition: 'isSet',
     values: [],
 }
 const textFilter: FilterClause = {
-    propertyId: board.cardProperties[2].id,
+    propertyId: board.cardProperties[3].id,
     condition: 'contains',
     values: [],
 }
 const dateFilter: FilterClause = {
-    propertyId: board.cardProperties[3].id,
+    propertyId: board.cardProperties[4].id,
     condition: 'is',
     values: [],
 }
@@ -319,7 +319,7 @@ describe('components/viewHeader/filterEntry', () => {
             {operation: 'and', filters: [booleanFilter]},
             {operation: 'and',
                 filters: [{
-                    propertyId: board.cardProperties[3].id,
+                    propertyId: board.cardProperties[4].id,
                     condition: 'isSet',
                     values: [],
                 }]})
