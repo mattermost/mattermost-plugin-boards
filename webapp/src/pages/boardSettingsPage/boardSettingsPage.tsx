@@ -43,7 +43,7 @@ const BoardSettingsPage = (): JSX.Element => {
 
     useEffect(() => {
         if (boardId) {
-            dispatch(initialLoad(boardId))
+            dispatch(initialLoad())
             dispatch(setCurrentBoard(boardId))
         }
     }, [teamId, boardId, me?.id])
