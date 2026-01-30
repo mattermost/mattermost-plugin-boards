@@ -35,6 +35,7 @@ describe('/components/viewMenu', () => {
     activeView.fields.viewType = 'table'
     activeView.fields.groupById = undefined
     activeView.fields.visiblePropertyIds = ['property1', 'property2']
+    activeView.createdBy = 'user-id-1'
 
     const state = {
         users: {

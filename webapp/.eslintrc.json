@@ -14,6 +14,13 @@
     "header"
   ],
   "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": 2019,
+    "sourceType": "module"
+  },
   "env": {
     "jest": true,
     "cypress/globals": true

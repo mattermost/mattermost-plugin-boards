@@ -132,9 +132,27 @@ export function getView(viewId: string): (state: RootState) => BoardView|null {
 export const getCurrentBoardViews = createSelector(
     (state: RootState) => state.boards.current,
     getViews,
-    (boardId, views) => {
-        Utils.log(`getCurrentBoardViews boardId: ${boardId} views: ${views.length}`)
-        return Object.values(views).filter((v) => v.boardId === boardId).sort((a, b) => a.title.localeCompare(b.title)).map((v) => createBoardView(v))
+    (state: RootState) => state.users.me,
+    (boardId, views, me) => {
+        Utils.log(`getCurrentBoardViews boardId: ${boardId} views: ${Object.keys(views).length}`)
+        const userId = me?.id
+        return Object.values(views).filter((v) => {
+            if (v.boardId !== boardId) {
+                return false
+            }
+            // Show public views to everyone
+            if (v.fields.visibility === 'everyone' || !v.fields.visibility) {
+                return true
+            }
+            // Show personal views only to their owner (ownerUserId if set, otherwise createdBy)
+            if (v.fields.visibility === 'owner-only' && userId) {
+                const ownerId = v.fields.ownerUserId || v.createdBy
+                if (ownerId === userId) {
+                    return true
+                }
+            }
+            return false
+        }).sort((a, b) => a.title.localeCompare(b.title)).map((v) => createBoardView(v))
     },
 )
 

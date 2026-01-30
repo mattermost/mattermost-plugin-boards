@@ -15,6 +15,8 @@ import Button from '../../widgets/buttons/button'
 import PersonSelector from '../../components/personSelector'
 import {useAppDispatch} from '../../store/hooks'
 import {updateViews} from '../../store/views'
+import IconButton from '../../widgets/buttons/iconButton'
+import DeleteIcon from '../../widgets/icons/delete'
 
 import './viewsSection.scss'
 
@@ -107,6 +109,14 @@ const ViewsSection = (props: Props): JSX.Element => {
         return boardUsers.find(u => u.id === ownerId)
     }, [boardUsers])
 
+    const handleDeleteView = useCallback(async (view: BoardView) => {
+        if (views.length <= 1) {
+            // Don't allow deleting the last view
+            return
+        }
+        await mutator.deleteBlock(view, 'delete view')
+    }, [views])
+
     return (
         <div className='ViewsSection'>
             <div className='ViewsSection__table'>
@@ -133,6 +143,12 @@ const ViewsSection = (props: Props): JSX.Element => {
                         <FormattedMessage
                             id='ViewsSection.header.visibility'
                             defaultMessage='Visibility'
+                        />
+                    </div>
+                    <div className='ViewsSection__table-cell ViewsSection__table-cell--actions'>
+                        <FormattedMessage
+                            id='ViewsSection.header.actions'
+                            defaultMessage='Actions'
                         />
                     </div>
                 </div>
@@ -200,6 +216,15 @@ const ViewsSection = (props: Props): JSX.Element => {
                                         />
                                     </Menu>
                                 </MenuWrapper>
+                            </div>
+                            <div className='ViewsSection__table-cell ViewsSection__table-cell--actions'>
+                                {views.length > 1 && (
+                                    <IconButton
+                                        onClick={() => handleDeleteView(view)}
+                                        icon={<DeleteIcon/>}
+                                        title={intl.formatMessage({id: 'ViewsSection.delete-view', defaultMessage: 'Delete view'})}
+                                    />
+                                )}
                             </div>
                         </div>
                     )
