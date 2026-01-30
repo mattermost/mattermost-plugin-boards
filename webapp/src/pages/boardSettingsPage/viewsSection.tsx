@@ -122,9 +122,11 @@ const ViewsSection = (props: Props): JSX.Element => {
     const handleConfirmDelete = useCallback(async () => {
         if (viewToDelete) {
             await mutator.deleteBlock(viewToDelete, 'delete view')
+            // Update Redux store immediately so the view disappears from the table
+            dispatch(updateViews([{...viewToDelete, deleteAt: Date.now()}]))
         }
         setViewToDelete(null)
-    }, [viewToDelete])
+    }, [viewToDelete, dispatch])
 
     const handleCancelDelete = useCallback(() => {
         setViewToDelete(null)
