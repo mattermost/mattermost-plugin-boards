@@ -58,16 +58,19 @@ const GitHubBranchCreate = (props: Props): JSX.Element | null => {
         loadConnectionStatus()
     }, [])
 
-    // Load saved branch from card fields on mount
+    // Load saved branch from card fields on mount/card change
     useEffect(() => {
-        if (card.fields.githubBranch) {
-            setCreatedBranch({
-                ref: card.fields.githubBranch.ref,
-                url: card.fields.githubBranch.url,
+        const saved = card.fields.githubBranch
+        if (saved && typeof saved.ref === 'string' && typeof saved.url === 'string') {
+            const branch: GitHubBranch = {
+                ref: saved.ref,
+                url: saved.url,
                 object: {sha: '', type: 'commit'},
-            })
+            }
+            setCreatedBranch(branch)
+            onBranchCreated?.(branch)
         }
-    }, [card.id, card.fields.githubBranch])
+    }, [card.id, card.fields.githubBranch, onBranchCreated])
 
     // Reset all state when card changes to prevent data leaking between cards
     useEffect(() => {
@@ -141,11 +144,7 @@ const GitHubBranchCreate = (props: Props): JSX.Element | null => {
             })
 
             if (branch) {
-                setCreatedBranch(branch)
-                onBranchCreated?.(branch)
-                setShowForm(false)
-
-                // Save branch info to card fields
+                // Save branch info to card fields before updating UI
                 const blockPatch = {
                     updatedFields: {
                         githubBranch: {
@@ -156,7 +155,23 @@ const GitHubBranchCreate = (props: Props): JSX.Element | null => {
                         },
                     },
                 }
-                await octoClient.patchBlock(card.boardId, card.id, blockPatch)
+
+                try {
+                    await octoClient.patchBlock(card.boardId, card.id, blockPatch)
+                } catch (saveError) {
+                    console.error('Failed to save branch to card:', saveError)
+                    sendFlashMessage({
+                        content: intl.formatMessage({
+                            id: 'GitHubBranchCreate.saveError',
+                            defaultMessage: 'Branch created on GitHub but failed to save to card. Try refreshing.',
+                        }),
+                        severity: 'low',
+                    })
+                }
+
+                setCreatedBranch(branch)
+                onBranchCreated?.(branch)
+                setShowForm(false)
 
                 sendFlashMessage({
                     content: intl.formatMessage({
