@@ -192,7 +192,7 @@ const GitHubBranchCreate = (props: Props): JSX.Element | null => {
         <div className='GitHubBranchCreate'>
             <div className='GitHubBranchCreate__header'>
                 <div className='GitHubBranchCreate__title'>
-                    <CompassIcon icon='source-branch'/>
+                    <CompassIcon icon='github-circle'/>
                     <FormattedMessage
                         id='GitHubBranchCreate.title'
                         defaultMessage='GitHub Branch'
