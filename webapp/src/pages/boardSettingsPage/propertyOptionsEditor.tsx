@@ -11,6 +11,8 @@ import DeleteIcon from '../../widgets/icons/delete'
 import UpIcon from '../../widgets/icons/sortUp'
 import DownIcon from '../../widgets/icons/sortDown'
 import Button from '../../widgets/buttons/button'
+import Menu from '../../widgets/menu'
+import MenuWrapper from '../../widgets/menuWrapper'
 import {Utils, IDType} from '../../utils'
 
 import './propertyOptionsEditor.scss'
@@ -82,21 +84,6 @@ const PropertyOptionsEditor = (props: Props): JSX.Element => {
                 />
             </div>
 
-            {/* Issue 6: Hide if empty checkbox now applies to entire property */}
-            <div className='PropertyOptionsEditor__property-settings'>
-                <label>
-                    <input
-                        type='checkbox'
-                        checked={property.hideIfEmpty || false}
-                        onChange={(e) => props.onPropertyUpdate({hideIfEmpty: e.target.checked})}
-                    />
-                    <FormattedMessage
-                        id='PropertyOptionsEditor.hide-property-if-empty'
-                        defaultMessage='Hide this property if empty'
-                    />
-                </label>
-            </div>
-
             <div className='PropertyOptionsEditor__list'>
                 {property.options.map((option, index) => (
                     <div
@@ -104,20 +91,23 @@ const PropertyOptionsEditor = (props: Props): JSX.Element => {
                         className='PropertyOptionsEditor__option'
                     >
                         <div className='PropertyOptionsEditor__option-color'>
-                            <select
-                                value={option.color}
-                                onChange={(e) => handleUpdateOption(option.id, {color: e.target.value})}
-                                className={`PropertyOptionsEditor__color-select ${option.color}`}
-                            >
-                                {colorOptions.map((color) => (
-                                    <option
-                                        key={color}
-                                        value={color}
-                                    >
-                                        {color.replace('propColor', '')}
-                                    </option>
-                                ))}
-                            </select>
+                            <MenuWrapper>
+                                <button className={`PropertyOptionsEditor__color-button ${option.color}`}>
+                                    <span className={`PropertyOptionsEditor__color-swatch ${option.color}`}/>
+                                    {option.color.replace('propColor', '')}
+                                </button>
+                                <Menu>
+                                    {colorOptions.map((color) => (
+                                        <Menu.Text
+                                            key={color}
+                                            id={color}
+                                            name={color.replace('propColor', '')}
+                                            icon={<span className={`PropertyOptionsEditor__color-swatch ${color}`}/>}
+                                            onClick={() => handleUpdateOption(option.id, {color})}
+                                        />
+                                    ))}
+                                </Menu>
+                            </MenuWrapper>
                         </div>
 
                         <div className='PropertyOptionsEditor__option-value'>

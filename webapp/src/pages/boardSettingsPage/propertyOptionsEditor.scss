@@ -9,27 +9,6 @@
         color: rgba(var(--center-channel-color-rgb), 0.72);
     }
 
-    &__property-settings {
-        padding: 12px;
-        background: rgba(var(--center-channel-color-rgb), 0.04);
-        border-radius: 4px;
-        margin-bottom: 8px;
-
-        label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            color: rgba(var(--center-channel-color-rgb), 0.88);
-
-            input[type='checkbox'] {
-                cursor: pointer;
-            }
-        }
-    }
-
     &__list {
         display: flex;
         flex-direction: column;
@@ -51,18 +30,36 @@
     }
 
     &__option-color {
-        min-width: 100px;
+        min-width: 120px;
     }
 
-    &__color-select {
+    &__color-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
         padding: 4px 8px;
         border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
         border-radius: 4px;
         font-size: 12px;
-        width: 100%;
         font-weight: 600;
+        width: 100%;
+        background: rgba(var(--center-channel-bg-rgb), 1);
+        cursor: pointer;
+        text-align: left;
 
-        // Issue 8: Show actual color in the select dropdown
+        &:hover {
+            background: rgba(var(--center-channel-color-rgb), 0.04);
+        }
+    }
+
+    &__color-swatch {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+        flex-shrink: 0;
+        border: 1px solid rgba(var(--center-channel-color-rgb), 0.12);
+
         &.propColorDefault {
             background-color: var(--prop-default);
         }

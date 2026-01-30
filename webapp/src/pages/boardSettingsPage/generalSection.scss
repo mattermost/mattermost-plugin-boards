@@ -17,12 +17,12 @@
 
     &__name-code-wrapper {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         gap: 16px;
-        flex-wrap: wrap;
 
-        @media (max-width: 768px) {
+        @media (max-width: 480px) {
             flex-direction: column;
+            align-items: stretch;
         }
     }
 
@@ -31,20 +31,21 @@
         align-items: center;
         gap: 12px;
         flex: 1;
-        min-width: 250px;
+        min-width: 0;
     }
 
     &__code-wrapper {
         display: flex;
-        flex-direction: column;
-        gap: 4px;
-        min-width: 120px;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
     }
 
     &__code-label {
         font-size: 12px;
         font-weight: 600;
         color: rgba(var(--center-channel-color-rgb), 0.72);
+        white-space: nowrap;
     }
 
     &__input {

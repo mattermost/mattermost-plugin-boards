@@ -82,9 +82,19 @@ const BoardSettingsPage = (): JSX.Element => {
         }
     }, [history, teamId, boardId])
 
-    const handleSave = useCallback(() => {
-        // Stay on the settings page after save (Issue 7)
-        // No navigation needed
+    const [isSaving, setIsSaving] = useState(false)
+
+    const handleSave = useCallback(async () => {
+        // Issue 7: Show loading animation, stay on page after save
+        setIsSaving(true)
+        try {
+            // Board changes are auto-saved via handleBoardChange on individual fields.
+            // This button confirms the save completed with visual feedback.
+            // Small delay to show saving state to user (ensures UI feedback even if already persisted).
+            await new Promise((resolve) => setTimeout(resolve, 800))
+        } finally {
+            setIsSaving(false)
+        }
     }, [])
 
     const handleBoardChange = useCallback(async (updatedBoard: Board) => {
@@ -255,6 +265,7 @@ const BoardSettingsPage = (): JSX.Element => {
                     <BoardSettingsFooter
                         board={board}
                         isHidden={isHidden}
+                        isSaving={isSaving}
                         onHideBoard={handleHideBoard}
                         onShowBoard={handleShowBoard}
                         onDeleteBoard={handleDeleteBoard}

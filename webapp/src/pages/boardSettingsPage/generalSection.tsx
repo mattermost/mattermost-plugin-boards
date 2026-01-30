@@ -115,10 +115,7 @@ const GeneralSection = (props: Props): JSX.Element => {
                     </div>
                     <div className='GeneralSection__code-wrapper'>
                         <label className='GeneralSection__code-label'>
-                            <FormattedMessage
-                                id='BoardSettings.general.code'
-                                defaultMessage='Code'
-                            />
+                            {'Code'}
                         </label>
                         <Editable
                             className='GeneralSection__input GeneralSection__input--code'
