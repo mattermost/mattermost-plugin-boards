@@ -123,9 +123,13 @@ type Branch struct {
 	} `json:"object"`
 }
 
-// TokenResponse represents the OAuth token response from GitHub plugin.
+// TokenResponse represents the OAuth token response from the GitHub plugin's
+// /api/v1/token endpoint. The plugin returns an oauth2.Token struct.
 type TokenResponse struct {
-	Token string `json:"token"`
+	AccessToken  string `json:"access_token"`
+	TokenType    string `json:"token_type"`
+	RefreshToken string `json:"refresh_token,omitempty"`
+	Expiry       string `json:"expiry,omitempty"`
 }
 
 // RepoInfo represents minimal repository info for default branch lookup.

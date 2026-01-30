@@ -113,7 +113,7 @@ func (s *Service) GetUserToken(userID string) (string, error) {
 		return "", fmt.Errorf("failed to decode token response: %w", err)
 	}
 
-	return tokenResp.Token, nil
+	return tokenResp.AccessToken, nil
 }
 
 // IsUserConnected checks if a user has connected their GitHub account.

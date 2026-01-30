@@ -41,7 +41,7 @@ func (m *mockServicesAPI) GetLogger() mlog.LoggerIFace {
 // tokenResponse returns a mock PluginHTTP func that returns a token.
 func tokenResponse(token string) func(req *http.Request) *http.Response {
 	return func(req *http.Request) *http.Response {
-		resp := TokenResponse{Token: token}
+		resp := TokenResponse{AccessToken: token, TokenType: "bearer"}
 		body, _ := json.Marshal(resp)
 		return &http.Response{
 			StatusCode: http.StatusOK,
