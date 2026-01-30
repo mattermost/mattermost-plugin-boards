@@ -1,12 +1,12 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useCallback} from 'react'
+import React, {useCallback, useState} from 'react'
 import {injectIntl, IntlShape} from 'react-intl'
 import {generatePath, useHistory, useRouteMatch} from 'react-router-dom'
 
 import {Board, IPropertyTemplate} from '../blocks/board'
-import {BoardView, createBoardView, IViewType} from '../blocks/boardView'
+import {BoardView, createBoardView, IViewType, ViewVisibility} from '../blocks/boardView'
 import {Constants, Permission} from '../constants'
 import mutator from '../mutator'
 import TelemetryClient, {TelemetryActions, TelemetryCategory} from '../telemetry/telemetryClient'
@@ -20,8 +20,12 @@ import DuplicateIcon from '../widgets/icons/duplicate'
 import GalleryIcon from '../widgets/icons/gallery'
 import TableIcon from '../widgets/icons/table'
 import Menu from '../widgets/menu'
+import {useAppSelector} from '../store/hooks'
+import {getMe} from '../store/users'
 
 import BoardPermissionGate from './permissions/boardPermissionGate'
+import ViewVisibilityDialog from './viewVisibilityDialog'
+import RootPortal from './rootPortal'
 import './viewMenu.scss'
 
 type Props = {
@@ -35,6 +39,9 @@ type Props = {
 const ViewMenu = (props: Props) => {
     const history = useHistory()
     const match = useRouteMatch()
+    const me = useAppSelector(getMe)
+    const [showVisibilityDialog, setShowVisibilityDialog] = useState(false)
+    const [pendingViewType, setPendingViewType] = useState<IViewType | null>(null)
 
     const showView = useCallback((viewId) => {
         let newPath = generatePath(Utils.getBoardPagePath(match.path), {...match.params, viewId: viewId || ''})
@@ -91,15 +98,39 @@ const ViewMenu = (props: Props) => {
         }
     }, [props.views, showView])
 
-    const handleAddViewBoard = useCallback(() => {
+    const createViewWithVisibility = useCallback((viewType: IViewType, visibility: ViewVisibility) => {
         const {board, activeView, intl} = props
-        Utils.log('addview-board')
+        Utils.log(`addview-${viewType}`)
 
         TelemetryClient.trackEvent(TelemetryCategory, TelemetryActions.CreateBoardView, {board: board.id, view: activeView.id})
         const view = createBoardView()
-        view.title = intl.formatMessage({id: 'View.NewBoardTitle', defaultMessage: 'Board view'})
-        view.fields.viewType = 'board'
+
+        // Set view title based on type
+        switch (viewType) {
+        case 'board':
+            view.title = intl.formatMessage({id: 'View.NewBoardTitle', defaultMessage: 'Board view'})
+            break
+        case 'table':
+            view.title = intl.formatMessage({id: 'View.NewTableTitle', defaultMessage: 'Table view'})
+            view.fields.visiblePropertyIds = board.cardProperties.map((o: IPropertyTemplate) => o.id)
+            view.fields.columnWidths = {}
+            view.fields.columnWidths[Constants.titleColumnId] = Constants.defaultTitleColumnWidth
+            break
+        case 'gallery':
+            view.title = intl.formatMessage({id: 'View.NewGalleryTitle', defaultMessage: 'Gallery view'})
+            view.fields.visiblePropertyIds = [Constants.titleColumnId]
+            break
+        case 'calendar':
+            view.title = intl.formatMessage({id: 'View.NewCalendarTitle', defaultMessage: 'Calendar view'})
+            view.parentId = board.id
+            view.fields.visiblePropertyIds = [Constants.titleColumnId]
+            view.fields.dateDisplayPropertyId = board.cardProperties.find((o: IPropertyTemplate) => o.type === 'date')?.id
+            break
+        }
+
+        view.fields.viewType = viewType
         view.boardId = board.id
+        view.fields.visibility = visibility === 'everyone' ? 'everyone' : 'owner-only'
 
         const oldViewId = activeView.id
 
@@ -117,99 +148,47 @@ const ViewMenu = (props: Props) => {
                 showView(oldViewId)
             })
     }, [props.activeView, props.board, props.intl, showView])
+
+    const handleAddViewBoard = useCallback(() => {
+        setPendingViewType('board')
+        setShowVisibilityDialog(true)
+    }, [])
 
     const handleAddViewTable = useCallback(() => {
-        const {board, activeView, intl} = props
-
-        Utils.log('addview-table')
-
-        const view = createBoardView()
-        view.title = intl.formatMessage({id: 'View.NewTableTitle', defaultMessage: 'Table view'})
-        view.fields.viewType = 'table'
-        view.boardId = board.id
-        view.fields.visiblePropertyIds = board.cardProperties.map((o: IPropertyTemplate) => o.id)
-        view.fields.columnWidths = {}
-        view.fields.columnWidths[Constants.titleColumnId] = Constants.defaultTitleColumnWidth
-
-        const oldViewId = activeView.id
-
-        mutator.insertBlock(
-            view.boardId,
-            view,
-            'add view',
-            async (block: Block) => {
-                // This delay is needed because WSClient has a default 100 ms notification delay before updates
-                setTimeout(() => {
-                    Utils.log(`showView: ${block.id}`)
-                    showView(block.id)
-                }, 120)
-            },
-            async () => {
-                showView(oldViewId)
-            })
-    }, [props.activeView, props.board, props.intl, showView])
+        setPendingViewType('table')
+        setShowVisibilityDialog(true)
+    }, [])
 
     const handleAddViewGallery = useCallback(() => {
-        const {board, activeView, intl} = props
-
-        Utils.log('addview-gallery')
-
-        const view = createBoardView()
-        view.title = intl.formatMessage({id: 'View.NewGalleryTitle', defaultMessage: 'Gallery view'})
-        view.fields.viewType = 'gallery'
-        view.boardId = board.id
-        view.fields.visiblePropertyIds = [Constants.titleColumnId]
-
-        const oldViewId = activeView.id
-
-        mutator.insertBlock(
-            view.boardId,
-            view,
-            'add view',
-            async (block: Block) => {
-                // This delay is needed because WSClient has a default 100 ms notification delay before updates
-                setTimeout(() => {
-                    Utils.log(`showView: ${block.id}`)
-                    showView(block.id)
-                }, 120)
-            },
-            async () => {
-                showView(oldViewId)
-            })
-    }, [props.board, props.activeView, props.intl, showView])
+        setPendingViewType('gallery')
+        setShowVisibilityDialog(true)
+    }, [])
 
     const handleAddViewCalendar = useCallback(() => {
-        const {board, activeView, intl} = props
+        setPendingViewType('calendar')
+        setShowVisibilityDialog(true)
+    }, [])
 
-        Utils.log('addview-calendar')
+    const handleVisibilityPublic = useCallback(() => {
+        if (pendingViewType) {
+            createViewWithVisibility(pendingViewType, 'everyone')
+        }
+        setShowVisibilityDialog(false)
+        setPendingViewType(null)
+    }, [pendingViewType, createViewWithVisibility])
 
-        const view = createBoardView()
-        view.title = intl.formatMessage({id: 'View.NewCalendarTitle', defaultMessage: 'Calendar view'})
-        view.fields.viewType = 'calendar'
-        view.parentId = board.id
-        view.boardId = board.id
-        view.fields.visiblePropertyIds = [Constants.titleColumnId]
+    const handleVisibilityPersonal = useCallback(() => {
+        if (pendingViewType) {
+            createViewWithVisibility(pendingViewType, 'owner-only')
+        }
+        setShowVisibilityDialog(false)
+        setPendingViewType(null)
+    }, [pendingViewType, createViewWithVisibility])
 
-        const oldViewId = activeView.id
-
-        // Find first date property
-        view.fields.dateDisplayPropertyId = board.cardProperties.find((o: IPropertyTemplate) => o.type === 'date')?.id
-
-        mutator.insertBlock(
-            view.boardId,
-            view,
-            'add view',
-            async (block: Block) => {
-                // This delay is needed because WSClient has a default 100 ms notification delay before updates
-                setTimeout(() => {
-                    Utils.log(`showView: ${block.id}`)
-                    showView(block.id)
-                }, 120)
-            },
-            async () => {
-                showView(oldViewId)
-            })
-    }, [props.board, props.activeView, props.intl, showView])
+    const handleVisibilityCancel = useCallback(() => {
+        setShowVisibilityDialog(false)
+        setPendingViewType(null)
+    }, [])
 
     const {views, intl} = props
 
@@ -274,7 +253,7 @@ const ViewMenu = (props: Props) => {
                     />
                 </BoardPermissionGate>
                 }
-                {!props.readonly && views.length > 1 &&
+                {!props.readonly && views.length > 1 && me && props.activeView.createdBy === me.id &&
                 <BoardPermissionGate permissions={[Permission.ManageBoardProperties]}>
                     <Menu.Text
                         id='__deleteView'
@@ -321,6 +300,17 @@ const ViewMenu = (props: Props) => {
                 </BoardPermissionGate>
                 }
             </Menu>
+            {showVisibilityDialog &&
+                <RootPortal>
+                    <ViewVisibilityDialog
+                        dialogBox={{
+                            onPublic: handleVisibilityPublic,
+                            onPersonal: handleVisibilityPersonal,
+                            onClose: handleVisibilityCancel,
+                        }}
+                    />
+                </RootPortal>
+            }
         </div>
     )
 }
