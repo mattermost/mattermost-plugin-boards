@@ -187,4 +187,3 @@ const ViewsSection = (props: Props): JSX.Element => {
 }
 
 export default React.memo(ViewsSection)
-
