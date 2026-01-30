@@ -14,6 +14,22 @@ import Label from '../../widgets/label'
 
 import './githubPRStatus.scss'
 
+// Well-known property ID for GitHub PRs JSON data (synced by external cron)
+const GITHUB_PRS_PROPERTY_ID = 'agithubprs1prp7x9jkxd1ec66j'
+
+// PR status as synced by the cron
+type PRStatus = 'NEW' | 'CI' | 'FAILED' | 'READY' | 'MERGED'
+
+// Shape of each PR entry stored in the card property JSON
+interface PropertyPR {
+    number: number
+    title: string
+    url: string
+    status: PRStatus
+    repo: string
+    branch?: string
+}
+
 type Props = {
     card: Card
     readonly: boolean
@@ -34,6 +50,98 @@ const parsePRUrl = (url: string): {owner: string; repo: string; number: number} 
     return null
 }
 
+// Status badge color mapping
+const getStatusColor = (status: PRStatus): string => {
+    switch (status) {
+    case 'NEW':
+        return 'propColorGray'
+    case 'CI':
+        return 'propColorBlue'
+    case 'FAILED':
+        return 'propColorRed'
+    case 'READY':
+        return 'propColorGreen'
+    case 'MERGED':
+        return 'propColorPurple'
+    default:
+        return 'propColorGray'
+    }
+}
+
+// Valid PR status values
+const VALID_PR_STATUSES: PRStatus[] = ['NEW', 'CI', 'FAILED', 'READY', 'MERGED']
+
+// Sanitize URL to prevent XSS — only allow http(s) schemes
+const sanitizePRUrl = (url: string): string => {
+    try {
+        const parsed = new URL(url)
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+            return parsed.href
+        }
+    } catch {
+        // Invalid URL
+    }
+    return ''
+}
+
+// Parse the JSON property value into an array of PRs
+const parsePRsFromProperty = (card: Card): PropertyPR[] => {
+    const raw = card.fields?.properties?.[GITHUB_PRS_PROPERTY_ID]
+    if (!raw || typeof raw !== 'string') {
+        return []
+    }
+    try {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) {
+            return parsed
+                .filter((pr: any) =>
+                    pr &&
+                    typeof pr.number === 'number' &&
+                    typeof pr.url === 'string' &&
+                    typeof pr.status === 'string' &&
+                    VALID_PR_STATUSES.includes(pr.status) &&
+                    typeof pr.repo === 'string' &&
+                    pr.repo.length > 0,
+                )
+                .map((pr: any) => ({
+                    ...pr,
+                    url: sanitizePRUrl(pr.url),
+                }))
+                .filter((pr: PropertyPR) => pr.url.length > 0)
+        }
+    } catch {
+        // Invalid JSON — ignore
+    }
+    return []
+}
+
+// Sub-component: renders PRs from card property data (cron-synced)
+const PropertyPRList = ({prs}: {prs: PropertyPR[]}): JSX.Element => {
+    return (
+        <div className='GitHubPRStatus__property-list'>
+            {prs.map((pr) => (
+                <div
+                    key={`${pr.repo}-${pr.number}`}
+                    className='GitHubPRStatus__property-pr'
+                >
+                    <a
+                        href={pr.url}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='GitHubPRStatus__property-pr-title'
+                        title={`${pr.repo}#${pr.number}`}
+                    >
+                        {pr.title || `#${pr.number}`}
+                    </a>
+                    <Label color={getStatusColor(pr.status)}>
+                        <span className='Label-text'>{pr.status}</span>
+                    </Label>
+                </div>
+            ))}
+        </div>
+    )
+}
+
 const GitHubPRStatus = (props: Props): JSX.Element | null => {
     const {card, readonly, hasBranch} = props
     const intl = useIntl()
@@ -46,10 +154,18 @@ const GitHubPRStatus = (props: Props): JSX.Element | null => {
     const [loadingPR, setLoadingPR] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    // Check GitHub connection status
+    // PRs from card property (cron-synced)
+    const propertyPRs = parsePRsFromProperty(card)
+    const hasPropertyPRs = propertyPRs.length > 0
+
+    // Check GitHub connection status (only needed for manual tracking)
     useEffect(() => {
-        loadConnectionStatus()
-    }, [])
+        if (!hasPropertyPRs) {
+            loadConnectionStatus()
+        } else {
+            setLoading(false)
+        }
+    }, [hasPropertyPRs])
 
     // Reset all state when card changes to prevent data leaking between cards
     useEffect(() => {
@@ -131,7 +247,25 @@ const GitHubPRStatus = (props: Props): JSX.Element | null => {
         return pr.state
     }
 
-    // Don't show anything while loading, if not connected, or if no branch has been created
+    // If we have property-based PRs, always show them (no GitHub connection needed)
+    if (hasPropertyPRs) {
+        return (
+            <div className='GitHubPRStatus'>
+                <div className='GitHubPRStatus__header'>
+                    <div className='GitHubPRStatus__title'>
+                        <CompassIcon icon='source-pull'/>
+                        <FormattedMessage
+                            id='GitHubPRStatus.title'
+                            defaultMessage='Pull Request'
+                        />
+                    </div>
+                </div>
+                <PropertyPRList prs={propertyPRs}/>
+            </div>
+        )
+    }
+
+    // Fallback: manual PR tracking (requires GitHub connection + branch)
     if (loading || !connectionStatus?.connected || !hasBranch) {
         return null
     }
@@ -351,4 +485,5 @@ const GitHubPRStatus = (props: Props): JSX.Element | null => {
     )
 }
 
+export {GITHUB_PRS_PROPERTY_ID}
 export default GitHubPRStatus
