@@ -1223,7 +1223,7 @@ class OctoClient {
         })
 
         if (response.status !== 200) {
-            return []
+            throw new Error(`Failed to fetch branches: ${response.status} ${response.statusText}`)
         }
 
         return (await this.getJson(response, [])) as GitHubBranchInfo[]

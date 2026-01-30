@@ -132,10 +132,9 @@ const GitHubBranchCreate = (props: Props): JSX.Element | null => {
             setLoadingBranches(true)
             const branchList = await octoClient.getGitHubBranches(repo.owner, repo.name)
             setBranches(branchList)
-            // Set default base branch
-            if (!baseBranch && repo.default_branch) {
-                setBaseBranch(repo.default_branch)
-            }
+            // Always reset base branch when repository changes to avoid
+            // carrying over a branch name that doesn't exist in the new repo.
+            setBaseBranch(repo.default_branch || '')
         } catch (error) {
             console.error('Failed to load branches:', error)
             sendFlashMessage({
