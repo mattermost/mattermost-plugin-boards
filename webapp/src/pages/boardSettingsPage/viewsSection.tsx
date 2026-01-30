@@ -13,6 +13,8 @@ import Menu from '../../widgets/menu'
 import MenuWrapper from '../../widgets/menuWrapper'
 import Button from '../../widgets/buttons/button'
 import PersonSelector from '../../components/personSelector'
+import {useAppDispatch} from '../../store/hooks'
+import {updateViews} from '../../store/views'
 
 import './viewsSection.scss'
 
@@ -32,6 +34,7 @@ const VIEW_TYPE_OPTIONS: {value: IViewType, labelId: string, defaultLabel: strin
 const ViewsSection = (props: Props): JSX.Element => {
     const {views, boardUsers} = props
     const intl = useIntl()
+    const dispatch = useAppDispatch()
 
     const viewTypeLabels = VIEW_TYPE_OPTIONS.map((opt) => ({
         ...opt,
@@ -43,13 +46,16 @@ const ViewsSection = (props: Props): JSX.Element => {
             return
         }
 
+        const updatedView = {...view, fields: {...view.fields, viewType: newType}}
         await mutator.updateBlock(
             view.boardId,
-            {...view, fields: {...view.fields, viewType: newType}},
+            updatedView,
             view,
             'change view type',
         )
-    }, [])
+        // Update Redux store immediately (Issue 5)
+        dispatch(updateViews([updatedView]))
+    }, [dispatch])
 
     const handleOwnerChange = useCallback(async (view: BoardView, newOwner: IUser | null, action: ActionMeta<IUser>) => {
         if (action.action === 'clear') {
@@ -66,29 +72,35 @@ const ViewsSection = (props: Props): JSX.Element => {
         // Store owner in fields.ownerUserId so it persists via the
         // BlockPatch updatedFields (createdBy is a read-only top-level
         // field that the patch API ignores).
+        const updatedView = {...view, fields: {...view.fields, ownerUserId: newOwnerId}}
         await mutator.updateBlock(
             view.boardId,
-            {...view, fields: {...view.fields, ownerUserId: newOwnerId}},
+            updatedView,
             view,
             'change view owner',
         )
-    }, [])
+        // Update Redux store immediately
+        dispatch(updateViews([updatedView]))
+    }, [dispatch])
 
     const handleVisibilityChange = useCallback(async (view: BoardView, isOwnerOnly: boolean) => {
         const currentVisibility = view.fields.visibility || 'everyone'
         const newVisibility = isOwnerOnly ? 'owner-only' : 'everyone'
-        
+
         if (currentVisibility === newVisibility) {
             return
         }
 
+        const updatedView = {...view, fields: {...view.fields, visibility: newVisibility}}
         await mutator.updateBlock(
             view.boardId,
-            {...view, fields: {...view.fields, visibility: newVisibility}},
+            updatedView,
             view,
             'change view visibility',
         )
-    }, [])
+        // Update Redux store immediately (Issue 4)
+        dispatch(updateViews([updatedView]))
+    }, [dispatch])
 
     const getOwnerUser = useCallback((view: BoardView): IUser | undefined => {
         const ownerId = view.fields.ownerUserId || view.createdBy

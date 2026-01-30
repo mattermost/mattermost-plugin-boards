@@ -11,6 +11,7 @@ import MenuWrapper from '../../widgets/menuWrapper'
 import {Utils, IDType} from '../../utils'
 import propsRegistry from '../../properties'
 import {PropertyTypes} from '../../widgets/propertyMenu'
+import {GITHUB_PRS_PROPERTY_ID} from '../../components/cardDetail/githubPRStatus'
 
 import PropertyItem from './propertyItem'
 
@@ -80,15 +81,18 @@ const PropertiesSection = (props: Props): JSX.Element => {
         props.onBoardChange(updatedBoard)
     }, [board, props])
 
+    // Issue 9: Filter out GitHub PRs property (it's force-hidden and managed by external cron)
+    const visibleProperties = board.cardProperties.filter((prop) => prop.id !== GITHUB_PRS_PROPERTY_ID)
+
     return (
         <div className='PropertiesSection'>
             <div className='PropertiesSection__list'>
-                {board.cardProperties.map((property, index) => (
+                {visibleProperties.map((property, index) => (
                     <PropertyItem
                         key={property.id}
                         property={property}
                         index={index}
-                        totalCount={board.cardProperties.length}
+                        totalCount={visibleProperties.length}
                         isExpanded={expandedPropertyId === property.id}
                         onToggleExpand={() => setExpandedPropertyId(
                             expandedPropertyId === property.id ? null : property.id

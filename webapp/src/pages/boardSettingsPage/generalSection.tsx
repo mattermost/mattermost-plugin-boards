@@ -46,7 +46,10 @@ const GeneralSection = (props: Props): JSX.Element => {
     }, [title, board, props])
 
     const handleCodeChange = useCallback((newCode: string) => {
-        setCode(newCode)
+        // Enforce max 10 characters on frontend (Issue 1)
+        if (newCode.length <= 10) {
+            setCode(newCode)
+        }
     }, [])
 
     const handleCodeSave = useCallback(() => {
@@ -84,7 +87,7 @@ const GeneralSection = (props: Props): JSX.Element => {
 
     return (
         <div className='GeneralSection'>
-            {/* Board Name */}
+            {/* Board Name and Code - Compact Layout (Issue 1) */}
             <div className='GeneralSection__field'>
                 <label className='GeneralSection__label'>
                     <FormattedMessage
@@ -92,47 +95,47 @@ const GeneralSection = (props: Props): JSX.Element => {
                         defaultMessage='Board Name'
                     />
                 </label>
-                <div className='GeneralSection__input-wrapper'>
-                    <BoardIconSelector
-                        board={board}
-                        size='m'
-                    />
-                    <Editable
-                        className='GeneralSection__input GeneralSection__input--title'
-                        value={title}
-                        placeholderText={intl.formatMessage({
-                            id: 'BoardSettings.general.name-placeholder',
-                            defaultMessage: 'Untitled board',
-                        })}
-                        onChange={handleTitleChange}
-                        onSave={handleTitleSave}
-                        saveOnEsc={true}
-                        spellCheck={true}
-                    />
+                <div className='GeneralSection__name-code-wrapper'>
+                    <div className='GeneralSection__input-wrapper'>
+                        <BoardIconSelector
+                            board={board}
+                            size='m'
+                        />
+                        <Editable
+                            className='GeneralSection__input GeneralSection__input--title'
+                            value={title}
+                            placeholderText={intl.formatMessage({
+                                id: 'BoardSettings.general.name-placeholder',
+                                defaultMessage: 'Untitled board',
+                            })}
+                            onChange={handleTitleChange}
+                            onSave={handleTitleSave}
+                            saveOnEsc={true}
+                            spellCheck={true}
+                        />
+                    </div>
+                    <div className='GeneralSection__code-wrapper'>
+                        <label className='GeneralSection__code-label'>
+                            <FormattedMessage
+                                id='BoardSettings.general.code'
+                                defaultMessage='Code'
+                            />
+                        </label>
+                        <Editable
+                            className='GeneralSection__input GeneralSection__input--code'
+                            value={code}
+                            placeholderText={intl.formatMessage({
+                                id: 'BoardSettings.general.code-placeholder',
+                                defaultMessage: 'e.g., PROJ1',
+                            })}
+                            onChange={handleCodeChange}
+                            onSave={handleCodeSave}
+                            saveOnEsc={true}
+                            validator={validateCode}
+                            spellCheck={false}
+                        />
+                    </div>
                 </div>
-            </div>
-
-            {/* Board Code */}
-            <div className='GeneralSection__field'>
-                <label className='GeneralSection__label'>
-                    <FormattedMessage
-                        id='BoardSettings.general.code'
-                        defaultMessage='Board Code'
-                    />
-                </label>
-                <Editable
-                    className='GeneralSection__input'
-                    value={code}
-                    placeholderText={intl.formatMessage({
-                        id: 'BoardSettings.general.code-placeholder',
-                        defaultMessage: 'e.g., PROJ1',
-                    })}
-                    onChange={handleCodeChange}
-                    onSave={handleCodeSave}
-                    saveOnEsc={true}
-                    validator={validateCode}
-                    spellCheck={false}
-                />
                 <p className='GeneralSection__help-text'>
                     <FormattedMessage
                         id='BoardSettings.general.code-help'

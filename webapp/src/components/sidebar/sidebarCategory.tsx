@@ -108,7 +108,15 @@ const SidebarCategory = (props: Props) => {
         if (boardId === props.activeBoardID && props.onBoardTemplateSelectorClose) {
             props.onBoardTemplateSelectorClose()
         }
-        Utils.showBoard(boardId, match, history)
+        // Issue 3: If on settings page, navigate to board page (not settings)
+        const isOnSettingsPage = match.path.includes('/settings')
+        if (isOnSettingsPage) {
+            const params = {...match.params, boardId: boardId || ''}
+            const newPath = generatePath('/team/:teamId/:boardId', params)
+            history.push(newPath)
+        } else {
+            Utils.showBoard(boardId, match, history)
+        }
         props.hideSidebar()
     }, [match, history])
 
@@ -117,13 +125,17 @@ const SidebarCategory = (props: Props) => {
             props.onBoardTemplateSelectorClose()
         }
 
+        // Issue 3: If on settings page, navigate to board page (not settings)
+        const isOnSettingsPage = match.path.includes('/settings')
+        const basePath = isOnSettingsPage ? '/team/:teamId/:boardId/:viewId?' : Utils.getBoardPagePath(match.path)
+
         // if the same board, reuse the match params
         // otherwise remove viewId and cardId, results in first view being selected
         const params = {...match.params, boardId: boardId || '', viewId: viewId || ''}
         if (boardId !== match.params.boardId && viewId !== match.params.viewId) {
             params.cardId = undefined
         }
-        const newPath = generatePath(Utils.getBoardPagePath(match.path), params)
+        const newPath = generatePath(basePath, params)
         history.push(newPath)
         props.hideSidebar()
     }, [match, history])

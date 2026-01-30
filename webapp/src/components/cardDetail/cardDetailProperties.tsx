@@ -143,12 +143,13 @@ const CardDetailProperties = (props: Props) => {
     }
 
     // Separate properties into visible and hidden based on hideIfEmpty setting
+    // Issue 6: hideIfEmpty now applies to entire property, not individual options
     const visibleProperties: IPropertyTemplate[] = []
     const hiddenProperties: IPropertyTemplate[] = []
 
     board.cardProperties.forEach((propertyTemplate: IPropertyTemplate) => {
         const isEmpty = isPropertyEmpty(propertyTemplate)
-        const shouldHide = isEmpty && propertyTemplate.options.some((opt) => opt.hideIfEmpty)
+        const shouldHide = isEmpty && propertyTemplate.hideIfEmpty
 
         if (shouldHide) {
             hiddenProperties.push(propertyTemplate)
