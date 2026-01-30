@@ -22,33 +22,39 @@ var (
 	ErrPluginError   = errors.New("GitHub plugin error")
 	ErrPluginStatus  = errors.New("GitHub plugin returned error status")
 	ErrGitHubAPICall = errors.New("GitHub API error")
+	ErrNotConnected  = errors.New("user is not connected to GitHub")
 )
 
 const (
 	// GitHubPluginID is the ID of the GitHub plugin.
 	GitHubPluginID = "github"
 
-	// API endpoints for the GitHub plugin (without /plugins/ prefix - PluginHTTP adds it).
-	endpointConnected    = "/github/api/v1/connected"
-	endpointRepos        = "/github/api/v1/repositories"
-	endpointCreateIssue  = "/github/api/v1/issue"
-	endpointGetIssue     = "/github/api/v1/issue"
-	endpointSearchIssues = "/github/api/v1/searchissues"
-	endpointGetPR        = "/github/api/v1/pr"
-	endpointToken        = "/github/api/v1/token" //nolint:gosec // G101: This is an endpoint path, not a credential
+	// IPC endpoint for token retrieval (uses query params, not User-ID header).
+	// This is the only PluginHTTP endpoint we use, because other endpoints rely on
+	// Mattermost-User-ID header which gets overwritten by PluginHTTP.
+	endpointToken = "/github/api/v1/token" //nolint:gosec // G101: This is an endpoint path, not a credential
 
-	// GitHub API endpoints (direct).
+	// GitHub API base URL.
 	githubAPIBase = "https://api.github.com"
-	githubAPIRefs = "/repos/%s/%s/git/refs"
-	githubAPIRef  = "/repos/%s/%s/git/refs/heads/%s"
-	githubAPIRepo = "/repos/%s/%s"
 
-	// Headers for IPC communication.
-	headerUserID      = "Mattermost-User-ID"
+	// GitHub API endpoint patterns.
+	githubAPIUser         = "/user"
+	githubAPIUserRepos    = "/user/repos"
+	githubAPIRepoIssues   = "/repos/%s/%s/issues"
+	githubAPIRepoIssue    = "/repos/%s/%s/issues/%d"
+	githubAPISearchIssues = "/search/issues"
+	githubAPIRepoPull     = "/repos/%s/%s/pulls/%d"
+	githubAPIRefs         = "/repos/%s/%s/git/refs"
+	githubAPIRef          = "/repos/%s/%s/git/refs/heads/%s"
+	githubAPIRepo         = "/repos/%s/%s"
+
+	// Headers.
 	headerPluginID    = "Mattermost-Plugin-ID"
 	headerContentType = "Content-Type"
 	headerAuthBearer  = "Authorization"
+	headerAccept      = "Accept"
 	contentTypeJSON   = "application/json"
+	githubAccept      = "application/vnd.github+json"
 )
 
 // ServicesAPI defines the interface for interacting with Mattermost services.
@@ -60,7 +66,10 @@ type ServicesAPI interface {
 	GetLogger() mlog.LoggerIFace
 }
 
-// Service provides GitHub plugin IPC functionality.
+// Service provides GitHub integration functionality.
+// It retrieves the user's OAuth token via IPC (PluginHTTP → /api/v1/token)
+// and then calls the GitHub API directly, bypassing the Mattermost-User-ID
+// header issue in PluginHTTP.
 type Service struct {
 	api        ServicesAPI
 	httpClient *http.Client
@@ -76,104 +85,131 @@ func New(api ServicesAPI) *Service {
 	}
 }
 
+// GetUserToken retrieves the OAuth token for a user from the GitHub plugin.
+// This is the only IPC call we make — it uses query params (not the User-ID
+// header that gets overwritten by PluginHTTP).
+func (s *Service) GetUserToken(userID string) (string, error) {
+	reqURL := fmt.Sprintf("%s?userID=%s", endpointToken, url.QueryEscape(userID))
+
+	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set(headerPluginID, "focalboard")
+
+	resp := s.api.PluginHTTP(req)
+	if resp == nil {
+		return "", ErrNoResponse
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", s.handleIPCError(resp)
+	}
+
+	var tokenResp TokenResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+		return "", fmt.Errorf("failed to decode token response: %w", err)
+	}
+
+	return tokenResp.Token, nil
+}
+
 // IsUserConnected checks if a user has connected their GitHub account.
+// Returns true if the user has a valid OAuth token.
 func (s *Service) IsUserConnected(userID string) (bool, error) {
-	req, err := http.NewRequest(http.MethodGet, endpointConnected, nil)
+	token, err := s.GetUserToken(userID)
 	if err != nil {
-		return false, fmt.Errorf("failed to create request: %w", err)
+		// If plugin returns an error, user is likely not connected
+		s.api.GetLogger().Debug("GitHub IsUserConnected: token retrieval failed",
+			mlog.String("userID", userID),
+			mlog.Err(err),
+		)
+		return false, nil
 	}
 
-	req.Header.Set(headerUserID, userID)
-
-	resp := s.api.PluginHTTP(req)
-	if resp == nil {
-		return false, ErrNoResponse
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return false, s.handleErrorResponse(resp)
-	}
-
-	var connResp ConnectedResponse
-	if err := json.NewDecoder(resp.Body).Decode(&connResp); err != nil {
-		return false, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	return connResp.Connected, nil
+	return token != "", nil
 }
 
-// GetConnectedStatus returns the full connection status including username.
+// GetConnectedStatus returns the full connection status including GitHub username.
 func (s *Service) GetConnectedStatus(userID string) (*ConnectedResponse, error) {
-	req, err := http.NewRequest(http.MethodGet, endpointConnected, nil)
+	token, err := s.GetUserToken(userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		s.api.GetLogger().Debug("GitHub GetConnectedStatus: token retrieval failed",
+			mlog.String("userID", userID),
+			mlog.Err(err),
+		)
+		return &ConnectedResponse{Connected: false}, nil
 	}
 
-	req.Header.Set(headerUserID, userID)
-
-	s.api.GetLogger().Debug("GitHub GetConnectedStatus request",
-		mlog.String("userID", userID),
-		mlog.String("endpoint", endpointConnected),
-	)
-
-	resp := s.api.PluginHTTP(req)
-	if resp == nil {
-		s.api.GetLogger().Error("GitHub GetConnectedStatus: no response from plugin")
-		return nil, ErrNoResponse
+	if token == "" {
+		return &ConnectedResponse{Connected: false}, nil
 	}
-	defer resp.Body.Close()
 
-	// Read body for logging
-	body, err := io.ReadAll(resp.Body)
+	// Get the GitHub username via the API
+	username, err := s.getAuthenticatedUser(token)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		s.api.GetLogger().Warn("GitHub GetConnectedStatus: failed to get username",
+			mlog.String("userID", userID),
+			mlog.Err(err),
+		)
+		// Token exists but we can't get the username — still connected
+		return &ConnectedResponse{Connected: true}, nil
 	}
 
-	s.api.GetLogger().Debug("GitHub GetConnectedStatus response",
-		mlog.Int("statusCode", resp.StatusCode),
-		mlog.String("body", string(body)),
-	)
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("%w: status %d: %s", ErrPluginStatus, resp.StatusCode, string(body))
-	}
-
-	var connResp ConnectedResponse
-	if err := json.Unmarshal(body, &connResp); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	return &connResp, nil
+	return &ConnectedResponse{
+		Connected:      true,
+		GitHubUsername: username,
+	}, nil
 }
 
-// GetRepositories retrieves the list of repositories for a user in a channel.
+// GetRepositories retrieves the list of GitHub repositories for a user.
 func (s *Service) GetRepositories(userID, channelID string) ([]Repository, error) {
-	reqURL := endpointRepos
-	if channelID != "" {
-		reqURL = fmt.Sprintf("%s?channel_id=%s", reqURL, url.QueryEscape(channelID))
+	token, err := s.GetUserToken(userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user token: %w", err)
 	}
+	if token == "" {
+		return nil, ErrNotConnected
+	}
+
+	reqURL := fmt.Sprintf("%s%s?per_page=100&sort=full_name", githubAPIBase, githubAPIUserRepos)
 
 	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set(headerUserID, userID)
+	s.setGitHubHeaders(req, token)
 
-	resp := s.api.PluginHTTP(req)
-	if resp == nil {
-		return nil, ErrNoResponse
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call GitHub API: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, s.handleErrorResponse(resp)
+		return nil, s.handleGitHubError(resp)
 	}
 
-	var repos []Repository
-	if err := json.NewDecoder(resp.Body).Decode(&repos); err != nil {
+	var ghRepos []ghRepository
+	if err := json.NewDecoder(resp.Body).Decode(&ghRepos); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	repos := make([]Repository, 0, len(ghRepos))
+	for _, r := range ghRepos {
+		repos = append(repos, Repository{
+			ID:            r.ID,
+			Name:          r.Name,
+			FullName:      r.FullName,
+			Owner:         r.Owner.Login,
+			Private:       r.Private,
+			HTMLURL:       r.HTMLURL,
+			Description:   r.Description,
+			DefaultBranch: r.DefaultBranch,
+		})
 	}
 
 	return repos, nil
@@ -181,27 +217,46 @@ func (s *Service) GetRepositories(userID, channelID string) ([]Repository, error
 
 // CreateIssue creates a new GitHub issue.
 func (s *Service) CreateIssue(userID string, req CreateIssueRequest) (*Issue, error) {
-	body, err := json.Marshal(req)
+	token, err := s.GetUserToken(userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user token: %w", err)
+	}
+	if token == "" {
+		return nil, ErrNotConnected
+	}
+
+	reqURL := fmt.Sprintf("%s"+githubAPIRepoIssues, githubAPIBase, req.Owner, req.Repo)
+
+	payload := ghCreateIssueRequest{
+		Title:     req.Title,
+		Body:      req.Body,
+		Labels:    req.Labels,
+		Assignees: req.Assignees,
+	}
+	if req.Milestone > 0 {
+		payload.Milestone = &req.Milestone
+	}
+
+	body, err := json.Marshal(payload)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	httpReq, err := http.NewRequest(http.MethodPost, endpointCreateIssue, bytes.NewReader(body))
+	httpReq, err := http.NewRequest(http.MethodPost, reqURL, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	httpReq.Header.Set(headerUserID, userID)
-	httpReq.Header.Set(headerContentType, contentTypeJSON)
+	s.setGitHubHeaders(httpReq, token)
 
-	resp := s.api.PluginHTTP(httpReq)
-	if resp == nil {
-		return nil, ErrNoResponse
+	resp, err := s.httpClient.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call GitHub API: %w", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		return nil, s.handleErrorResponse(resp)
+	if resp.StatusCode != http.StatusCreated {
+		return nil, s.handleGitHubError(resp)
 	}
 
 	var issue Issue
@@ -214,23 +269,31 @@ func (s *Service) CreateIssue(userID string, req CreateIssueRequest) (*Issue, er
 
 // GetIssue retrieves a specific GitHub issue.
 func (s *Service) GetIssue(userID, owner, repo string, number int) (*Issue, error) {
-	reqURL := fmt.Sprintf("%s?owner=%s&repo=%s&number=%d", endpointGetIssue, url.QueryEscape(owner), url.QueryEscape(repo), number)
+	token, err := s.GetUserToken(userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user token: %w", err)
+	}
+	if token == "" {
+		return nil, ErrNotConnected
+	}
+
+	reqURL := fmt.Sprintf("%s"+githubAPIRepoIssue, githubAPIBase, owner, repo, number)
 
 	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set(headerUserID, userID)
+	s.setGitHubHeaders(req, token)
 
-	resp := s.api.PluginHTTP(req)
-	if resp == nil {
-		return nil, ErrNoResponse
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call GitHub API: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, s.handleErrorResponse(resp)
+		return nil, s.handleGitHubError(resp)
 	}
 
 	var issue Issue
@@ -241,54 +304,70 @@ func (s *Service) GetIssue(userID, owner, repo string, number int) (*Issue, erro
 	return &issue, nil
 }
 
-// SearchIssues searches for GitHub issues.
+// SearchIssues searches for GitHub issues using the search API.
 func (s *Service) SearchIssues(userID, term string) ([]Issue, error) {
-	reqURL := fmt.Sprintf("%s?q=%s", endpointSearchIssues, url.QueryEscape(term))
+	token, err := s.GetUserToken(userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user token: %w", err)
+	}
+	if token == "" {
+		return nil, ErrNotConnected
+	}
+
+	reqURL := fmt.Sprintf("%s%s?q=%s", githubAPIBase, githubAPISearchIssues, url.QueryEscape(term))
 
 	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set(headerUserID, userID)
+	s.setGitHubHeaders(req, token)
 
-	resp := s.api.PluginHTTP(req)
-	if resp == nil {
-		return nil, ErrNoResponse
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call GitHub API: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, s.handleErrorResponse(resp)
+		return nil, s.handleGitHubError(resp)
 	}
 
-	var issues []Issue
-	if err := json.NewDecoder(resp.Body).Decode(&issues); err != nil {
+	var searchResult ghSearchResult
+	if err := json.NewDecoder(resp.Body).Decode(&searchResult); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return issues, nil
+	return searchResult.Items, nil
 }
 
 // GetPRDetails retrieves details for a specific pull request.
 func (s *Service) GetPRDetails(userID, owner, repo string, number int) (*PRDetails, error) {
-	reqURL := fmt.Sprintf("%s?owner=%s&repo=%s&number=%d", endpointGetPR, url.QueryEscape(owner), url.QueryEscape(repo), number)
+	token, err := s.GetUserToken(userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user token: %w", err)
+	}
+	if token == "" {
+		return nil, ErrNotConnected
+	}
+
+	reqURL := fmt.Sprintf("%s"+githubAPIRepoPull, githubAPIBase, owner, repo, number)
 
 	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set(headerUserID, userID)
+	s.setGitHubHeaders(req, token)
 
-	resp := s.api.PluginHTTP(req)
-	if resp == nil {
-		return nil, ErrNoResponse
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call GitHub API: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, s.handleErrorResponse(resp)
+		return nil, s.handleGitHubError(resp)
 	}
 
 	var pr PRDetails
@@ -299,65 +378,31 @@ func (s *Service) GetPRDetails(userID, owner, repo string, number int) (*PRDetai
 	return &pr, nil
 }
 
-// GetUserToken retrieves the OAuth token for a user from the GitHub plugin.
-// This is an IPC endpoint that requires the plugin ID header.
-func (s *Service) GetUserToken(userID string) (string, error) {
-	reqURL := fmt.Sprintf("%s?userID=%s", endpointToken, url.QueryEscape(userID))
-
-	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
-	}
-
-	// IPC endpoint requires plugin ID header instead of user ID
-	req.Header.Set(headerPluginID, "focalboard")
-
-	resp := s.api.PluginHTTP(req)
-	if resp == nil {
-		return "", ErrNoResponse
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", s.handleErrorResponse(resp)
-	}
-
-	var tokenResp TokenResponse
-	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	return tokenResp.Token, nil
-}
-
 // CreateBranch creates a new branch in a GitHub repository.
-// It uses the user's OAuth token to call GitHub API directly.
 func (s *Service) CreateBranch(userID string, req CreateBranchRequest) (*Branch, error) {
-	// Get user's OAuth token
 	token, err := s.GetUserToken(userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user token: %w", err)
+	}
+	if token == "" {
+		return nil, ErrNotConnected
 	}
 
 	// Get base branch SHA
 	baseBranch := req.BaseBranch
 	if baseBranch == "" {
-		// Get default branch from repo
-		var defaultBranch string
-		defaultBranch, err = s.getDefaultBranch(token, req.Owner, req.Repo)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get default branch: %w", err)
+		defaultBranch, dbErr := s.getDefaultBranch(token, req.Owner, req.Repo)
+		if dbErr != nil {
+			return nil, fmt.Errorf("failed to get default branch: %w", dbErr)
 		}
 		baseBranch = defaultBranch
 	}
 
-	// Get the SHA of the base branch
 	baseSHA, err := s.getBranchSHA(token, req.Owner, req.Repo, baseBranch)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get base branch SHA: %w", err)
 	}
 
-	// Create the new branch
 	branch, err := s.createRef(token, req.Owner, req.Repo, req.BranchName, baseSHA)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create branch: %w", err)
@@ -366,28 +411,63 @@ func (s *Service) CreateBranch(userID string, req CreateBranchRequest) (*Branch,
 	return branch, nil
 }
 
-// getDefaultBranch retrieves the default branch name for a repository.
-func (s *Service) getDefaultBranch(token, owner, repo string) (string, error) {
-	reqURL := fmt.Sprintf("%s%s", githubAPIBase, fmt.Sprintf(githubAPIRepo, owner, repo))
+// --- Internal helpers ---
 
-	httpReq, err := http.NewRequest(http.MethodGet, reqURL, nil)
+// setGitHubHeaders sets common headers for GitHub API requests.
+func (s *Service) setGitHubHeaders(req *http.Request, token string) {
+	req.Header.Set(headerAuthBearer, "Bearer "+token)
+	req.Header.Set(headerContentType, contentTypeJSON)
+	req.Header.Set(headerAccept, githubAccept)
+}
+
+// getAuthenticatedUser returns the login name of the authenticated user.
+func (s *Service) getAuthenticatedUser(token string) (string, error) {
+	reqURL := githubAPIBase + githubAPIUser
+
+	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
 
-	httpReq.Header.Set(headerAuthBearer, "Bearer "+token)
-	httpReq.Header.Set(headerContentType, contentTypeJSON)
+	s.setGitHubHeaders(req, token)
 
-	client := s.httpClient
-	resp, err := client.Do(httpReq)
+	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("failed to send request: %w", err)
+		return "", fmt.Errorf("failed to call GitHub API: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("%w: status %d: %s", ErrGitHubAPICall, resp.StatusCode, string(body))
+		return "", s.handleGitHubError(resp)
+	}
+
+	var user User
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		return "", fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return user.Login, nil
+}
+
+// getDefaultBranch retrieves the default branch name for a repository.
+func (s *Service) getDefaultBranch(token, owner, repo string) (string, error) {
+	reqURL := fmt.Sprintf("%s"+githubAPIRepo, githubAPIBase, owner, repo)
+
+	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	s.setGitHubHeaders(req, token)
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to call GitHub API: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", s.handleGitHubError(resp)
 	}
 
 	var repoInfo RepoInfo
@@ -400,26 +480,23 @@ func (s *Service) getDefaultBranch(token, owner, repo string) (string, error) {
 
 // getBranchSHA retrieves the SHA of a branch.
 func (s *Service) getBranchSHA(token, owner, repo, branch string) (string, error) {
-	reqURL := fmt.Sprintf("%s%s", githubAPIBase, fmt.Sprintf(githubAPIRef, owner, repo, branch))
+	reqURL := fmt.Sprintf("%s"+githubAPIRef, githubAPIBase, owner, repo, branch)
 
-	httpReq, err := http.NewRequest(http.MethodGet, reqURL, nil)
+	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
 
-	httpReq.Header.Set(headerAuthBearer, "Bearer "+token)
-	httpReq.Header.Set(headerContentType, contentTypeJSON)
+	s.setGitHubHeaders(req, token)
 
-	client := s.httpClient
-	resp, err := client.Do(httpReq)
+	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("failed to send request: %w", err)
+		return "", fmt.Errorf("failed to call GitHub API: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("%w: status %d: %s", ErrGitHubAPICall, resp.StatusCode, string(body))
+		return "", s.handleGitHubError(resp)
 	}
 
 	var ref Branch
@@ -432,7 +509,7 @@ func (s *Service) getBranchSHA(token, owner, repo, branch string) (string, error
 
 // createRef creates a new git reference (branch) in the repository.
 func (s *Service) createRef(token, owner, repo, branchName, sha string) (*Branch, error) {
-	reqURL := fmt.Sprintf("%s%s", githubAPIBase, fmt.Sprintf(githubAPIRefs, owner, repo))
+	reqURL := fmt.Sprintf("%s"+githubAPIRefs, githubAPIBase, owner, repo)
 
 	payload := map[string]string{
 		"ref": "refs/heads/" + branchName,
@@ -449,19 +526,16 @@ func (s *Service) createRef(token, owner, repo, branchName, sha string) (*Branch
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	httpReq.Header.Set(headerAuthBearer, "Bearer "+token)
-	httpReq.Header.Set(headerContentType, contentTypeJSON)
+	s.setGitHubHeaders(httpReq, token)
 
-	client := s.httpClient
-	resp, err := client.Do(httpReq)
+	resp, err := s.httpClient.Do(httpReq)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		return nil, fmt.Errorf("failed to call GitHub API: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
-		respBody, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("%w: status %d: %s", ErrGitHubAPICall, resp.StatusCode, string(respBody))
+		return nil, s.handleGitHubError(resp)
 	}
 
 	var branch Branch
@@ -472,8 +546,8 @@ func (s *Service) createRef(token, owner, repo, branchName, sha string) (*Branch
 	return &branch, nil
 }
 
-// handleErrorResponse processes error responses from the GitHub plugin.
-func (s *Service) handleErrorResponse(resp *http.Response) error {
+// handleIPCError processes error responses from the GitHub plugin IPC.
+func (s *Service) handleIPCError(resp *http.Response) error {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("%w: status %d (failed to read body: %w)", ErrPluginStatus, resp.StatusCode, err)
@@ -489,4 +563,10 @@ func (s *Service) handleErrorResponse(resp *http.Response) error {
 	}
 
 	return fmt.Errorf("%w: %s", ErrPluginError, errResp.Error)
+}
+
+// handleGitHubError processes error responses from the GitHub API.
+func (s *Service) handleGitHubError(resp *http.Response) error {
+	body, _ := io.ReadAll(resp.Body)
+	return fmt.Errorf("%w: status %d: %s", ErrGitHubAPICall, resp.StatusCode, string(body))
 }
