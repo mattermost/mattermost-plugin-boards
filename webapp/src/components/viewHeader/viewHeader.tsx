@@ -1,13 +1,18 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useState, useEffect} from 'react'
+import React, {useState, useEffect, useCallback} from 'react'
 import {FormattedMessage, useIntl} from 'react-intl'
+import {generatePath, useHistory, useRouteMatch} from 'react-router-dom'
 
 import ViewMenu from '../../components/viewMenu'
 import mutator from '../../mutator'
 import {Board, IPropertyTemplate} from '../../blocks/board'
-import {BoardView} from '../../blocks/boardView'
+import {BoardView, createBoardView, IViewType, ViewVisibility} from '../../blocks/boardView'
+import {Block} from '../../blocks/block'
+import {Constants} from '../../constants'
+import TelemetryClient, {TelemetryActions, TelemetryCategory} from '../../telemetry/telemetryClient'
+import {Utils} from '../../utils'
 import {Card} from '../../blocks/card'
 import Button from '../../widgets/buttons/button'
 import IconButton from '../../widgets/buttons/iconButton'
@@ -34,6 +39,8 @@ import {OnboardingBoardTitle} from '../cardDetail/cardDetail'
 import AddViewTourStep from '../onboardingTour/addView/add_view'
 import {getCurrentCard} from '../../store/cards'
 import BoardPermissionGate from '../permissions/boardPermissionGate'
+import ViewVisibilityDialog from '../viewVisibilityDialog'
+import RootPortal from '../rootPortal'
 
 import NewCardButton from './newCardButton'
 import ViewHeaderPropertiesMenu from './viewHeaderPropertiesMenu'
@@ -63,7 +70,11 @@ type Props = {
 const ViewHeader = (props: Props) => {
     const [showFilter, setShowFilter] = useState(false)
     const [lockFilterOnClose, setLockFilterOnClose] = useState(false)
+    const [showVisibilityDialog, setShowVisibilityDialog] = useState(false)
+    const [pendingViewType, setPendingViewType] = useState<IViewType | null>(null)
     const intl = useIntl()
+    const history = useHistory()
+    const match = useRouteMatch()
     const canEditBoardProperties = useHasCurrentBoardPermissions([Permission.ManageBoardProperties])
 
     const {board, activeView, views, groupByProperty, cards, dateDisplayProperty} = props
@@ -114,6 +125,88 @@ const ViewHeader = (props: Props) => {
 
     const showAddViewTourStep = showTourBaseCondition && delayComplete
 
+    const showView = useCallback((viewId: string) => {
+        let newPath = generatePath(Utils.getBoardPagePath(match.path), {...match.params, viewId: viewId || ''})
+        if (props.readonly) {
+            newPath += `?r=${Utils.getReadToken()}`
+        }
+        history.push(newPath)
+    }, [match, history, props.readonly])
+
+    const createViewWithVisibility = useCallback((viewType: IViewType, visibility: ViewVisibility) => {
+        Utils.log(`addview-${viewType}`)
+        TelemetryClient.trackEvent(TelemetryCategory, TelemetryActions.CreateBoardView, {board: board.id, view: activeView.id})
+        const view = createBoardView()
+
+        switch (viewType) {
+        case 'board':
+            view.title = intl.formatMessage({id: 'View.NewBoardTitle', defaultMessage: 'Board view'})
+            break
+        case 'table':
+            view.title = intl.formatMessage({id: 'View.NewTableTitle', defaultMessage: 'Table view'})
+            view.fields.visiblePropertyIds = board.cardProperties.map((o: IPropertyTemplate) => o.id)
+            view.fields.columnWidths = {}
+            view.fields.columnWidths[Constants.titleColumnId] = Constants.defaultTitleColumnWidth
+            break
+        case 'gallery':
+            view.title = intl.formatMessage({id: 'View.NewGalleryTitle', defaultMessage: 'Gallery view'})
+            view.fields.visiblePropertyIds = [Constants.titleColumnId]
+            break
+        case 'calendar':
+            view.title = intl.formatMessage({id: 'View.NewCalendarTitle', defaultMessage: 'Calendar view'})
+            view.parentId = board.id
+            view.fields.visiblePropertyIds = [Constants.titleColumnId]
+            view.fields.dateDisplayPropertyId = board.cardProperties.find((o: IPropertyTemplate) => o.type === 'date')?.id
+            break
+        }
+
+        view.fields.viewType = viewType
+        view.boardId = board.id
+        view.fields.visibility = visibility === 'everyone' ? 'everyone' : 'owner-only'
+
+        const oldViewId = activeView.id
+
+        mutator.insertBlock(
+            view.boardId,
+            view,
+            'add view',
+            async (block: Block) => {
+                setTimeout(() => {
+                    showView(block.id)
+                }, 120)
+            },
+            async () => {
+                showView(oldViewId)
+            },
+        )
+    }, [activeView, board, intl, showView])
+
+    const handleRequestAddView = useCallback((viewType: IViewType) => {
+        setPendingViewType(viewType)
+        setShowVisibilityDialog(true)
+    }, [])
+
+    const handleVisibilityPublic = useCallback(() => {
+        if (pendingViewType) {
+            createViewWithVisibility(pendingViewType, 'everyone')
+        }
+        setShowVisibilityDialog(false)
+        setPendingViewType(null)
+    }, [pendingViewType, createViewWithVisibility])
+
+    const handleVisibilityPersonal = useCallback(() => {
+        if (pendingViewType) {
+            createViewWithVisibility(pendingViewType, 'owner-only')
+        }
+        setShowVisibilityDialog(false)
+        setPendingViewType(null)
+    }, [pendingViewType, createViewWithVisibility])
+
+    const handleVisibilityCancel = useCallback(() => {
+        setShowVisibilityDialog(false)
+        setPendingViewType(null)
+    }, [])
+
     return (
         <div className='ViewHeader'>
             <div className='viewSelector'>
@@ -140,6 +233,7 @@ const ViewHeader = (props: Props) => {
                             activeView={activeView}
                             views={views}
                             readonly={props.readonly || !canEditBoardProperties}
+                            onRequestAddView={handleRequestAddView}
                         />
                     </MenuWrapper>
                     {showAddViewTourStep && <AddViewTourStep/>}
@@ -239,6 +333,17 @@ const ViewHeader = (props: Props) => {
                     />
                 </BoardPermissionGate>
             </>}
+            {showVisibilityDialog &&
+                <RootPortal>
+                    <ViewVisibilityDialog
+                        dialogBox={{
+                            onPublic: handleVisibilityPublic,
+                            onPersonal: handleVisibilityPersonal,
+                            onClose: handleVisibilityCancel,
+                        }}
+                    />
+                </RootPortal>
+            }
         </div>
     )
 }
