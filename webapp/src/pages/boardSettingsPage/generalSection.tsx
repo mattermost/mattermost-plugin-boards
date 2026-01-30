@@ -95,52 +95,42 @@ const GeneralSection = (props: Props): JSX.Element => {
                     />
                 </label>
                 <div className='GeneralSection__name-code-wrapper'>
-                    <div className='GeneralSection__input-wrapper'>
-                        <BoardIconSelector
-                            board={board}
-                            size='m'
-                        />
-                        <Editable
-                            className='GeneralSection__input GeneralSection__input--title'
-                            value={title}
-                            placeholderText={intl.formatMessage({
-                                id: 'BoardSettings.general.name-placeholder',
-                                defaultMessage: 'Untitled board',
-                            })}
-                            onChange={handleTitleChange}
-                            onSave={handleTitleSave}
-                            saveOnEsc={true}
-                            spellCheck={true}
-                        />
-                    </div>
-                    <div className='GeneralSection__code-wrapper'>
-                        <label className='GeneralSection__code-label'>
-                            <FormattedMessage
-                                id='BoardSettings.general.code-label'
-                                defaultMessage='Code'
-                            />
-                        </label>
-                        <Editable
-                            className='GeneralSection__input GeneralSection__input--code'
-                            value={code}
-                            placeholderText={intl.formatMessage({
-                                id: 'BoardSettings.general.code-placeholder',
-                                defaultMessage: 'e.g., PROJ1',
-                            })}
-                            onChange={handleCodeChange}
-                            onSave={handleCodeSave}
-                            saveOnEsc={true}
-                            validator={validateCode}
-                            spellCheck={false}
-                        />
-                    </div>
-                </div>
-                <p className='GeneralSection__help-text'>
-                    <FormattedMessage
-                        id='BoardSettings.general.code-help'
-                        defaultMessage='1-10 alphanumeric characters, must start with a letter'
+                    <BoardIconSelector
+                        board={board}
+                        size='m'
                     />
-                </p>
+                    <Editable
+                        className='GeneralSection__input GeneralSection__input--title'
+                        value={title}
+                        placeholderText={intl.formatMessage({
+                            id: 'BoardSettings.general.name-placeholder',
+                            defaultMessage: 'Untitled board',
+                        })}
+                        onChange={handleTitleChange}
+                        onSave={handleTitleSave}
+                        saveOnEsc={true}
+                        spellCheck={true}
+                    />
+                    <label className='GeneralSection__code-label'>
+                        <FormattedMessage
+                            id='BoardSettings.general.code-label'
+                            defaultMessage='Code'
+                        />
+                    </label>
+                    <Editable
+                        className='GeneralSection__input GeneralSection__input--code'
+                        value={code}
+                        placeholderText={intl.formatMessage({
+                            id: 'BoardSettings.general.code-placeholder',
+                            defaultMessage: 'e.g., PROJ1',
+                        })}
+                        onChange={handleCodeChange}
+                        onSave={handleCodeSave}
+                        saveOnEsc={true}
+                        validator={validateCode}
+                        spellCheck={false}
+                    />
+                </div>
             </div>
 
             {/* Board Description */}
@@ -151,8 +141,8 @@ const GeneralSection = (props: Props): JSX.Element => {
                         defaultMessage='Description'
                     />
                 </label>
-                <EditableArea
-                    className='GeneralSection__textarea'
+                <Editable
+                    className='GeneralSection__input'
                     value={description}
                     placeholderText={intl.formatMessage({
                         id: 'BoardSettings.general.description-placeholder',
