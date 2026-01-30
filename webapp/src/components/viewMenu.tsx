@@ -253,7 +253,7 @@ const ViewMenu = (props: Props) => {
                     />
                 </BoardPermissionGate>
                 }
-                {!props.readonly && views.length > 1 && me && props.activeView.createdBy === me.id &&
+                {!props.readonly && views.length > 1 && me && (props.activeView.fields.ownerUserId || props.activeView.createdBy) === me.id &&
                 <BoardPermissionGate permissions={[Permission.ManageBoardProperties]}>
                     <Menu.Text
                         id='__deleteView'

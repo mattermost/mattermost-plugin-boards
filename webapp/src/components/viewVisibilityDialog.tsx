@@ -1,7 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useCallback} from 'react'
+import React from 'react'
 import {FormattedMessage} from 'react-intl'
 
 import Button from '../widgets/buttons/button'
@@ -20,15 +20,13 @@ type Props = {
 }
 
 export const ViewVisibilityDialog = (props: Props) => {
-    const handleOnClose = useCallback(props.dialogBox.onClose, [])
-    const handleOnPublic = useCallback(props.dialogBox.onPublic, [])
-    const handleOnPersonal = useCallback(props.dialogBox.onPersonal, [])
+    const {onClose, onPublic, onPersonal} = props.dialogBox
 
     return (
         <Dialog
             size='small'
             className='view-visibility-dialog'
-            onClose={handleOnClose}
+            onClose={onClose}
         >
             <div
                 className='box-area'
@@ -52,7 +50,7 @@ export const ViewVisibilityDialog = (props: Props) => {
                         title='Cancel'
                         size='medium'
                         emphasis='tertiary'
-                        onClick={handleOnClose}
+                        onClick={onClose}
                     >
                         <FormattedMessage
                             id='ViewVisibilityDialog.cancel-action'
@@ -62,7 +60,7 @@ export const ViewVisibilityDialog = (props: Props) => {
                     <Button
                         title='Personal'
                         size='medium'
-                        onClick={handleOnPersonal}
+                        onClick={onPersonal}
                         filled={false}
                     >
                         <FormattedMessage
@@ -73,7 +71,7 @@ export const ViewVisibilityDialog = (props: Props) => {
                     <Button
                         title='Public'
                         size='medium'
-                        onClick={handleOnPublic}
+                        onClick={onPublic}
                         filled={true}
                     >
                         <FormattedMessage

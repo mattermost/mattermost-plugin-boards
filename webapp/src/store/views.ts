@@ -144,9 +144,12 @@ export const getCurrentBoardViews = createSelector(
             if (v.fields.visibility === 'everyone' || !v.fields.visibility) {
                 return true
             }
-            // Show personal views only to their creator
-            if (v.fields.visibility === 'owner-only' && userId && v.createdBy === userId) {
-                return true
+            // Show personal views only to their owner (ownerUserId if set, otherwise createdBy)
+            if (v.fields.visibility === 'owner-only' && userId) {
+                const ownerId = v.fields.ownerUserId || v.createdBy
+                if (ownerId === userId) {
+                    return true
+                }
             }
             return false
         }).sort((a, b) => a.title.localeCompare(b.title)).map((v) => createBoardView(v))
