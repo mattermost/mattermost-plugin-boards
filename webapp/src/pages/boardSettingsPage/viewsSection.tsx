@@ -1,7 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useCallback} from 'react'
+import React, {useCallback, useState} from 'react'
 import {FormattedMessage, useIntl} from 'react-intl'
 import {ActionMeta} from 'react-select'
 
@@ -17,6 +17,8 @@ import {useAppDispatch} from '../../store/hooks'
 import {updateViews} from '../../store/views'
 import IconButton from '../../widgets/buttons/iconButton'
 import DeleteIcon from '../../widgets/icons/delete'
+import ConfirmationDialogBox from '../../components/confirmationDialogBox'
+import RootPortal from '../../components/rootPortal'
 
 import './viewsSection.scss'
 
@@ -37,6 +39,7 @@ const ViewsSection = (props: Props): JSX.Element => {
     const {views, boardUsers} = props
     const intl = useIntl()
     const dispatch = useAppDispatch()
+    const [viewToDelete, setViewToDelete] = useState<BoardView | null>(null)
 
     const viewTypeLabels = VIEW_TYPE_OPTIONS.map((opt) => ({
         ...opt,
@@ -109,13 +112,23 @@ const ViewsSection = (props: Props): JSX.Element => {
         return boardUsers.find(u => u.id === ownerId)
     }, [boardUsers])
 
-    const handleDeleteView = useCallback(async (view: BoardView) => {
+    const handleDeleteViewClick = useCallback((view: BoardView) => {
         if (views.length <= 1) {
-            // Don't allow deleting the last view
             return
         }
-        await mutator.deleteBlock(view, 'delete view')
+        setViewToDelete(view)
     }, [views])
+
+    const handleConfirmDelete = useCallback(async () => {
+        if (viewToDelete) {
+            await mutator.deleteBlock(viewToDelete, 'delete view')
+        }
+        setViewToDelete(null)
+    }, [viewToDelete])
+
+    const handleCancelDelete = useCallback(() => {
+        setViewToDelete(null)
+    }, [])
 
     return (
         <div className='ViewsSection'>
@@ -220,7 +233,7 @@ const ViewsSection = (props: Props): JSX.Element => {
                             <div className='ViewsSection__table-cell ViewsSection__table-cell--actions'>
                                 {views.length > 1 && (
                                     <IconButton
-                                        onClick={() => handleDeleteView(view)}
+                                        onClick={() => handleDeleteViewClick(view)}
                                         icon={<DeleteIcon/>}
                                         title={intl.formatMessage({id: 'ViewsSection.delete-view', defaultMessage: 'Delete view'})}
                                     />
@@ -230,6 +243,23 @@ const ViewsSection = (props: Props): JSX.Element => {
                     )
                 })}
             </div>
+            {viewToDelete &&
+                <RootPortal>
+                    <ConfirmationDialogBox
+                        dialogBox={{
+                            heading: intl.formatMessage({id: 'ViewsSection.delete-confirm-heading', defaultMessage: 'Delete view'}),
+                            subText: intl.formatMessage(
+                                {id: 'ViewsSection.delete-confirm-body', defaultMessage: 'Are you sure you want to delete the view "{viewTitle}"?'},
+                                {viewTitle: viewToDelete.title || intl.formatMessage({id: 'ViewsSection.untitled', defaultMessage: 'Untitled'})},
+                            ),
+                            confirmButtonText: intl.formatMessage({id: 'ViewsSection.delete-confirm-button', defaultMessage: 'Delete'}),
+                            destructive: true,
+                            onConfirm: handleConfirmDelete,
+                            onClose: handleCancelDelete,
+                        }}
+                    />
+                </RootPortal>
+            }
         </div>
     )
 }

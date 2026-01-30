@@ -10,7 +10,7 @@
 
     &__table-header {
         display: grid;
-        grid-template-columns: 2fr 1fr 1.5fr 1fr;
+        grid-template-columns: 2fr 1fr 1.5fr 1fr 40px;
         gap: 16px;
         padding: 12px 16px;
         background: rgba(var(--center-channel-color-rgb), 0.04);
@@ -23,7 +23,7 @@
 
     &__table-row {
         display: grid;
-        grid-template-columns: 2fr 1fr 1.5fr 1fr;
+        grid-template-columns: 2fr 1fr 1.5fr 1fr 40px;
         gap: 16px;
         padding: 12px 16px;
         border-bottom: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
