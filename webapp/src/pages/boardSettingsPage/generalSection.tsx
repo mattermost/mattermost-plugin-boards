@@ -7,7 +7,6 @@ import {FormattedMessage, useIntl} from 'react-intl'
 import {Board} from '../../blocks/board'
 import BoardIconSelector from '../../components/boardIconSelector'
 import Editable from '../../widgets/editable'
-import EditableArea from '../../widgets/editableArea'
 
 import './generalSection.scss'
 
