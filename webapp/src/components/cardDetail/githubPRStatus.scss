@@ -61,6 +61,44 @@
         }
     }
 
+    // Property-based PR list (cron-synced data)
+    &__property-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    &__property-pr {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        background: rgba(var(--center-channel-color-rgb), 0.04);
+        border-radius: 6px;
+        border: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
+        transition: all 0.15s ease;
+
+        &:hover {
+            background: rgba(var(--center-channel-color-rgb), 0.06);
+            border-color: rgba(var(--center-channel-color-rgb), 0.16);
+        }
+    }
+
+    &__property-pr-title {
+        flex: 1;
+        font-size: 13px;
+        color: rgba(var(--button-bg-rgb), 1);
+        text-decoration: none;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: 1.4;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
     &__pr {
         padding: 12px;
         background: rgba(var(--center-channel-color-rgb), 0.04);
@@ -288,5 +326,49 @@
         display: flex;
         justify-content: flex-end;
         gap: 8px;
+    }
+}
+
+// PR status label — small colored badge (used by property-based PR list)
+.pr-status-label {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 3px 7px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    flex-shrink: 0;
+
+    // NEW — gray
+    &--new {
+        background: rgba(var(--center-channel-color-rgb), 0.12);
+        color: rgba(var(--center-channel-color-rgb), 0.72);
+    }
+
+    // CI — blue (running)
+    &--ci {
+        background: rgba(56, 111, 229, 0.12);
+        color: rgb(56, 111, 229);
+    }
+
+    // FAILED — red
+    &--failed {
+        background: rgba(var(--error-text-color-rgb), 0.12);
+        color: rgba(var(--error-text-color-rgb), 1);
+    }
+
+    // READY — green
+    &--ready {
+        background: rgba(61, 184, 135, 0.12);
+        color: rgb(61, 184, 135);
+    }
+
+    // MERGED — purple
+    &--merged {
+        background: rgba(146, 100, 222, 0.12);
+        color: rgb(146, 100, 222);
     }
 }
