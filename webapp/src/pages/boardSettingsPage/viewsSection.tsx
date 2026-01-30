@@ -22,16 +22,21 @@ type Props = {
     boardUsers: IUser[]
 }
 
-const VIEW_TYPE_OPTIONS: {value: IViewType, label: string}[] = [
-    {value: 'board', label: 'Board'},
-    {value: 'table', label: 'Table'},
-    {value: 'gallery', label: 'Gallery'},
-    {value: 'calendar', label: 'Calendar'},
+const VIEW_TYPE_OPTIONS: {value: IViewType, labelId: string, defaultLabel: string}[] = [
+    {value: 'board', labelId: 'ViewType.board', defaultLabel: 'Board'},
+    {value: 'table', labelId: 'ViewType.table', defaultLabel: 'Table'},
+    {value: 'gallery', labelId: 'ViewType.gallery', defaultLabel: 'Gallery'},
+    {value: 'calendar', labelId: 'ViewType.calendar', defaultLabel: 'Calendar'},
 ]
 
 const ViewsSection = (props: Props): JSX.Element => {
     const {views, boardUsers} = props
     const intl = useIntl()
+
+    const viewTypeLabels = VIEW_TYPE_OPTIONS.map((opt) => ({
+        ...opt,
+        label: intl.formatMessage({id: opt.labelId, defaultMessage: opt.defaultLabel}),
+    }))
 
     const handleViewTypeChange = useCallback(async (view: BoardView, newType: IViewType) => {
         if (view.fields.viewType === newType) {
@@ -53,13 +58,17 @@ const ViewsSection = (props: Props): JSX.Element => {
         }
 
         const newOwnerId = newOwner?.id
-        if (!newOwnerId || view.createdBy === newOwnerId) {
+        const currentOwnerId = view.fields.ownerUserId || view.createdBy
+        if (!newOwnerId || currentOwnerId === newOwnerId) {
             return
         }
 
+        // Store owner in fields.ownerUserId so it persists via the
+        // BlockPatch updatedFields (createdBy is a read-only top-level
+        // field that the patch API ignores).
         await mutator.updateBlock(
             view.boardId,
-            {...view, createdBy: newOwnerId},
+            {...view, fields: {...view.fields, ownerUserId: newOwnerId}},
             view,
             'change view owner',
         )
@@ -82,7 +91,8 @@ const ViewsSection = (props: Props): JSX.Element => {
     }, [])
 
     const getOwnerUser = useCallback((view: BoardView): IUser | undefined => {
-        return boardUsers.find(u => u.id === view.createdBy)
+        const ownerId = view.fields.ownerUserId || view.createdBy
+        return boardUsers.find(u => u.id === ownerId)
     }, [boardUsers])
 
     return (
@@ -131,10 +141,11 @@ const ViewsSection = (props: Props): JSX.Element => {
                             <div className='ViewsSection__table-cell ViewsSection__table-cell--type'>
                                 <MenuWrapper>
                                     <Button>
-                                        {VIEW_TYPE_OPTIONS.find(opt => opt.value === view.fields.viewType)?.label || 'Board'}
+                                        {viewTypeLabels.find(opt => opt.value === view.fields.viewType)?.label ||
+                                            intl.formatMessage({id: 'ViewType.board', defaultMessage: 'Board'})}
                                     </Button>
                                     <Menu>
-                                        {VIEW_TYPE_OPTIONS.map((option) => (
+                                        {viewTypeLabels.map((option) => (
                                             <Menu.Text
                                                 key={option.value}
                                                 id={option.value}
