@@ -68,6 +68,22 @@ const getStatusColor = (status: PRStatus): string => {
     }
 }
 
+// Valid PR status values
+const VALID_PR_STATUSES: PRStatus[] = ['NEW', 'CI', 'FAILED', 'READY', 'MERGED']
+
+// Sanitize URL to prevent XSS — only allow http(s) schemes
+const sanitizePRUrl = (url: string): string => {
+    try {
+        const parsed = new URL(url)
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+            return parsed.href
+        }
+    } catch {
+        // Invalid URL
+    }
+    return ''
+}
+
 // Parse the JSON property value into an array of PRs
 const parsePRsFromProperty = (card: Card): PropertyPR[] => {
     const raw = card.fields?.properties?.[GITHUB_PRS_PROPERTY_ID]
@@ -77,9 +93,21 @@ const parsePRsFromProperty = (card: Card): PropertyPR[] => {
     try {
         const parsed = JSON.parse(raw)
         if (Array.isArray(parsed)) {
-            return parsed.filter((pr: any) =>
-                pr && typeof pr.number === 'number' && typeof pr.url === 'string',
-            )
+            return parsed
+                .filter((pr: any) =>
+                    pr &&
+                    typeof pr.number === 'number' &&
+                    typeof pr.url === 'string' &&
+                    typeof pr.status === 'string' &&
+                    VALID_PR_STATUSES.includes(pr.status) &&
+                    typeof pr.repo === 'string' &&
+                    pr.repo.length > 0,
+                )
+                .map((pr: any) => ({
+                    ...pr,
+                    url: sanitizePRUrl(pr.url),
+                }))
+                .filter((pr: PropertyPR) => pr.url.length > 0)
         }
     } catch {
         // Invalid JSON — ignore
@@ -105,9 +133,9 @@ const PropertyPRList = ({prs}: {prs: PropertyPR[]}): JSX.Element => {
                     >
                         {pr.title || `#${pr.number}`}
                     </a>
-                    <span className={`pr-status-label pr-status-label--${pr.status.toLowerCase()}`}>
-                        {pr.status}
-                    </span>
+                    <Label color={getStatusColor(pr.status)}>
+                        <span className='Label-text'>{pr.status}</span>
+                    </Label>
                 </div>
             ))}
         </div>
