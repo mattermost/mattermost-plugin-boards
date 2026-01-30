@@ -92,7 +92,10 @@ const PropertyOptionsEditor = (props: Props): JSX.Element => {
                     >
                         <div className='PropertyOptionsEditor__option-color'>
                             <MenuWrapper>
-                                <button className={`PropertyOptionsEditor__color-button ${option.color}`}>
+                                <button
+                                    type='button'
+                                    className={`PropertyOptionsEditor__color-button ${option.color}`}
+                                >
                                     <span className={`PropertyOptionsEditor__color-swatch ${option.color}`}/>
                                     {option.color.replace('propColor', '')}
                                 </button>

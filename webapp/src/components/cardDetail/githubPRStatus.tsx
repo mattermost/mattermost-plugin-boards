@@ -136,6 +136,7 @@ const parsePRsFromProperty = (card: Card): PropertyPR[] => {
 
 // Sub-component: renders PRs from card property data (cron-synced)
 const PropertyPRList = ({prs}: {prs: PropertyPR[]}): JSX.Element => {
+    const intl = useIntl()
     // Separate active and historical PRs
     const activePRs = prs.filter((pr) => isActivePR(pr.status))
     const historicalPRs = prs.filter((pr) => isHistoricalPR(pr.status))
@@ -160,7 +161,7 @@ const PropertyPRList = ({prs}: {prs: PropertyPR[]}): JSX.Element => {
                                 #{pr.number}
                             </span>
                             <span className='GitHubPRStatus__property-pr-title'>
-                                {pr.title || 'Untitled PR'}
+                                {pr.title || intl.formatMessage({id: 'GitHubPRStatus.untitledPR', defaultMessage: 'Untitled PR'})}
                             </span>
                         </a>
                         <Label color={getStatusColor(pr.status)}>
@@ -179,7 +180,12 @@ const PropertyPRList = ({prs}: {prs: PropertyPR[]}): JSX.Element => {
             {/* Historical PRs - shown after active PRs with muted styling */}
             {historicalPRs.length > 0 && activePRs.length > 0 && (
                 <div className='GitHubPRStatus__property-divider'>
-                    <span>Historical PRs</span>
+                    <span>
+                        <FormattedMessage
+                            id='GitHubPRStatus.historicalPRs'
+                            defaultMessage='Historical PRs'
+                        />
+                    </span>
                 </div>
             )}
             {historicalPRs.map((pr) => (
@@ -199,7 +205,7 @@ const PropertyPRList = ({prs}: {prs: PropertyPR[]}): JSX.Element => {
                                 #{pr.number}
                             </span>
                             <span className='GitHubPRStatus__property-pr-title'>
-                                {pr.title || 'Untitled PR'}
+                                {pr.title || intl.formatMessage({id: 'GitHubPRStatus.untitledPR', defaultMessage: 'Untitled PR'})}
                             </span>
                         </a>
                         <Label color={getStatusColor(pr.status)}>
