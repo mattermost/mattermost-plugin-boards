@@ -1,29 +1,59 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useCallback, useState} from 'react'
+import React, {useCallback, useEffect, useState} from 'react'
 import {FormattedMessage} from 'react-intl'
 import {useHistory, useRouteMatch} from 'react-router-dom'
 
-import {useAppSelector} from '../../store/hooks'
-import {getCurrentBoardId} from '../../store/boards'
-import {getCurrentTeam} from '../../store/teams'
+import {useAppDispatch, useAppSelector} from '../../store/hooks'
+import {getCurrentBoardId, setCurrent as setCurrentBoard, fetchBoardMembers} from '../../store/boards'
+import {getCurrentTeam, setTeam} from '../../store/teams'
 import {Permission} from '../../constants'
 import {useHasPermissions} from '../../hooks/permissions'
+import {initialLoad, loadBoardData} from '../../store/initialLoad'
+import {getMe} from '../../store/users'
+import octoClient from '../../octoClient'
+import {UserSettings} from '../../userSettings'
 import Button from '../../widgets/buttons/button'
 import Sidebar from '../../components/sidebar/sidebar'
+import BoardTemplateSelector from '../../components/boardTemplateSelector/boardTemplateSelector'
 
 import './boardSettingsPage.scss'
 
 const BoardSettingsPage = (): JSX.Element => {
     const history = useHistory()
     const match = useRouteMatch<{teamId: string, boardId: string}>()
+    const dispatch = useAppDispatch()
     const currentBoardId = useAppSelector(getCurrentBoardId)
     const currentTeam = useAppSelector(getCurrentTeam)
-    const [, setBoardTemplateSelectorOpen] = useState(false)
+    const me = useAppSelector(getMe)
+    const [boardTemplateSelectorOpen, setBoardTemplateSelectorOpen] = useState(false)
 
     const teamId = match.params.teamId || currentTeam?.id || ''
     const boardId = match.params.boardId || currentBoardId || ''
+
+    // Initialize team and board data (same as BoardPage)
+    useEffect(() => {
+        if (teamId) {
+            UserSettings.lastTeamId = teamId
+            octoClient.teamId = teamId
+            dispatch(setTeam(teamId))
+        }
+    }, [teamId])
+
+    useEffect(() => {
+        if (boardId) {
+            dispatch(initialLoad(boardId))
+            dispatch(setCurrentBoard(boardId))
+        }
+    }, [teamId, boardId, me?.id])
+
+    useEffect(() => {
+        if (boardId && me) {
+            dispatch(loadBoardData(boardId))
+            dispatch(fetchBoardMembers({teamId, boardId}))
+        }
+    }, [teamId, boardId, me?.id])
 
     // Check if user has admin permissions
     const hasAdminPermission = useHasPermissions(teamId, boardId, [Permission.ManageBoardType])
@@ -160,9 +190,27 @@ const BoardSettingsPage = (): JSX.Element => {
                     </div>
                 </div>
             </div>
+
+            {/* Board template selector modal (triggered from sidebar "+ Add board") */}
+            {boardTemplateSelectorOpen &&
+                <BoardTemplateSelector
+                    title={
+                        <FormattedMessage
+                            id='BoardTemplateSelector.plugin.no-content-title'
+                            defaultMessage='Create a board'
+                        />
+                    }
+                    description={
+                        <FormattedMessage
+                            id='BoardTemplateSelector.plugin.no-content-description'
+                            defaultMessage='Add a board to the sidebar to start managing your project tasks, meetings, and more.'
+                        />
+                    }
+                    onClose={() => setBoardTemplateSelectorOpen(false)}
+                />
+            }
         </div>
     )
 }
 
 export default React.memo(BoardSettingsPage)
-

@@ -115,3 +115,9 @@
     left: 0;
 }
 
+// Adjust footer when sidebar is collapsed/hidden (50px width)
+.Sidebar.hidden ~ .BoardSettingsPage__content .BoardSettingsPage__footer,
+.BoardSettingsPage__wrapper .Sidebar.hidden ~ .BoardSettingsPage__content .BoardSettingsPage__footer {
+    left: 50px;
+}
+

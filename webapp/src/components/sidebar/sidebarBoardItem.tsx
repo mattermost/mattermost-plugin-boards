@@ -12,6 +12,7 @@ import {Board} from '../../blocks/board'
 import {BoardView, IViewType} from '../../blocks/boardView'
 import mutator from '../../mutator'
 import IconButton from '../../widgets/buttons/iconButton'
+import DeleteIcon from '../../widgets/icons/delete'
 import OptionsIcon from '../../widgets/icons/options'
 import SettingsIcon from '../../widgets/icons/settings'
 import Menu from '../../widgets/menu'
@@ -300,6 +301,21 @@ const SidebarBoardItem = (props: Props) => {
                                             name={intl.formatMessage({id: 'Sidebar.board-settings', defaultMessage: 'Board Settings'})}
                                             icon={<SettingsIcon/>}
                                             onClick={handleBoardSettings}
+                                        />
+                                    </BoardPermissionGate>
+                                    <BoardPermissionGate
+                                        boardId={board.id}
+                                        permissions={[Permission.DeleteBoard]}
+                                    >
+                                        <Menu.Text
+                                            key={`deleteBlock-${board.id}`}
+                                            id='deleteBlock'
+                                            className='text-danger'
+                                            name={intl.formatMessage({id: 'Sidebar.delete-board', defaultMessage: 'Delete board'})}
+                                            icon={<DeleteIcon/>}
+                                            onClick={() => {
+                                                props.onDeleteRequest(board)
+                                            }}
                                         />
                                     </BoardPermissionGate>
                                 </Menu>
