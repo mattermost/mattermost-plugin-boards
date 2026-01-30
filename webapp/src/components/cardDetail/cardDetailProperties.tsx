@@ -7,13 +7,10 @@ import {FormattedMessage, useIntl} from 'react-intl'
 import {Board, IPropertyTemplate} from '../../blocks/board'
 import {Card} from '../../blocks/card'
 import {BoardView} from '../../blocks/boardView'
-import {GITHUB_PRS_PROPERTY_ID} from './githubPRStatus'
-
 import mutator from '../../mutator'
 import Button from '../../widgets/buttons/button'
 import MenuWrapper from '../../widgets/menuWrapper'
 import PropertyMenu, {PropertyTypes} from '../../widgets/propertyMenu'
-
 import Calculations from '../calculations/calculations'
 import PropertyValueElement from '../propertyValueElement'
 import ConfirmationDialogBox, {ConfirmationDialogBoxProps} from '../confirmationDialogBox'
@@ -25,6 +22,8 @@ import {Permission} from '../../constants'
 import {useHasCurrentBoardPermissions} from '../../hooks/permissions'
 import propRegistry from '../../properties'
 import {PropertyType} from '../../properties/types'
+
+import {GITHUB_PRS_PROPERTY_ID} from './githubPRStatus'
 
 type Props = {
     board: Board
