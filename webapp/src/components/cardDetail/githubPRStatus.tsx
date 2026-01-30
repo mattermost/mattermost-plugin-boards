@@ -19,7 +19,11 @@ import './githubPRStatus.scss'
 export const GITHUB_PRS_PROPERTY_ID = 'agithubprs1prp7x9jkxd1ec66j'
 
 // PR status as synced by the cron
-type PRStatus = 'NEW' | 'CI' | 'FAILED' | 'READY' | 'MERGED'
+// OPEN - PR is open and active
+// CLOSED - PR was closed without merging
+// MERGED - PR was merged
+// NEW/CI/FAILED/READY - intermediate states for open PRs
+type PRStatus = 'NEW' | 'CI' | 'FAILED' | 'READY' | 'MERGED' | 'OPEN' | 'CLOSED'
 
 // Shape of each PR entry stored in the card property JSON
 interface PropertyPR {
@@ -64,13 +68,27 @@ const getStatusColor = (status: PRStatus): string => {
         return 'propColorGreen'
     case 'MERGED':
         return 'propColorPurple'
+    case 'OPEN':
+        return 'propColorGreen'
+    case 'CLOSED':
+        return 'propColorRed'
     default:
         return 'propColorGray'
     }
 }
 
 // Valid PR status values
-const VALID_PR_STATUSES: PRStatus[] = ['NEW', 'CI', 'FAILED', 'READY', 'MERGED']
+const VALID_PR_STATUSES: PRStatus[] = ['NEW', 'CI', 'FAILED', 'READY', 'MERGED', 'OPEN', 'CLOSED']
+
+// Check if a PR is active (open) vs historical (merged/closed)
+const isActivePR = (status: PRStatus): boolean => {
+    return status === 'NEW' || status === 'CI' || status === 'FAILED' || status === 'READY' || status === 'OPEN'
+}
+
+// Check if a PR is historical (merged or closed)
+const isHistoricalPR = (status: PRStatus): boolean => {
+    return status === 'MERGED' || status === 'CLOSED'
+}
 
 // Sanitize URL to prevent XSS — only allow http(s) schemes
 const sanitizePRUrl = (url: string): string => {
@@ -118,25 +136,82 @@ const parsePRsFromProperty = (card: Card): PropertyPR[] => {
 
 // Sub-component: renders PRs from card property data (cron-synced)
 const PropertyPRList = ({prs}: {prs: PropertyPR[]}): JSX.Element => {
+    // Separate active and historical PRs
+    const activePRs = prs.filter((pr) => isActivePR(pr.status))
+    const historicalPRs = prs.filter((pr) => isHistoricalPR(pr.status))
+
     return (
         <div className='GitHubPRStatus__property-list'>
-            {prs.map((pr) => (
+            {/* Active PRs - shown first with prominent styling */}
+            {activePRs.map((pr) => (
                 <div
                     key={`${pr.repo}-${pr.number}`}
-                    className='GitHubPRStatus__property-pr'
+                    className='GitHubPRStatus__property-pr GitHubPRStatus__property-pr--active'
                 >
-                    <a
-                        href={pr.url}
-                        target='_blank'
-                        rel='noopener noreferrer'
-                        className='GitHubPRStatus__property-pr-title'
-                        title={`${pr.repo}#${pr.number}`}
-                    >
-                        {pr.title || `#${pr.number}`}
-                    </a>
-                    <Label color={getStatusColor(pr.status)}>
-                        <span className='Label-text'>{pr.status}</span>
-                    </Label>
+                    <div className='GitHubPRStatus__property-pr-header'>
+                        <a
+                            href={pr.url}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            className='GitHubPRStatus__property-pr-link'
+                            title={`${pr.repo}#${pr.number}`}
+                        >
+                            <span className='GitHubPRStatus__property-pr-number'>
+                                #{pr.number}
+                            </span>
+                            <span className='GitHubPRStatus__property-pr-title'>
+                                {pr.title || 'Untitled PR'}
+                            </span>
+                        </a>
+                        <Label color={getStatusColor(pr.status)}>
+                            <span className='Label-text'>{pr.status}</span>
+                        </Label>
+                    </div>
+                    {pr.branch && (
+                        <div className='GitHubPRStatus__property-pr-branch'>
+                            <CompassIcon icon='source-branch'/>
+                            <span>{pr.branch}</span>
+                        </div>
+                    )}
+                </div>
+            ))}
+
+            {/* Historical PRs - shown after active PRs with muted styling */}
+            {historicalPRs.length > 0 && activePRs.length > 0 && (
+                <div className='GitHubPRStatus__property-divider'>
+                    <span>Historical PRs</span>
+                </div>
+            )}
+            {historicalPRs.map((pr) => (
+                <div
+                    key={`${pr.repo}-${pr.number}`}
+                    className='GitHubPRStatus__property-pr GitHubPRStatus__property-pr--historical'
+                >
+                    <div className='GitHubPRStatus__property-pr-header'>
+                        <a
+                            href={pr.url}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            className='GitHubPRStatus__property-pr-link'
+                            title={`${pr.repo}#${pr.number}`}
+                        >
+                            <span className='GitHubPRStatus__property-pr-number'>
+                                #{pr.number}
+                            </span>
+                            <span className='GitHubPRStatus__property-pr-title'>
+                                {pr.title || 'Untitled PR'}
+                            </span>
+                        </a>
+                        <Label color={getStatusColor(pr.status)}>
+                            <span className='Label-text'>{pr.status}</span>
+                        </Label>
+                    </div>
+                    {pr.branch && (
+                        <div className='GitHubPRStatus__property-pr-branch'>
+                            <CompassIcon icon='source-branch'/>
+                            <span>{pr.branch}</span>
+                        </div>
+                    )}
                 </div>
             ))}
         </div>

@@ -65,14 +65,28 @@
     &__property-list {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 8px;
+    }
+
+    &__property-divider {
+        margin: 4px 0;
+        padding: 4px 0;
+        border-top: 1px solid rgba(var(--center-channel-color-rgb), 0.12);
+
+        span {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: rgba(var(--center-channel-color-rgb), 0.48);
+            letter-spacing: 0.5px;
+        }
     }
 
     &__property-pr {
         display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 10px;
+        flex-direction: column;
+        gap: 6px;
+        padding: 10px 12px;
         background: rgba(var(--center-channel-color-rgb), 0.04);
         border-radius: 6px;
         border: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
@@ -82,20 +96,82 @@
             background: rgba(var(--center-channel-color-rgb), 0.06);
             border-color: rgba(var(--center-channel-color-rgb), 0.16);
         }
+
+        // Active PRs - more prominent
+        &--active {
+            border-left: 3px solid rgba(var(--button-bg-rgb), 0.6);
+            background: rgba(var(--button-bg-rgb), 0.04);
+        }
+
+        // Historical PRs - muted appearance
+        &--historical {
+            opacity: 0.7;
+            border-left: 3px solid rgba(var(--center-channel-color-rgb), 0.2);
+        }
+    }
+
+    &__property-pr-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        justify-content: space-between;
+    }
+
+    &__property-pr-link {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex: 1;
+        text-decoration: none;
+        overflow: hidden;
+        min-width: 0;
+
+        &:hover {
+            .GitHubPRStatus__property-pr-title {
+                text-decoration: underline;
+            }
+        }
+    }
+
+    &__property-pr-number {
+        font-size: 12px;
+        font-weight: 600;
+        font-family: monospace;
+        color: rgba(var(--button-bg-rgb), 1);
+        flex-shrink: 0;
     }
 
     &__property-pr-title {
         flex: 1;
         font-size: 13px;
-        color: rgba(var(--button-bg-rgb), 1);
-        text-decoration: none;
+        color: rgba(var(--center-channel-color-rgb), 0.88);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
         line-height: 1.4;
+    }
 
-        &:hover {
-            text-decoration: underline;
+    &__property-pr-branch {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        font-family: monospace;
+        color: rgba(var(--center-channel-color-rgb), 0.64);
+        background: rgba(var(--center-channel-color-rgb), 0.06);
+        padding: 3px 8px;
+        border-radius: 4px;
+        width: fit-content;
+
+        .CompassIcon {
+            font-size: 11px;
+        }
+
+        span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 200px;
         }
     }
 
@@ -370,5 +446,17 @@
     &--merged {
         background: rgba(146, 100, 222, 0.12);
         color: rgb(146, 100, 222);
+    }
+
+    // OPEN — green (active PR)
+    &--open {
+        background: rgba(61, 184, 135, 0.12);
+        color: rgb(61, 184, 135);
+    }
+
+    // CLOSED — red (closed without merge)
+    &--closed {
+        background: rgba(var(--error-text-color-rgb), 0.12);
+        color: rgba(var(--error-text-color-rgb), 1);
     }
 }
