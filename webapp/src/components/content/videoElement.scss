@@ -1,0 +1,100 @@
+// Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
+// See LICENSE.txt for license information.
+
+.VideoElement {
+    &__container {
+        max-width: 560px;
+        margin: 8px 0;
+    }
+
+    &__wrapper {
+        position: relative;
+        width: 100%;
+        padding-bottom: 56.25%; // 16:9 aspect ratio
+        background: #000;
+        border-radius: 4px;
+        overflow: hidden;
+        cursor: pointer;
+    }
+
+    &__thumbnail,
+    &__preview {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    &__gdrive-placeholder {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+
+        .GDriveIcon {
+            font-size: 64px;
+            color: white;
+            opacity: 0.8;
+        }
+    }
+
+    &__overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+
+        &:hover,
+        &:focus {
+            opacity: 1;
+        }
+    }
+
+    &__play-icon {
+        width: 64px;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        transition: transform 0.2s ease;
+
+        .PlayIcon {
+            font-size: 32px;
+            color: #000;
+            margin-left: 4px; // Optical centering for play icon
+        }
+
+        &:hover {
+            transform: scale(1.1);
+        }
+    }
+
+    &__metadata {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 8px;
+        font-size: 12px;
+        color: rgba(var(--center-channel-color-rgb), 0.64);
+    }
+
+    &__source {
+        font-weight: 600;
+    }
+}

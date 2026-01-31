@@ -16,6 +16,7 @@ import {contentRegistry} from './contentRegistry'
 import './textElement'
 import './markdownElement'
 import './imageElement'
+import './videoElement'
 import './dividerElement'
 import './checkboxElement'
 
