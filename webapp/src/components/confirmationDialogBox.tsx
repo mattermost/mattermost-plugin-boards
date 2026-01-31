@@ -2,7 +2,7 @@
 // See LICENSE.txt for license information.
 
 
-import React, {ReactNode, useCallback} from 'react'
+import React, {ReactNode} from 'react'
 import {FormattedMessage} from 'react-intl'
 
 import Button from '../widgets/buttons/button'
@@ -24,14 +24,13 @@ type Props = {
 }
 
 export const ConfirmationDialogBox = (props: Props) => {
-    const handleOnClose = useCallback(props.dialogBox.onClose, [])
-    const handleOnConfirm = useCallback(props.dialogBox.onConfirm, [])
+    const {onClose, onConfirm} = props.dialogBox
 
     return (
         <Dialog
             size='small'
             className='confirmation-dialog-box'
-            onClose={handleOnClose}
+            onClose={onClose}
         >
             <div
                 className='box-area'
@@ -45,7 +44,7 @@ export const ConfirmationDialogBox = (props: Props) => {
                         title='Cancel'
                         size='medium'
                         emphasis='tertiary'
-                        onClick={handleOnClose}
+                        onClick={onClose}
                     >
                         <FormattedMessage
                             id='ConfirmationDialog.cancel-action'
@@ -57,7 +56,7 @@ export const ConfirmationDialogBox = (props: Props) => {
                         size='medium'
                         submit={true}
                         danger={Boolean(props.dialogBox.destructive)}
-                        onClick={handleOnConfirm}
+                        onClick={onConfirm}
                         filled={true}
                     >
                         { props.dialogBox.confirmButtonText ||
