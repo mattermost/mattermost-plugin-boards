@@ -363,7 +363,7 @@ func (a *API) handleGetCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !a.permissions.HasPermissionToBoard(userID, card.BoardID, model.PermissionManageBoardCards) {
+	if !a.permissions.HasPermissionToBoard(userID, card.BoardID, model.PermissionViewBoard) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to fetch card"))
 		return
 	}
