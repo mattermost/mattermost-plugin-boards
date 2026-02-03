@@ -17,10 +17,12 @@ import {IAppWindow} from './types'
 import BoardPage from './pages/boardPage/boardPage'
 import WelcomePage from './pages/welcome/welcomePage'
 import ErrorPage from './pages/errorPage'
+import AccessDeniedPage from './pages/accessDeniedPage'
 import {Utils} from './utils'
 import octoClient from './octoClient'
 import {setGlobalError, getGlobalError} from './store/globalError'
 import {useAppSelector, useAppDispatch} from './store/hooks'
+import {ErrorId} from './errors'
 import {getFirstTeam, fetchTeams, Team} from './store/teams'
 import {getSidebarCategories, CategoryBoards} from './store/sidebar'
 import {getMySortedBoards} from './store/boards'
@@ -119,13 +121,26 @@ function GlobalErrorRedirect() {
     const globalError = useAppSelector<string>(getGlobalError)
     const dispatch = useAppDispatch()
     const history = useHistory()
+    const location = useLocation()
 
     useEffect(() => {
         if (globalError) {
+            // Don't redirect if we're already on an error page
+            if (location.pathname === '/error' || location.pathname === '/access-denied') {
+                dispatch(setGlobalError(''))
+                return
+            }
+
             dispatch(setGlobalError(''))
-            history.replace(`/error?id=${globalError}`)
+            // Redirect to access denied page for access denied errors
+            if (globalError === ErrorId.AccessDenied || globalError === ErrorId.InvalidReadOnlyBoard) {
+                const currentPath = location.pathname + location.search
+                history.replace(`/access-denied?r=${encodeURIComponent(currentPath)}`)
+            } else {
+                history.replace(`/error?id=${globalError}`)
+            }
         }
-    }, [globalError, history])
+    }, [globalError, history, location, dispatch])
 
     return null
 }
@@ -168,6 +183,9 @@ const FocalboardRouter = (props: Props): JSX.Element => {
 
                 <FBRoute path='/error'>
                     <ErrorPage/>
+                </FBRoute>
+                <FBRoute path='/access-denied'>
+                    <AccessDeniedPage/>
                 </FBRoute>
                 <FBRoute path={['/team/:teamId/new/:channelId']}>
                     <BoardPage new={true}/>

@@ -53,9 +53,9 @@ export const initialReadOnlyLoad = createAsyncThunk(
             client.getAllBlocks(boardId),
         ])
 
-        // if no board, read_token invalid
+        // if no board, access denied or invalid token
         if (!board) {
-            throw new Error(ErrorId.InvalidReadOnlyBoard)
+            throw new Error(ErrorId.AccessDenied)
         }
 
         return {board, blocks}
@@ -65,9 +65,18 @@ export const initialReadOnlyLoad = createAsyncThunk(
 export const loadBoardData = createAsyncThunk(
     'loadBoardData',
     async (boardID: string) => {
-        const blocks = await client.getAllBlocks(boardID)
-        return {
-            blocks,
+        try {
+            const blocks = await client.getAllBlocks(boardID)
+            return {
+                blocks,
+            }
+        } catch (error: unknown) {
+            const err = error as {status?: number; message?: string}
+            // If we get a 403 or access denied error, throw AccessDenied
+            if (err?.status === 403 || err?.message?.includes('access') || err?.message?.includes('denied')) {
+                throw new Error(ErrorId.AccessDenied)
+            }
+            throw error
         }
     },
 )
