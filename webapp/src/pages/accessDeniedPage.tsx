@@ -5,13 +5,13 @@ import React, {useCallback} from 'react'
 import {useHistory} from 'react-router-dom'
 import {FormattedMessage, useIntl} from 'react-intl'
 
-import ErrorIllustration from '../svg/error-illustration'
 
 import Button from '../widgets/buttons/button'
 import './accessDeniedPage.scss'
 
 import {setGlobalError} from '../store/globalError'
 import {useAppDispatch} from '../store/hooks'
+import AccessDeniedIllustration from '../svg/access-denied-illustation'
 
 const AccessDeniedPage = () => {
     const history = useHistory()
@@ -28,26 +28,26 @@ const AccessDeniedPage = () => {
     return (
         <div className='AccessDeniedPage'>
             <div>
+                <AccessDeniedIllustration/>
                 <div className='title'>
                     <FormattedMessage
                         id='accessDenied.page.title'
-                        defaultMessage={'Access Denied'}
+                        defaultMessage={'You don’t have access to this board'}
                     />
                 </div>
                 <div className='subtitle'>
                     <FormattedMessage
                         id='accessDenied.page.subtitle'
-                        defaultMessage={'You don\'t have access to this board. Please contact the board owner if you believe this is an error.'}
+                        defaultMessage={'This board is private or has restricted permissions.'}
                     />
                 </div>
-                <ErrorIllustration/>
                 <br/>
                 <Button
                     filled={true}
                     size='large'
                     onClick={handleBackToHome}
                 >
-                    {intl.formatMessage({id: 'accessDenied.back-to-home', defaultMessage: 'Back to Home'})}
+                    {intl.formatMessage({id: 'accessDenied.back-to-home', defaultMessage: 'Back to your boards'})}
                 </Button>
             </div>
         </div>
