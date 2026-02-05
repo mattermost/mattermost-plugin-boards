@@ -70,13 +70,14 @@ function HomeToCurrentTeam(props: {path: string, exact: boolean}) {
 
                 let teamID = (window.getCurrentTeamId && window.getCurrentTeamId()) || ''
                 const lastTeamID = UserSettings.lastTeamId
+                const hasNoTeamId = !teamID && !firstTeam && !lastTeamID
                 
-                if (teamsFetchError && !teamID && !firstTeam && !lastTeamID) {
+                if (teamsFetchError && hasNoTeamId) {
                     history.replace('/error?id=unknown')
                     return null
                 }
                 
-                if (!teamID && !firstTeam && !lastTeamID && !teamsFetched) {
+                if (hasNoTeamId && !teamsFetched) {
                     return <></>
                 }
                 
