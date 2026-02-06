@@ -572,7 +572,7 @@ func TestSearchBoards(t *testing.T) {
 				boards, resp := tc.Client.SearchBoardsForTeam(teamID, tc.Term)
 				th.CheckOK(resp)
 
-				boardIDs := []string{}
+				boardIDs := make([]string, 0, len(boards))
 				for _, board := range boards {
 					boardIDs = append(boardIDs, board.ID)
 				}
