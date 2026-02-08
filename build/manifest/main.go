@@ -6,7 +6,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
+	"strings"
 
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/pkg/errors"
@@ -33,6 +35,13 @@ func init() {
 	_ = json.NewDecoder(strings.NewReader(manifestStr)).Decode(&manifest)
 }
 `
+
+// These build-time vars are read from shell commands and populated in ../setup.mk
+var (
+	BuildHashShort  string
+	BuildTagLatest  string
+	BuildTagCurrent string
+)
 
 func main() {
 	if len(os.Args) <= 1 {
@@ -90,6 +99,32 @@ func findManifest() (*model.Manifest, error) {
 	decoder.DisallowUnknownFields()
 	if err = decoder.Decode(&manifest); err != nil {
 		return nil, errors.Wrap(err, "failed to parse manifest")
+	}
+
+	if manifest.Version == "" {
+		var version string
+		tags := strings.Fields(BuildTagCurrent)
+		for _, t := range tags {
+			if strings.HasPrefix(t, "v") {
+				version = t
+				break
+			}
+		}
+		if version == "" {
+			if BuildTagLatest != "" {
+				version = BuildTagLatest
+			} else {
+				version = "v0.0.0+" + BuildHashShort
+			}
+		}
+		manifest.Version = strings.TrimPrefix(version, "v")
+	}
+
+	if manifest.ReleaseNotesURL == "" && BuildTagLatest != "" {
+		manifest.ReleaseNotesURL, err = url.JoinPath(manifest.HomepageURL, "releases", "tag", BuildTagLatest)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to generate release notes URL")
+		}
 	}
 
 	return &manifest, nil
