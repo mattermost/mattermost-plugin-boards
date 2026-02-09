@@ -173,8 +173,7 @@ func (pd PropDef) ParseDate(s string) (string, error) {
 
 	var m map[string]int64
 	if err := json.Unmarshal([]byte(s), &m); err != nil {
-		// If it's not valid JSON, return the original string with error
-		// This handles cases where plain text was entered instead of JSON
+		// If it's not valid JSON, return the original string with error.
 		return s, fmt.Errorf("invalid date format (expected JSON): %w", err)
 	}
 	tsFrom, ok := m["from"]
