@@ -359,7 +359,7 @@ func (a *App) MoveFile(channelID, teamID, boardID, filename string) error {
 	return nil
 }
 
-// processFileIDPatch handles patching for fileID field in a block
+// processFileIDPatch handles patching for fileID field in a block.
 func (a *App) processFileIDPatch(block *model.Block, fileID string, newFileNames map[string]string, blockIDs []string, blockPatches []model.BlockPatch) ([]string, []model.BlockPatch, error) {
 	if err := model.ValidateFileId(fileID); err != nil {
 		errMessage := fmt.Sprintf("invalid characters in block with key: %s, %s", block.Fields[model.BlockFieldFileId], err)
@@ -392,7 +392,7 @@ func (a *App) processFileIDPatch(block *model.Block, fileID string, newFileNames
 	return blockIDs, blockPatches, nil
 }
 
-// processAttachmentIDPatch handles patching for attachmentID field in a block
+// processAttachmentIDPatch handles patching for attachmentID field in a block.
 func (a *App) processAttachmentIDPatch(block *model.Block, attachmentID string, newFileNames map[string]string, blockIDs []string, blockPatches []model.BlockPatch) ([]string, []model.BlockPatch, error) {
 	if err := model.ValidateFileId(attachmentID); err != nil {
 		errMessage := fmt.Sprintf("invalid characters in block with key: %s, %s", block.Fields[model.BlockFieldAttachmentId], err)
@@ -466,7 +466,7 @@ func (a *App) processAttachmentIDPatch(block *model.Block, attachmentID string, 
 	return blockIDs, blockPatches, nil
 }
 
-// updateInMemoryBlocks applies patches to in-memory block objects
+// updateInMemoryBlocks applies patches to in-memory block objects.
 func (a *App) updateInMemoryBlocks(blocks []*model.Block, blockIDs []string, blockPatches []model.BlockPatch) {
 	// Create a map for quick lookup of patches by block ID
 	patchMap := make(map[string]*model.BlockPatch)
