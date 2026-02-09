@@ -431,9 +431,10 @@ func (a *App) broadcastTeamUsers(teamID, boardID string, boardType model.BoardTy
 			}
 		}
 		if !isMember {
-			if boardType == model.BoardTypePrivate {
+			switch boardType {
+			case model.BoardTypePrivate:
 				a.wsAdapter.BroadcastMemberDelete(teamID, boardID, user.ID)
-			} else if boardType == model.BoardTypeOpen {
+			case model.BoardTypeOpen:
 				a.wsAdapter.BroadcastMemberChange(teamID, boardID, &model.BoardMember{UserID: user.ID, BoardID: boardID, SchemeViewer: true, Synthetic: true})
 			}
 		}

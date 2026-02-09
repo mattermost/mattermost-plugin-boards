@@ -826,9 +826,10 @@ func (s *SQLStore) RunDeDuplicateCategoryBoardsMigration(currentMigration int) e
 		}
 	}
 
-	if s.dbType == model.MysqlDBType {
+	switch s.dbType {
+	case model.MysqlDBType:
 		return s.runMySQLDeDuplicateCategoryBoardsMigration()
-	} else if s.dbType == model.PostgresDBType {
+	case model.PostgresDBType:
 		return s.runPostgresDeDuplicateCategoryBoardsMigration()
 	}
 
