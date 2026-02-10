@@ -60,7 +60,10 @@ func createBoardsConfig(mmconfig mm_model.Config, baseURL string, serverID strin
 
 	enablePublicSharedBoards := mmconfig.PluginSettings.Plugins[PluginName][SharedBoardsName] == true
 
-	enableBoardsDeletion := mmconfig.DataRetentionSettings.EnableBoardsDeletion != nil
+	enableBoardsDeletion := false
+	if mmconfig.DataRetentionSettings.EnableBoardsDeletion != nil {
+		enableBoardsDeletion = *mmconfig.DataRetentionSettings.EnableBoardsDeletion
+	}
 
 	featureFlags := parseFeatureFlags(mmconfig.FeatureFlags.ToMap())
 

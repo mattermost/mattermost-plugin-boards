@@ -54,7 +54,7 @@ func TeamsFromJSON(data io.Reader) []*Team {
 func ValidateTeamID(teamID string, isTemplate bool) error {
 	// Validate inputs to ensure proper file path handling
 	// Only allow GlobalTeamID for template operations to prevent path traversal attacks
-	if !mm_model.IsValidId(teamID) && (!isTemplate && teamID != GlobalTeamID) {
+	if !mm_model.IsValidId(teamID) && (!isTemplate || teamID != GlobalTeamID) {
 		return fmt.Errorf("invalid teamID in ValidateTeamID: %s", teamID) //nolint:err113
 	}
 	return nil
