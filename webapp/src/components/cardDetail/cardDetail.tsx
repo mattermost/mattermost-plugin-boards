@@ -232,6 +232,7 @@ const CardDetail = (props: Props): JSX.Element|null => {
                     onCancel={() => setTitle(props.card.title)}
                     readonly={props.readonly || !canEditBoardCards || limited}
                     spellCheck={true}
+                    dir='auto'
                 />
 
                 {/* Hidden (limited) card copy + CTA */}

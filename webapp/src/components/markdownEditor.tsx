@@ -22,6 +22,7 @@ type Props = {
     onEditorCancel?: () => void
     autofocus?: boolean
     saveOnEnter?: boolean
+    dir?: string
 }
 
 const MarkdownEditor = (props: Props): JSX.Element => {
@@ -46,6 +47,7 @@ const MarkdownEditor = (props: Props): JSX.Element => {
                     setIsEditing(true)
                 }
             }}
+            dir='auto'
         />
     )
 
@@ -70,7 +72,7 @@ const MarkdownEditor = (props: Props): JSX.Element => {
     )
 
     const element = (
-        <div className={`MarkdownEditor octo-editor ${props.className || ''} ${isEditing ? 'active' : ''}`}>
+        <div className={`MarkdownEditor octo-editor ${props.className || ''} ${isEditing ? 'active' : ''}`} dir='auto'>
             {isEditing ? editorElement : previewElement}
         </div>
     )

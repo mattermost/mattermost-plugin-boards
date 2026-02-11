@@ -139,6 +139,7 @@ const KanbanCard = (props: Props) => {
                     <div
                         key='__title'
                         className='octo-titletext'
+                        dir='auto'
                     >
                         {card.title || intl.formatMessage({id: 'KanbanCard.untitled', defaultMessage: 'Untitled'})}
                     </div>

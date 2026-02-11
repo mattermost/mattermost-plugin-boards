@@ -300,6 +300,7 @@ const SidebarCategory = (props: Props) => {
                                                 title={props.categoryBoards.name}
                                                 onClick={toggleCollapse}
                                                 {...provided.dragHandleProps}
+                                                dir='auto'
                                             >
                                                 {collapsed || snapshot.isDragging || props.forceCollapse ? <ChevronRight/> : <ChevronDown/>}
                                                 {props.categoryBoards.name}

@@ -113,6 +113,7 @@ const TableGroupHeaderRow = (props: Props): JSX.Element => {
                             }}
                             readonly={props.readonly || !group.option.id}
                             spellCheck={true}
+                            dir='auto'
                         />
                     </Label>}
             </div>

@@ -19,6 +19,7 @@ export type EditableProps = {
     onCancel?: () => void
     onSave?: (saveType: 'onEnter'|'onEsc'|'onBlur') => void
     onFocus?: () => void
+    dir?: string
 }
 
 export type Focusable = {
@@ -132,6 +133,7 @@ const Editable = (props: EditableProps, ref: React.Ref<Focusable>): JSX.Element 
         <input
             {...elementProps}
             ref={elementRef}
+            dir='auto'
         />
     )
 }
