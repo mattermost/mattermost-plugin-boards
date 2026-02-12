@@ -23,6 +23,7 @@ import {Card} from '../../blocks/card'
 import {
     updateBoards,
     updateMembersEnsuringBoardsAndUsers,
+    getCurrentBoard,
     getCurrentBoardId,
     setCurrent as setCurrentBoard,
     fetchBoardMembers,
@@ -73,6 +74,7 @@ const BoardPage = (props: Props): JSX.Element => {
     const intl = useIntl()
     const activeBoardId = useAppSelector(getCurrentBoardId)
     const activeViewId = useAppSelector(getCurrentViewId)
+    const currentBoard = useAppSelector(getCurrentBoard)
     const dispatch = useAppDispatch()
     const match = useRouteMatch<{boardId: string, viewId: string, cardId?: string, teamId?: string}>()
     const [mobileWarningClosed, setMobileWarningClosed] = useState(UserSettings.mobileWarningClosed)
@@ -224,6 +226,8 @@ const BoardPage = (props: Props): JSX.Element => {
                     setShowJoinBoardDialog(true)
                     return
                 }
+                UserSettings.setLastBoardID(boardTeamId, null)
+                UserSettings.setLastViewId(boardId, null)
                 dispatch(setGlobalError(ErrorId.AccessDenied))
             } else {
                 dispatch(setGlobalError('board-not-found'))
@@ -277,6 +281,14 @@ const BoardPage = (props: Props): JSX.Element => {
             loadOrJoinBoard(me, teamId, match.params.boardId)
         }
     }, [teamId, match.params.boardId, me?.id])
+
+    // When the board is removed from the store while viewing (e.g. user was removed via websocket),
+    // re-verify access so we show access-denied instead of the template picker
+    useEffect(() => {
+        if (match.params.boardId && !props.readonly && me && !currentBoard) {
+            loadOrJoinBoard(me, teamId, match.params.boardId)
+        }
+    }, [teamId, match.params.boardId, me?.id, currentBoard, loadOrJoinBoard])
 
     const handleUnhideBoard = async (boardID: string) => {
         if (!me || !category) {
