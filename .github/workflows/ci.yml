@@ -12,6 +12,9 @@ env:
  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
  EXCLUDE_ENTERPRISE: true
 
+permissions:
+  contents: read
+
 jobs:
   webapp-test:
     runs-on: ubuntu-22.04
