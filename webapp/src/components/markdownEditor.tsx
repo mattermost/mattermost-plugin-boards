@@ -1,8 +1,9 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useState, Suspense} from 'react'
+import React, {useState, Suspense, useMemo} from 'react'
 
+import {Channel} from '@mattermost/types/channels'
 import {getChannelsNameMapInTeam} from 'mattermost-redux/selectors/entities/channels'
 
 import {Provider} from 'react-redux'
@@ -13,6 +14,8 @@ import {useAppSelector} from '../store/hooks'
 import './markdownEditor.scss'
 
 const MarkdownEditorInput = React.lazy(() => import('./markdownEditorInput/markdownEditorInput'))
+
+const EMPTY_CHANNEL_NAMES_MAP: Record<string, Channel> = {}
 
 type Props = {
     id?: string
@@ -35,7 +38,12 @@ const MarkdownEditor = (props: Props): JSX.Element => {
     const [isEditing, setIsEditing] = useState(Boolean(props.autofocus))
 
     const selectedTeam = useAppSelector(getCurrentTeam)
-    const channelNamesMap = selectedTeam ? getChannelsNameMapInTeam((window as any).store.getState(), selectedTeam.id) : {}
+    const channelNamesMap = useMemo(() => {
+        if (!selectedTeam) {
+            return EMPTY_CHANNEL_NAMES_MAP
+        }
+        return getChannelsNameMapInTeam((window as any).store.getState(), selectedTeam.id)
+    }, [selectedTeam?.id])
 
     const previewElement = (
         <div
@@ -54,27 +62,15 @@ const MarkdownEditor = (props: Props): JSX.Element => {
                 }
             }}
         >
-            {text ? (
-                <Provider store={(window as any).store}>
-                    {messageHtmlToComponent(formatText(text, {
-                        atMentions: true,
-                        team: selectedTeam,
-                        channelNamesMap,
-                    }), {
-                        fetchMissingUsers: true, 
-                    })}
-                </Provider>
-            ) : (
-                <Provider store={(window as any).store}>
-                    {messageHtmlToComponent(formatText(placeholderText || '', {
-                        atMentions: true,
-                        team: selectedTeam,
-                        channelNamesMap,
-                    }), {
-                        fetchMissingUsers: true, 
-                    })}
-                </Provider>
-            )}
+            <Provider store={(window as any).store}>
+                {messageHtmlToComponent(formatText(text || placeholderText || '', {
+                    atMentions: true,
+                    team: selectedTeam,
+                    channelNamesMap,
+                }), {
+                    fetchMissingUsers: true,
+                })}
+            </Provider>
         </div>
     )
 
