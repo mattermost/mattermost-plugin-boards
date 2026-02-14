@@ -247,6 +247,7 @@ const BoardPage = (props: Props): JSX.Element => {
                 }
                 UserSettings.setLastBoardID(boardTeamId, null)
                 UserSettings.setLastViewId(boardId, null)
+                dispatch(setGlobalError(ErrorId.AccessDenied))
             }
             return
         }
