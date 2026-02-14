@@ -239,6 +239,15 @@ const BoardPage = (props: Props): JSX.Element => {
         // and fetch its data
         const result: any = await dispatch(loadBoardData(boardId))
         if (result.type === loadBoardData.rejected.type) {
+            if (result.error?.message === ErrorId.AccessDenied) {
+                const isAdmin = myUser.permissions?.find((s) => s === 'manage_system' || s === 'manage_team')
+                if (isAdmin) {
+                    setShowJoinBoardDialog(true)
+                    return
+                }
+                UserSettings.setLastBoardID(boardTeamId, null)
+                UserSettings.setLastViewId(boardId, null)
+            }
             return
         }
         if (result.payload?.blocks?.length === 0 && myUser.id) {
