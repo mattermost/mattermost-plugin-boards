@@ -63,6 +63,12 @@ func (a *API) handleGetMembersForBoard(w http.ResponseWriter, r *http.Request) {
 	// For template boards, require explicit board membership (not synthetic)
 	board, err := a.app.GetBoard(boardID)
 	if err != nil {
+		// Return 403 Forbidden instead of 404 Not Found for non-existing boards
+		// to avoid leaking information about board existence
+		if model.IsErrNotFound(err) {
+			a.errorResponse(w, r, model.NewErrPermission("access denied to board members"))
+			return
+		}
 		a.errorResponse(w, r, err)
 		return
 	}
