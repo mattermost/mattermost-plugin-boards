@@ -549,7 +549,7 @@ func SetupTestHelperPluginMode(t *testing.T) *TestHelper {
 
 	// Create sqlSettings for test database
 	driverName := getEnvWithDefault("TEST_DATABASE_DRIVERNAME", "postgres")
-	sqlSettings := storetest.MakeSqlSettings(driverName, false)
+	sqlSettings := storetest.MakeSqlSettings(driverName)
 
 	th := &TestHelper{
 		T:                  t,
