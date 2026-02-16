@@ -133,12 +133,14 @@ func (a *API) handleArchiveImport(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 
-	ctx := r.Context()
-	session, _ := ctx.Value(sessionContextKey).(*model.Session)
-	userID := session.UserID
-
 	vars := mux.Vars(r)
 	teamID := vars["teamID"]
+
+	userID := getUserID(r)
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to archive import"))
+		return
+	}
 
 	if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionViewTeam) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to create board"))
