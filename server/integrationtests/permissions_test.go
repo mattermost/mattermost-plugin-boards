@@ -2562,13 +2562,13 @@ func TestPermissionsCreateSubscription(t *testing.T) {
 		}
 		return []TestCase{
 			{"/subscriptions", methodPost, subscription(""), userAnon, http.StatusUnauthorized, 0},
-			{"/subscriptions", methodPost, subscription(userNoTeamMemberID), userNoTeamMember, http.StatusOK, 1},
-			{"/subscriptions", methodPost, subscription(userTeamMemberID), userTeamMember, http.StatusOK, 1},
+			{"/subscriptions", methodPost, subscription(userNoTeamMemberID), userNoTeamMember, http.StatusForbidden, 0},
+			{"/subscriptions", methodPost, subscription(userTeamMemberID), userTeamMember, http.StatusForbidden, 0},
 			{"/subscriptions", methodPost, subscription(userViewerID), userViewer, http.StatusOK, 1},
 			{"/subscriptions", methodPost, subscription(userCommenterID), userCommenter, http.StatusOK, 1},
 			{"/subscriptions", methodPost, subscription(userEditorID), userEditor, http.StatusOK, 1},
 			{"/subscriptions", methodPost, subscription(userAdminID), userAdmin, http.StatusOK, 1},
-			{"/subscriptions", methodPost, subscription(userGuestID), userGuest, http.StatusOK, 1},
+			{"/subscriptions", methodPost, subscription(userGuestID), userGuest, http.StatusForbidden, 0},
 		}
 	}
 

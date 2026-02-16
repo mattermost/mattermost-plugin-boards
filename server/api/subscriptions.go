@@ -52,6 +52,12 @@ func (a *API) handleCreateSubscription(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 
+	userID := getUserID(r)
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to create subscription"))
+		return
+	}
+
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		a.errorResponse(w, r, err)
@@ -70,11 +76,8 @@ func (a *API) handleCreateSubscription(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
-
 	// User can only create subscriptions for themselves (for now)
-	if session.UserID != sub.SubscriberID {
+	if userID != sub.SubscriberID {
 		a.errorResponse(w, r, model.NewErrBadRequest("userID and subscriberID mismatch"))
 		return
 	}
