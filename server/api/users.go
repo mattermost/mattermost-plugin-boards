@@ -353,14 +353,17 @@ func (a *API) handleUpdateUserConfig(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID := vars["userID"]
 
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
+	requestingUserID := getUserID(r)
+	if requestingUserID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to update user config"))
+		return
+	}
 
 	auditRec := a.makeAuditRecord(r, "updateUserConfig", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)
 
 	// a user can update only own config
-	if userID != session.UserID {
+	if userID != requestingUserID {
 		a.errorResponse(w, r, model.NewErrForbidden(""))
 		return
 	}
