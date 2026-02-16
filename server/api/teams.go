@@ -178,6 +178,12 @@ func (a *API) handleGetTeamUsers(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	teamID := vars["teamID"]
 	userID := getUserID(r)
+
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to team users"))
+		return
+	}
+
 	query := r.URL.Query()
 	searchQuery := query.Get("search")
 	excludeBots := r.URL.Query().Get("exclude_bots") == True
