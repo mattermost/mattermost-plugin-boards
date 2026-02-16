@@ -2506,18 +2506,18 @@ func TestPermissionsUpdateCategoryBoard(t *testing.T) {
 }
 
 func TestPermissionsGetFile(t *testing.T) {
-	ttCasesF := func() []TestCase {
+	ttCasesF := func(teamID string) []TestCase {
 		return []TestCase{
-			{"/files/teams/test-team/{PRIVATE_BOARD_ID}/{NEW_FILE_ID}", methodGet, "", userAnon, http.StatusUnauthorized, 0},
-			{"/files/teams/test-team/{PRIVATE_BOARD_ID}/{NEW_FILE_ID}", methodGet, "", userCommenter, http.StatusOK, 1},
-			{"/files/teams/test-team/{PRIVATE_BOARD_ID}/{NEW_FILE_ID}", methodGet, "", userEditor, http.StatusOK, 1},
-			{"/files/teams/test-team/{PRIVATE_BOARD_ID}/{NEW_FILE_ID}", methodGet, "", userAdmin, http.StatusOK, 1},
-			{"/files/teams/test-team/{PRIVATE_BOARD_ID}/{NEW_FILE_ID}", methodGet, "", userGuest, http.StatusOK, 1},
+			{"/files/teams/" + teamID + "/{PRIVATE_BOARD_ID}/{NEW_FILE_ID}", methodGet, "", userAnon, http.StatusUnauthorized, 0},
+			{"/files/teams/" + teamID + "/{PRIVATE_BOARD_ID}/{NEW_FILE_ID}", methodGet, "", userCommenter, http.StatusOK, 1},
+			{"/files/teams/" + teamID + "/{PRIVATE_BOARD_ID}/{NEW_FILE_ID}", methodGet, "", userEditor, http.StatusOK, 1},
+			{"/files/teams/" + teamID + "/{PRIVATE_BOARD_ID}/{NEW_FILE_ID}", methodGet, "", userAdmin, http.StatusOK, 1},
+			{"/files/teams/" + teamID + "/{PRIVATE_BOARD_ID}/{NEW_FILE_ID}", methodGet, "", userGuest, http.StatusOK, 1},
 
-			{"/files/teams/test-team/{PRIVATE_BOARD_ID}/{NEW_FILE_ID}?read_token=invalid", methodGet, "", userAnon, http.StatusUnauthorized, 0},
-			{"/files/teams/test-team/{PRIVATE_BOARD_ID}/{NEW_FILE_ID}?read_token=valid", methodGet, "", userAnon, http.StatusOK, 1},
-			{"/files/teams/test-team/{PRIVATE_BOARD_ID}/{NEW_FILE_ID}?read_token=invalid", methodGet, "", userNoTeamMember, http.StatusForbidden, 0},
-			{"/files/teams/test-team/{PRIVATE_BOARD_ID}/{NEW_FILE_ID}?read_token=valid", methodGet, "", userTeamMember, http.StatusOK, 1},
+			{"/files/teams/" + teamID + "/{PRIVATE_BOARD_ID}/{NEW_FILE_ID}?read_token=invalid", methodGet, "", userAnon, http.StatusUnauthorized, 0},
+			{"/files/teams/" + teamID + "/{PRIVATE_BOARD_ID}/{NEW_FILE_ID}?read_token=valid", methodGet, "", userAnon, http.StatusOK, 1},
+			{"/files/teams/" + teamID + "/{PRIVATE_BOARD_ID}/{NEW_FILE_ID}?read_token=invalid", methodGet, "", userNoTeamMember, http.StatusForbidden, 0},
+			{"/files/teams/" + teamID + "/{PRIVATE_BOARD_ID}/{NEW_FILE_ID}?read_token=valid", methodGet, "", userTeamMember, http.StatusOK, 1},
 		}
 	}
 
@@ -2526,10 +2526,23 @@ func TestPermissionsGetFile(t *testing.T) {
 	clients := setupClients(th)
 	testData := setupData(t, th)
 
-	newFileID, err := th.Server.App().SaveFile(bytes.NewBuffer([]byte("test")), "test-team", testData.privateBoard.ID, "test.png", false)
+	validTeamID := mmModel.NewId()
+	newFileID, err := th.Server.App().SaveFile(bytes.NewBuffer([]byte("test")), validTeamID, testData.privateBoard.ID, "test.png", false)
 	require.NoError(t, err)
 
-	ttCases := ttCasesF()
+	blockID := utils.NewID(utils.IDTypeBlock)
+	err = th.Server.App().InsertBlock(&model.Block{
+		ID:      blockID,
+		Title:   "Test Image Block",
+		Type:    model.TypeImage,
+		BoardID: testData.privateBoard.ID,
+		Fields: map[string]interface{}{
+			"fileId": newFileID,
+		},
+	}, userAdminID)
+	require.NoError(t, err)
+
+	ttCases := ttCasesF(validTeamID)
 	for i, tc := range ttCases {
 		ttCases[i].url = strings.Replace(tc.url, "{NEW_FILE_ID}", newFileID, 1)
 	}
