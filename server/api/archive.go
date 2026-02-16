@@ -207,5 +207,11 @@ func (a *API) handleArchiveExportTeam(w http.ResponseWriter, r *http.Request) {
 	//     description: internal error
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
+	userID := getUserID(r)
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to archive export"))
+		return
+	}
+
 	a.errorResponse(w, r, model.NewErrNotImplemented("not permitted in plugin mode"))
 }
