@@ -265,6 +265,12 @@ func (a *API) handleGetUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID := vars["userID"]
 
+	requestingUserID := getUserID(r)
+	if requestingUserID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to user"))
+		return
+	}
+
 	auditRec := a.makeAuditRecord(r, "postBlocks", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelRead, auditRec)
 	auditRec.AddMeta("userID", userID)
@@ -275,10 +281,7 @@ func (a *API) handleGetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
-
-	canSeeUser, err := a.app.CanSeeUser(session.UserID, userID)
+	canSeeUser, err := a.app.CanSeeUser(requestingUserID, userID)
 	if err != nil {
 		a.errorResponse(w, r, err)
 		return
@@ -288,10 +291,10 @@ func (a *API) handleGetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if userID == session.UserID {
+	if userID == requestingUserID {
 		user.Sanitize(map[string]bool{})
 	} else {
-		a.app.SanitizeProfile(user, a.permissions.HasPermissionTo(session.UserID, model.PermissionManageSystem))
+		a.app.SanitizeProfile(user, a.permissions.HasPermissionTo(requestingUserID, model.PermissionManageSystem))
 	}
 
 	userData, err := json.Marshal(user)
