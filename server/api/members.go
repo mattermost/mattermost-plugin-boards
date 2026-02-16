@@ -268,7 +268,7 @@ func (a *API) handleJoinBoard(w http.ResponseWriter, r *http.Request) {
 
 	userID := getUserID(r)
 	if userID == "" {
-		a.errorResponse(w, r, model.NewErrBadRequest("missing user ID"))
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to join board"))
 		return
 	}
 
