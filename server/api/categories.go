@@ -302,9 +302,11 @@ func (a *API) handleGetUserCategoryBoards(w http.ResponseWriter, r *http.Request
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
-	userID := session.UserID
+	userID := getUserID(r)
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to categories"))
+		return
+	}
 
 	vars := mux.Vars(r)
 	teamID := vars["teamID"]
@@ -312,7 +314,7 @@ func (a *API) handleGetUserCategoryBoards(w http.ResponseWriter, r *http.Request
 	auditRec := a.makeAuditRecord(r, "getUserCategoryBoards", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)
 
-	if !a.permissions.HasPermissionToTeam(session.UserID, teamID, model.PermissionViewTeam) {
+	if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionViewTeam) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to team"))
 		return
 	}

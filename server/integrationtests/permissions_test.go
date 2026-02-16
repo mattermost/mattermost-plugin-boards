@@ -1713,7 +1713,7 @@ func TestPermissionsDeleteBoardMember(t *testing.T) {
 
 func TestPermissionsJoinBoardAsMember(t *testing.T) {
 	ttCases := []TestCase{
-		{"/boards/{PRIVATE_BOARD_ID}/join", methodPost, "", userAnon, http.StatusBadRequest, 0},
+		{"/boards/{PRIVATE_BOARD_ID}/join", methodPost, "", userAnon, http.StatusUnauthorized, 0},
 		// Do we want to forbid already existing members to join to the board or simply return the current membership?
 		{"/boards/{PRIVATE_BOARD_ID}/join", methodPost, "", userViewer, http.StatusForbidden, 0},
 		{"/boards/{PRIVATE_BOARD_ID}/join", methodPost, "", userCommenter, http.StatusForbidden, 0},
@@ -1721,7 +1721,7 @@ func TestPermissionsJoinBoardAsMember(t *testing.T) {
 		{"/boards/{PRIVATE_BOARD_ID}/join", methodPost, "", userAdmin, http.StatusForbidden, 0},
 		{"/boards/{PRIVATE_BOARD_ID}/join", methodPost, "", userGuest, http.StatusForbidden, 0},
 
-		{"/boards/{PUBLIC_BOARD_ID}/join", methodPost, "", userAnon, http.StatusBadRequest, 0},
+		{"/boards/{PUBLIC_BOARD_ID}/join", methodPost, "", userAnon, http.StatusUnauthorized, 0},
 		{"/boards/{PUBLIC_BOARD_ID}/join", methodPost, "", userNoTeamMember, http.StatusForbidden, 0},
 		{"/boards/{PUBLIC_BOARD_ID}/join", methodPost, "", userTeamMember, http.StatusOK, 1},
 		{"/boards/{PUBLIC_BOARD_ID}/join", methodPost, "", userViewer, http.StatusOK, 1},
@@ -1730,7 +1730,7 @@ func TestPermissionsJoinBoardAsMember(t *testing.T) {
 		{"/boards/{PUBLIC_BOARD_ID}/join", methodPost, "", userAdmin, http.StatusOK, 1},
 		{"/boards/{PUBLIC_BOARD_ID}/join", methodPost, "", userGuest, http.StatusForbidden, 0},
 
-		{"/boards/{PRIVATE_TEMPLATE_ID}/join", methodPost, "", userAnon, http.StatusBadRequest, 0},
+		{"/boards/{PRIVATE_TEMPLATE_ID}/join", methodPost, "", userAnon, http.StatusUnauthorized, 0},
 		{"/boards/{PRIVATE_TEMPLATE_ID}/join", methodPost, "", userNoTeamMember, http.StatusForbidden, 0},
 		{"/boards/{PRIVATE_TEMPLATE_ID}/join", methodPost, "", userTeamMember, http.StatusForbidden, 0},
 		{"/boards/{PRIVATE_TEMPLATE_ID}/join", methodPost, "", userViewer, http.StatusForbidden, 0},
@@ -1739,7 +1739,7 @@ func TestPermissionsJoinBoardAsMember(t *testing.T) {
 		{"/boards/{PRIVATE_TEMPLATE_ID}/join", methodPost, "", userAdmin, http.StatusForbidden, 0},
 		{"/boards/{PRIVATE_TEMPLATE_ID}/join", methodPost, "", userGuest, http.StatusForbidden, 0},
 
-		{"/boards/{PUBLIC_TEMPLATE_ID}/join", methodPost, "", userAnon, http.StatusBadRequest, 0},
+		{"/boards/{PUBLIC_TEMPLATE_ID}/join", methodPost, "", userAnon, http.StatusUnauthorized, 0},
 		{"/boards/{PUBLIC_TEMPLATE_ID}/join", methodPost, "", userNoTeamMember, http.StatusForbidden, 0},
 		{"/boards/{PUBLIC_TEMPLATE_ID}/join", methodPost, "", userTeamMember, http.StatusOK, 1},
 		{"/boards/{PUBLIC_TEMPLATE_ID}/join", methodPost, "", userViewer, http.StatusOK, 1},
