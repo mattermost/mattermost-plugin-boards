@@ -2150,9 +2150,30 @@ func TestPermissionsUpdateUserConfig(t *testing.T) {
 }
 
 func TestPermissionsCreateBoardsAndBlocks(t *testing.T) {
+	th := SetupTestHelperPluginMode(t)
+	defer th.TearDown()
+	clients := setupClients(th)
+	testData := setupData(t, th)
+
+	validTeamID := mmModel.NewId()
+	testBoardID := "test"
+	testBlockID := "test-block"
 	bab := toJSON(t, model.BoardsAndBlocks{
-		Boards: []*model.Board{{ID: "test", Title: "Test Board", TeamID: "test-team"}},
-		Blocks: []*model.Block{},
+		Boards: []*model.Board{{
+			ID:          testBoardID,
+			Title:       "Test Board",
+			TeamID:      validTeamID,
+			Type:        model.BoardTypeOpen,
+			MinimumRole: model.BoardRoleViewer,
+		}},
+		Blocks: []*model.Block{{
+			ID:       testBlockID,
+			Title:    "Test Block",
+			BoardID:  testBoardID,
+			Type:     "card",
+			CreateAt: model.GetMillis(),
+			UpdateAt: model.GetMillis(),
+		}},
 	})
 
 	ttCases := []TestCase{
@@ -2166,10 +2187,6 @@ func TestPermissionsCreateBoardsAndBlocks(t *testing.T) {
 		{"/boards-and-blocks", methodPost, bab, userGuest, http.StatusForbidden, 0},
 	}
 
-	th := SetupTestHelperPluginMode(t)
-	defer th.TearDown()
-	clients := setupClients(th)
-	testData := setupData(t, th)
 	runTestCases(t, ttCases, testData, clients)
 }
 
