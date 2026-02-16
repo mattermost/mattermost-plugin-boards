@@ -94,6 +94,13 @@ func (s *Service) HasPermissionToBoard(userID, boardID string, permission *mmMod
 		)
 		return false
 	}
+	if member == nil {
+		s.logger.Error("member is nil for board",
+			mlog.String("boardID", boardID),
+			mlog.String("userID", userID),
+		)
+		return false
+	}
 
 	switch member.MinimumRole {
 	case "admin":
