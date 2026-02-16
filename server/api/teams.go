@@ -100,6 +100,11 @@ func (a *API) handleGetTeam(w http.ResponseWriter, r *http.Request) {
 	teamID := vars["teamID"]
 	userID := getUserID(r)
 
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to team"))
+		return
+	}
+
 	if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionViewTeam) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to team"))
 		return
@@ -111,9 +116,11 @@ func (a *API) handleGetTeam(w http.ResponseWriter, r *http.Request) {
 	team, err = a.app.GetTeam(teamID)
 	if model.IsErrNotFound(err) {
 		a.errorResponse(w, r, model.NewErrUnauthorized("invalid team"))
+		return
 	}
 	if err != nil {
 		a.errorResponse(w, r, err)
+		return
 	}
 
 	auditRec := a.makeAuditRecord(r, "getTeam", audit.Fail)
