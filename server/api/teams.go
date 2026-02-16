@@ -45,10 +45,15 @@ func (a *API) handleGetTeams(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	userID := getUserID(r)
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to teams"))
+		return
+	}
 
 	teams, err := a.app.GetTeamsForUser(userID)
 	if err != nil {
 		a.errorResponse(w, r, err)
+		return
 	}
 
 	auditRec := a.makeAuditRecord(r, "getTeams", audit.Fail)
