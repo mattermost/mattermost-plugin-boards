@@ -2623,38 +2623,38 @@ func TestPermissionsDeleteSubscription(t *testing.T) {
 		{"/subscriptions/block-3/other", methodDelete, "", userGuest, http.StatusForbidden, 0},
 	}
 
-	extraSetup := func(t *testing.T, th *TestHelper) {
-		_, err := th.Server.App().CreateSubscription(
-			&model.Subscription{BlockType: "card", BlockID: "block-3", SubscriberType: "user", SubscriberID: userNoTeamMemberID, CreateAt: model.GetMillis()})
-		require.NoError(t, err)
-		_, err = th.Server.App().CreateSubscription(
-			&model.Subscription{BlockType: "card", BlockID: "block-3", SubscriberType: "user", SubscriberID: userTeamMemberID, CreateAt: model.GetMillis()})
-		require.NoError(t, err)
-		_, err = th.Server.App().CreateSubscription(
-			&model.Subscription{BlockType: "card", BlockID: "block-3", SubscriberType: "user", SubscriberID: userViewerID, CreateAt: model.GetMillis()})
-		require.NoError(t, err)
-		_, err = th.Server.App().CreateSubscription(
-			&model.Subscription{BlockType: "card", BlockID: "block-3", SubscriberType: "user", SubscriberID: userCommenterID, CreateAt: model.GetMillis()})
-		require.NoError(t, err)
-		_, err = th.Server.App().CreateSubscription(
-			&model.Subscription{BlockType: "card", BlockID: "block-3", SubscriberType: "user", SubscriberID: userEditorID, CreateAt: model.GetMillis()})
-		require.NoError(t, err)
-		_, err = th.Server.App().CreateSubscription(
-			&model.Subscription{BlockType: "card", BlockID: "block-3", SubscriberType: "user", SubscriberID: userAdminID, CreateAt: model.GetMillis()})
-		require.NoError(t, err)
-		_, err = th.Server.App().CreateSubscription(
-			&model.Subscription{BlockType: "card", BlockID: "block-3", SubscriberType: "user", SubscriberID: userGuestID, CreateAt: model.GetMillis()})
-		require.NoError(t, err)
-		_, err = th.Server.App().CreateSubscription(
-			&model.Subscription{BlockType: "card", BlockID: "block-3", SubscriberType: "user", SubscriberID: "other", CreateAt: model.GetMillis()})
-		require.NoError(t, err)
-	}
-
 	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	extraSetup(t, th)
+
+	// Create subscriptions using the actual block ID from testData
+	blockID := testData.publicBoardBlockID
+	_, err := th.Server.App().CreateSubscription(
+		&model.Subscription{BlockType: "card", BlockID: blockID, SubscriberType: "user", SubscriberID: userNoTeamMemberID, CreateAt: model.GetMillis()})
+	require.NoError(t, err)
+	_, err = th.Server.App().CreateSubscription(
+		&model.Subscription{BlockType: "card", BlockID: blockID, SubscriberType: "user", SubscriberID: userTeamMemberID, CreateAt: model.GetMillis()})
+	require.NoError(t, err)
+	_, err = th.Server.App().CreateSubscription(
+		&model.Subscription{BlockType: "card", BlockID: blockID, SubscriberType: "user", SubscriberID: userViewerID, CreateAt: model.GetMillis()})
+	require.NoError(t, err)
+	_, err = th.Server.App().CreateSubscription(
+		&model.Subscription{BlockType: "card", BlockID: blockID, SubscriberType: "user", SubscriberID: userCommenterID, CreateAt: model.GetMillis()})
+	require.NoError(t, err)
+	_, err = th.Server.App().CreateSubscription(
+		&model.Subscription{BlockType: "card", BlockID: blockID, SubscriberType: "user", SubscriberID: userEditorID, CreateAt: model.GetMillis()})
+	require.NoError(t, err)
+	_, err = th.Server.App().CreateSubscription(
+		&model.Subscription{BlockType: "card", BlockID: blockID, SubscriberType: "user", SubscriberID: userAdminID, CreateAt: model.GetMillis()})
+	require.NoError(t, err)
+	_, err = th.Server.App().CreateSubscription(
+		&model.Subscription{BlockType: "card", BlockID: blockID, SubscriberType: "user", SubscriberID: userGuestID, CreateAt: model.GetMillis()})
+	require.NoError(t, err)
+	_, err = th.Server.App().CreateSubscription(
+		&model.Subscription{BlockType: "card", BlockID: blockID, SubscriberType: "user", SubscriberID: "other", CreateAt: model.GetMillis()})
+	require.NoError(t, err)
+
 	runTestCases(t, ttCases, testData, clients)
 }
 

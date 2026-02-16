@@ -150,12 +150,15 @@ func (a *API) handleDeleteSubscription(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
-
 	vars := mux.Vars(r)
 	blockID := vars["blockID"]
 	subscriberID := vars["subscriberID"]
+
+	userID := getUserID(r)
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to delete subscription"))
+		return
+	}
 
 	auditRec := a.makeAuditRecord(r, "deleteSubscription", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)
@@ -163,7 +166,7 @@ func (a *API) handleDeleteSubscription(w http.ResponseWriter, r *http.Request) {
 	auditRec.AddMeta("subscriber_id", subscriberID)
 
 	// User can only delete subscriptions for themselves
-	if session.UserID != subscriberID {
+	if userID != subscriberID {
 		a.errorResponse(w, r, model.NewErrPermission("access denied"))
 		return
 	}
@@ -209,18 +212,21 @@ func (a *API) handleGetSubscriptions(w http.ResponseWriter, r *http.Request) {
 	//     description: internal error
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
-
 	vars := mux.Vars(r)
 	subscriberID := vars["subscriberID"]
+
+	userID := getUserID(r)
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to get subscriptions"))
+		return
+	}
 
 	auditRec := a.makeAuditRecord(r, "getSubscriptions", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelRead, auditRec)
 	auditRec.AddMeta("subscriber_id", subscriberID)
 
 	// User can only get subscriptions for themselves (for now)
-	if session.UserID != subscriberID {
+	if userID != subscriberID {
 		a.errorResponse(w, r, model.NewErrPermission("access denied"))
 		return
 	}
