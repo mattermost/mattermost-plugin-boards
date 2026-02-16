@@ -146,6 +146,11 @@ func (a *API) handleGetMe(w http.ResponseWriter, r *http.Request) {
 
 	userID := getUserID(r)
 
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to user"))
+		return
+	}
+
 	var user *model.User
 	var err error
 
