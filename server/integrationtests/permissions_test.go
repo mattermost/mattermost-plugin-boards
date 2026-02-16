@@ -2297,7 +2297,7 @@ func TestPermissionsCreateCategory(t *testing.T) {
 
 		return []TestCase{
 			{"/teams/test-team/categories", methodPost, category(userNoTeamMemberID), userAnon, http.StatusUnauthorized, 0},
-			{"/teams/test-team/categories", methodPost, category(userNoTeamMemberID), userNoTeamMember, http.StatusOK, 1},
+			{"/teams/test-team/categories", methodPost, category(userNoTeamMemberID), userNoTeamMember, http.StatusForbidden, 0},
 			{"/teams/test-team/categories", methodPost, category(userTeamMemberID), userTeamMember, http.StatusOK, 1},
 			{"/teams/test-team/categories", methodPost, category(userViewerID), userViewer, http.StatusOK, 1},
 			{"/teams/test-team/categories", methodPost, category(userCommenterID), userCommenter, http.StatusOK, 1},
