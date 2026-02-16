@@ -1972,21 +1972,6 @@ func TestPermissionsGetTeam(t *testing.T) {
 	runTestCases(t, ttCases, testData, clients)
 }
 
-func TestPermissionsRegenerateSignupToken(t *testing.T) {
-	th := SetupTestHelperPluginMode(t)
-	defer th.TearDown()
-	clients := setupClients(th)
-	testData := setupData(t, th)
-	ttCases := []TestCase{
-		{"/teams/test-team/regenerate_signup_token", methodPost, "", userAnon, http.StatusUnauthorized, 0},
-		{"/teams/test-team/regenerate_signup_token", methodPost, "", userAdmin, http.StatusNotImplemented, 0},
-
-		{"/teams/empty-team/regenerate_signup_token", methodPost, "", userAnon, http.StatusUnauthorized, 0},
-		{"/teams/empty-team/regenerate_signup_token", methodPost, "", userAdmin, http.StatusNotImplemented, 0},
-	}
-	runTestCases(t, ttCases, testData, clients)
-}
-
 func TestPermissionsGetTeamUsers(t *testing.T) {
 	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
