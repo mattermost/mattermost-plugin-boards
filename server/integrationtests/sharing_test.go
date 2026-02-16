@@ -55,6 +55,10 @@ func TestSharing(t *testing.T) {
 	})
 
 	t.Run("POST sharing, config = false", func(t *testing.T) {
+		// Explicitly set config to false for this test
+		th.Server.Config().EnablePublicSharedBoards = false
+		th.Server.UpdateAppConfig()
+
 		sharing := model.Sharing{
 			ID:       boardID,
 			Token:    token,
