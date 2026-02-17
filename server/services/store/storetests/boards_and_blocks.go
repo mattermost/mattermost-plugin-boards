@@ -67,12 +67,12 @@ func testCreateBoardsAndBlocks(t *testing.T, store store.Store) {
 		require.Len(t, bab.Boards, 3)
 		require.Len(t, bab.Blocks, 2)
 
-		boardIDs := []string{}
+		boardIDs := make([]string, 0, len(bab.Boards))
 		for _, board := range bab.Boards {
 			boardIDs = append(boardIDs, board.ID)
 		}
 
-		blockIDs := []string{}
+		blockIDs := make([]string, 0, len(bab.Blocks))
 		for _, block := range bab.Blocks {
 			blockIDs = append(blockIDs, block.ID)
 		}
@@ -101,12 +101,12 @@ func testCreateBoardsAndBlocks(t *testing.T, store store.Store) {
 		require.Len(t, bab.Blocks, 2)
 		require.Len(t, members, 3)
 
-		boardIDs := []string{}
+		boardIDs := make([]string, 0, len(bab.Boards))
 		for _, board := range bab.Boards {
 			boardIDs = append(boardIDs, board.ID)
 		}
 
-		blockIDs := []string{}
+		blockIDs := make([]string, 0, len(bab.Blocks))
 		for _, block := range bab.Blocks {
 			blockIDs = append(blockIDs, block.ID)
 		}
@@ -114,7 +114,7 @@ func testCreateBoardsAndBlocks(t *testing.T, store store.Store) {
 		require.ElementsMatch(t, []string{"board-id-4", "board-id-5", "board-id-6"}, boardIDs)
 		require.ElementsMatch(t, []string{"block-id-3", "block-id-4"}, blockIDs)
 
-		memberBoardIDs := []string{}
+		memberBoardIDs := make([]string, 0, len(members))
 		for _, member := range members {
 			require.Equal(t, userID, member.UserID)
 			memberBoardIDs = append(memberBoardIDs, member.BoardID)

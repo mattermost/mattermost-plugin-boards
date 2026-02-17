@@ -60,7 +60,7 @@ func TestGetBlocksWithSameID(t *testing.T) {
 
 	// we process the found blocks to remove extra information and be
 	// able to compare both expected and found sets
-	foundBlocks := []*model.Block{}
+	foundBlocks := make([]*model.Block, 0, len(blocks))
 	for _, foundBlock := range blocks {
 		foundBlocks = append(foundBlocks, &model.Block{ID: foundBlock.ID, BoardID: foundBlock.BoardID})
 	}
