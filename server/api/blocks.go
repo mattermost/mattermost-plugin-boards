@@ -712,14 +712,6 @@ func (a *API) handlePatchBlocks(w http.ResponseWriter, r *http.Request) {
 			a.errorResponse(w, r, model.NewErrPermission("access denied to make board changes"))
 			return
 		}
-		if teamID == "" {
-			board, bErr := a.app.GetBoard(block.BoardID)
-			if bErr != nil {
-				a.errorResponse(w, r, bErr)
-				return
-			}
-			teamID = board.TeamID
-		}
 		if block.Type == model.TypeComment && block.CreatedBy != userID {
 			if !a.permissions.HasPermissionToBoard(userID, block.BoardID, model.PermissionDeleteOthersComments) {
 				a.errorResponse(w, r, model.NewErrPermission("access denied to modify others' comments"))
