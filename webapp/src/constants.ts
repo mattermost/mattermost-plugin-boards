@@ -2,6 +2,8 @@
 // See LICENSE.txt for license information.
 
 
+import {version} from './manifest'
+
 import {TelemetryActions} from './telemetry/telemetryClient'
 
 enum Permission {
@@ -38,7 +40,7 @@ class Constants {
     static readonly titleColumnId = '__title'
     static readonly badgesColumnId = '__badges'
 
-    static readonly versionString = '9.2.2'
+    static readonly versionString = version
 
     static readonly archiveHelpPage = 'https://docs.mattermost.com/boards/migrate-to-boards.html'
     static readonly imports = [
