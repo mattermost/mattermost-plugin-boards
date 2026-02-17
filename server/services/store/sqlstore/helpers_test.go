@@ -300,7 +300,7 @@ func SetupTests(t *testing.T) (store.Store, func()) {
 	}
 
 	// Use storetest.MakeSqlSettings to get proper test database setup (handles SSL, etc.)
-	sqlSettings := storetest.MakeSqlSettings(driverName, false)
+	sqlSettings := storetest.MakeSqlSettings(driverName)
 	dbType := *sqlSettings.DriverName
 	connectionString := *sqlSettings.DataSource
 

@@ -121,20 +121,23 @@ type TestHelper struct {
 	cleanupDone        bool
 }
 
-type FakePermissionPluginAPI struct{}
+type FakePermissionPluginAPI struct {
+	emptyTeamID string
+}
 
-func (*FakePermissionPluginAPI) HasPermissionTo(userID string, permission *mmModel.Permission) bool {
+func (f *FakePermissionPluginAPI) HasPermissionTo(userID string, permission *mmModel.Permission) bool {
 	return userID == userAdmin
 }
 
-func (*FakePermissionPluginAPI) HasPermissionToTeam(userID string, teamID string, permission *mmModel.Permission) bool {
+func (f *FakePermissionPluginAPI) HasPermissionToTeam(userID string, teamID string, permission *mmModel.Permission) bool {
 	if permission.Id == model.PermissionManageTeam.Id {
 		return false
 	}
 	if userID == userNoTeamMember {
 		return false
 	}
-	if teamID == "empty-team" {
+	// Check against the actual empty team ID from the store, not hardcoded string
+	if teamID == f.emptyTeamID {
 		return false
 	}
 	return true
@@ -529,7 +532,10 @@ func NewTestServerPluginMode(sqlSettings *mmModel.SqlSettings) *server.Server {
 
 	db := NewPluginTestStore(innerStore)
 
-	permissionsService := mmpermissions.New(db, &FakePermissionPluginAPI{}, logger)
+	// Get the empty team ID from the store to pass to FakePermissionPluginAPI
+	emptyTeamID := db.GetEmptyTeamID()
+	fakePermissionAPI := &FakePermissionPluginAPI{emptyTeamID: emptyTeamID}
+	permissionsService := mmpermissions.New(db, fakePermissionAPI, logger)
 
 	params := server.Params{
 		Cfg:                cfg,
@@ -701,6 +707,17 @@ func (th *TestHelper) CreateCategory(category model.Category) *model.Category {
 func (th *TestHelper) UpdateCategoryBoard(teamID, categoryID, boardID string) {
 	response := th.Client.UpdateCategoryBoard(teamID, categoryID, boardID)
 	th.CheckOK(response)
+}
+
+// GetTestTeamIDs returns the test team IDs from the PluginTestStore
+// This allows tests to use dynamically generated team IDs instead of hardcoded strings
+func (th *TestHelper) GetTestTeamIDs() (testTeamID, otherTeamID, emptyTeamID string) {
+	store := th.Server.Store()
+	if pluginStore, ok := store.(*PluginTestStore); ok {
+		return pluginStore.GetTestTeamID(), pluginStore.GetOtherTeamID(), pluginStore.GetEmptyTeamID()
+	}
+	// Fallback: return empty strings if store is not PluginTestStore
+	return "", "", ""
 }
 
 func (th *TestHelper) CreateBoardAndCards(teamdID string, boardType model.BoardType, numCards int) (*model.Board, []*model.Card) {

@@ -10,6 +10,7 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/client"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,8 +23,9 @@ func createTestSubscriptions(client *client.Client, num int) ([]*model.Subscript
 		return nil, "", fmt.Errorf("cannot get current user: %w", resp.Error)
 	}
 
+	teamID := mmModel.NewId()
 	board := &model.Board{
-		TeamID:   "0",
+		TeamID:   teamID,
 		Type:     model.BoardTypeOpen,
 		CreateAt: 1,
 		UpdateAt: 1,

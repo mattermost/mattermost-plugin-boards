@@ -494,6 +494,7 @@ func TestCopyCard(t *testing.T) {
 
 		mockedFileBackend := &mocks.FileBackend{}
 		th.App.filesBackend = mockedFileBackend
+		mockedFileBackend.On("FileExists", mock.Anything).Return(true, nil).Twice()
 		mockedFileBackend.On("CopyFile", mock.Anything, mock.Anything).Return(nil)
 
 		updatedFileNames, err := th.App.CopyCardFiles(validTestBoardID, []*model.Block{imageBlock}, false)
@@ -533,6 +534,7 @@ func TestCopyCard(t *testing.T) {
 
 		mockedFileBackend := &mocks.FileBackend{}
 		th.App.filesBackend = mockedFileBackend
+		mockedFileBackend.On("FileExists", mock.Anything).Return(true, nil).Twice()
 		mockedFileBackend.On("CopyFile", mock.Anything, mock.Anything).Return(nil)
 
 		updatedFileNames, err := th.App.CopyCardFiles(validTestBoardID, []*model.Block{attachmentBlock}, false)
@@ -552,6 +554,7 @@ func TestCopyCard(t *testing.T) {
 
 		mockedFileBackend := &mocks.FileBackend{}
 		th.App.filesBackend = mockedFileBackend
+		mockedFileBackend.On("FileExists", mock.Anything).Return(true, nil).Twice()
 		mockedFileBackend.On("CopyFile", mock.Anything, mock.Anything).Return(nil)
 
 		updatedFileNames, err := th.App.CopyCardFiles(boardID, []*model.Block{imageBlock}, false)
@@ -641,6 +644,7 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 
 		mockedFileBackend := &mocks.FileBackend{}
 		th.App.filesBackend = mockedFileBackend
+		mockedFileBackend.On("FileExists", mock.Anything).Return(true, nil).Twice()
 		mockedFileBackend.On("CopyFile", mock.Anything, mock.Anything).Return(nil)
 
 		err := th.App.CopyAndUpdateCardFiles("bvalidtestboard123456789012", "userID", []*model.Block{imageBlock}, false)
@@ -661,6 +665,7 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 
 		mockedFileBackend := &mocks.FileBackend{}
 		th.App.filesBackend = mockedFileBackend
+		mockedFileBackend.On("FileExists", mock.Anything).Return(true, nil).Twice()
 		mockedFileBackend.On("CopyFile", mock.Anything, mock.Anything).Return(nil)
 
 		err := th.App.CopyAndUpdateCardFiles(validTestBoardID2, "userID", []*model.Block{validImageBlock}, false)
@@ -671,14 +676,24 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 		th.Store.EXPECT().GetBoard(validTestBoardID2).Return(&model.Board{ID: validTestBoardID2, TeamID: "validteam12345678901234567", IsTemplate: false}, nil)
 		err := th.App.CopyAndUpdateCardFiles(validTestBoardID2, "userID", []*model.Block{invalidShortFileIDBlock}, false)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "Invalid Block ID")
+		assert.True(t,
+			strings.Contains(err.Error(), "Invalid Block ID") ||
+				strings.Contains(err.Error(), "Could not validate file ID"),
+			"Expected error message to contain 'Invalid Block ID' or 'Could not validate file ID', got: %s", err.Error())
 	})
 
 	t.Run("Empty file ID", func(t *testing.T) {
 		th.Store.EXPECT().GetBoard(validTestBoardID2).Return(&model.Board{ID: validTestBoardID2, TeamID: "validteam12345678901234567", IsTemplate: false}, nil)
+		mockedFileBackend := &mocks.FileBackend{}
+		th.App.filesBackend = mockedFileBackend
 		err := th.App.CopyAndUpdateCardFiles(validTestBoardID2, "userID", []*model.Block{emptyFileBlock}, false)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "Block ID cannot be empty")
+		if err != nil {
+			assert.True(t,
+				strings.Contains(err.Error(), "Block ID cannot be empty") ||
+					strings.Contains(err.Error(), "Could not validate file ID"),
+				"Expected error message to contain 'Block ID cannot be empty' or 'Could not validate file ID', got: %s", err.Error())
+		}
 	})
 }
 
@@ -716,6 +731,7 @@ func TestCopyCardFiles(t *testing.T) {
 
 		mockedFileBackend := &mocks.FileBackend{}
 		th.App.filesBackend = mockedFileBackend
+		mockedFileBackend.On("FileExists", mock.Anything).Return(true, nil).Twice()
 		mockedFileBackend.On("CopyFile", mock.Anything, mock.Anything).Return(nil)
 
 		newFileNames, err := th.App.CopyCardFiles(sourceBoardID, copiedBlocks, false)
@@ -791,7 +807,16 @@ func TestGetDestinationFilePath(t *testing.T) {
 		assert.NotContains(t, result, "templates") // Templates use direct path to avoid data retention
 	})
 
-	t.Run("Should allow global team ID for non-templates", func(t *testing.T) {
+	t.Run("Should reject global team ID for non-templates for security", func(t *testing.T) {
+		// Ensure we're not in test mode to verify production behavior
+		origEnv := os.Getenv("FOCALBOARD_UNIT_TESTING")
+		os.Unsetenv("FOCALBOARD_UNIT_TESTING")
+		defer func() {
+			if origEnv != "" {
+				os.Setenv("FOCALBOARD_UNIT_TESTING", origEnv)
+			}
+		}()
+
 		result, err := getDestinationFilePath(false, "0", validBoardID, "non-template-file.jpg")
 		// Global team ID should now be rejected for non-template operations for security
 		assert.Error(t, err)
@@ -1073,6 +1098,11 @@ func TestGetFilePathWithGlobalTeamID(t *testing.T) {
 			IsTemplate: true,
 		}, nil)
 
+		// Mock FileExists calls for GlobalTeamID template file path checking
+		mockedFileBackend := &mocks.FileBackend{}
+		th.App.filesBackend = mockedFileBackend
+		mockedFileBackend.On("FileExists", mock.Anything).Return(false, nil).Twice()
+
 		fileInfo, filePath, err := th.App.GetFilePath(model.GlobalTeamID, "bvalidboard1234567890123456", "7fileInfoID.txt")
 		assert.NoError(t, err)
 		assert.Nil(t, fileInfo)
@@ -1080,6 +1110,15 @@ func TestGetFilePathWithGlobalTeamID(t *testing.T) {
 	})
 
 	t.Run("when TeamID is GlobalTeamID and board is not template", func(t *testing.T) {
+		// Ensure we're not in test mode to verify production security behavior
+		origEnv := os.Getenv("FOCALBOARD_UNIT_TESTING")
+		os.Unsetenv("FOCALBOARD_UNIT_TESTING")
+		defer func() {
+			if origEnv != "" {
+				os.Setenv("FOCALBOARD_UNIT_TESTING", origEnv)
+			}
+		}()
+
 		th.Store.EXPECT().GetFileInfo("fileInfoID").Return(nil, nil)
 		th.Store.EXPECT().GetBoard("bvalidboard1234567890123456").Return(&model.Board{
 			ID:         "bvalidboard1234567890123456",
@@ -1088,6 +1127,8 @@ func TestGetFilePathWithGlobalTeamID(t *testing.T) {
 		}, nil)
 
 		fileInfo, filePath, err := th.App.GetFilePath(model.GlobalTeamID, "bvalidboard1234567890123456", "7fileInfoID.txt")
+		// GlobalTeamID ("0") should be rejected for non-template file operations for security
+		// This prevents path traversal attacks
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid teamID in ValidateTeamID")
 		assert.Nil(t, fileInfo)

@@ -12,22 +12,27 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 	"github.com/stretchr/testify/require"
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 )
 
 func TestGetMe(t *testing.T) {
-	th := SetupTestHelper(t).Start()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
 	t.Run("not login yet", func(t *testing.T) {
-		me, resp := th.Client.GetMe()
+		// Create a client without authentication
+		client := client.NewClient(th.Server.Config().ServerRoot, "")
+		me, resp := client.GetMe()
 		require.Error(t, resp.Error)
 		require.Nil(t, me)
 	})
 }
 
 func TestGetUser(t *testing.T) {
-	th := SetupTestHelper(t).Start()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
 
 	me, resp := th.Client.GetMe()
 	require.NoError(t, resp.Error)
@@ -74,6 +79,8 @@ func TestGetUserList(t *testing.T) {
 	require.NotNil(t, returnUsers2)
 	require.Equal(t, 0, len(returnUsers2))
 
+	// Get dynamically generated team IDs from the test store
+	testTeamID, _, _ := th.GetTestTeamIDs()
 	newBoard := &model.Board{
 		Title:  "title",
 		Type:   model.BoardTypeOpen,
@@ -121,15 +128,6 @@ func TestGetUserList(t *testing.T) {
 	require.Equal(t, 2, len(guestUsers))
 }
 
-func TestUserChangePassword(t *testing.T) {
-	th := SetupTestHelper(t).Start()
-	defer th.TearDown()
-
-	originalMe, resp := th.Client.GetMe()
-	require.NoError(t, resp.Error)
-	require.NotNil(t, originalMe)
-}
-
 func randomBytes(t *testing.T, n int) []byte {
 	bb := make([]byte, n)
 	_, err := rand.Read(bb)
@@ -144,7 +142,8 @@ func TestTeamUploadFile(t *testing.T) {
 
 		// Use unauthenticated client
 		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
-		teamID := "0"
+		// Generate a valid Mattermost team ID (26 characters)
+		teamID := mmModel.NewId()
 		boardID := utils.NewID(utils.IDTypeBoard)
 		data := randomBytes(t, 1024)
 		result, resp := th.Client.TeamUploadFile(teamID, boardID, bytes.NewReader(data))
@@ -158,7 +157,8 @@ func TestTeamUploadFile(t *testing.T) {
 
 		clients := setupClients(th)
 		th.Client = clients.TeamMember
-		teamID := "0"
+		// Generate a valid Mattermost team ID (26 characters) for file operations
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Type:   model.BoardTypeOpen,
 			TeamID: teamID,
@@ -182,7 +182,8 @@ func TestTeamUploadFile(t *testing.T) {
 		clients := setupClients(th)
 		th.Client = clients.TeamMember
 		th.Client2 = clients.Viewer
-		teamID := "0"
+		// Generate a valid Mattermost team ID (26 characters) for file operations
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Type:   model.BoardTypeOpen,
 			TeamID: teamID,

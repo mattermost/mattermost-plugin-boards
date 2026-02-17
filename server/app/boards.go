@@ -38,7 +38,7 @@ func (a *App) GetBoardCount(includeDeleted bool) (int64, error) {
 
 func (a *App) GetBoardMetadata(boardID string) (*model.Board, *model.BoardMetadata, error) {
 	license := a.store.GetLicense()
-	if license == nil || !(*license.Features.Compliance) {
+	if license == nil || license.Features == nil || !(*license.Features.Compliance) {
 		return nil, nil, model.ErrInsufficientLicense
 	}
 

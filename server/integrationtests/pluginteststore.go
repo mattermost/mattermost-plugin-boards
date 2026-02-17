@@ -27,6 +27,11 @@ type PluginTestStore struct {
 }
 
 func NewPluginTestStore(innerStore store.Store) *PluginTestStore {
+	// Generate valid Mattermost team IDs (26 characters) instead of hardcoded strings
+	testTeamID := mmModel.NewId()
+	otherTeamID := mmModel.NewId()
+	emptyTeamID := mmModel.NewId()
+	
 	return &PluginTestStore{
 		Store: innerStore,
 		users: map[string]*model.User{
@@ -81,9 +86,9 @@ func NewPluginTestStore(innerStore store.Store) *PluginTestStore {
 				IsGuest:  true,
 			},
 		},
-		testTeam:  &model.Team{ID: "test-team", Title: "Test Team"},
-		otherTeam: &model.Team{ID: "other-team", Title: "Other Team"},
-		emptyTeam: &model.Team{ID: "empty-team", Title: "Empty Team"},
+		testTeam:  &model.Team{ID: testTeamID, Title: "Test Team"},
+		otherTeam: &model.Team{ID: otherTeamID, Title: "Other Team"},
+		emptyTeam: &model.Team{ID: emptyTeamID, Title: "Empty Team"},
 		baseTeam:  &model.Team{ID: "0", Title: "Base Team"},
 	}
 }
@@ -92,11 +97,11 @@ func (s *PluginTestStore) GetTeam(id string) (*model.Team, error) {
 	switch id {
 	case "0":
 		return s.baseTeam, nil
-	case "other-team":
+	case s.otherTeam.ID:
 		return s.otherTeam, nil
-	case "test-team", testTeamID:
+	case s.testTeam.ID:
 		return s.testTeam, nil
-	case "empty-team":
+	case s.emptyTeam.ID:
 		return s.emptyTeam, nil
 	}
 	// For any valid Mattermost ID (26 characters), return a mock team
@@ -342,4 +347,31 @@ func (s *PluginTestStore) GetLicense() *mmModel.License {
 	}
 
 	return license
+}
+
+// PostMessage is a no-op for tests - we don't actually need to post messages
+func (s *PluginTestStore) PostMessage(message, postType, channelID string) error {
+	// No-op for tests - just return nil
+	return nil
+}
+
+// SendMessage is a no-op for tests - we don't actually need to send messages
+func (s *PluginTestStore) SendMessage(message, postType string, receipts []string) error {
+	// No-op for tests - just return nil
+	return nil
+}
+
+// GetTestTeamID returns the test team ID for use in integration tests
+func (s *PluginTestStore) GetTestTeamID() string {
+	return s.testTeam.ID
+}
+
+// GetOtherTeamID returns the other team ID for use in integration tests
+func (s *PluginTestStore) GetOtherTeamID() string {
+	return s.otherTeam.ID
+}
+
+// GetEmptyTeamID returns the empty team ID for use in integration tests
+func (s *PluginTestStore) GetEmptyTeamID() string {
+	return s.emptyTeam.ID
 }

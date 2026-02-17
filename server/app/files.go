@@ -200,6 +200,9 @@ func (a *App) GetFilePath(teamID, boardID, fileName string) (*mm_model.FileInfo,
 			if err != nil {
 				return nil, "", fmt.Errorf("GetFilePath: cannot validate board for GlobalTeamID: %w", err)
 			}
+			if board == nil {
+				return nil, "", fmt.Errorf("GetFilePath: board is nil for GlobalTeamID")
+			}
 			isTemplate = board.IsTemplate
 		}
 
@@ -278,6 +281,9 @@ func (a *App) GetFileReader(teamID, boardID, filename string) (filestore.ReadClo
 		board, err := a.GetBoard(boardID)
 		if err != nil {
 			return nil, fmt.Errorf("GetFileReader: cannot validate board for GlobalTeamID: %w", err)
+		}
+		if board == nil {
+			return nil, fmt.Errorf("GetFileReader: board is nil for GlobalTeamID")
 		}
 		isTemplate = board.IsTemplate
 	}
@@ -491,6 +497,7 @@ func (a *App) CopyAndUpdateCardFiles(boardID, userID string, blocks []*model.Blo
 	newFileNames, err := a.CopyCardFiles(boardID, blocks, asTemplate)
 	if err != nil {
 		a.logger.Error("Could not copy files while duplicating board", mlog.String("BoardID", boardID), mlog.Err(err))
+		return err
 	}
 
 	// blocks now has updated file ids for any blocks containing files.  We need to update the database for them.

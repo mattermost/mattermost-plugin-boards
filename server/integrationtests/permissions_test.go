@@ -80,13 +80,18 @@ type TestData struct {
 }
 
 func setupData(t *testing.T, th *TestHelper) TestData {
+	// Get dynamically generated team IDs from the test store
+	testTeamID, otherTeamID, _ := th.GetTestTeamIDs()
+	require.NotEmpty(t, testTeamID, "testTeamID should not be empty")
+	require.NotEmpty(t, otherTeamID, "otherTeamID should not be empty")
+	
 	blockID1 := utils.NewID(utils.IDTypeBlock)
 	blockID2 := utils.NewID(utils.IDTypeBlock)
 	blockID3 := utils.NewID(utils.IDTypeBlock)
 	blockID4 := utils.NewID(utils.IDTypeBlock)
 
 	customTemplate1, err := th.Server.App().CreateBoard(
-		&model.Board{Title: "Custom template 1", TeamID: "test-team", IsTemplate: true, Type: model.BoardTypeOpen, MinimumRole: "viewer"},
+		&model.Board{Title: "Custom template 1", TeamID: testTeamID, IsTemplate: true, Type: model.BoardTypeOpen, MinimumRole: "viewer"},
 		userAdminID,
 		true,
 	)
@@ -94,18 +99,18 @@ func setupData(t *testing.T, th *TestHelper) TestData {
 	err = th.Server.App().InsertBlock(&model.Block{ID: blockID1, Title: "Test", Type: "card", BoardID: customTemplate1.ID, Fields: map[string]interface{}{}}, userAdminID)
 	require.NoError(t, err)
 	customTemplate2, err := th.Server.App().CreateBoard(
-		&model.Board{Title: "Custom template 2", TeamID: "test-team", IsTemplate: true, Type: model.BoardTypePrivate, MinimumRole: "viewer"},
+		&model.Board{Title: "Custom template 2", TeamID: testTeamID, IsTemplate: true, Type: model.BoardTypePrivate, MinimumRole: "viewer"},
 		userAdminID,
 		true)
 	require.NoError(t, err)
 	err = th.Server.App().InsertBlock(&model.Block{ID: blockID2, Title: "Test", Type: "card", BoardID: customTemplate2.ID, Fields: map[string]interface{}{}}, userAdminID)
 	require.NoError(t, err)
 
-	board1, err := th.Server.App().CreateBoard(&model.Board{Title: "Board 1", TeamID: "test-team", Type: model.BoardTypeOpen, MinimumRole: "viewer"}, userAdminID, true)
+	board1, err := th.Server.App().CreateBoard(&model.Board{Title: "Board 1", TeamID: testTeamID, Type: model.BoardTypeOpen, MinimumRole: "viewer"}, userAdminID, true)
 	require.NoError(t, err)
 	err = th.Server.App().InsertBlock(&model.Block{ID: blockID3, Title: "Test", Type: "card", BoardID: board1.ID, Fields: map[string]interface{}{}}, userAdminID)
 	require.NoError(t, err)
-	board2, err := th.Server.App().CreateBoard(&model.Board{Title: "Board 2", TeamID: "test-team", Type: model.BoardTypePrivate, MinimumRole: "viewer"}, userAdminID, true)
+	board2, err := th.Server.App().CreateBoard(&model.Board{Title: "Board 2", TeamID: testTeamID, Type: model.BoardTypePrivate, MinimumRole: "viewer"}, userAdminID, true)
 	require.NoError(t, err)
 
 	rBoard2, err := th.Server.App().GetBoard(board2.ID)
@@ -188,7 +193,7 @@ func setupData(t *testing.T, th *TestHelper) TestData {
 	}
 }
 
-func runTestCases(t *testing.T, ttCases []TestCase, testData TestData, clients Clients) {
+func runTestCases(t *testing.T, ttCases []TestCase, testData TestData, clients Clients, testTeamID, otherTeamID, emptyTeamID string) {
 	for _, tc := range ttCases {
 		t.Run(tc.userRole+": "+tc.method+" "+tc.url, func(t *testing.T) {
 			reqClient := clients.Anon
@@ -226,6 +231,10 @@ func runTestCases(t *testing.T, ttCases []TestCase, testData TestData, clients C
 			url = strings.ReplaceAll(url, "{USER_EDITOR_ID}", userEditorID)
 			url = strings.ReplaceAll(url, "{USER_ADMIN_ID}", userAdminID)
 			url = strings.ReplaceAll(url, "{USER_GUEST_ID}", userGuestID)
+			// Replace hardcoded team IDs with dynamically generated ones
+			url = strings.ReplaceAll(url, "test-team", testTeamID)
+			url = strings.ReplaceAll(url, "other-team", otherTeamID)
+			url = strings.ReplaceAll(url, "empty-team", emptyTeamID)
 			// Replace block IDs in URL if present
 			url = strings.ReplaceAll(url, "block-1", testData.publicTemplateBlockID)
 			url = strings.ReplaceAll(url, "block-2", testData.privateTemplateBlockID)
@@ -256,6 +265,10 @@ func runTestCases(t *testing.T, ttCases []TestCase, testData TestData, clients C
 			body = strings.ReplaceAll(body, `"block-2"`, `"`+testData.privateTemplateBlockID+`"`)
 			body = strings.ReplaceAll(body, `"block-3"`, `"`+testData.publicBoardBlockID+`"`)
 			body = strings.ReplaceAll(body, `"block-4"`, `"`+testData.privateBoardBlockID+`"`)
+			// Replace hardcoded team IDs in JSON body with dynamically generated ones
+			body = strings.ReplaceAll(body, `"test-team"`, `"`+testTeamID+`"`)
+			body = strings.ReplaceAll(body, `"other-team"`, `"`+otherTeamID+`"`)
+			body = strings.ReplaceAll(body, `"empty-team"`, `"`+emptyTeamID+`"`)
 
 			var response *http.Response
 			var err error
@@ -327,7 +340,8 @@ func TestPermissionsGetTeamBoards(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsSearchTeamBoards(t *testing.T) {
@@ -347,7 +361,8 @@ func TestPermissionsSearchTeamBoards(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 func TestPermissionsSearchTeamLinkableBoards(t *testing.T) {
 	t.Skip("Skipping TestPermissionsSearchTeamLinkableBoards - search tests will be fixed separately")
@@ -365,7 +380,8 @@ func TestPermissionsSearchTeamLinkableBoards(t *testing.T) {
 		{"/teams/test-team/boards/search/linkable?q=b", methodGet, "", userEditor, http.StatusOK, 0},
 		{"/teams/test-team/boards/search/linkable?q=b", methodGet, "", userAdmin, http.StatusOK, 2},
 	}
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsGetTeamTemplates(t *testing.T) {
@@ -401,7 +417,8 @@ func TestPermissionsGetTeamTemplates(t *testing.T) {
 	clients := setupClients(th)
 	testData := setupData(t, th)
 	extraSetup(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsCreateBoard(t *testing.T) {
@@ -428,7 +445,8 @@ func TestPermissionsCreateBoard(t *testing.T) {
 		{"/boards", methodPost, privateBoard, userGuest, http.StatusForbidden, 0},
 		{"/boards", methodPost, privateBoard, userTeamMember, http.StatusOK, 1},
 	}
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 func TestPermissionsGetBoard(t *testing.T) {
 	ttCases := []TestCase{
@@ -474,7 +492,8 @@ func TestPermissionsGetBoard(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 func TestPermissionsGetBoardPublic(t *testing.T) {
 	th := SetupTestHelperPluginMode(t)
@@ -487,14 +506,15 @@ func TestPermissionsGetBoardPublic(t *testing.T) {
 	th.Server.UpdateAppConfig()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 	cfg.EnablePublicSharedBoards = false
 	th.Server.UpdateAppConfig()
 	clients = setupClients(th)
 	testData = setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
-	runTestCases(t, ttCases, testData, clients)
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsPatchBoard(t *testing.T) {
@@ -536,7 +556,8 @@ func TestPermissionsPatchBoard(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsPatchBoardType(t *testing.T) {
@@ -574,7 +595,8 @@ func TestPermissionsPatchBoardType(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsPatchBoardMinimumRole(t *testing.T) {
@@ -614,7 +636,8 @@ func TestPermissionsPatchBoardMinimumRole(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsPatchBoardChannelId(t *testing.T) {
@@ -664,7 +687,8 @@ func TestPermissionsPatchBoardChannelId(t *testing.T) {
 		{"/boards/{PUBLIC_TEMPLATE_ID}", methodPatch, patch, userAdmin, http.StatusOK, 1},
 	}
 
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsDeleteBoard(t *testing.T) {
@@ -707,7 +731,8 @@ func TestPermissionsDeleteBoard(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsDuplicateBoard(t *testing.T) {
@@ -752,18 +777,19 @@ func TestPermissionsDuplicateBoard(t *testing.T) {
 	t.Run("plugin-same-team", func(t *testing.T) {
 		clients := setupClients(th)
 		testData := setupData(t, th)
-		runTestCases(t, ttCases, testData, clients)
+		testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+		runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 		testData = setupData(t, th)
-		runTestCases(t, ttCases, testData, clients)
+		runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 		clients = setupClients(th)
 		testData = setupData(t, th)
 		ttCasesCopy := make([]TestCase, len(ttCases))
 		copy(ttCasesCopy, ttCases)
 		ttCasesCopy[25].expectedStatusCode = http.StatusOK
 		ttCasesCopy[25].totalResults = 1
-		runTestCases(t, ttCasesCopy, testData, clients)
+		runTestCases(t, ttCasesCopy, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 		testData = setupData(t, th)
-		runTestCases(t, ttCasesCopy, testData, clients)
+		runTestCases(t, ttCasesCopy, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 	})
 
 	// In other team
@@ -807,9 +833,10 @@ func TestPermissionsDuplicateBoard(t *testing.T) {
 	t.Run("plugin-other-team", func(t *testing.T) {
 		clients := setupClients(th)
 		testData := setupData(t, th)
-		runTestCases(t, ttCases, testData, clients)
+		testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+		runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 		testData = setupData(t, th)
-		runTestCases(t, ttCases, testData, clients)
+		runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 		clients = setupClients(th)
 		testData = setupData(t, th)
 		// Create a copy of ttCases to avoid modifying the original slice
@@ -817,9 +844,9 @@ func TestPermissionsDuplicateBoard(t *testing.T) {
 		// which should remain 403 (Forbidden) - no modification needed
 		ttCasesCopy := make([]TestCase, len(ttCases))
 		copy(ttCasesCopy, ttCases)
-		runTestCases(t, ttCasesCopy, testData, clients)
+		runTestCases(t, ttCasesCopy, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 		testData = setupData(t, th)
-		runTestCases(t, ttCasesCopy, testData, clients)
+		runTestCases(t, ttCasesCopy, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 	})
 
 	// In empty team
@@ -863,8 +890,9 @@ func TestPermissionsDuplicateBoard(t *testing.T) {
 	t.Run("plugin-empty-team", func(t *testing.T) {
 		clients := setupClients(th)
 		testData := setupData(t, th)
-		runTestCases(t, ttCases, testData, clients)
-		runTestCases(t, ttCases, testData, clients)
+		testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+		runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
+		runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 	})
 }
 
@@ -916,7 +944,8 @@ func TestPermissionsGetBoardBlocks(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsCreateBoardBlocks(t *testing.T) {
@@ -978,7 +1007,8 @@ func TestPermissionsCreateBoardBlocks(t *testing.T) {
 	clients := setupClients(th)
 	testData := setupData(t, th)
 	ttCases := ttCasesF(testData)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 func TestPermissionsCreateBoardComments(t *testing.T) {
 	ttCasesF := func(testData TestData) []TestCase {
@@ -1039,7 +1069,8 @@ func TestPermissionsCreateBoardComments(t *testing.T) {
 	clients := setupClients(th)
 	testData := setupData(t, th)
 	ttCases := ttCasesF(testData)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 func TestPermissionsPatchBoardBlocks(t *testing.T) {
 	newBlocksPatchJSON := func(blockID string) string {
@@ -1091,7 +1122,8 @@ func TestPermissionsPatchBoardBlocks(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsPatchBoardBlock(t *testing.T) {
@@ -1140,7 +1172,8 @@ func TestPermissionsPatchBoardBlock(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsDeleteBoardBlock(t *testing.T) {
@@ -1198,7 +1231,8 @@ func TestPermissionsDeleteBoardBlock(t *testing.T) {
 	clients := setupClients(th)
 	testData := setupData(t, th)
 	extraSetup(t, th, testData)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsUndeleteBoardBlock(t *testing.T) {
@@ -1281,7 +1315,8 @@ func TestPermissionsUndeleteBoardBlock(t *testing.T) {
 	clients := setupClients(th)
 	testData := setupData(t, th)
 	extraSetup(t, th, &testData)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsMoveContentBlock(t *testing.T) {
@@ -1366,7 +1401,8 @@ func TestPermissionsMoveContentBlock(t *testing.T) {
 	clients := setupClients(th)
 	testData := setupData(t, th)
 	extraSetup(t, th, &testData)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsUndeleteBoard(t *testing.T) {
@@ -1421,7 +1457,8 @@ func TestPermissionsUndeleteBoard(t *testing.T) {
 	clients := setupClients(th)
 	testData := setupData(t, th)
 	extraSetup(t, th, testData)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsDuplicateBoardBlock(t *testing.T) {
@@ -1479,7 +1516,8 @@ func TestPermissionsDuplicateBoardBlock(t *testing.T) {
 	clients := setupClients(th)
 	testData := setupData(t, th)
 	extraSetup(t, th, testData)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsGetBoardMembers(t *testing.T) {
@@ -1522,7 +1560,8 @@ func TestPermissionsGetBoardMembers(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsCreateBoardMembers(t *testing.T) {
@@ -1579,7 +1618,8 @@ func TestPermissionsCreateBoardMembers(t *testing.T) {
 	clients := setupClients(th)
 	testData := setupData(t, th)
 	ttCases := ttCasesF(testData)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsUpdateBoardMember(t *testing.T) {
@@ -1646,7 +1686,8 @@ func TestPermissionsUpdateBoardMember(t *testing.T) {
 	clients := setupClients(th)
 	testData := setupData(t, th)
 	ttCases := ttCasesF(testData)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 func TestPermissionsDeleteBoardMember(t *testing.T) {
 	extraSetup := func(t *testing.T, th *TestHelper, testData TestData) {
@@ -1708,7 +1749,8 @@ func TestPermissionsDeleteBoardMember(t *testing.T) {
 	clients := setupClients(th)
 	testData := setupData(t, th)
 	extraSetup(t, th, testData)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsJoinBoardAsMember(t *testing.T) {
@@ -1753,7 +1795,8 @@ func TestPermissionsJoinBoardAsMember(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsLeaveBoardAsMember(t *testing.T) {
@@ -1825,7 +1868,8 @@ func TestPermissionsLeaveBoardAsMember(t *testing.T) {
 	clients := setupClients(th)
 	testData := setupData(t, th)
 	extraSetup(t, th, testData)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsShareBoard(t *testing.T) {
@@ -1870,7 +1914,8 @@ func TestPermissionsShareBoard(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsGetSharedBoardInfo(t *testing.T) {
@@ -1918,12 +1963,13 @@ func TestPermissionsGetSharedBoardInfo(t *testing.T) {
 	clients.Admin.PostSharing(&model.Sharing{ID: testData.publicTemplate.ID, Enabled: true, Token: "test-token"})
 	clients.Admin.PostSharing(&model.Sharing{ID: testData.privateTemplate.ID, Enabled: true, Token: "test-token"})
 
-	runTestCases(t, ttCases, testData, clients)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 	clients.Admin.PostSharing(&model.Sharing{ID: testData.privateTemplate.ID, Enabled: true, Token: "test-token"})
 
-	runTestCases(t, ttCases, testData, clients)
-	runTestCases(t, ttCases, testData, clients)
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsListTeams(t *testing.T) {
@@ -1942,7 +1988,8 @@ func TestPermissionsListTeams(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsGetTeam(t *testing.T) {
@@ -1969,7 +2016,8 @@ func TestPermissionsGetTeam(t *testing.T) {
 		{"/teams/empty-team", methodGet, "", userAdmin, http.StatusForbidden, 0},
 		{"/teams/empty-team", methodGet, "", userGuest, http.StatusForbidden, 0},
 	}
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsGetTeamUsers(t *testing.T) {
@@ -1996,7 +2044,8 @@ func TestPermissionsGetTeamUsers(t *testing.T) {
 		{"/teams/empty-team/users", methodGet, "", userAdmin, http.StatusForbidden, 0},
 		{"/teams/empty-team/users", methodGet, "", userGuest, http.StatusForbidden, 0},
 	}
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsTeamArchiveExport(t *testing.T) {
@@ -2011,7 +2060,8 @@ func TestPermissionsTeamArchiveExport(t *testing.T) {
 		{"/teams/empty-team/archive/export", methodGet, "", userAnon, http.StatusUnauthorized, 0},
 		{"/teams/empty-team/archive/export", methodGet, "", userAdmin, http.StatusNotImplemented, 0},
 	}
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsUploadFile(t *testing.T) {
@@ -2057,7 +2107,8 @@ func TestPermissionsUploadFile(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsGetMe(t *testing.T) {
@@ -2076,7 +2127,8 @@ func TestPermissionsGetMe(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsGetMyMemberships(t *testing.T) {
@@ -2095,7 +2147,8 @@ func TestPermissionsGetMyMemberships(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsGetUser(t *testing.T) {
@@ -2129,7 +2182,8 @@ func TestPermissionsGetUser(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsUpdateUserConfig(t *testing.T) {
@@ -2146,7 +2200,8 @@ func TestPermissionsUpdateUserConfig(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsCreateBoardsAndBlocks(t *testing.T) {
@@ -2187,7 +2242,8 @@ func TestPermissionsCreateBoardsAndBlocks(t *testing.T) {
 		{"/boards-and-blocks", methodPost, bab, userGuest, http.StatusForbidden, 0},
 	}
 
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsUpdateBoardsAndBlocks(t *testing.T) {
@@ -2217,7 +2273,8 @@ func TestPermissionsUpdateBoardsAndBlocks(t *testing.T) {
 	clients := setupClients(th)
 	testData := setupData(t, th)
 	ttCases := ttCasesF(t, testData)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsDeleteBoardsAndBlocks(t *testing.T) {
@@ -2248,7 +2305,8 @@ func TestPermissionsDeleteBoardsAndBlocks(t *testing.T) {
 	_, err := th.Server.App().AddMemberToBoard(&model.BoardMember{BoardID: testData.publicBoard.ID, UserID: userGuestID, SchemeViewer: true})
 	require.NoError(t, err)
 
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsClientConfig(t *testing.T) {
@@ -2261,7 +2319,8 @@ func TestPermissionsClientConfig(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsGetCategories(t *testing.T) {
@@ -2280,15 +2339,20 @@ func TestPermissionsGetCategories(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsCreateCategory(t *testing.T) {
+	th := SetupTestHelperPluginMode(t)
+	defer th.TearDown()
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	
 	ttCasesF := func() []TestCase {
 		category := func(userID string) string {
 			return toJSON(t, model.Category{
 				Name:     "Test category",
-				TeamID:   "test-team",
+				TeamID:   testTeamID,
 				UserID:   userID,
 				CreateAt: model.GetMillis(),
 				UpdateAt: model.GetMillis(),
@@ -2307,20 +2371,22 @@ func TestPermissionsCreateCategory(t *testing.T) {
 		}
 	}
 
-	th := SetupTestHelperPluginMode(t)
-	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
 	ttCases := ttCasesF()
-	runTestCases(t, ttCases, testData, clients)
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 func TestPermissionsUpdateCategory(t *testing.T) {
+	th := SetupTestHelperPluginMode(t)
+	defer th.TearDown()
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	
 	ttCasesF := func(extraData map[string]string) []TestCase {
 		category := func(userID string, categoryID string) string {
 			return toJSON(t, model.Category{
 				ID:       categoryID,
 				Name:     "Test category",
-				TeamID:   "test-team",
+				TeamID:   testTeamID,
 				UserID:   userID,
 				CreateAt: model.GetMillis(),
 				UpdateAt: model.GetMillis(),
@@ -2350,25 +2416,25 @@ func TestPermissionsUpdateCategory(t *testing.T) {
 
 	extraSetup := func(t *testing.T, th *TestHelper) map[string]string {
 		categoryNoTeamMember, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userNoTeamMemberID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userNoTeamMemberID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		categoryTeamMember, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userTeamMemberID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userTeamMemberID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		categoryViewer, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userViewerID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userViewerID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		categoryCommenter, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userCommenterID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userCommenterID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		categoryEditor, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userEditorID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userEditorID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		categoryAdmin, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userAdminID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userAdminID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		categoryGuest, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userGuestID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userGuestID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		return map[string]string{
 			"noTeamMember": categoryNoTeamMember.ID,
@@ -2381,13 +2447,11 @@ func TestPermissionsUpdateCategory(t *testing.T) {
 		}
 	}
 
-	th := SetupTestHelperPluginMode(t)
-	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
 	extraData := extraSetup(t, th)
 	ttCases := ttCasesF(extraData)
-	runTestCases(t, ttCases, testData, clients)
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsDeleteCategory(t *testing.T) {
@@ -2410,27 +2474,31 @@ func TestPermissionsDeleteCategory(t *testing.T) {
 		}
 	}
 
+	th := SetupTestHelperPluginMode(t)
+	defer th.TearDown()
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	
 	extraSetup := func(t *testing.T, th *TestHelper) map[string]string {
 		categoryNoTeamMember, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userNoTeamMemberID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userNoTeamMemberID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		categoryTeamMember, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userTeamMemberID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userTeamMemberID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		categoryViewer, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userViewerID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userViewerID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		categoryCommenter, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userCommenterID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userCommenterID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		categoryEditor, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userEditorID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userEditorID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		categoryAdmin, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userAdminID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userAdminID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		categoryGuest, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userGuestID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userGuestID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		return map[string]string{
 			"noTeamMember": categoryNoTeamMember.ID,
@@ -2443,13 +2511,11 @@ func TestPermissionsDeleteCategory(t *testing.T) {
 		}
 	}
 
-	th := SetupTestHelperPluginMode(t)
-	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
 	extraData := extraSetup(t, th)
 	ttCases := ttCasesF(extraData)
-	runTestCases(t, ttCases, testData, clients)
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsUpdateCategoryBoard(t *testing.T) {
@@ -2463,27 +2529,31 @@ func TestPermissionsUpdateCategoryBoard(t *testing.T) {
 		}
 	}
 
+	th := SetupTestHelperPluginMode(t)
+	defer th.TearDown()
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	
 	extraSetup := func(t *testing.T, th *TestHelper) map[string]string {
 		categoryNoTeamMember, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userNoTeamMemberID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userNoTeamMemberID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		categoryTeamMember, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userTeamMemberID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userTeamMemberID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		categoryViewer, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userViewerID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userViewerID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		categoryCommenter, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userCommenterID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userCommenterID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		categoryEditor, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userEditorID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userEditorID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		categoryAdmin, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userAdminID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userAdminID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		categoryGuest, err := th.Server.App().CreateCategory(
-			&model.Category{Name: "Test category", TeamID: "test-team", UserID: userGuestID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
+			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userGuestID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
 		require.NoError(t, err)
 		return map[string]string{
 			"noTeamMember": categoryNoTeamMember.ID,
@@ -2496,13 +2566,11 @@ func TestPermissionsUpdateCategoryBoard(t *testing.T) {
 		}
 	}
 
-	th := SetupTestHelperPluginMode(t)
-	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
 	extraData := extraSetup(t, th)
 	ttCases := ttCasesF(testData, extraData)
-	runTestCases(t, ttCases, testData, clients)
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsGetFile(t *testing.T) {
@@ -2546,7 +2614,8 @@ func TestPermissionsGetFile(t *testing.T) {
 	for i, tc := range ttCases {
 		ttCases[i].url = strings.Replace(tc.url, "{NEW_FILE_ID}", newFileID, 1)
 	}
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsCreateSubscription(t *testing.T) {
@@ -2576,10 +2645,11 @@ func TestPermissionsCreateSubscription(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases(), testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases(), testData, clients, testTeamID, otherTeamID, emptyTeamID)
 	clients = setupClients(th)
 	testData = setupData(t, th)
-	runTestCases(t, ttCases(), testData, clients)
+	runTestCases(t, ttCases(), testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsGetSubscriptions(t *testing.T) {
@@ -2603,7 +2673,8 @@ func TestPermissionsGetSubscriptions(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsDeleteSubscription(t *testing.T) {
@@ -2655,7 +2726,8 @@ func TestPermissionsDeleteSubscription(t *testing.T) {
 		&model.Subscription{BlockType: "card", BlockID: blockID, SubscriberType: "user", SubscriberID: "other", CreateAt: model.GetMillis()})
 	require.NoError(t, err)
 
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsOnboard(t *testing.T) {
@@ -2678,7 +2750,8 @@ func TestPermissionsOnboard(t *testing.T) {
 	err := th.Server.App().InitTemplates()
 	require.NoError(t, err, "InitTemplates should not fail")
 
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsBoardArchiveExport(t *testing.T) {
@@ -2721,7 +2794,8 @@ func TestPermissionsBoardArchiveExport(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsBoardArchiveImport(t *testing.T) {
@@ -2740,7 +2814,8 @@ func TestPermissionsBoardArchiveImport(t *testing.T) {
 	defer th.TearDown()
 	clients := setupClients(th)
 	testData := setupData(t, th)
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsMinimumRolesApplied(t *testing.T) {
@@ -2842,7 +2917,8 @@ func TestPermissionsMinimumRolesApplied(t *testing.T) {
 		clients := setupClients(th)
 		testData := setupData(t, th)
 		ttCases := ttCasesF(t, th, "viewer", testData)
-		runTestCases(t, ttCases, testData, clients)
+		testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 	})
 }
 
@@ -2860,7 +2936,8 @@ func TestPermissionsChannels(t *testing.T) {
 		{"/teams/test-team/channels", methodGet, "", userEditor, http.StatusOK, 2},
 		{"/teams/test-team/channels", methodGet, "", userAdmin, http.StatusOK, 2},
 	}
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsChannel(t *testing.T) {
@@ -2885,7 +2962,8 @@ func TestPermissionsChannel(t *testing.T) {
 		{"/teams/test-team/channels/not-valid-channel-id", methodGet, "", userEditor, http.StatusForbidden, 0},
 		{"/teams/test-team/channels/not-valid-channel-id", methodGet, "", userAdmin, http.StatusForbidden, 0},
 	}
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
 func TestPermissionsGetStatistics(t *testing.T) {
@@ -2903,5 +2981,6 @@ func TestPermissionsGetStatistics(t *testing.T) {
 		{"/statistics", methodGet, "", userAdmin, http.StatusOK, 1},
 		{"/statistics", methodGet, "", userGuest, http.StatusForbidden, 0},
 	}
-	runTestCases(t, ttCases, testData, clients)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }

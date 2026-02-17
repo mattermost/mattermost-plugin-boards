@@ -48,8 +48,9 @@ func TestGetBoards(t *testing.T) {
 		th.Client = clients.TeamMember
 		th.Client2 = clients.Viewer
 
-		teamID := "0"
-		otherTeamID := "other-team-id"
+		// Get dynamically generated team IDs from the test store
+		testTeamID, otherTeamID, _ := th.GetTestTeamIDs()
+		teamID := testTeamID
 		user1 := th.GetUser1()
 		user2 := th.GetUser2()
 
@@ -558,10 +559,12 @@ func TestSearchBoards(t *testing.T) {
 		_, err = th.Server.App().CreateBoard(board4, user1.ID, false)
 		require.NoError(t, err)
 
+		// Get dynamically generated team IDs from the test store
+		_, otherTeamID, _ := th.GetTestTeamIDs()
 		board5 := &model.Board{
 			Title:  "private board where user1 is admin, but in other team",
 			Type:   model.BoardTypePrivate,
-			TeamID: "other-team-id",
+			TeamID: otherTeamID,
 		}
 		rBoard5, err := th.Server.App().CreateBoard(board5, user1.ID, true)
 		require.NoError(t, err)
@@ -785,6 +788,8 @@ func TestGetBoardMetadata(t *testing.T) {
 		defer th.TearDown()
 		th.Server.Config().EnablePublicSharedBoards = true
 
+		// Get dynamically generated team IDs from the test store
+		testTeamID, _, _ := th.GetTestTeamIDs()
 		teamID := testTeamID
 
 		board := &model.Board{
@@ -2112,7 +2117,9 @@ func TestGetTemplates(t *testing.T) {
 		err := th.Server.App().InitTemplates()
 		require.NoError(t, err, "InitTemplates should not fail")
 
-		teamID := "my-team-id"
+		// Get dynamically generated team IDs from the test store
+		testTeamID, _, _ := th.GetTestTeamIDs()
+		teamID := testTeamID
 		rBoards, resp := th.Client.GetTemplatesForTeam("0")
 		th.CheckOK(resp)
 		require.NotNil(t, rBoards)

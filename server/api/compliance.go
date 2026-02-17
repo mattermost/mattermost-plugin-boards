@@ -82,7 +82,7 @@ func (a *API) handleGetBoardsForCompliance(w http.ResponseWriter, r *http.Reques
 
 	// check for valid license feature: compliance
 	license := a.app.GetLicense()
-	if license == nil || !(*license.Features.Compliance) {
+	if license == nil || license.Features == nil || !(*license.Features.Compliance) {
 		a.errorResponse(w, r, model.NewErrNotImplemented("insufficient license Compliance Export getAllBoards"))
 		return
 	}
@@ -217,7 +217,7 @@ func (a *API) handleGetBoardsComplianceHistory(w http.ResponseWriter, r *http.Re
 
 	// check for valid license feature: compliance
 	license := a.app.GetLicense()
-	if license == nil || !(*license.Features.Compliance) {
+	if license == nil || license.Features == nil || !(*license.Features.Compliance) {
 		a.errorResponse(w, r, model.NewErrNotImplemented("insufficient license Compliance Export getBoardsHistory"))
 		return
 	}
@@ -366,7 +366,7 @@ func (a *API) handleGetBlocksComplianceHistory(w http.ResponseWriter, r *http.Re
 
 	// check for valid license feature: compliance
 	license := a.app.GetLicense()
-	if license == nil || !(*license.Features.Compliance) {
+	if license == nil || license.Features == nil || !(*license.Features.Compliance) {
 		a.errorResponse(w, r, model.NewErrNotImplemented("insufficient license Compliance Export getBlocksHistory"))
 		return
 	}

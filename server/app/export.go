@@ -220,6 +220,15 @@ func (a *App) writeArchiveFile(zw *zip.Writer, filename string, boardID string, 
 		)
 		return nil
 	}
+	if fileReader == nil {
+		// fileReader is nil even though there's no error, this shouldn't happen but handle it gracefully
+		a.logger.Error("file reader is nil for export",
+			mlog.String("filename", filename),
+			mlog.String("team_id", opt.TeamID),
+			mlog.String("board_id", boardID),
+		)
+		return nil
+	}
 	defer fileReader.Close()
 
 	_, err = io.Copy(dest, fileReader)
@@ -234,6 +243,9 @@ func (a *App) getBoardsForArchive(boardIDs []string) ([]model.Board, error) {
 		b, err := a.GetBoard(id)
 		if err != nil {
 			return nil, fmt.Errorf("could not fetch board %s: %w", id, err)
+		}
+		if b == nil {
+			return nil, fmt.Errorf("board %s is nil", id)
 		}
 
 		boards = append(boards, *b)
