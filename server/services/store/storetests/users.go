@@ -16,7 +16,7 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 )
 
-// dbHandle is an interface to access the database handle from the store
+// dbHandle is an interface to access the database handle from the store.
 type dbHandle interface {
 	DBHandle() *sql.DB
 	DBType() string

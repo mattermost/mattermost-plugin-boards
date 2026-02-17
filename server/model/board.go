@@ -8,8 +8,8 @@ import (
 	"io"
 	"time"
 
-	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 )
 
 type BoardType string

@@ -11,8 +11,8 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/client"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
-	"github.com/stretchr/testify/require"
 	mmModel "github.com/mattermost/mattermost/server/public/model"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetMe(t *testing.T) {

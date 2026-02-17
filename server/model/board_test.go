@@ -33,7 +33,7 @@ func TestBoardIsValid(t *testing.T) {
 		origEnv := os.Getenv("FOCALBOARD_UNIT_TESTING")
 		os.Setenv("FOCALBOARD_UNIT_TESTING", "1")
 		defer os.Setenv("FOCALBOARD_UNIT_TESTING", origEnv)
-		
+
 		board := &Board{
 			ID:          model.NewId(),
 			TeamID:      GlobalTeamID,

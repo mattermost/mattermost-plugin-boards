@@ -863,8 +863,8 @@ func testSearchBoardsForUser(t *testing.T, store store.Store) {
 	require.NoError(t, err)
 
 	t.Run("should return empty if user is not a member of any board and there are no public boards on the team", func(t *testing.T) {
-		boards, err := store.SearchBoardsForUser("", model.BoardSearchFieldTitle, userID, true)
-		require.NoError(t, err)
+		boards, err2 := store.SearchBoardsForUser("", model.BoardSearchFieldTitle, userID, true)
+		require.NoError(t, err2)
 		require.Empty(t, boards)
 	})
 

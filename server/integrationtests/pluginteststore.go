@@ -31,7 +31,6 @@ func NewPluginTestStore(innerStore store.Store) *PluginTestStore {
 	testTeamID := mmModel.NewId()
 	otherTeamID := mmModel.NewId()
 	emptyTeamID := mmModel.NewId()
-	
 	return &PluginTestStore{
 		Store: innerStore,
 		users: map[string]*model.User{
@@ -349,29 +348,29 @@ func (s *PluginTestStore) GetLicense() *mmModel.License {
 	return license
 }
 
-// PostMessage is a no-op for tests - we don't actually need to post messages
+// PostMessage is a no-op for tests - we don't actually need to post messages.
 func (s *PluginTestStore) PostMessage(message, postType, channelID string) error {
 	// No-op for tests - just return nil
 	return nil
 }
 
-// SendMessage is a no-op for tests - we don't actually need to send messages
+// SendMessage is a no-op for tests - we don't actually need to send messages.
 func (s *PluginTestStore) SendMessage(message, postType string, receipts []string) error {
 	// No-op for tests - just return nil
 	return nil
 }
 
-// GetTestTeamID returns the test team ID for use in integration tests
+// GetTestTeamID returns the test team ID for use in integration tests.
 func (s *PluginTestStore) GetTestTeamID() string {
 	return s.testTeam.ID
 }
 
-// GetOtherTeamID returns the other team ID for use in integration tests
+// GetOtherTeamID returns the other team ID for use in integration tests.
 func (s *PluginTestStore) GetOtherTeamID() string {
 	return s.otherTeam.ID
 }
 
-// GetEmptyTeamID returns the empty team ID for use in integration tests
+// GetEmptyTeamID returns the empty team ID for use in integration tests.
 func (s *PluginTestStore) GetEmptyTeamID() string {
 	return s.emptyTeam.ID
 }

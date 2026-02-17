@@ -116,12 +116,12 @@ func testInsertBlock(t *testing.T, store store.Store) {
 			ModifiedBy: userID,
 		}
 
-		err := store.InsertBlock(block, "user-id-1")
-		require.NoError(t, err)
+		err2 := store.InsertBlock(block, "user-id-1")
+		require.NoError(t, err2)
 
-		blocks, err := store.GetBlocksForBoard(boardID)
-		require.NoError(t, err)
-		require.Len(t, blocks, initialCount+1)
+		blocks2, err3 := store.GetBlocksForBoard(boardID)
+		require.NoError(t, err3)
+		require.Len(t, blocks2, initialCount+1)
 	})
 
 	t.Run("invalid rootid", func(t *testing.T) {
@@ -131,12 +131,12 @@ func testInsertBlock(t *testing.T, store store.Store) {
 			ModifiedBy: userID,
 		}
 
-		err := store.InsertBlock(block, userID)
-		require.Error(t, err)
+		err2 := store.InsertBlock(block, userID)
+		require.Error(t, err2)
 
-		blocks, err := store.GetBlocksForBoard(boardID)
-		require.NoError(t, err)
-		require.Len(t, blocks, initialCount+1)
+		blocks2, err3 := store.GetBlocksForBoard(boardID)
+		require.NoError(t, err3)
+		require.Len(t, blocks2, initialCount+1)
 	})
 
 	t.Run("invalid fields data", func(t *testing.T) {
@@ -147,12 +147,12 @@ func testInsertBlock(t *testing.T, store store.Store) {
 			Fields:     map[string]interface{}{"no-serialiable-value": t.Run},
 		}
 
-		err := store.InsertBlock(block, userID)
-		require.Error(t, err)
+		err2 := store.InsertBlock(block, userID)
+		require.Error(t, err2)
 
-		blocks, err := store.GetBlocksForBoard(boardID)
-		require.NoError(t, err)
-		require.Len(t, blocks, initialCount+1)
+		blocks2, err3 := store.GetBlocksForBoard(boardID)
+		require.NoError(t, err3)
+		require.Len(t, blocks2, initialCount+1)
 	})
 
 	t.Run("block with title too large", func(t *testing.T) {
@@ -163,8 +163,8 @@ func testInsertBlock(t *testing.T, store store.Store) {
 			Title:      strings.Repeat("A", model.BlockTitleMaxRunes+1),
 		}
 
-		err := store.InsertBlock(block, userID)
-		require.ErrorIs(t, err, model.ErrBlockTitleSizeLimitExceeded)
+		err2 := store.InsertBlock(block, userID)
+		require.ErrorIs(t, err2, model.ErrBlockTitleSizeLimitExceeded)
 	})
 
 	t.Run("block with aggregated fields size too large", func(t *testing.T) {
@@ -180,8 +180,8 @@ func testInsertBlock(t *testing.T, store store.Store) {
 			},
 		}
 
-		err := store.InsertBlock(block, userID)
-		require.ErrorIs(t, err, model.ErrBlockFieldsSizeLimitExceeded)
+		err2 := store.InsertBlock(block, userID)
+		require.ErrorIs(t, err2, model.ErrBlockFieldsSizeLimitExceeded)
 	})
 
 	t.Run("insert new block", func(t *testing.T) {
@@ -190,8 +190,8 @@ func testInsertBlock(t *testing.T, store store.Store) {
 			BoardID: testBoardID,
 		}
 
-		err := store.InsertBlock(block, testUserID2)
-		require.NoError(t, err)
+		err2 := store.InsertBlock(block, testUserID2)
+		require.NoError(t, err2)
 		require.Equal(t, testUserID2, block.CreatedBy)
 	})
 
@@ -208,8 +208,8 @@ func testInsertBlock(t *testing.T, store store.Store) {
 			TeamID: testTeamID,
 			Type:   model.BoardTypeOpen,
 		}
-		_, err := store.InsertBoard(board, testUserID2)
-		require.NoError(t, err)
+		_, err2 := store.InsertBoard(board, testUserID2)
+		require.NoError(t, err2)
 
 		block := &model.Block{
 			ID:      testBlockID2,
@@ -253,8 +253,8 @@ func testInsertBlock(t *testing.T, store store.Store) {
 			TeamID: testTeamID,
 			Type:   model.BoardTypeOpen,
 		}
-		_, err := store.InsertBoard(board, testUserID3)
-		require.NoError(t, err)
+		_, err2 := store.InsertBoard(board, testUserID3)
+		require.NoError(t, err2)
 
 		block := &model.Block{
 			ID:        testBlockID3,
@@ -296,8 +296,8 @@ func testInsertBlock(t *testing.T, store store.Store) {
 			TeamID: testTeamID,
 			Type:   model.BoardTypeOpen,
 		}
-		_, err := store.InsertBoard(board, testUserID3)
-		require.NoError(t, err)
+		_, err2 := store.InsertBoard(board, testUserID3)
+		require.NoError(t, err2)
 
 		block := &model.Block{
 			ID:        testBlockID3,
@@ -383,7 +383,6 @@ func testInsertBlock(t *testing.T, store store.Store) {
 
 func testInsertBlocks(t *testing.T, store store.Store) {
 	userID := testUserID
-	testBoardID := utils.NewID(utils.IDTypeBoard)
 	testBlockID := utils.NewID(utils.IDTypeBlock)
 
 	// Create a board first

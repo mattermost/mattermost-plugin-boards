@@ -62,69 +62,6 @@ func testGetTeam(t *testing.T, store store.Store) {
 	})
 }
 
-func testUpsertTeamSignupToken(t *testing.T, store store.Store) {
-	t.Run("Insert and update team with signup token", func(t *testing.T) {
-		teamID := "0"
-		team := &model.Team{
-			ID:          teamID,
-			SignupToken: utils.NewID(utils.IDTypeToken),
-		}
-
-		// insert
-		err := store.UpsertTeamSignupToken(*team)
-		require.NoError(t, err)
-
-		got, err := store.GetTeam(teamID)
-		require.NoError(t, err)
-		require.Equal(t, team.ID, got.ID)
-		require.Equal(t, team.SignupToken, got.SignupToken)
-
-		// update signup token
-		team.SignupToken = utils.NewID(utils.IDTypeToken)
-		err = store.UpsertTeamSignupToken(*team)
-		require.NoError(t, err)
-
-		got, err = store.GetTeam(teamID)
-		require.NoError(t, err)
-		require.Equal(t, team.ID, got.ID)
-		require.Equal(t, team.SignupToken, got.SignupToken)
-	})
-}
-
-func testUpsertTeamSettings(t *testing.T, store store.Store) {
-	t.Run("Insert and update team with settings", func(t *testing.T) {
-		teamID := "0"
-		team := &model.Team{
-			ID: teamID,
-			Settings: map[string]interface{}{
-				"field1": "A",
-			},
-		}
-
-		// insert
-		err := store.UpsertTeamSettings(*team)
-		require.NoError(t, err)
-
-		got, err := store.GetTeam(teamID)
-		require.NoError(t, err)
-		require.Equal(t, team.ID, got.ID)
-		require.Equal(t, team.Settings, got.Settings)
-
-		// update settings
-		team.Settings = map[string]interface{}{
-			"field1": "B",
-		}
-		err = store.UpsertTeamSettings(*team)
-		require.NoError(t, err)
-
-		got2, err := store.GetTeam(teamID)
-		require.NoError(t, err)
-		require.Equal(t, team.ID, got2.ID)
-		require.Equal(t, team.Settings, got2.Settings)
-		require.Equal(t, got.SignupToken, got2.SignupToken)
-	})
-}
-
 func testGetAllTeams(t *testing.T, store store.Store) {
 	t.Run("No teams response", func(t *testing.T) {
 		got, err := store.GetAllTeams()

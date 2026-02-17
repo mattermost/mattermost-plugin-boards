@@ -156,7 +156,7 @@ func (*FakePermissionPluginAPI) HasPermissionToChannel(userID string, channelID 
 	return false
 }
 
-// testMutexAPI provides a no-op mutex for tests
+// testMutexAPI provides a no-op mutex for tests.
 type testMutexAPI struct{}
 
 func (f *testMutexAPI) KVSetWithOptions(key string, value []byte, options mmModel.PluginKVSetOptions) (bool, *mmModel.AppError) {
@@ -175,9 +175,9 @@ func getEnvWithDefault(name, defaultValue string) string {
 	return defaultValue
 }
 
-// getAvailablePort finds an available port by listening on port 0 and then closing the listener
+// getAvailablePort finds an available port by listening on port 0 and then closing the listener.
 func getAvailablePort() (int, error) {
-	listener, err := net.Listen("tcp", ":0")
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return 0, err
 	}
@@ -230,7 +230,7 @@ func getTestConfig(sqlSettings *mmModel.SqlSettings) (*config.Configuration, err
 	}, nil
 }
 
-// testServicesAPI provides a servicesAPI implementation for tests
+// testServicesAPI provides a servicesAPI implementation for tests.
 type testServicesAPI struct {
 	users  map[string]*model.User
 	db     *sql.DB
@@ -240,7 +240,7 @@ type testServicesAPI struct {
 func (t *testServicesAPI) GetUserByID(userID string) (*mmModel.User, error) {
 	user := t.users[userID]
 	if user == nil {
-		return nil, fmt.Errorf("user not found: %s", userID)
+		return nil, fmt.Errorf("%w: %s", ErrUserNotFound, userID)
 	}
 	// Convert Boards model.User to Mattermost model.User
 	return &mmModel.User{
@@ -266,7 +266,7 @@ func (t *testServicesAPI) GetUserByEmail(email string) (*mmModel.User, error) {
 			}, nil
 		}
 	}
-	return nil, fmt.Errorf("user not found: %s", email)
+	return nil, fmt.Errorf("%w: %s", ErrUserNotFound, email)
 }
 
 func (t *testServicesAPI) GetUserByUsername(username string) (*mmModel.User, error) {
@@ -282,7 +282,7 @@ func (t *testServicesAPI) GetUserByUsername(username string) (*mmModel.User, err
 			}, nil
 		}
 	}
-	return nil, fmt.Errorf("user not found: %s", username)
+	return nil, fmt.Errorf("%w: %s", ErrUserNotFound, username)
 }
 
 func (t *testServicesAPI) UpdateUser(user *mmModel.User) (*mmModel.User, error) {
@@ -340,54 +340,29 @@ func (t *testServicesAPI) GetFileInfo(fileID string) (*mmModel.FileInfo, error) 
 	}
 
 	var fileInfo mmModel.FileInfo
-	var err error
-	if t.dbType == model.PostgresDBType {
-		err = t.db.QueryRow(query, fileID).Scan(
-			&fileInfo.Id,
-			&fileInfo.CreateAt,
-			&fileInfo.UpdateAt,
-			&fileInfo.DeleteAt,
-			&fileInfo.Path,
-			&fileInfo.ThumbnailPath,
-			&fileInfo.PreviewPath,
-			&fileInfo.Name,
-			&fileInfo.Extension,
-			&fileInfo.Size,
-			&fileInfo.MimeType,
-			&fileInfo.Width,
-			&fileInfo.Height,
-			&fileInfo.HasPreviewImage,
-			&fileInfo.MiniPreview,
-			&fileInfo.Content,
-			&fileInfo.RemoteId,
-			&fileInfo.CreatorId,
-			&fileInfo.PostId,
-		)
-	} else {
-		err = t.db.QueryRow(query, fileID).Scan(
-			&fileInfo.Id,
-			&fileInfo.CreateAt,
-			&fileInfo.UpdateAt,
-			&fileInfo.DeleteAt,
-			&fileInfo.Path,
-			&fileInfo.ThumbnailPath,
-			&fileInfo.PreviewPath,
-			&fileInfo.Name,
-			&fileInfo.Extension,
-			&fileInfo.Size,
-			&fileInfo.MimeType,
-			&fileInfo.Width,
-			&fileInfo.Height,
-			&fileInfo.HasPreviewImage,
-			&fileInfo.MiniPreview,
-			&fileInfo.Content,
-			&fileInfo.RemoteId,
-			&fileInfo.CreatorId,
-			&fileInfo.PostId,
-		)
-	}
+	err := t.db.QueryRow(query, fileID).Scan(
+		&fileInfo.Id,
+		&fileInfo.CreateAt,
+		&fileInfo.UpdateAt,
+		&fileInfo.DeleteAt,
+		&fileInfo.Path,
+		&fileInfo.ThumbnailPath,
+		&fileInfo.PreviewPath,
+		&fileInfo.Name,
+		&fileInfo.Extension,
+		&fileInfo.Size,
+		&fileInfo.MimeType,
+		&fileInfo.Width,
+		&fileInfo.Height,
+		&fileInfo.HasPreviewImage,
+		&fileInfo.MiniPreview,
+		&fileInfo.Content,
+		&fileInfo.RemoteId,
+		&fileInfo.CreatorId,
+		&fileInfo.PostId,
+	)
 
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, mmModel.NewAppError("GetFileInfo", "app.file_info.get.app_error", nil, "", http.StatusNotFound)
 	}
 	if err != nil {
@@ -398,11 +373,11 @@ func (t *testServicesAPI) GetFileInfo(fileID string) (*mmModel.FileInfo, error) 
 }
 
 func (t *testServicesAPI) CreatePost(post *mmModel.Post) (*mmModel.Post, error) {
-	return nil, fmt.Errorf("not implemented")
+	return nil, ErrNotImplemented
 }
 
 func (t *testServicesAPI) EnsureBot(bot *mmModel.Bot) (string, error) {
-	return "", fmt.Errorf("not implemented")
+	return "", ErrNotImplemented
 }
 
 func (t *testServicesAPI) GetTeamMember(teamID string, userID string) (*mmModel.TeamMember, error) {
@@ -452,8 +427,8 @@ func NewTestServerPluginMode(sqlSettings *mmModel.SqlSettings) *server.Server {
 	}
 
 	// Create Mattermost tables needed for migrations (Playbooks approach)
-	if err := sqlstore.SetupMattermostTablesForIntegration(sqlDB, cfg.DBType); err != nil {
-		panic(fmt.Errorf("failed to setup Mattermost tables: %w", err))
+	if err2 := sqlstore.SetupMattermostTablesForIntegration(sqlDB, cfg.DBType); err2 != nil {
+		panic(fmt.Errorf("failed to setup Mattermost tables: %w", err2))
 	}
 
 	// Create test users map for servicesAPI
@@ -579,6 +554,7 @@ func SetupTestHelperPluginMode(t *testing.T) *TestHelper {
 				if r := recover(); r != nil {
 					// Ignore panics from CleanupSqlSettings - database may already be cleaned up
 					// This prevents double-cleanup issues when both TearDown() and t.Cleanup() run
+					_ = r // Suppress staticcheck SA9003: empty branch
 				}
 			}()
 			storetest.CleanupSqlSettings(th.sqlSettings)
@@ -639,7 +615,12 @@ func (th *TestHelper) InitBasic() *TestHelper {
 	return th
 }
 
-var ErrRegisterFail = errors.New("register failed")
+var (
+	ErrRegisterFail   = errors.New("register failed")
+	ErrUserNotFound   = errors.New("user not found")
+	ErrNotImplemented = errors.New("not implemented")
+	ErrUnknownError   = errors.New("unknown error")
+)
 
 func (th *TestHelper) TearDown() {
 	os.Setenv("FOCALBOARD_UNIT_TESTING", th.origEnvUnitTesting)
@@ -709,8 +690,8 @@ func (th *TestHelper) UpdateCategoryBoard(teamID, categoryID, boardID string) {
 	th.CheckOK(response)
 }
 
-// GetTestTeamIDs returns the test team IDs from the PluginTestStore
-// This allows tests to use dynamically generated team IDs instead of hardcoded strings
+// GetTestTeamIDs returns the test team IDs from the PluginTestStore.
+// This allows tests to use dynamically generated team IDs instead of hardcoded strings.
 func (th *TestHelper) GetTestTeamIDs() (testTeamID, otherTeamID, emptyTeamID string) {
 	store := th.Server.Store()
 	if pluginStore, ok := store.(*PluginTestStore); ok {
@@ -816,7 +797,7 @@ func (th *TestHelper) AddUserToTeamMembers(teamID, userID string) error {
 		// Check if record exists first to avoid constraint errors
 		var count int
 		checkSQL := `SELECT COUNT(*) FROM teammembers WHERE teamid = $1 AND userid = $2`
-		err := db.QueryRow(checkSQL, teamID, userID).Scan(&count)
+		err = db.QueryRow(checkSQL, teamID, userID).Scan(&count)
 		if err != nil {
 			return err
 		}

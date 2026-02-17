@@ -5,7 +5,7 @@ package sqlstore
 
 import (
 	"database/sql"
-	"fmt"
+	"errors"
 	"net/http"
 	"os"
 	"strings"
@@ -21,7 +21,11 @@ import (
 	"github.com/mattermost/mattermost/server/v8/channels/store/storetest"
 )
 
-// testMutexAPI provides a no-op mutex for tests
+var (
+	ErrNotImplemented = errors.New("not implemented")
+)
+
+// testMutexAPI provides a no-op mutex for tests.
 type testMutexAPI struct{}
 
 func (f *testMutexAPI) KVSetWithOptions(key string, value []byte, options mmModel.PluginKVSetOptions) (bool, *mmModel.AppError) {
@@ -33,7 +37,7 @@ func (f *testMutexAPI) LogError(msg string, keyValuePairs ...interface{}) {
 	// No-op for tests
 }
 
-// testServicesAPIForUnitTests provides a minimal servicesAPI implementation for unit tests
+// testServicesAPIForUnitTests provides a minimal servicesAPI implementation for unit tests.
 type testServicesAPIForUnitTests struct {
 	users  map[string]*model.User
 	db     *sql.DB
@@ -252,7 +256,7 @@ func (t *testServicesAPIForUnitTests) GetFileInfo(fileID string) (*mmModel.FileI
 		&fileInfo.PostId,
 	)
 
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, mmModel.NewAppError("GetFileInfo", "app.file_info.get.app_error", nil, "", http.StatusNotFound)
 	}
 	if err != nil {
@@ -263,11 +267,11 @@ func (t *testServicesAPIForUnitTests) GetFileInfo(fileID string) (*mmModel.FileI
 }
 
 func (t *testServicesAPIForUnitTests) CreatePost(post *mmModel.Post) (*mmModel.Post, error) {
-	return nil, fmt.Errorf("not implemented")
+	return nil, ErrNotImplemented
 }
 
 func (t *testServicesAPIForUnitTests) EnsureBot(bot *mmModel.Bot) (string, error) {
-	return "", fmt.Errorf("not implemented")
+	return "", ErrNotImplemented
 }
 
 func (t *testServicesAPIForUnitTests) GetTeamMember(teamID string, userID string) (*mmModel.TeamMember, error) {
@@ -311,6 +315,7 @@ func SetupTests(t *testing.T) (store.Store, func()) {
 			if r := recover(); r != nil {
 				// Ignore panics from CleanupSqlSettings - database may already be cleaned up
 				// This prevents double-cleanup issues
+				_ = r // Suppress staticcheck SA9003: empty branch
 			}
 		}()
 		storetest.CleanupSqlSettings(sqlSettings)

@@ -245,7 +245,7 @@ func (a *App) getBoardsForArchive(boardIDs []string) ([]model.Board, error) {
 			return nil, fmt.Errorf("could not fetch board %s: %w", id, err)
 		}
 		if b == nil {
-			return nil, fmt.Errorf("board %s is nil", id)
+			return nil, fmt.Errorf("%w: %s", ErrBoardIsNil, id)
 		}
 
 		boards = append(boards, *b)

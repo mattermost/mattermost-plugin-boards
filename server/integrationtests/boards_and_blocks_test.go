@@ -144,8 +144,8 @@ func TestCreateBoardsAndBlocks(t *testing.T) {
 					BoardID:      board.ID,
 					SchemeEditor: true,
 				}
-				_, err := th.Server.App().AddMemberToBoard(newMember)
-				require.NoError(t, err)
+				_, err2 := th.Server.App().AddMemberToBoard(newMember)
+				require.NoError(t, err2)
 			}
 
 			// Verify boards were created correctly by fetching them directly

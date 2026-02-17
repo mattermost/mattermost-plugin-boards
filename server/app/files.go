@@ -22,8 +22,12 @@ import (
 const emptyString = "empty"
 
 var errEmptyFilename = errors.New("IsFileArchived: empty filename not allowed")
-var ErrFileNotFound = errors.New("file not found")
-var ErrFileNotReferencedByBoard = errors.New("file not referenced by board")
+
+var (
+	ErrFileNotFound             = errors.New("file not found")
+	ErrFileNotReferencedByBoard = errors.New("file not referenced by board")
+	ErrBoardIsNil               = errors.New("board is nil")
+)
 
 func (a *App) SaveFile(reader io.Reader, teamID, boardID, filename string, asTemplate bool) (string, error) {
 	// NOTE: File extension includes the dot
@@ -201,7 +205,7 @@ func (a *App) GetFilePath(teamID, boardID, fileName string) (*mm_model.FileInfo,
 				return nil, "", fmt.Errorf("GetFilePath: cannot validate board for GlobalTeamID: %w", err)
 			}
 			if board == nil {
-				return nil, "", fmt.Errorf("GetFilePath: board is nil for GlobalTeamID")
+				return nil, "", fmt.Errorf("GetFilePath: %w for GlobalTeamID", ErrBoardIsNil)
 			}
 			isTemplate = board.IsTemplate
 		}
@@ -283,7 +287,7 @@ func (a *App) GetFileReader(teamID, boardID, filename string) (filestore.ReadClo
 			return nil, fmt.Errorf("GetFileReader: cannot validate board for GlobalTeamID: %w", err)
 		}
 		if board == nil {
-			return nil, fmt.Errorf("GetFileReader: board is nil for GlobalTeamID")
+			return nil, fmt.Errorf("GetFileReader: %w for GlobalTeamID", ErrBoardIsNil)
 		}
 		isTemplate = board.IsTemplate
 	}

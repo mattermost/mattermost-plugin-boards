@@ -115,12 +115,12 @@ func (ws *Server) registerRoutes() {
 func (ws *Server) Start() {
 	ws.startMutex.Lock()
 	defer ws.startMutex.Unlock()
-	
+
 	if ws.started {
 		ws.logger.Debug("server already started, skipping")
 		return
 	}
-	
+
 	ws.registerRoutes()
 	if ws.port == -1 {
 		ws.logger.Debug("server not bind to any port")
@@ -153,11 +153,11 @@ func (ws *Server) Start() {
 func (ws *Server) Shutdown() error {
 	ws.startMutex.Lock()
 	defer ws.startMutex.Unlock()
-	
+
 	if !ws.started {
 		return nil
 	}
-	
+
 	ws.started = false
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

@@ -30,7 +30,6 @@ func StoreTestFileStore(t *testing.T, setup func(t *testing.T) (store.Store, fun
 
 		err := sqlStore.SaveFileInfo(fileInfo)
 		require.NoError(t, err)
-
 	})
 
 	t.Run("should return an error on not found", func(t *testing.T) {

@@ -5,9 +5,14 @@ package sqlstore
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
+)
+
+var (
+	ErrUnsupportedDatabaseDriver = errors.New("unsupported database driver")
 )
 
 // SetupMattermostTablesForIntegration creates Mattermost tables for integration tests
@@ -103,7 +108,7 @@ func setupChannelsTableForIntegration(db *sql.DB, dbType string) error {
 			) DEFAULT CHARACTER SET utf8mb4;
 		`
 	default:
-		return fmt.Errorf("unsupported database driver: %s", dbType)
+		return fmt.Errorf("%w: %s", ErrUnsupportedDatabaseDriver, dbType)
 	}
 
 	_, err := db.Exec(createTableSQL)
@@ -146,7 +151,7 @@ func setupChannelMembersTableForIntegration(db *sql.DB, dbType string) error {
 			) DEFAULT CHARACTER SET utf8mb4;
 		`
 	default:
-		return fmt.Errorf("unsupported database driver: %s", dbType)
+		return fmt.Errorf("%w: %s", ErrUnsupportedDatabaseDriver, dbType)
 	}
 
 	_, err := db.Exec(createTableSQL)
@@ -179,7 +184,7 @@ func setupTeamMembersTableForIntegration(db *sql.DB, dbType string) error {
 			) DEFAULT CHARACTER SET utf8mb4;
 		`
 	default:
-		return fmt.Errorf("unsupported database driver: %s", dbType)
+		return fmt.Errorf("%w: %s", ErrUnsupportedDatabaseDriver, dbType)
 	}
 
 	_, err := db.Exec(createTableSQL)
@@ -234,7 +239,7 @@ func setupTeamsTableForIntegration(db *sql.DB, dbType string) error {
 			) DEFAULT CHARACTER SET utf8mb4;
 		`
 	default:
-		return fmt.Errorf("unsupported database driver: %s", dbType)
+		return fmt.Errorf("%w: %s", ErrUnsupportedDatabaseDriver, dbType)
 	}
 
 	_, err := db.Exec(createTableSQL)
@@ -307,7 +312,7 @@ func setupUsersTableForIntegration(db *sql.DB, dbType string) error {
 			) DEFAULT CHARACTER SET utf8mb4;
 		`
 	default:
-		return fmt.Errorf("unsupported database driver: %s", dbType)
+		return fmt.Errorf("%w: %s", ErrUnsupportedDatabaseDriver, dbType)
 	}
 
 	_, err := db.Exec(createTableSQL)
@@ -338,7 +343,7 @@ func setupPreferencesTableForIntegration(db *sql.DB, dbType string) error {
 			) DEFAULT CHARACTER SET utf8mb4;
 		`
 	default:
-		return fmt.Errorf("unsupported database driver: %s", dbType)
+		return fmt.Errorf("%w: %s", ErrUnsupportedDatabaseDriver, dbType)
 	}
 
 	_, err := db.Exec(createTableSQL)
@@ -365,7 +370,7 @@ func setupBotsTableForIntegration(db *sql.DB, dbType string) error {
 			) DEFAULT CHARACTER SET utf8mb4;
 		`
 	default:
-		return fmt.Errorf("unsupported database driver: %s", dbType)
+		return fmt.Errorf("%w: %s", ErrUnsupportedDatabaseDriver, dbType)
 	}
 
 	_, err := db.Exec(createTableSQL)
@@ -428,7 +433,7 @@ func setupFileInfoTableForIntegration(db *sql.DB, dbType string) error {
 			) DEFAULT CHARACTER SET utf8mb4;
 		`
 	default:
-		return fmt.Errorf("unsupported database driver: %s", dbType)
+		return fmt.Errorf("%w: %s", ErrUnsupportedDatabaseDriver, dbType)
 	}
 
 	_, err := db.Exec(createTableSQL)
@@ -469,7 +474,7 @@ func setupSessionsTableForIntegration(db *sql.DB, dbType string) error {
 			) DEFAULT CHARACTER SET utf8mb4;
 		`
 	default:
-		return fmt.Errorf("unsupported database driver: %s", dbType)
+		return fmt.Errorf("%w: %s", ErrUnsupportedDatabaseDriver, dbType)
 	}
 	_, err := db.Exec(createTableSQL)
 	return err

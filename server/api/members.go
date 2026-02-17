@@ -75,12 +75,12 @@ func (a *API) handleGetMembersForBoard(w http.ResponseWriter, r *http.Request) {
 
 	if board.IsTemplate {
 		// Check for explicit board membership (not synthetic)
-		member, err := a.app.GetMemberForBoard(boardID, userID)
-		if err != nil || member == nil || member.Synthetic {
+		member, err2 := a.app.GetMemberForBoard(boardID, userID)
+		if err2 != nil || member == nil || member.Synthetic {
 			a.errorResponse(w, r, model.NewErrPermission("access denied to board members"))
 			return
 		}
-	} else {
+	} else if !board.IsTemplate {
 		// For non-template boards, use standard permission check
 		if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard) {
 			a.errorResponse(w, r, model.NewErrPermission("access denied to board members"))

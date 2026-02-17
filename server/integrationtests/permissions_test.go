@@ -84,7 +84,7 @@ func setupData(t *testing.T, th *TestHelper) TestData {
 	testTeamID, otherTeamID, _ := th.GetTestTeamIDs()
 	require.NotEmpty(t, testTeamID, "testTeamID should not be empty")
 	require.NotEmpty(t, otherTeamID, "otherTeamID should not be empty")
-	
+
 	blockID1 := utils.NewID(utils.IDTypeBlock)
 	blockID2 := utils.NewID(utils.IDTypeBlock)
 	blockID3 := utils.NewID(utils.IDTypeBlock)
@@ -2347,7 +2347,7 @@ func TestPermissionsCreateCategory(t *testing.T) {
 	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
-	
+
 	ttCasesF := func() []TestCase {
 		category := func(userID string) string {
 			return toJSON(t, model.Category{
@@ -2380,7 +2380,7 @@ func TestPermissionsUpdateCategory(t *testing.T) {
 	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
-	
+
 	ttCasesF := func(extraData map[string]string) []TestCase {
 		category := func(userID string, categoryID string) string {
 			return toJSON(t, model.Category{
@@ -2477,7 +2477,7 @@ func TestPermissionsDeleteCategory(t *testing.T) {
 	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
-	
+
 	extraSetup := func(t *testing.T, th *TestHelper) map[string]string {
 		categoryNoTeamMember, err := th.Server.App().CreateCategory(
 			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userNoTeamMemberID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
@@ -2532,7 +2532,7 @@ func TestPermissionsUpdateCategoryBoard(t *testing.T) {
 	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
-	
+
 	extraSetup := func(t *testing.T, th *TestHelper) map[string]string {
 		categoryNoTeamMember, err := th.Server.App().CreateCategory(
 			&model.Category{Name: "Test category", TeamID: testTeamID, UserID: userNoTeamMemberID, CreateAt: model.GetMillis(), UpdateAt: model.GetMillis()})
@@ -2918,7 +2918,7 @@ func TestPermissionsMinimumRolesApplied(t *testing.T) {
 		testData := setupData(t, th)
 		ttCases := ttCasesF(t, th, "viewer", testData)
 		testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
-	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
+		runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 	})
 }
 
