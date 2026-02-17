@@ -84,6 +84,7 @@ const BoardPage = (props: Props): JSX.Element => {
     const hiddenBoardIDs = useAppSelector(getHiddenBoardIDs)
     const category = useAppSelector(getCategoryOfBoard(activeBoardId))
     const [showJoinBoardDialog, setShowJoinBoardDialog] = useState<boolean>(false)
+    const [boardWasLoaded, setBoardWasLoaded] = useState(false)
     const history = useHistory()
     const globalError = useAppSelector<string>(getGlobalError)
 
@@ -292,13 +293,20 @@ const BoardPage = (props: Props): JSX.Element => {
         }
     }, [teamId, match.params.boardId, me?.id])
 
+    // Track when board has been loaded at least once
+    useEffect(() => {
+        if (currentBoard) {
+            setBoardWasLoaded(true)
+        }
+    }, [currentBoard])
+
     // When the board is removed from the store while viewing (e.g. user was removed via websocket),
     // re-verify access so we show access-denied instead of the template picker
     useEffect(() => {
-        if (match.params.boardId && !props.readonly && me && !currentBoard) {
+        if (match.params.boardId && !props.readonly && me && !currentBoard && boardWasLoaded) {
             loadOrJoinBoard(me, teamId, match.params.boardId)
         }
-    }, [teamId, match.params.boardId, me?.id, currentBoard, loadOrJoinBoard])
+    }, [teamId, match.params.boardId, me?.id, currentBoard, loadOrJoinBoard, boardWasLoaded])
 
     const handleUnhideBoard = async (boardID: string) => {
         if (!me || !category) {
