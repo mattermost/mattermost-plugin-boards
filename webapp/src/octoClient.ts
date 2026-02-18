@@ -496,6 +496,12 @@ class OctoClient {
             method: 'POST',
         }))
 
+        if (response.status === 403) {
+            const error = new Error('access-denied') as Error & {status: number}
+            error.status = 403
+            throw error
+        }
+
         if (response.status !== 200) {
             return undefined
         }
