@@ -282,19 +282,19 @@ func runTestCases(t *testing.T, ttCases []TestCase, testData TestData, clients C
 			switch tc.method {
 			case methodGet:
 				response, err = reqClient.DoAPIGet(url, "")
-				defer response.Body.Close()
+				defer func() { _ = response.Body.Close() }()
 			case methodPost:
 				response, err = reqClient.DoAPIPost(url, tc.body)
-				defer response.Body.Close()
+				defer func() { _ = response.Body.Close() }()
 			case methodPatch:
 				response, err = reqClient.DoAPIPatch(url, tc.body)
-				defer response.Body.Close()
+				defer func() { _ = response.Body.Close() }()
 			case methodPut:
 				response, err = reqClient.DoAPIPut(url, tc.body)
-				defer response.Body.Close()
+				defer func() { _ = response.Body.Close() }()
 			case methodDelete:
 				response, err = reqClient.DoAPIDelete(url, tc.body)
-				defer response.Body.Close()
+				defer func() { _ = response.Body.Close() }()
 			}
 
 			require.Equal(t, tc.expectedStatusCode, response.StatusCode, tc.identifier())

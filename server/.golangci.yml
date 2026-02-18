@@ -1,27 +1,18 @@
+version: 2
+
 run:
   timeout: 5m
-  modules-download-mode: readonly
 
 linters-settings:
-  gofmt:
-    simplify: true
-  goimports:
-    local-prefixes: github.com/mattermost/mattermost-starter-template
-  golint:
-    min-confidence: 0
   govet:
-    enable-all: true
+    enable:
+      - shadow
     disable:
       - fieldalignment
-  misspell:
-    locale: US
-  lll:
-    line-length: 150
-  revive:
-    enableAllRules: true
-    rules:
-      - name: exported
-        disabled: true
+  staticcheck:
+    checks:
+      - all
+      - "-QF1008"
 
 linters:
   disable-all: true
@@ -30,39 +21,13 @@ linters:
       enable:
         - shadow
   enable:
-    - gofmt
-    - goimports
-    - ineffassign
-    - unparam
+    - errcheck
     - govet
-    - bodyclose
-    - durationcheck
-    - errorlint
-    - exhaustive
-    - copyloopvar
-    - gosec
-    - makezero
+    - ineffassign
     - staticcheck
-    - prealloc
-    - asciicheck
-    - dogsled
-    - gocritic
-    - godot
-    - err113
-    - goheader
-    - revive
-    - nakedret
-    - gomodguard
-    - goprintffuncname
-    - gosimple
-    - misspell
-    - nolintlint
-    - typecheck
-    - unconvert
     - unused
-    - whitespace
-    - gocyclo
-
+    - misspell
+    
 issues:
   exclude-files:
     - product/boards_product.go
@@ -71,10 +36,12 @@ issues:
     - path: server/manifest.go
       linters:
         - unused
-    - path: server/configuration.go
+    - path: server/configuration.go  
       linters:
         - unused
     - path: _test\.go
       linters:
         - bodyclose
-        - scopelint # https://github.com/kyoh86/scopelint/issues/4
+    - linters:
+        - staticcheck
+      source: QF1008

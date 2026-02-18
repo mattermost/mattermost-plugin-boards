@@ -145,7 +145,9 @@ func (s *SQLStore) Migrate() error {
 
 		defer func() {
 			s.logger.Debug("Closing migrations connection")
-			db.Close()
+			if err = db.Close(); err != nil {
+				s.logger.Error("Error closing migrations connection", mlog.Err(err))
+			}
 		}()
 	}
 
@@ -230,7 +232,9 @@ func (s *SQLStore) Migrate() error {
 	}
 	defer func() {
 		s.logger.Debug("Closing migration engine")
-		engine.Close()
+		if err := engine.Close(); err != nil {
+			s.logger.Error("Error closing migration engine", mlog.Err(err))
+		}
 	}()
 
 	return s.runMigrationSequence(engine, driver)

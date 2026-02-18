@@ -11,6 +11,7 @@ on:
 env:
  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
  EXCLUDE_ENTERPRISE: true
+ GO_VERSION: 1.24.6
 
 permissions:
   contents: read
@@ -41,14 +42,118 @@ jobs:
       run: cd focalboard; make webapp-ci
 
     - name: set up golangci-lint
-      run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.64.8
+      run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.1.6
     
     - name: Lint & test server 
       run: cd focalboard; make server-ci
-      
+
   dist:
-    uses: mattermost/actions-workflows/.github/workflows/plugin-dist-pr.yml@main
-    secrets: inherit
-    with:
-      dist-target: "dist-linux"
-      s3-prefix: "mattermost-plugin-boards"
+    runs-on: ubuntu-22.04
+    needs:
+      - webapp-test
+    permissions:
+      id-token: write
+    steps:
+    - name: Checkout
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        path: "focalboard"
+        fetch-depth: "0"
+
+    - name: Set up Go
+      uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # v5.2.0
+      with:
+        go-version: "${{ env.GO_VERSION }}"
+        cache: true
+
+    - name: Setup Node
+      uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+      with:
+        node-version-file: focalboard/.nvmrc
+        cache: "npm"
+        cache-dependency-path: focalboard/webapp/package-lock.json
+
+    - name: Cache webapp node modules
+      id: cache-webapp-node-modules
+      uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+      with:
+        path: focalboard/webapp/node_modules
+        key: ${{ runner.os }}-webapp-node-modules-${{ hashFiles('focalboard/webapp/package-lock.json') }}
+        restore-keys: ${{ runner.os }}-webapp-node-modules-
+
+    - name: Setup webapp npm deps
+      if: steps.cache-webapp-node-modules.outputs.cache-hit != 'true'
+      env:
+        NODE_ENV: development
+      run: |
+        cd focalboard/webapp
+        npm install --ignore-scripts --no-save
+
+    - name: ci/setup-chainctl
+      uses: chainguard-dev/setup-chainctl@v0.3.2
+      with:
+        identity: ${{ secrets.CHAINGUARD_IDENTITY }}
+
+    - name: ci/setup-build-tools
+      run: |
+        echo "Setting up build tools..."
+        cd focalboard
+        mkdir -p build/bin
+        cd build/manifest && go build -o ../bin/manifest
+        cd ../pluginctl && go build -o ../bin/pluginctl
+
+    - name: Build both distributions
+      env:
+        GO_VERSION: ${{ env.GO_VERSION }}
+      run: cd focalboard; make dist-all
+
+    - name: ci/display-signing-parameters
+      if: github.event_name == 'pull_request'
+      run: |
+        cd focalboard
+        echo "📦 Plugin Artifact Signing Parameters"
+        echo "===================================="
+        
+        # Extract plugin version using manifest tool (handles git versioning)
+        PLUGIN_VERSION=$(build/bin/manifest version)
+        # Add 'v' prefix for consistency with other plugin packages
+        if [[ ! $PLUGIN_VERSION == v* ]]; then
+          PLUGIN_VERSION="v${PLUGIN_VERSION}"
+        fi
+        SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+        
+        echo ""
+        echo "To sign artifacts from this PR, run the following command:"
+        echo ""
+        echo "gh workflow run sign-plugin-pr-artifacts.yaml \\"
+        echo "  --repo mattermost/delivery-platform \\"
+        echo "  --field repository_full_name=\"${{ github.repository }}\" \\"
+        echo "  --field pr_number=\"${{ github.event.number }}\" \\"
+        echo "  --field commit_sha=\"${{ github.sha }}\" \\"
+        echo "  --field run_id=\"${{ github.run_id }}\" \\"
+        echo "  --field plugin_version=\"${PLUGIN_VERSION}\" \\"
+        echo "  --field include_fips=true"
+        echo ""
+        echo "Or use the GitHub web interface with these values:"
+        echo "- Repository Full Name: ${{ github.repository }}"
+        echo "- PR Number: ${{ github.event.number }}"
+        echo "- Commit SHA: ${{ github.sha }}"
+        echo "- Run ID: ${{ github.run_id }}"
+        echo "- Plugin Version: ${PLUGIN_VERSION}"
+        echo "- Include FIPS: true"
+        echo ""
+        echo "Expected artifact naming:"
+        echo "- mattermost-plugin-boards-${PLUGIN_VERSION}+${SHORT_SHA}-linux-amd64.tar.gz"
+        echo "- mattermost-plugin-boards-${PLUGIN_VERSION}+${SHORT_SHA}-fips-linux-amd64.tar.gz"
+        echo ""
+        echo "Artifacts will be available at:"
+        echo "https://plugins.releases.mattermost.com/pr/mattermost-plugin-boards/pr-${{ github.event.number }}-${SHORT_SHA}/"
+
+    - name: Upload all artifacts
+      uses: actions/upload-artifact@1746f4ab65b179e0ea60a494b83293b640dd5bba # v4.5.0
+      with:
+        name: all-plugin-artifacts
+        path: |
+          focalboard/dist/*.tar.gz
+          focalboard/dist-fips/*.tar.gz
+        retention-days: 7
