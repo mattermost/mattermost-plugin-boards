@@ -4,6 +4,7 @@
 package boards
 
 import (
+	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -16,6 +17,7 @@ import (
 
 	serverModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
+	"github.com/mattermost/mattermost/server/v8/channels/store/storetest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -39,8 +41,17 @@ func SetupTestHelper(t *testing.T) (*TestHelper, func()) {
 	return th, tearDown
 }
 
+func getEnvWithDefault(name, defaultValue string) string {
+	if value := os.Getenv(name); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
 func newTestServer() *server.Server {
-	return integrationtests.NewTestServerPluginMode()
+	driverName := getEnvWithDefault("TEST_DATABASE_DRIVERNAME", "postgres")
+	sqlSettings := storetest.MakeSqlSettings(driverName)
+	return integrationtests.NewTestServerPluginMode(sqlSettings)
 }
 func TestConfigurationNullConfiguration(t *testing.T) {
 	boardsApp := &BoardsApp{}

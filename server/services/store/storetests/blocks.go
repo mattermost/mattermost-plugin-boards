@@ -18,10 +18,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	testUserID  = "user-id"
-	testTeamID  = "team-id"
-	testBoardID = "board-id"
+var (
+	testUserID  = utils.NewID(utils.IDTypeUser)
+	testTeamID  = utils.NewID(utils.IDTypeTeam)
+	testBoardID = utils.NewID(utils.IDTypeBoard)
 )
 
 func StoreTestBlocksStore(t *testing.T, setup func(t *testing.T) (store.Store, func())) {
@@ -96,6 +96,15 @@ func testInsertBlock(t *testing.T, store store.Store) {
 	userID := testUserID
 	boardID := testBoardID
 
+	// Create a board first since GetBlocksForBoard expects it to exist
+	board := &model.Board{
+		ID:     boardID,
+		TeamID: testTeamID,
+		Type:   model.BoardTypeOpen,
+	}
+	_, err := store.InsertBoard(board, userID)
+	require.NoError(t, err)
+
 	blocks, errBlocks := store.GetBlocksForBoard(boardID)
 	require.NoError(t, errBlocks)
 	initialCount := len(blocks)
@@ -107,60 +116,60 @@ func testInsertBlock(t *testing.T, store store.Store) {
 			ModifiedBy: userID,
 		}
 
-		err := store.InsertBlock(block, "user-id-1")
-		require.NoError(t, err)
+		err2 := store.InsertBlock(block, "user-id-1")
+		require.NoError(t, err2)
 
-		blocks, err := store.GetBlocksForBoard(boardID)
-		require.NoError(t, err)
-		require.Len(t, blocks, initialCount+1)
+		blocks2, err3 := store.GetBlocksForBoard(boardID)
+		require.NoError(t, err3)
+		require.Len(t, blocks2, initialCount+1)
 	})
 
 	t.Run("invalid rootid", func(t *testing.T) {
 		block := &model.Block{
-			ID:         "id-test",
+			ID:         utils.NewID(utils.IDTypeBlock),
 			BoardID:    "",
 			ModifiedBy: userID,
 		}
 
-		err := store.InsertBlock(block, "user-id-1")
-		require.Error(t, err)
+		err2 := store.InsertBlock(block, userID)
+		require.Error(t, err2)
 
-		blocks, err := store.GetBlocksForBoard(boardID)
-		require.NoError(t, err)
-		require.Len(t, blocks, initialCount+1)
+		blocks2, err3 := store.GetBlocksForBoard(boardID)
+		require.NoError(t, err3)
+		require.Len(t, blocks2, initialCount+1)
 	})
 
 	t.Run("invalid fields data", func(t *testing.T) {
 		block := &model.Block{
-			ID:         "id-test",
-			BoardID:    "id-test",
+			ID:         utils.NewID(utils.IDTypeBlock),
+			BoardID:    boardID,
 			ModifiedBy: userID,
 			Fields:     map[string]interface{}{"no-serialiable-value": t.Run},
 		}
 
-		err := store.InsertBlock(block, "user-id-1")
-		require.Error(t, err)
+		err2 := store.InsertBlock(block, userID)
+		require.Error(t, err2)
 
-		blocks, err := store.GetBlocksForBoard(boardID)
-		require.NoError(t, err)
-		require.Len(t, blocks, initialCount+1)
+		blocks2, err3 := store.GetBlocksForBoard(boardID)
+		require.NoError(t, err3)
+		require.Len(t, blocks2, initialCount+1)
 	})
 
 	t.Run("block with title too large", func(t *testing.T) {
 		block := &model.Block{
-			ID:         "id-test",
+			ID:         utils.NewID(utils.IDTypeBlock),
 			BoardID:    boardID,
 			ModifiedBy: userID,
 			Title:      strings.Repeat("A", model.BlockTitleMaxRunes+1),
 		}
 
-		err := store.InsertBlock(block, "user-id-1")
-		require.ErrorIs(t, err, model.ErrBlockTitleSizeLimitExceeded)
+		err2 := store.InsertBlock(block, userID)
+		require.ErrorIs(t, err2, model.ErrBlockTitleSizeLimitExceeded)
 	})
 
 	t.Run("block with aggregated fields size too large", func(t *testing.T) {
 		block := &model.Block{
-			ID:         "id-test",
+			ID:         utils.NewID(utils.IDTypeBlock),
 			BoardID:    boardID,
 			ModifiedBy: userID,
 			Fields: map[string]any{
@@ -171,33 +180,49 @@ func testInsertBlock(t *testing.T, store store.Store) {
 			},
 		}
 
-		err := store.InsertBlock(block, "user-id-2")
-		require.ErrorIs(t, err, model.ErrBlockFieldsSizeLimitExceeded)
+		err2 := store.InsertBlock(block, userID)
+		require.ErrorIs(t, err2, model.ErrBlockFieldsSizeLimitExceeded)
 	})
 
 	t.Run("insert new block", func(t *testing.T) {
+		testUserID2 := utils.NewID(utils.IDTypeUser)
 		block := &model.Block{
 			BoardID: testBoardID,
 		}
 
-		err := store.InsertBlock(block, "user-id-2")
-		require.NoError(t, err)
-		require.Equal(t, "user-id-2", block.CreatedBy)
+		err2 := store.InsertBlock(block, testUserID2)
+		require.NoError(t, err2)
+		require.Equal(t, testUserID2, block.CreatedBy)
 	})
 
 	t.Run("update existing block", func(t *testing.T) {
+		testBoardID1 := utils.NewID(utils.IDTypeBoard)
+		testUserID2 := utils.NewID(utils.IDTypeUser)
+		testUserID3 := utils.NewID(utils.IDTypeUser)
+		testUserID4 := utils.NewID(utils.IDTypeUser)
+		testBlockID2 := utils.NewID(utils.IDTypeBlock)
+
+		// Create a board first
+		board := &model.Board{
+			ID:     testBoardID1,
+			TeamID: testTeamID,
+			Type:   model.BoardTypeOpen,
+		}
+		_, err2 := store.InsertBoard(board, testUserID2)
+		require.NoError(t, err2)
+
 		block := &model.Block{
-			ID:      "id-2",
-			BoardID: "board-id-1",
+			ID:      testBlockID2,
+			BoardID: testBoardID1,
 			Title:   "Old Title",
 		}
 
 		// inserting
-		err := store.InsertBlock(block, "user-id-2")
+		err = store.InsertBlock(block, testUserID2)
 		require.NoError(t, err)
 
 		// created by populated from user id for new blocks
-		require.Equal(t, "user-id-2", block.CreatedBy)
+		require.Equal(t, testUserID2, block.CreatedBy)
 
 		// hack to avoid multiple, quick updates to a card
 		// violating block_history composite primary key constraint
@@ -205,32 +230,45 @@ func testInsertBlock(t *testing.T, store store.Store) {
 
 		// updating
 		newBlock := &model.Block{
-			ID:        "id-2",
-			BoardID:   "board-id-1",
-			CreatedBy: "user-id-3",
+			ID:        testBlockID2,
+			BoardID:   testBoardID1,
+			CreatedBy: testUserID3,
 			Title:     "New Title",
 		}
-		err = store.InsertBlock(newBlock, "user-id-4")
+		err = store.InsertBlock(newBlock, testUserID4)
 		require.NoError(t, err)
 		// created by is not altered for existing blocks
-		require.Equal(t, "user-id-3", newBlock.CreatedBy)
+		require.Equal(t, testUserID3, newBlock.CreatedBy)
 		require.Equal(t, "New Title", newBlock.Title)
 	})
 
 	t.Run("update existing block with title too large", func(t *testing.T) {
+		testBoardID1 := utils.NewID(utils.IDTypeBoard)
+		testUserID3 := utils.NewID(utils.IDTypeUser)
+		testBlockID3 := utils.NewID(utils.IDTypeBlock)
+
+		// Create a board first
+		board := &model.Board{
+			ID:     testBoardID1,
+			TeamID: testTeamID,
+			Type:   model.BoardTypeOpen,
+		}
+		_, err2 := store.InsertBoard(board, testUserID3)
+		require.NoError(t, err2)
+
 		block := &model.Block{
-			ID:        "id-3",
-			BoardID:   "board-id-1",
-			CreatedBy: "user-id-3",
+			ID:        testBlockID3,
+			BoardID:   testBoardID1,
+			CreatedBy: testUserID3,
 			Title:     "New Title",
 		}
 
 		// inserting
-		err := store.InsertBlock(block, "user-id-3")
+		err = store.InsertBlock(block, testUserID3)
 		require.NoError(t, err)
 
 		// created by populated from user id for new blocks
-		require.Equal(t, "user-id-3", block.CreatedBy)
+		require.Equal(t, testUserID3, block.CreatedBy)
 
 		// hack to avoid multiple, quick updates to a card
 		// violating block_history composite primary key constraint
@@ -238,29 +276,42 @@ func testInsertBlock(t *testing.T, store store.Store) {
 
 		// updating
 		newBlock := &model.Block{
-			ID:        "id-3",
-			BoardID:   "board-id-1",
-			CreatedBy: "user-id-3",
+			ID:        testBlockID3,
+			BoardID:   testBoardID1,
+			CreatedBy: testUserID3,
 			Title:     strings.Repeat("A", model.BlockTitleMaxRunes+1),
 		}
-		err = store.InsertBlock(newBlock, "user-id-3")
+		err = store.InsertBlock(newBlock, testUserID3)
 		require.ErrorIs(t, err, model.ErrBlockTitleSizeLimitExceeded)
 	})
 
 	t.Run("update existing block with aggregated fields size too large", func(t *testing.T) {
+		testBoardID1 := utils.NewID(utils.IDTypeBoard)
+		testUserID3 := utils.NewID(utils.IDTypeUser)
+		testBlockID3 := utils.NewID(utils.IDTypeBlock)
+
+		// Create a board first
+		board := &model.Board{
+			ID:     testBoardID1,
+			TeamID: testTeamID,
+			Type:   model.BoardTypeOpen,
+		}
+		_, err2 := store.InsertBoard(board, testUserID3)
+		require.NoError(t, err2)
+
 		block := &model.Block{
-			ID:        "id-3",
-			BoardID:   "board-id-1",
-			CreatedBy: "user-id-3",
+			ID:        testBlockID3,
+			BoardID:   testBoardID1,
+			CreatedBy: testUserID3,
 			Title:     "New Title",
 		}
 
 		// inserting
-		err := store.InsertBlock(block, "user-id-3")
+		err = store.InsertBlock(block, testUserID3)
 		require.NoError(t, err)
 
 		// created by populated from user id for new blocks
-		require.Equal(t, "user-id-3", block.CreatedBy)
+		require.Equal(t, testUserID3, block.CreatedBy)
 
 		// hack to avoid multiple, quick updates to a card
 		// violating block_history composite primary key constraint
@@ -268,9 +319,9 @@ func testInsertBlock(t *testing.T, store store.Store) {
 
 		// updating
 		newBlock := &model.Block{
-			ID:        "id-3",
-			BoardID:   "board-id-1",
-			CreatedBy: "user-id-3",
+			ID:        testBlockID3,
+			BoardID:   testBoardID1,
+			CreatedBy: testUserID3,
 			Fields: map[string]any{
 				"one":   strings.Repeat("1", model.BlockFieldsMaxRunes/4),
 				"two":   strings.Repeat("2", model.BlockFieldsMaxRunes/4),
@@ -278,7 +329,7 @@ func testInsertBlock(t *testing.T, store store.Store) {
 				"four":  strings.Repeat("4", model.BlockFieldsMaxRunes/4),
 			},
 		}
-		err = store.InsertBlock(newBlock, "user-id-3")
+		err = store.InsertBlock(newBlock, testUserID3)
 		require.ErrorIs(t, err, model.ErrBlockFieldsSizeLimitExceeded)
 	})
 
@@ -289,27 +340,42 @@ func testInsertBlock(t *testing.T, store store.Store) {
 	assert.NoError(t, err)
 
 	t.Run("data tamper attempt", func(t *testing.T) {
+		testBoardID1 := utils.NewID(utils.IDTypeBoard)
+		testUserID1 := utils.NewID(utils.IDTypeUser)
+		testUserID5 := utils.NewID(utils.IDTypeUser)
+		testUserID6 := utils.NewID(utils.IDTypeUser)
+		testBlockID10 := utils.NewID(utils.IDTypeBlock)
+
+		// Create a board first
+		board := &model.Board{
+			ID:     testBoardID1,
+			TeamID: testTeamID,
+			Type:   model.BoardTypeOpen,
+		}
+		_, err := store.InsertBoard(board, testUserID1)
+		require.NoError(t, err)
+
 		block := &model.Block{
-			ID:         "id-10",
-			BoardID:    "board-id-1",
+			ID:         testBlockID10,
+			BoardID:    testBoardID1,
 			Title:      "Old Title",
 			CreateAt:   utils.GetMillisForTime(createdAt),
 			UpdateAt:   utils.GetMillisForTime(updateAt),
-			CreatedBy:  "user-id-5",
-			ModifiedBy: "user-id-6",
+			CreatedBy:  testUserID5,
+			ModifiedBy: testUserID6,
 		}
 
 		// inserting
-		err := store.InsertBlock(block, "user-id-1")
+		err = store.InsertBlock(block, testUserID1)
 		require.NoError(t, err)
 		expectedTime := time.Now()
 
-		retrievedBlock, err := store.GetBlock("id-10")
+		retrievedBlock, err := store.GetBlock(testBlockID10)
 		assert.NoError(t, err)
 		assert.NotNil(t, retrievedBlock)
-		assert.Equal(t, "board-id-1", retrievedBlock.BoardID)
-		assert.Equal(t, "user-id-1", retrievedBlock.CreatedBy)
-		assert.Equal(t, "user-id-1", retrievedBlock.ModifiedBy)
+		assert.Equal(t, testBoardID1, retrievedBlock.BoardID)
+		assert.Equal(t, testUserID1, retrievedBlock.CreatedBy)
+		assert.Equal(t, testUserID1, retrievedBlock.ModifiedBy)
 		assert.WithinDurationf(t, expectedTime, utils.GetTimeForMillis(retrievedBlock.CreateAt), 1*time.Second, "create time should be current time")
 		assert.WithinDurationf(t, expectedTime, utils.GetTimeForMillis(retrievedBlock.UpdateAt), 1*time.Second, "update time should be current time")
 	})
@@ -317,20 +383,30 @@ func testInsertBlock(t *testing.T, store store.Store) {
 
 func testInsertBlocks(t *testing.T, store store.Store) {
 	userID := testUserID
+	testBlockID := utils.NewID(utils.IDTypeBlock)
 
-	blocks, errBlocks := store.GetBlocksForBoard("id-test")
+	// Create a board first
+	board := &model.Board{
+		ID:     testBoardID,
+		TeamID: testTeamID,
+		Type:   model.BoardTypeOpen,
+	}
+	_, err := store.InsertBoard(board, userID)
+	require.NoError(t, err)
+
+	blocks, errBlocks := store.GetBlocksForBoard(testBoardID)
 	require.NoError(t, errBlocks)
 	initialCount := len(blocks)
 
 	t.Run("invalid block", func(t *testing.T) {
 		validBlock := &model.Block{
-			ID:         "id-test",
-			BoardID:    "id-test",
+			ID:         utils.NewID(utils.IDTypeBlock),
+			BoardID:    testBoardID,
 			ModifiedBy: userID,
 		}
 
 		invalidBlock := &model.Block{
-			ID:         "id-test",
+			ID:         testBlockID,
 			BoardID:    "",
 			ModifiedBy: userID,
 		}
@@ -338,10 +414,10 @@ func testInsertBlocks(t *testing.T, store store.Store) {
 		newBlocks := []*model.Block{validBlock, invalidBlock}
 
 		time.Sleep(1 * time.Millisecond)
-		err := store.InsertBlocks(newBlocks, "user-id-1")
+		err := store.InsertBlocks(newBlocks, userID)
 		require.Error(t, err)
 
-		blocks, err := store.GetBlocksForBoard("id-test")
+		blocks, err := store.GetBlocksForBoard(testBoardID)
 		require.NoError(t, err)
 		// no blocks should have been inserted
 		require.Len(t, blocks, initialCount)
@@ -350,17 +426,29 @@ func testInsertBlocks(t *testing.T, store store.Store) {
 
 func testPatchBlock(t *testing.T, store store.Store) {
 	userID := testUserID
-	boardID := "board-id-1"
+	testUserID1 := utils.NewID(utils.IDTypeUser)
+	testUserID2 := utils.NewID(utils.IDTypeUser)
+	boardID := utils.NewID(utils.IDTypeBoard)
+	testBlockID := utils.NewID(utils.IDTypeBlock)
+
+	// Create a board first
+	board := &model.Board{
+		ID:     boardID,
+		TeamID: testTeamID,
+		Type:   model.BoardTypeOpen,
+	}
+	_, err := store.InsertBoard(board, userID)
+	require.NoError(t, err)
 
 	block := &model.Block{
-		ID:         "id-test",
+		ID:         testBlockID,
 		BoardID:    boardID,
 		Title:      "oldTitle",
 		ModifiedBy: userID,
 		Fields:     map[string]interface{}{"test": "test value", "test2": "test value 2"},
 	}
 
-	err := store.InsertBlock(block, "user-id-1")
+	err = store.InsertBlock(block, testUserID1)
 	require.NoError(t, err)
 
 	blocks, errBlocks := store.GetBlocksForBoard(boardID)
@@ -368,7 +456,8 @@ func testPatchBlock(t *testing.T, store store.Store) {
 	initialCount := len(blocks)
 
 	t.Run("not existing block id", func(t *testing.T) {
-		err := store.PatchBlock("invalid-block-id", &model.BlockPatch{}, "user-id-1")
+		invalidBlockID := utils.NewID(utils.IDTypeBlock)
+		err := store.PatchBlock(invalidBlockID, &model.BlockPatch{}, testUserID1)
 		var nf *model.ErrNotFound
 		require.ErrorAs(t, err, &nf)
 		require.True(t, model.IsErrNotFound(err))
@@ -383,7 +472,7 @@ func testPatchBlock(t *testing.T, store store.Store) {
 			UpdatedFields: map[string]interface{}{"no-serialiable-value": t.Run},
 		}
 
-		err := store.PatchBlock("id-test", blockPatch, "user-id-1")
+		err := store.PatchBlock(testBlockID, blockPatch, testUserID1)
 		require.Error(t, err)
 
 		blocks, err := store.GetBlocksForBoard(boardID)
@@ -401,14 +490,14 @@ func testPatchBlock(t *testing.T, store store.Store) {
 		time.Sleep(1 * time.Millisecond)
 
 		// inserting
-		err := store.PatchBlock("id-test", &blockPatch, "user-id-2")
+		err := store.PatchBlock(testBlockID, &blockPatch, testUserID2)
 		require.NoError(t, err)
 
-		retrievedBlock, err := store.GetBlock("id-test")
+		retrievedBlock, err := store.GetBlock(testBlockID)
 		require.NoError(t, err)
 
 		// created by populated from user id for new blocks
-		require.Equal(t, "user-id-2", retrievedBlock.ModifiedBy)
+		require.Equal(t, testUserID2, retrievedBlock.ModifiedBy)
 		require.Equal(t, "New title", retrievedBlock.Title)
 	})
 
@@ -421,14 +510,14 @@ func testPatchBlock(t *testing.T, store store.Store) {
 		time.Sleep(1 * time.Millisecond)
 
 		// inserting
-		err := store.PatchBlock("id-test", blockPatch, "user-id-2")
+		err := store.PatchBlock(testBlockID, blockPatch, testUserID2)
 		require.NoError(t, err)
 
-		retrievedBlock, err := store.GetBlock("id-test")
+		retrievedBlock, err := store.GetBlock(testBlockID)
 		require.NoError(t, err)
 
 		// created by populated from user id for new blocks
-		require.Equal(t, "user-id-2", retrievedBlock.ModifiedBy)
+		require.Equal(t, testUserID2, retrievedBlock.ModifiedBy)
 		require.Equal(t, "new test value", retrievedBlock.Fields["test"])
 		require.Equal(t, "test value 2", retrievedBlock.Fields["test2"])
 		require.Equal(t, "new value", retrievedBlock.Fields["test3"])
@@ -443,14 +532,14 @@ func testPatchBlock(t *testing.T, store store.Store) {
 		time.Sleep(1 * time.Millisecond)
 
 		// inserting
-		err := store.PatchBlock("id-test", blockPatch, "user-id-2")
+		err := store.PatchBlock(testBlockID, blockPatch, testUserID2)
 		require.NoError(t, err)
 
-		retrievedBlock, err := store.GetBlock("id-test")
+		retrievedBlock, err := store.GetBlock(testBlockID)
 		require.NoError(t, err)
 
 		// created by populated from user id for new blocks
-		require.Equal(t, "user-id-2", retrievedBlock.ModifiedBy)
+		require.Equal(t, testUserID2, retrievedBlock.ModifiedBy)
 		require.Equal(t, nil, retrievedBlock.Fields["test"])
 		require.Equal(t, "test value 2", retrievedBlock.Fields["test2"])
 		require.Equal(t, nil, retrievedBlock.Fields["test3"])
@@ -458,20 +547,43 @@ func testPatchBlock(t *testing.T, store store.Store) {
 }
 
 func testPatchBlocks(t *testing.T, store store.Store) {
+	userID := testUserID
+	testBoardID1 := utils.NewID(utils.IDTypeBoard)
+	testBoardID2 := utils.NewID(utils.IDTypeBoard)
+	testBlockID1 := utils.NewID(utils.IDTypeBlock)
+	testBlockID2 := utils.NewID(utils.IDTypeBlock)
+
+	// Create boards first
+	board1 := &model.Board{
+		ID:     testBoardID1,
+		TeamID: testTeamID,
+		Type:   model.BoardTypeOpen,
+	}
+	_, err := store.InsertBoard(board1, userID)
+	require.NoError(t, err)
+
+	board2 := &model.Board{
+		ID:     testBoardID2,
+		TeamID: testTeamID,
+		Type:   model.BoardTypeOpen,
+	}
+	_, err = store.InsertBoard(board2, userID)
+	require.NoError(t, err)
+
 	block := &model.Block{
-		ID:      "id-test",
-		BoardID: "id-test",
+		ID:      testBlockID1,
+		BoardID: testBoardID1,
 		Title:   "oldTitle",
 	}
 
 	block2 := &model.Block{
-		ID:      "id-test2",
-		BoardID: "id-test2",
+		ID:      testBlockID2,
+		BoardID: testBoardID2,
 		Title:   "oldTitle2",
 	}
 
 	insertBlocks := []*model.Block{block, block2}
-	err := store.InsertBlocks(insertBlocks, "user-id-1")
+	err = store.InsertBlocks(insertBlocks, userID)
 	require.NoError(t, err)
 
 	t.Run("successful updated existing blocks", func(t *testing.T) {
@@ -484,18 +596,18 @@ func testPatchBlocks(t *testing.T, store store.Store) {
 			Title: &title,
 		}
 
-		blockIds := []string{"id-test", "id-test2"}
+		blockIds := []string{testBlockID1, testBlockID2}
 		blockPatches := []model.BlockPatch{blockPatch, blockPatch2}
 
 		time.Sleep(1 * time.Millisecond)
-		err := store.PatchBlocks(&model.BlockPatchBatch{BlockIDs: blockIds, BlockPatches: blockPatches}, "user-id-1")
+		err := store.PatchBlocks(&model.BlockPatchBatch{BlockIDs: blockIds, BlockPatches: blockPatches}, userID)
 		require.NoError(t, err)
 
-		retrievedBlock, err := store.GetBlock("id-test")
+		retrievedBlock, err := store.GetBlock(testBlockID1)
 		require.NoError(t, err)
 		require.Equal(t, title, retrievedBlock.Title)
 
-		retrievedBlock2, err := store.GetBlock("id-test2")
+		retrievedBlock2, err := store.GetBlock(testBlockID2)
 		require.NoError(t, err)
 		require.Equal(t, title, retrievedBlock2.Title)
 	})
@@ -514,15 +626,16 @@ func testPatchBlocks(t *testing.T, store store.Store) {
 			Title: &title,
 		}
 
-		blockIds := []string{"id-test", "invalid id"}
+		invalidBlockID := utils.NewID(utils.IDTypeBlock)
+		blockIds := []string{testBlockID1, invalidBlockID}
 		blockPatches := []model.BlockPatch{blockPatch, blockPatch2}
 
 		time.Sleep(1 * time.Millisecond)
-		err := store.PatchBlocks(&model.BlockPatchBatch{BlockIDs: blockIds, BlockPatches: blockPatches}, "user-id-1")
+		err := store.PatchBlocks(&model.BlockPatchBatch{BlockIDs: blockIds, BlockPatches: blockPatches}, userID)
 		var nf *model.ErrNotFound
 		require.ErrorAs(t, err, &nf)
 
-		retrievedBlock, err := store.GetBlock("id-test")
+		retrievedBlock, err := store.GetBlock(testBlockID1)
 		require.NoError(t, err)
 		require.NotEqual(t, title, retrievedBlock.Title)
 	})
@@ -895,22 +1008,36 @@ func testGetBlocks(t *testing.T, store store.Store) {
 
 func testGetBlock(t *testing.T, store store.Store) {
 	t.Run("get a block", func(t *testing.T) {
+		// Generate valid IDs
+		blockID := utils.NewID(utils.IDTypeBlock)
+		boardID := utils.NewID(utils.IDTypeBoard)
+		userID := utils.NewID(utils.IDTypeUser)
+
+		// Create a board first since blocks need a valid board
+		board := &model.Board{
+			ID:     boardID,
+			TeamID: testTeamID,
+			Type:   model.BoardTypeOpen,
+		}
+		_, err := store.InsertBoard(board, userID)
+		require.NoError(t, err)
+
 		block := &model.Block{
-			ID:         "block-id-10",
-			BoardID:    "board-id-1",
-			ModifiedBy: "user-id-1",
+			ID:         blockID,
+			BoardID:    boardID,
+			ModifiedBy: userID,
 		}
 
-		err := store.InsertBlock(block, "user-id-1")
+		err = store.InsertBlock(block, userID)
 		require.NoError(t, err)
 
-		fetchedBlock, err := store.GetBlock("block-id-10")
+		fetchedBlock, err := store.GetBlock(blockID)
 		require.NoError(t, err)
 		require.NotNil(t, fetchedBlock)
-		require.Equal(t, "block-id-10", fetchedBlock.ID)
-		require.Equal(t, "board-id-1", fetchedBlock.BoardID)
-		require.Equal(t, "user-id-1", fetchedBlock.CreatedBy)
-		require.Equal(t, "user-id-1", fetchedBlock.ModifiedBy)
+		require.Equal(t, blockID, fetchedBlock.ID)
+		require.Equal(t, boardID, fetchedBlock.BoardID)
+		require.Equal(t, userID, fetchedBlock.CreatedBy)
+		require.Equal(t, userID, fetchedBlock.ModifiedBy)
 		assert.WithinDurationf(t, time.Now(), utils.GetTimeForMillis(fetchedBlock.CreateAt), 1*time.Second, "create time should be current time")
 		assert.WithinDurationf(t, time.Now(), utils.GetTimeForMillis(fetchedBlock.UpdateAt), 1*time.Second, "update time should be current time")
 	})

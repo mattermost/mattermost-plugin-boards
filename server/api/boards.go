@@ -57,6 +57,11 @@ func (a *API) handleGetBoards(w http.ResponseWriter, r *http.Request) {
 	teamID := mux.Vars(r)["teamID"]
 	userID := getUserID(r)
 
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to team boards"))
+		return
+	}
+
 	if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionViewTeam) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to team"))
 		return
@@ -125,6 +130,11 @@ func (a *API) handleCreateBoard(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	userID := getUserID(r)
+
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to create board"))
+		return
+	}
 
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -257,6 +267,10 @@ func (a *API) handleGetBoard(w http.ResponseWriter, r *http.Request) {
 				a.errorResponse(w, r, err)
 				return
 			}
+			if board.IsTemplate && isGuest {
+				a.errorResponse(w, r, model.NewErrPermission("guest are not allowed to get board templates"))
+				return
+			}
 			if isGuest {
 				if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard) {
 					a.errorResponse(w, r, model.NewErrPermission("access denied to board"))
@@ -325,12 +339,17 @@ func (a *API) handlePatchBoard(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	boardID := mux.Vars(r)["boardID"]
+	userID := getUserID(r)
+
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to patch board"))
+		return
+	}
+
 	if _, err := a.app.GetBoard(boardID); err != nil {
 		a.errorResponse(w, r, err)
 		return
 	}
-
-	userID := getUserID(r)
 
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -424,6 +443,11 @@ func (a *API) handleDeleteBoard(w http.ResponseWriter, r *http.Request) {
 
 	boardID := mux.Vars(r)["boardID"]
 	userID := getUserID(r)
+
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to delete board"))
+		return
+	}
 
 	// Check if board exists
 	if _, err := a.app.GetBoard(boardID); err != nil {
@@ -582,12 +606,14 @@ func (a *API) handleUndeleteBoard(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
-	userID := session.UserID
-
 	vars := mux.Vars(r)
 	boardID := vars["boardID"]
+	userID := getUserID(r)
+
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to undelete board"))
+		return
+	}
 
 	auditRec := a.makeAuditRecord(r, "undeleteBoard", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)
@@ -642,6 +668,11 @@ func (a *API) handleGetBoardMetadata(w http.ResponseWriter, r *http.Request) {
 
 	boardID := mux.Vars(r)["boardID"]
 	userID := getUserID(r)
+
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to board metadata"))
+		return
+	}
 
 	board, boardMetadata, err := a.app.GetBoardMetadata(boardID)
 	if err != nil {

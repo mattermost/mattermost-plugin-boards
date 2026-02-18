@@ -10,14 +10,19 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetBlocks(t *testing.T) {
-	th := SetupTestHelperWithToken(t).Start()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
-	board := th.CreateBoard("team-id", model.BoardTypeOpen)
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
+
+	teamID := mmModel.NewId()
+	board := th.CreateBoard(teamID, model.BoardTypeOpen)
 
 	initialID1 := utils.NewID(utils.IDTypeBlock)
 	initialID2 := utils.NewID(utils.IDTypeBlock)
@@ -56,10 +61,15 @@ func TestGetBlocks(t *testing.T) {
 }
 
 func TestPostBlock(t *testing.T) {
-	th := SetupTestHelperWithToken(t).Start()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
-	board := th.CreateBoard("team-id", model.BoardTypeOpen)
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
+
+	// Use a valid Mattermost team ID (26 characters)
+	teamID := mmModel.NewId()
+	board := th.CreateBoard(teamID, model.BoardTypeOpen)
 
 	var blockID1 string
 	var blockID2 string
@@ -165,12 +175,17 @@ func TestPostBlock(t *testing.T) {
 }
 
 func TestPatchBlock(t *testing.T) {
-	th := SetupTestHelperWithToken(t).Start()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
+
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
 
 	initialID := utils.NewID(utils.IDTypeBlock)
 
-	board := th.CreateBoard("team-id", model.BoardTypeOpen)
+	// Use a valid Mattermost team ID (26 characters)
+	teamID := mmModel.NewId()
+	board := th.CreateBoard(teamID, model.BoardTypeOpen)
 	time.Sleep(10 * time.Millisecond)
 
 	block := &model.Block{
@@ -263,10 +278,15 @@ func TestPatchBlock(t *testing.T) {
 }
 
 func TestDeleteBlock(t *testing.T) {
-	th := SetupTestHelperWithToken(t).Start()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
-	board := th.CreateBoard("team-id", model.BoardTypeOpen)
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
+
+	// Use a valid Mattermost team ID (26 characters)
+	teamID := mmModel.NewId()
+	board := th.CreateBoard(teamID, model.BoardTypeOpen)
 	time.Sleep(10 * time.Millisecond)
 
 	var blockID string
@@ -314,10 +334,15 @@ func TestDeleteBlock(t *testing.T) {
 }
 
 func TestUndeleteBlock(t *testing.T) {
-	th := SetupTestHelper(t).InitBasic()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
-	board := th.CreateBoard("team-id", model.BoardTypeOpen)
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
+	th.Client2 = clients.Viewer
+
+	teamID := mmModel.NewId()
+	board := th.CreateBoard(teamID, model.BoardTypeOpen)
 
 	blocks, resp := th.Client.GetBlocksForBoard(board.ID)
 	require.NoError(t, resp.Error)

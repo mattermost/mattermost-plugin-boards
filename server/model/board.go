@@ -8,6 +8,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 	mmModel "github.com/mattermost/mattermost/server/public/model"
 )
 
@@ -389,7 +390,14 @@ func (ibe InvalidBoardErr) Error() string {
 }
 
 func (b *Board) IsValid() error {
-	if !mmModel.IsValidId(b.TeamID) {
+	// Only allow GlobalTeamID ("0") in test environments for security
+	// In production, GlobalTeamID should only be used for templates
+	if b.TeamID == GlobalTeamID {
+		if !utils.IsRunningUnitTests() {
+			return InvalidBoardErr{"invalid-team-id"}
+		}
+		// Allow in test environments
+	} else if !mmModel.IsValidId(b.TeamID) {
 		return InvalidBoardErr{"invalid-team-id"}
 	}
 

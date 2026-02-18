@@ -6,6 +6,7 @@ package app
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/notify"
@@ -37,7 +38,7 @@ func (a *App) GetBoardCount(includeDeleted bool) (int64, error) {
 
 func (a *App) GetBoardMetadata(boardID string) (*model.Board, *model.BoardMetadata, error) {
 	license := a.store.GetLicense()
-	if license == nil || !(*license.Features.Compliance) {
+	if license == nil || license.Features == nil || !(*license.Features.Compliance) {
 		return nil, nil, model.ErrInsufficientLicense
 	}
 
@@ -625,6 +626,10 @@ func (a *App) DeleteBoardMember(boardID, userID string) error {
 		return nil
 	}
 	if err != nil {
+		// If the error is "user not found", treat it as idempotent (member doesn't exist)
+		if strings.Contains(err.Error(), "user not found") {
+			return nil
+		}
 		return err
 	}
 

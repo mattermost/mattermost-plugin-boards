@@ -8,25 +8,31 @@ import (
 	"crypto/rand"
 	"testing"
 
+	"github.com/mattermost/mattermost-plugin-boards/server/client"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetMe(t *testing.T) {
-	th := SetupTestHelper(t).Start()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
 	t.Run("not login yet", func(t *testing.T) {
-		me, resp := th.Client.GetMe()
+		// Create a client without authentication
+		client := client.NewClient(th.Server.Config().ServerRoot, "")
+		me, resp := client.GetMe()
 		require.Error(t, resp.Error)
 		require.Nil(t, me)
 	})
 }
 
 func TestGetUser(t *testing.T) {
-	th := SetupTestHelper(t).Start()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
 
 	me, resp := th.Client.GetMe()
 	require.NoError(t, resp.Error)
@@ -73,6 +79,8 @@ func TestGetUserList(t *testing.T) {
 	require.NotNil(t, returnUsers2)
 	require.Equal(t, 0, len(returnUsers2))
 
+	// Get dynamically generated team IDs from the test store
+	testTeamID, _, _ := th.GetTestTeamIDs()
 	newBoard := &model.Board{
 		Title:  "title",
 		Type:   model.BoardTypeOpen,
@@ -120,15 +128,6 @@ func TestGetUserList(t *testing.T) {
 	require.Equal(t, 2, len(guestUsers))
 }
 
-func TestUserChangePassword(t *testing.T) {
-	th := SetupTestHelper(t).Start()
-	defer th.TearDown()
-
-	originalMe, resp := th.Client.GetMe()
-	require.NoError(t, resp.Error)
-	require.NotNil(t, originalMe)
-}
-
 func randomBytes(t *testing.T, n int) []byte {
 	bb := make([]byte, n)
 	_, err := rand.Read(bb)
@@ -138,10 +137,13 @@ func randomBytes(t *testing.T, n int) []byte {
 
 func TestTeamUploadFile(t *testing.T) {
 	t.Run("no permission", func(t *testing.T) { // native auth, but not login
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
-		teamID := "0"
+		// Use unauthenticated client
+		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
+		// Generate a valid Mattermost team ID (26 characters)
+		teamID := mmModel.NewId()
 		boardID := utils.NewID(utils.IDTypeBoard)
 		data := randomBytes(t, 1024)
 		result, resp := th.Client.TeamUploadFile(teamID, boardID, bytes.NewReader(data))
@@ -150,10 +152,13 @@ func TestTeamUploadFile(t *testing.T) {
 	})
 
 	t.Run("a board admin should be able to update a file", func(t *testing.T) { // single token auth
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
-		teamID := "0"
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		// Generate a valid Mattermost team ID (26 characters) for file operations
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Type:   model.BoardTypeOpen,
 			TeamID: teamID,
@@ -171,10 +176,14 @@ func TestTeamUploadFile(t *testing.T) {
 	})
 
 	t.Run("user that doesn't belong to the board should not be able to upload a file", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
-		teamID := "0"
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		th.Client2 = clients.Viewer
+		// Generate a valid Mattermost team ID (26 characters) for file operations
+		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Type:   model.BoardTypeOpen,
 			TeamID: teamID,

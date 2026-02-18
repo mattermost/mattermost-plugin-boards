@@ -59,24 +59,37 @@ func (a *API) handleArchiveExportBoard(w http.ResponseWriter, r *http.Request) {
 	boardID := vars["boardID"]
 	userID := getUserID(r)
 
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to archive export"))
+		return
+	}
+
 	// check user has permission to board
 	if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard) {
 		// if this user has `manage_system` permission and there is a license with the compliance
 		// feature enabled, then we will allow the export.
 		license := a.app.GetLicense()
-		if !a.permissions.HasPermissionTo(userID, mmModel.PermissionManageSystem) || license == nil || !(*license.Features.Compliance) {
+		if !a.permissions.HasPermissionTo(userID, mmModel.PermissionManageSystem) || license == nil || license.Features == nil || !(*license.Features.Compliance) {
 			a.errorResponse(w, r, model.NewErrPermission("access denied to board"))
 			return
 		}
 	}
 
 	auditRec := a.makeAuditRecord(r, "archiveExportBoard", audit.Fail)
-	defer a.audit.LogRecord(audit.LevelRead, auditRec)
+	defer func() {
+		if a.audit != nil {
+			a.audit.LogRecord(audit.LevelRead, auditRec)
+		}
+	}()
 	auditRec.AddMeta("BoardID", boardID)
 
 	board, err := a.app.GetBoard(boardID)
 	if err != nil {
 		a.errorResponse(w, r, err)
+		return
+	}
+	if board == nil {
+		a.errorResponse(w, r, model.NewErrNotFound("board"))
 		return
 	}
 
@@ -92,6 +105,7 @@ func (a *API) handleArchiveExportBoard(w http.ResponseWriter, r *http.Request) {
 
 	if err := a.app.ExportArchive(w, opts); err != nil {
 		a.errorResponse(w, r, err)
+		return
 	}
 
 	auditRec.Success()
@@ -128,12 +142,14 @@ func (a *API) handleArchiveImport(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 
-	ctx := r.Context()
-	session, _ := ctx.Value(sessionContextKey).(*model.Session)
-	userID := session.UserID
-
 	vars := mux.Vars(r)
 	teamID := vars["teamID"]
+
+	userID := getUserID(r)
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to archive import"))
+		return
+	}
 
 	if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionViewTeam) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to create board"))
@@ -207,5 +223,11 @@ func (a *API) handleArchiveExportTeam(w http.ResponseWriter, r *http.Request) {
 	//     description: internal error
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
+	userID := getUserID(r)
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to archive export"))
+		return
+	}
+
 	a.errorResponse(w, r, model.NewErrNotImplemented("not permitted in plugin mode"))
 }

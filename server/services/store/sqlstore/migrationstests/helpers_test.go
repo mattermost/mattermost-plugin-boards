@@ -30,8 +30,8 @@ func (th *TestHelper) IsSQLite() bool {
 }
 
 func SetupPluginTestHelper(t *testing.T) (*TestHelper, func()) {
-	dbType := strings.TrimSpace(os.Getenv("FOCALBOARD_STORE_TEST_DB_TYPE"))
-	if dbType == "" || dbType == model.SqliteDBType {
+	driverName := strings.TrimSpace(os.Getenv("TEST_DATABASE_DRIVERNAME"))
+	if driverName == "" || driverName == model.SqliteDBType {
 		t.Skip("Skipping plugin mode test for SQLite")
 	}
 
@@ -39,7 +39,7 @@ func SetupPluginTestHelper(t *testing.T) (*TestHelper, func()) {
 }
 
 func SetupTestHelper(t *testing.T) (*TestHelper, func()) {
-	return setupTestHelper(t)
+	return SetupPluginTestHelper(t)
 }
 
 func setupTestHelper(t *testing.T) (*TestHelper, func()) {

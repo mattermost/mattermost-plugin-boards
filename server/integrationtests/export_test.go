@@ -9,17 +9,22 @@ import (
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/require"
 )
 
 func TestExportBoard(t *testing.T) {
 	t.Run("export single board", func(t *testing.T) {
-		th := SetupTestHelper(t).InitBasic()
+		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
 
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+
+		teamID := mmModel.NewId()
 		board := &model.Board{
 			ID:        utils.NewID(utils.IDTypeBoard),
-			TeamID:    "test-team",
+			TeamID:    teamID,
 			Title:     "Export Test Board",
 			CreatedBy: th.GetUser1().ID,
 			Type:      model.BoardTypeOpen,
