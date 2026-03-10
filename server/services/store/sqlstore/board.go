@@ -1016,16 +1016,16 @@ func (s *SQLStore) searchBoardsForUserInTeam(db sq.BaseRunner, teamID, term, use
 		})
 
 	if term != "" {
-		// break search query into space separated words
-		// and search for all words.
-		// This should later be upgraded to industrial-strength
-		// word tokenizer, that uses much more than space
-		// to break words.
-
+		// Search both title and card_prefix (OR logic) so users can find
+		// boards by their ticket code prefix (e.g. searching "PROJ" finds
+		// the board with card_prefix=PROJ).
 		conditions := sq.And{}
-
 		for _, word := range strings.Split(strings.TrimSpace(term), " ") {
-			conditions = append(conditions, sq.Like{"lower(b.title)": "%" + strings.ToLower(word) + "%"})
+			lowerWord := "%" + strings.ToLower(word) + "%"
+			conditions = append(conditions, sq.Or{
+				sq.Like{"lower(b.title)": lowerWord},
+				sq.Like{"lower(b.card_prefix)": lowerWord},
+			})
 		}
 
 		openBoardsQ = openBoardsQ.Where(conditions)
@@ -1126,15 +1126,23 @@ func (s *SQLStore) searchBoardsForUser(db sq.BaseRunner, term string, searchFiel
 			boardMembersQ = boardMembersQ.Where(where, whereTerm)
 			teamMembersQ = teamMembersQ.Where(where, whereTerm)
 			channelMembersQ = channelMembersQ.Where(where, whereTerm)
+		} else if searchField == model.BoardSearchFieldCardPrefix {
+			conditions := sq.Like{"lower(b.card_prefix)": "%" + strings.ToLower(term) + "%"}
+			boardMembersQ = boardMembersQ.Where(conditions)
+			teamMembersQ = teamMembersQ.Where(conditions)
+			channelMembersQ = channelMembersQ.Where(conditions)
 		} else { // model.BoardSearchFieldTitle
 			// break search query into space separated words
 			// and search for all words.
-			// This should later be upgraded to industrial-strength
-			// word tokenizer, that uses much more than space
-			// to break words.
+			// Also match card_prefix so users can find boards
+			// by typing a ticket code prefix.
 			conditions := sq.And{}
 			for _, word := range strings.Split(strings.TrimSpace(term), " ") {
-				conditions = append(conditions, sq.Like{"lower(b.title)": "%" + strings.ToLower(word) + "%"})
+				lowerWord := "%" + strings.ToLower(word) + "%"
+				conditions = append(conditions, sq.Or{
+					sq.Like{"lower(b.title)": lowerWord},
+					sq.Like{"lower(b.card_prefix)": lowerWord},
+				})
 			}
 
 			boardMembersQ = boardMembersQ.Where(conditions)

@@ -32,6 +32,7 @@ const (
 	BoardSearchFieldNone         BoardSearchField = ""
 	BoardSearchFieldTitle        BoardSearchField = "title"
 	BoardSearchFieldPropertyName BoardSearchField = "property_name"
+	BoardSearchFieldCardPrefix   BoardSearchField = "card_prefix"
 )
 
 // Board groups a set of blocks and its layout
@@ -467,6 +468,8 @@ func BoardSearchFieldFromString(field string) (BoardSearchField, error) {
 		return BoardSearchFieldTitle, nil
 	case string(BoardSearchFieldPropertyName):
 		return BoardSearchFieldPropertyName, nil
+	case string(BoardSearchFieldCardPrefix):
+		return BoardSearchFieldCardPrefix, nil
 	}
 	return BoardSearchFieldNone, ErrInvalidBoardSearchField
 }

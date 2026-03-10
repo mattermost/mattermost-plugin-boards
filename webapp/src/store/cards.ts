@@ -343,6 +343,14 @@ function searchFilterCards(cards: Card[], board: Board, searchTextRaw: string): 
             return true
         }
 
+        // Match against ticket code (e.g. "PROJ-42")
+        if (board.cardPrefix && card.fields.cardNumber) {
+            const ticketCode = `${board.cardPrefix}-${card.fields.cardNumber}`.toLowerCase()
+            if (ticketCode.includes(searchText)) {
+                return true
+            }
+        }
+
         for (const [propertyId, propertyValue] of Object.entries(card.fields.properties)) {
             // TODO: Refactor to a shared function that returns the display value of a property
             const propertyTemplate = board.cardProperties.find((o) => o.id === propertyId)
