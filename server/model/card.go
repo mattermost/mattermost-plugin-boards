@@ -4,14 +4,38 @@
 package model
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 	"github.com/rivo/uniseg"
 )
 
 var ErrBoardIDMismatch = errors.New("Board IDs do not match")
+var ErrInvalidTicketCode = errors.New("invalid ticket code format, expected PREFIX-NUMBER")
+
+// ParseTicketCode parses a ticket code like "PROJ-42" into its prefix ("PROJ") and number (42).
+func ParseTicketCode(ticketCode string) (string, int64, error) {
+	parts := strings.SplitN(ticketCode, "-", 2)
+	if len(parts) != 2 {
+		return "", 0, ErrInvalidTicketCode
+	}
+
+	prefix := strings.TrimSpace(parts[0])
+	if prefix == "" {
+		return "", 0, ErrInvalidTicketCode
+	}
+
+	number, err := strconv.ParseInt(strings.TrimSpace(parts[1]), 10, 64)
+	if err != nil || number <= 0 {
+		return "", 0, ErrInvalidTicketCode
+	}
+
+	return strings.ToUpper(prefix), number, nil
+}
 
 type ErrInvalidCard struct {
 	msg string
@@ -75,6 +99,14 @@ type Card struct {
 	// A map of property ids to property values (option ids, strings, array of option ids)
 	// required: false
 	Properties map[string]any `json:"properties"`
+
+	// The sequential card number within the board (auto-assigned)
+	// required: false
+	CardNumber int64 `json:"cardNumber"`
+
+	// The full ticket code combining board prefix and card number (e.g. "PROJ-42")
+	// required: false
+	TicketCode string `json:"ticketCode,omitempty"`
 
 	// The creation time in milliseconds since the current epoch
 	// required: false
@@ -203,6 +235,7 @@ func Card2Block(card *Card) *Block {
 	fields["icon"] = card.Icon
 	fields["isTemplate"] = card.IsTemplate
 	fields["properties"] = card.Properties
+	fields["cardNumber"] = card.CardNumber
 
 	return &Block{
 		ID:         card.ID,
@@ -230,6 +263,7 @@ func Block2Card(block *Block) (*Card, error) {
 	icon := ""
 	isTemplate := false
 	properties := make(map[string]any)
+	var cardNumber int64
 
 	if co, ok := block.Fields["contentOrder"]; ok {
 		switch arr := co.(type) {
@@ -274,6 +308,19 @@ func Block2Card(block *Block) (*Card, error) {
 		}
 	}
 
+	if cn, ok := block.Fields["cardNumber"]; ok {
+		switch v := cn.(type) {
+		case float64:
+			cardNumber = int64(v)
+		case int64:
+			cardNumber = v
+		case json.Number:
+			if n, err := v.Int64(); err == nil {
+				cardNumber = n
+			}
+		}
+	}
+
 	card := &Card{
 		ID:           block.ID,
 		BoardID:      block.BoardID,
@@ -284,6 +331,7 @@ func Block2Card(block *Block) (*Card, error) {
 		Icon:         icon,
 		IsTemplate:   isTemplate,
 		Properties:   properties,
+		CardNumber:   cardNumber,
 		CreateAt:     block.CreateAt,
 		UpdateAt:     block.UpdateAt,
 		DeleteAt:     block.DeleteAt,

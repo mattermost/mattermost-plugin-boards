@@ -97,6 +97,14 @@ type Board struct {
 	// required: false
 	CardProperties []map[string]interface{} `json:"cardProperties"`
 
+	// The short prefix used for ticket codes (e.g. "PROJ", "BUG")
+	// required: false
+	CardPrefix string `json:"cardPrefix"`
+
+	// The auto-incrementing counter for card ticket numbers
+	// required: false
+	CardCount int64 `json:"cardCount"`
+
 	// The creation time in miliseconds since the current epoch
 	// required: true
 	CreateAt int64 `json:"createAt"`
@@ -155,6 +163,10 @@ type BoardPatch struct {
 	// Indicates if the board shows the description on the interface
 	// required: false
 	ChannelID *string `json:"channelId"`
+
+	// The short prefix used for ticket codes (e.g. "PROJ", "BUG")
+	// required: false
+	CardPrefix *string `json:"cardPrefix"`
 
 	// The board updated properties
 	// required: false
@@ -297,6 +309,10 @@ func (p *BoardPatch) Patch(board *Board) *Board {
 		board.ChannelID = *p.ChannelID
 	}
 
+	if p.CardPrefix != nil {
+		board.CardPrefix = *p.CardPrefix
+	}
+
 	for key, property := range p.UpdatedProperties {
 		board.Properties[key] = property
 	}
@@ -375,6 +391,10 @@ func (p *BoardPatch) IsValid() error {
 
 	if p.ChannelID != nil && *p.ChannelID != "" && !mmModel.IsValidId(*p.ChannelID) {
 		return InvalidBoardErr{"invalid-channel-id"}
+	}
+
+	if p.CardPrefix != nil && len(*p.CardPrefix) > 10 {
+		return InvalidBoardErr{"invalid-card-prefix-too-long"}
 	}
 
 	return nil

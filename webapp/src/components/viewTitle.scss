@@ -55,4 +55,45 @@
     >.description>* {
         flex-grow: 1;
     }
+
+    .card-prefix-row {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        margin-top: 4px;
+        margin-bottom: 4px;
+        min-height: 28px;
+
+        .card-prefix-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(var(--center-channel-color-rgb), 0.56);
+            white-space: nowrap;
+
+            .Icon {
+                font-size: 14px;
+            }
+        }
+
+        .card-prefix-input {
+            font-size: 12px;
+            font-weight: 600;
+            font-family: monospace;
+            letter-spacing: 0.5px;
+            max-width: 100px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(var(--center-channel-color-rgb), 0.04);
+        }
+
+        .card-prefix-example {
+            font-size: 11px;
+            color: rgba(var(--center-channel-color-rgb), 0.4);
+            font-style: italic;
+        }
+    }
 }
