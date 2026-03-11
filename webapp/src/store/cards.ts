@@ -257,8 +257,16 @@ function sortCards(cards: Card[], lastCommentByCard: {[key: string]: CommentBloc
                     aValue = usersById[a.modifiedBy]?.username || ''
                     bValue = usersById[b.modifiedBy]?.username || ''
                 } else if (template.type === 'date') {
-                    aValue = (aValue === '') ? '' : JSON.parse(aValue as string).from
-                    bValue = (bValue === '') ? '' : JSON.parse(bValue as string).from
+                    try {
+                        aValue = (aValue === '') ? '' : JSON.parse(aValue as string).from
+                    } catch {
+                        aValue = ''
+                    }
+                    try {
+                        bValue = (bValue === '') ? '' : JSON.parse(bValue as string).from
+                    } catch {
+                        bValue = ''
+                    }
                 }
 
                 let result = 0
@@ -300,19 +308,29 @@ function sortCards(cards: Card[], lastCommentByCard: {[key: string]: CommentBloc
                     }
 
                     if (template.type === 'multiPerson') {
-                        aValue = Array.isArray(aValue) && aValue.length !== 0 && Object.keys(usersById).length > 0 ? aValue.map((id) => {
-                            if (usersById[id] !== undefined) {
-                                return usersById[id].username
-                            }
-                            return ''
-                        }).toString() : aValue
+                        if (Array.isArray(aValue) && aValue.length !== 0 && Object.keys(usersById).length > 0) {
+                            aValue = aValue.map((id) => {
+                                if (usersById[id] !== undefined) {
+                                    return usersById[id].username
+                                }
+                                return ''
+                            }).toString()
+                        } else if (Array.isArray(aValue)) {
+                            // When usersById is empty (e.g. during initial load before users are fetched),
+                            // convert array to string for localeCompare - avoid crash from array.localeCompare
+                            aValue = aValue.join(',')
+                        }
 
-                        bValue = Array.isArray(bValue) && bValue.length !== 0 && Object.keys(usersById).length > 0 ? bValue.map((id) => {
-                            if (usersById[id] !== undefined) {
-                                return usersById[id].username
-                            }
-                            return ''
-                        }).toString() : bValue
+                        if (Array.isArray(bValue) && bValue.length !== 0 && Object.keys(usersById).length > 0) {
+                            bValue = bValue.map((id) => {
+                                if (usersById[id] !== undefined) {
+                                    return usersById[id].username
+                                }
+                                return ''
+                            }).toString()
+                        } else if (Array.isArray(bValue)) {
+                            bValue = bValue.join(',')
+                        }
                     }
 
                     result = (aValue as string).localeCompare(bValue as string)
