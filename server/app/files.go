@@ -25,6 +25,15 @@ var errEmptyFilename = errors.New("IsFileArchived: empty filename not allowed")
 var ErrFileNotFound = errors.New("file not found")
 var ErrFileNotReferencedByBoard = errors.New("file not referenced by board")
 
+// stripBoardIDPrefix safely removes the 1-char type prefix from a boardID.
+// Returns empty string if boardID is too short.
+func stripBoardIDPrefix(boardID string) string {
+	if len(boardID) < 2 {
+		return ""
+	}
+	return boardID[1:]
+}
+
 func (a *App) SaveFile(reader io.Reader, teamID, boardID, filename string, asTemplate bool) (string, error) {
 	// NOTE: File extension includes the dot
 	fileExtension := strings.ToLower(filepath.Ext(filename))
@@ -53,7 +62,7 @@ func (a *App) SaveFile(reader io.Reader, teamID, boardID, filename string, asTem
 	fileInfo.Size = fileSize
 	// PostId is VARCHAR(26). Boards IDs are 27 chars (1-char type prefix + 26 chars),
 	// so strip the prefix before storing.
-	fileInfo.PostId = boardID[1:]
+	fileInfo.PostId = stripBoardIDPrefix(boardID)
 
 	err := a.store.SaveFileInfo(fileInfo)
 	if err != nil {
@@ -98,7 +107,7 @@ func (a *App) ValidateFileOwnership(teamID, boardID, filename string) error {
 	}
 	if fileInfo != nil {
 		// Fast path: PostId records the uploading board (prefix-stripped to 26 chars).
-		if fileInfo.PostId != "" && fileInfo.PostId == boardID[1:] {
+		if fileInfo.PostId != "" && fileInfo.PostId == stripBoardIDPrefix(boardID) {
 			return nil
 		}
 		// Template files are stored at teamID/boardID/filename.
@@ -144,7 +153,7 @@ func (a *App) validateFileOwnershipForBlockWrite(teamID, boardID, filename strin
 	if fileInfo.PostId == "" {
 		return nil
 	}
-	if fileInfo.PostId != boardID[1:] {
+	if fileInfo.PostId != stripBoardIDPrefix(boardID) {
 		return model.NewErrPermission("file does not belong to the specified board")
 	}
 	return nil
