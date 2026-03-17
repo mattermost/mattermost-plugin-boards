@@ -111,7 +111,7 @@ func (a *App) ValidateFileOwnership(teamID, boardID, filename string) error {
 			return nil
 		}
 		// Template files are stored at teamID/boardID/filename.
-		if fileInfo.Path == filepath.Join(teamID, boardID, filename) {
+		if filepath.ToSlash(fileInfo.Path) == filepath.ToSlash(filepath.Join(teamID, boardID, filename)) {
 			return nil
 		}
 	}
@@ -141,8 +141,10 @@ func (a *App) validateFileOwnershipForBlockWrite(teamID, boardID, filename strin
 
 	// Template files have path teamID/boardID/filename (no "boards/" prefix).
 	// Their board is always determinable from the path alone.
-	if fileInfo.Path != "" && !strings.HasPrefix(filepath.ToSlash(fileInfo.Path), "boards/") {
-		if fileInfo.Path == filepath.Join(teamID, boardID, filename) {
+	normalizedPath := filepath.ToSlash(fileInfo.Path)
+	if normalizedPath != "" && !strings.HasPrefix(normalizedPath, "boards/") {
+		expectedPath := filepath.ToSlash(filepath.Join(teamID, boardID, filename))
+		if normalizedPath == expectedPath {
 			return nil
 		}
 		return model.NewErrPermission("file does not belong to the specified board")
