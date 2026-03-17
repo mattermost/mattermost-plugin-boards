@@ -51,6 +51,9 @@ func (a *App) SaveFile(reader io.Reader, teamID, boardID, filename string, asTem
 	fileInfo.Id = getFileInfoID(createdFilename)
 	fileInfo.Path = filePath
 	fileInfo.Size = fileSize
+	// PostId is VARCHAR(26). Boards IDs are 27 chars (1-char type prefix + 26 chars),
+	// so strip the prefix before storing.
+	fileInfo.PostId = boardID[1:]
 
 	err := a.store.SaveFileInfo(fileInfo)
 	if err != nil {
@@ -93,18 +96,56 @@ func (a *App) ValidateFileOwnership(teamID, boardID, filename string) error {
 	if err != nil {
 		return err
 	}
-	if fileInfo != nil && fileInfo.Path != "" && fileInfo.Path != emptyString {
-		expectedPath := filepath.Join(teamID, boardID, filename)
-		if fileInfo.Path == expectedPath {
+	if fileInfo != nil {
+		// Fast path: PostId records the uploading board (prefix-stripped to 26 chars).
+		if fileInfo.PostId != "" && fileInfo.PostId == boardID[1:] {
 			return nil
 		}
-		if err := a.validateFileReferencedByBoard(boardID, filename); err != nil {
-			return model.NewErrPermission("file does not belong to the specified board")
+		// Template files are stored at teamID/boardID/filename.
+		if fileInfo.Path == filepath.Join(teamID, boardID, filename) {
+			return nil
 		}
-	} else {
-		if err := a.validateFileReferencedByBoard(boardID, filename); err != nil {
-			return model.NewErrPermission("file does not belong to the specified board")
+	}
+	if err := a.validateFileReferencedByBoard(boardID, filename); err != nil {
+		return model.NewErrPermission("file does not belong to the specified board")
+	}
+	return nil
+}
+
+// validateFileOwnershipForBlockWrite verifies that a file belongs to the given board
+// before a block reference to it is persisted. It does not fall back to
+// validateFileReferencedByBoard because the new block has not been saved yet.
+// Regular files uploaded before PostId tracking was introduced have an empty PostId
+// and are allowed through for backward compatibility.
+func (a *App) validateFileOwnershipForBlockWrite(teamID, boardID, filename string) error {
+	fileInfo, err := a.GetFileInfo(filename)
+	if err != nil {
+		if model.IsErrNotFound(err) {
+			return nil // no FileInfo record, allow for backward compatibility
 		}
+		return err
+	}
+
+	if fileInfo == nil {
+		return nil
+	}
+
+	// Template files have path teamID/boardID/filename (no "boards/" prefix).
+	// Their board is always determinable from the path alone.
+	if fileInfo.Path != "" && !strings.HasPrefix(filepath.ToSlash(fileInfo.Path), "boards/") {
+		if fileInfo.Path == filepath.Join(teamID, boardID, filename) {
+			return nil
+		}
+		return model.NewErrPermission("file does not belong to the specified board")
+	}
+
+	// Regular files: board is stored in PostId at upload time (prefix-stripped to 26 chars).
+	// Empty PostId means the file predates this tracking; allow for backward compatibility.
+	if fileInfo.PostId == "" {
+		return nil
+	}
+	if fileInfo.PostId != boardID[1:] {
+		return model.NewErrPermission("file does not belong to the specified board")
 	}
 	return nil
 }
@@ -243,9 +284,8 @@ func getDestinationFilePath(isTemplate bool, teamID, boardID, filename string) (
 		return "", fmt.Errorf("invalid filename: %w", err)
 	}
 
-	// if saving a file for a template, save using the "old method" that is /teamID/boardID/fileName
-	// this will prevent template files from being deleted by DataRetention,
-	// which deletes all files inside the "date" subdirectory
+	// Template files skip the "boards/" prefix to avoid DataRetention deletion,
+	// which cleans all files under date-based subdirectories (boards/YYYYMMDD/).
 	if isTemplate {
 		return filepath.Join(teamID, boardID, filename), nil
 	}

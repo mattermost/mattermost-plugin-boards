@@ -80,6 +80,20 @@ func (a *App) PatchBlockAndNotify(blockID string, blockPatch *model.BlockPatch, 
 		return nil, err
 	}
 
+	// Reject patches that reference files not belonging to this board.
+	if blockPatch.UpdatedFields != nil {
+		if fileID, ok := blockPatch.UpdatedFields[model.BlockFieldFileId].(string); ok && fileID != "" {
+			if ownershipErr := a.validateFileOwnershipForBlockWrite(board.TeamID, oldBlock.BoardID, fileID); ownershipErr != nil {
+				return nil, fmt.Errorf("unauthorized file reference in patch for block %s: %w", blockID, ownershipErr)
+			}
+		}
+		if attachmentID, ok := blockPatch.UpdatedFields[model.BlockFieldAttachmentId].(string); ok && attachmentID != "" {
+			if ownershipErr := a.validateFileOwnershipForBlockWrite(board.TeamID, oldBlock.BoardID, attachmentID); ownershipErr != nil {
+				return nil, fmt.Errorf("unauthorized file reference in patch for block %s: %w", blockID, ownershipErr)
+			}
+		}
+	}
+
 	err = a.store.PatchBlock(blockID, blockPatch, modifiedByID)
 	if err != nil {
 		return nil, err
@@ -122,6 +136,37 @@ func (a *App) PatchBlocksAndNotify(teamID string, blockPatches *model.BlockPatch
 		return err
 	}
 
+	// Build a lookup so we can pair each patch with its block regardless of DB return order.
+	blockByID := make(map[string]*model.Block, len(oldBlocks))
+	for _, b := range oldBlocks {
+		blockByID[b.ID] = b
+	}
+
+	// Reject patches that reference files not belonging to the target board.
+	for i, patch := range blockPatches.BlockPatches {
+		if patch.UpdatedFields == nil {
+			continue
+		}
+		block, ok := blockByID[blockPatches.BlockIDs[i]]
+		if !ok {
+			continue
+		}
+		board, bErr := a.store.GetBoard(block.BoardID)
+		if bErr != nil {
+			return bErr
+		}
+		if fileID, ok := patch.UpdatedFields[model.BlockFieldFileId].(string); ok && fileID != "" {
+			if ownershipErr := a.validateFileOwnershipForBlockWrite(board.TeamID, block.BoardID, fileID); ownershipErr != nil {
+				return fmt.Errorf("unauthorized file reference in block %s: %w", block.ID, ownershipErr)
+			}
+		}
+		if attachmentID, ok := patch.UpdatedFields[model.BlockFieldAttachmentId].(string); ok && attachmentID != "" {
+			if ownershipErr := a.validateFileOwnershipForBlockWrite(board.TeamID, block.BoardID, attachmentID); ownershipErr != nil {
+				return fmt.Errorf("unauthorized file reference in block %s: %w", block.ID, ownershipErr)
+			}
+		}
+	}
+
 	if err := a.store.PatchBlocks(blockPatches, modifiedByID); err != nil {
 		return err
 	}
@@ -152,6 +197,17 @@ func (a *App) InsertBlockAndNotify(block *model.Block, modifiedByID string, disa
 	board, bErr := a.store.GetBoard(block.BoardID)
 	if bErr != nil {
 		return bErr
+	}
+
+	if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID != "" {
+		if ownershipErr := a.validateFileOwnershipForBlockWrite(board.TeamID, block.BoardID, fileID); ownershipErr != nil {
+			return fmt.Errorf("unauthorized file reference in block %s: %w", block.ID, ownershipErr)
+		}
+	}
+	if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok && attachmentID != "" {
+		if ownershipErr := a.validateFileOwnershipForBlockWrite(board.TeamID, block.BoardID, attachmentID); ownershipErr != nil {
+			return fmt.Errorf("unauthorized file reference in block %s: %w", block.ID, ownershipErr)
+		}
 	}
 
 	err := a.store.InsertBlock(block, modifiedByID)
@@ -190,6 +246,20 @@ func (a *App) InsertBlocksAndNotify(blocks []*model.Block, modifiedByID string, 
 	board, err := a.store.GetBoard(boardID)
 	if err != nil {
 		return nil, err
+	}
+
+	// Reject blocks that reference files not belonging to this board.
+	for _, block := range blocks {
+		if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID != "" {
+			if ownershipErr := a.validateFileOwnershipForBlockWrite(board.TeamID, boardID, fileID); ownershipErr != nil {
+				return nil, fmt.Errorf("unauthorized file reference in block %s: %w", block.ID, ownershipErr)
+			}
+		}
+		if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok && attachmentID != "" {
+			if ownershipErr := a.validateFileOwnershipForBlockWrite(board.TeamID, boardID, attachmentID); ownershipErr != nil {
+				return nil, fmt.Errorf("unauthorized file reference in block %s: %w", block.ID, ownershipErr)
+			}
+		}
 	}
 
 	needsNotify := make([]*model.Block, 0, len(blocks))

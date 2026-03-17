@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -207,51 +206,49 @@ func TestGetFileReader(t *testing.T) {
 
 func TestSaveFile(t *testing.T) {
 	th, _ := SetupTestHelper(t)
+	// validTeamID must be a valid 26-character Mattermost ID accepted by ValidateTeamID.
+	validTeamID := "abcdefghijklmnopqrstuvwxyz"
 	mockedReadCloseSeek := &mocks.ReadCloseSeeker{}
-	t.Run("should save file to file store using file backend", func(t *testing.T) {
+
+	t.Run("should save file to file store and record boardID in PostId", func(t *testing.T) {
 		fileName := "temp-file-name.txt"
 		mockedFileBackend := &mocks.FileBackend{}
 		th.App.filesBackend = mockedFileBackend
-		th.Store.EXPECT().SaveFileInfo(gomock.Any()).Return(nil)
 
-		writeFileFunc := func(reader io.Reader, path string) int64 {
-			paths := strings.Split(path, string(os.PathSeparator))
+		th.Store.EXPECT().SaveFileInfo(gomock.Any()).DoAndReturn(func(info *mm_model.FileInfo) error {
+			paths := strings.Split(info.Path, string(os.PathSeparator))
 			assert.Equal(t, "boards", paths[0])
-			assert.Equal(t, time.Now().Format("20060102"), paths[1])
-			fileName = paths[2]
-			return int64(10)
-		}
-
-		writeFileErrorFunc := func(reader io.Reader, filePath string) error {
+			// PostId is the boardID with its 1-char prefix stripped to fit VARCHAR(26).
+			assert.Equal(t, testBoardID[1:], info.PostId)
+			fileName = paths[len(paths)-1]
 			return nil
-		}
+		})
 
+		writeFileFunc := func(reader io.Reader, path string) int64 { return int64(10) }
+		writeFileErrorFunc := func(reader io.Reader, filePath string) error { return nil }
 		mockedFileBackend.On("WriteFile", mockedReadCloseSeek, mock.Anything).Return(writeFileFunc, writeFileErrorFunc)
-		actual, err := th.App.SaveFile(mockedReadCloseSeek, "1", testBoardID, fileName, false)
+
+		actual, err := th.App.SaveFile(mockedReadCloseSeek, validTeamID, testBoardID, fileName, false)
 		assert.Equal(t, fileName, actual)
 		assert.Nil(t, err)
 	})
 
-	t.Run("should save .jpeg file as jpg file to file store using file backend", func(t *testing.T) {
+	t.Run("should save .jpeg file as .jpg and record boardID in PostId", func(t *testing.T) {
 		fileName := "temp-file-name.jpeg"
 		mockedFileBackend := &mocks.FileBackend{}
 		th.App.filesBackend = mockedFileBackend
-		th.Store.EXPECT().SaveFileInfo(gomock.Any()).Return(nil)
 
-		writeFileFunc := func(reader io.Reader, path string) int64 {
-			paths := strings.Split(path, string(os.PathSeparator))
-			assert.Equal(t, "boards", paths[0])
-			assert.Equal(t, time.Now().Format("20060102"), paths[1])
-			assert.Equal(t, "jpg", strings.Split(paths[2], ".")[1])
-			return int64(10)
-		}
-
-		writeFileErrorFunc := func(reader io.Reader, filePath string) error {
+		th.Store.EXPECT().SaveFileInfo(gomock.Any()).DoAndReturn(func(info *mm_model.FileInfo) error {
+			assert.Equal(t, testBoardID[1:], info.PostId)
+			assert.Equal(t, "jpg", strings.Split(info.Path, ".")[1])
 			return nil
-		}
+		})
 
+		writeFileFunc := func(reader io.Reader, path string) int64 { return int64(10) }
+		writeFileErrorFunc := func(reader io.Reader, filePath string) error { return nil }
 		mockedFileBackend.On("WriteFile", mockedReadCloseSeek, mock.Anything).Return(writeFileFunc, writeFileErrorFunc)
-		actual, err := th.App.SaveFile(mockedReadCloseSeek, "1", "test-board-id", fileName, false)
+
+		actual, err := th.App.SaveFile(mockedReadCloseSeek, validTeamID, testBoardID, fileName, false)
 		assert.Nil(t, err)
 		assert.NotNil(t, actual)
 	})
@@ -263,10 +260,6 @@ func TestSaveFile(t *testing.T) {
 		mockedError := &TestError{}
 
 		writeFileFunc := func(reader io.Reader, path string) int64 {
-			paths := strings.Split(path, string(os.PathSeparator))
-			assert.Equal(t, "boards", paths[0])
-			assert.Equal(t, time.Now().Format("20060102"), paths[1])
-			assert.Equal(t, "jpg", strings.Split(paths[2], ".")[1])
 			return int64(10)
 		}
 
@@ -275,7 +268,7 @@ func TestSaveFile(t *testing.T) {
 		}
 
 		mockedFileBackend.On("WriteFile", mockedReadCloseSeek, mock.Anything).Return(writeFileFunc, writeFileErrorFunc)
-		actual, err := th.App.SaveFile(mockedReadCloseSeek, "1", "test-board-id", fileName, false)
+		actual, err := th.App.SaveFile(mockedReadCloseSeek, validTeamID, testBoardID, fileName, false)
 		assert.Equal(t, "", actual)
 		assert.Equal(t, "unable to store the file in the files storage: Mocked File backend error", err.Error())
 	})
@@ -949,47 +942,56 @@ func TestValidateFileOwnership(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("Should allow access to file with base path that is referenced by board", func(t *testing.T) {
-		// Mock file info with base path (newer storage format)
+	t.Run("Should allow access when PostId matches the board", func(t *testing.T) {
 		fileInfo := &mm_model.FileInfo{
-			Id:   "validfile1234567890123456",
-			Path: filepath.Join(utils.GetBaseFilePath(), filename),
+			Id:     "validfile1234567890123456",
+			PostId: validBoardID[1:], // stored as 26 chars (prefix stripped)
 		}
 		th.Store.EXPECT().GetFileInfo("validfile1234567890123456").Return(fileInfo, nil)
-
-		// Mock block that references the file
-		block := &model.Block{
-			ID:      "blockid1234567890123456789",
-			BoardID: validBoardID,
-			Type:    model.TypeImage,
-			Fields:  map[string]interface{}{model.BlockFieldFileId: filename},
-		}
-		th.Store.EXPECT().GetBlocksForBoard(validBoardID).Return([]*model.Block{block}, nil)
 
 		err := th.App.ValidateFileOwnership(validTeamID, validBoardID, filename)
 		assert.NoError(t, err)
 	})
 
-	t.Run("Should deny access to file that belongs to different board", func(t *testing.T) {
-		// Mock file info with path from different board
+	t.Run("Should deny access when PostId belongs to a different board", func(t *testing.T) {
 		fileInfo := &mm_model.FileInfo{
-			Id:   "validfile1234567890123456",
-			Path: filepath.Join(validTeamID, otherBoardID, filename),
+			Id:     "validfile1234567890123456",
+			PostId: otherBoardID[1:],
 		}
 		th.Store.EXPECT().GetFileInfo("validfile1234567890123456").Return(fileInfo, nil)
 
-		// Mock empty blocks for the requested board (file not referenced)
-		th.Store.EXPECT().GetBlocksForBoard(validBoardID).Return([]*model.Block{}, nil)
+		th.Store.EXPECT().GetBlocksWithType(validBoardID, model.TypeImage).Return([]*model.Block{}, nil)
+		th.Store.EXPECT().GetBlocksWithType(validBoardID, model.TypeAttachment).Return([]*model.Block{}, nil)
 
 		err := th.App.ValidateFileOwnership(validTeamID, validBoardID, filename)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "file does not belong to the specified board")
 	})
 
-	t.Run("Should deny access to file that is not referenced by any block in the board", func(t *testing.T) {
+	t.Run("Should allow access to legacy file (empty PostId) referenced by board", func(t *testing.T) {
 		fileInfo := &mm_model.FileInfo{
-			Id:   "validfile1234567890123456",
-			Path: filepath.Join(utils.GetBaseFilePath(), filename),
+			Id:     "validfile1234567890123456",
+			PostId: "", // legacy file — no board recorded
+		}
+		th.Store.EXPECT().GetFileInfo("validfile1234567890123456").Return(fileInfo, nil)
+
+		block := &model.Block{
+			ID:      "blockid1234567890123456789",
+			BoardID: validBoardID,
+			Type:    model.TypeImage,
+			Fields:  map[string]interface{}{model.BlockFieldFileId: filename},
+		}
+		th.Store.EXPECT().GetBlocksWithType(validBoardID, model.TypeImage).Return([]*model.Block{block}, nil)
+		th.Store.EXPECT().GetBlocksWithType(validBoardID, model.TypeAttachment).Return([]*model.Block{}, nil)
+
+		err := th.App.ValidateFileOwnership(validTeamID, validBoardID, filename)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Should deny access to legacy file not referenced by any block in the board", func(t *testing.T) {
+		fileInfo := &mm_model.FileInfo{
+			Id:     "validfile1234567890123456",
+			PostId: "",
 		}
 		th.Store.EXPECT().GetFileInfo("validfile1234567890123456").Return(fileInfo, nil)
 
@@ -999,17 +1001,18 @@ func TestValidateFileOwnership(t *testing.T) {
 			Type:    model.TypeImage,
 			Fields:  map[string]interface{}{model.BlockFieldFileId: "different_file.txt"},
 		}
-		th.Store.EXPECT().GetBlocksForBoard(validBoardID).Return([]*model.Block{block}, nil)
+		th.Store.EXPECT().GetBlocksWithType(validBoardID, model.TypeImage).Return([]*model.Block{block}, nil)
+		th.Store.EXPECT().GetBlocksWithType(validBoardID, model.TypeAttachment).Return([]*model.Block{}, nil)
 
 		err := th.App.ValidateFileOwnership(validTeamID, validBoardID, filename)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "file does not belong to the specified board")
 	})
 
-	t.Run("Should allow access to file referenced by attachment field", func(t *testing.T) {
+	t.Run("Should allow access to legacy file referenced by attachment field", func(t *testing.T) {
 		fileInfo := &mm_model.FileInfo{
-			Id:   "validfile1234567890123456",
-			Path: filepath.Join(utils.GetBaseFilePath(), filename),
+			Id:     "validfile1234567890123456",
+			PostId: "",
 		}
 		th.Store.EXPECT().GetFileInfo("validfile1234567890123456").Return(fileInfo, nil)
 
@@ -1019,7 +1022,8 @@ func TestValidateFileOwnership(t *testing.T) {
 			Type:    model.TypeAttachment,
 			Fields:  map[string]interface{}{model.BlockFieldAttachmentId: filename},
 		}
-		th.Store.EXPECT().GetBlocksForBoard(validBoardID).Return([]*model.Block{block}, nil)
+		th.Store.EXPECT().GetBlocksWithType(validBoardID, model.TypeImage).Return([]*model.Block{}, nil)
+		th.Store.EXPECT().GetBlocksWithType(validBoardID, model.TypeAttachment).Return([]*model.Block{block}, nil)
 
 		err := th.App.ValidateFileOwnership(validTeamID, validBoardID, filename)
 		assert.NoError(t, err)
@@ -1031,6 +1035,79 @@ func TestValidateFileOwnership(t *testing.T) {
 		err := th.App.ValidateFileOwnership(validTeamID, validBoardID, filename)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "file not found")
+	})
+}
+
+func TestValidateFileOwnershipForBlockWrite(t *testing.T) {
+	th, _ := SetupTestHelper(t)
+
+	validTeamID := "validteamid1234567890123456"
+	validBoardID := "bvalidboard1234567890123456"
+	otherBoardID := "botherboard1234567890123456"
+	filename := "7validfile1234567890123456.txt"
+
+	t.Run("Should allow file whose PostId matches the board", func(t *testing.T) {
+		fileInfo := &mm_model.FileInfo{
+			Id:     "validfile1234567890123456",
+			PostId: validBoardID[1:], // stored as 26 chars (prefix stripped)
+		}
+		th.Store.EXPECT().GetFileInfo("validfile1234567890123456").Return(fileInfo, nil)
+
+		err := th.App.validateFileOwnershipForBlockWrite(validTeamID, validBoardID, filename)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Should reject file whose PostId belongs to a different board", func(t *testing.T) {
+		fileInfo := &mm_model.FileInfo{
+			Id:     "validfile1234567890123456",
+			PostId: otherBoardID[1:],
+		}
+		th.Store.EXPECT().GetFileInfo("validfile1234567890123456").Return(fileInfo, nil)
+
+		err := th.App.validateFileOwnershipForBlockWrite(validTeamID, validBoardID, filename)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "file does not belong to the specified board")
+	})
+
+	t.Run("Should allow template file whose path matches the board", func(t *testing.T) {
+		fileInfo := &mm_model.FileInfo{
+			Id:   "validfile1234567890123456",
+			Path: filepath.Join(validTeamID, validBoardID, filename),
+		}
+		th.Store.EXPECT().GetFileInfo("validfile1234567890123456").Return(fileInfo, nil)
+
+		err := th.App.validateFileOwnershipForBlockWrite(validTeamID, validBoardID, filename)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Should reject template file whose path belongs to a different board", func(t *testing.T) {
+		fileInfo := &mm_model.FileInfo{
+			Id:   "validfile1234567890123456",
+			Path: filepath.Join(validTeamID, otherBoardID, filename),
+		}
+		th.Store.EXPECT().GetFileInfo("validfile1234567890123456").Return(fileInfo, nil)
+
+		err := th.App.validateFileOwnershipForBlockWrite(validTeamID, validBoardID, filename)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "file does not belong to the specified board")
+	})
+
+	t.Run("Should allow legacy file with empty PostId for backward compatibility", func(t *testing.T) {
+		fileInfo := &mm_model.FileInfo{
+			Id:     "validfile1234567890123456",
+			PostId: "",
+		}
+		th.Store.EXPECT().GetFileInfo("validfile1234567890123456").Return(fileInfo, nil)
+
+		err := th.App.validateFileOwnershipForBlockWrite(validTeamID, validBoardID, filename)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Should allow file with no FileInfo record (very old upload)", func(t *testing.T) {
+		th.Store.EXPECT().GetFileInfo("validfile1234567890123456").Return(nil, model.NewErrNotFound("file not found"))
+
+		err := th.App.validateFileOwnershipForBlockWrite(validTeamID, validBoardID, filename)
+		assert.NoError(t, err)
 	})
 }
 
