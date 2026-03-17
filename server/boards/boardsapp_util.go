@@ -80,7 +80,7 @@ func createBoardsConfig(mmconfig mm_model.Config, baseURL string, serverID strin
 		showFullName = *mmconfig.PrivacySettings.ShowFullName
 	}
 
-	serverRoot := baseURL + "/boards"
+	serverRoot := baseURL + "/plugins/focalboard"
 
 	return &config.Configuration{
 		ServerRoot:               serverRoot,
