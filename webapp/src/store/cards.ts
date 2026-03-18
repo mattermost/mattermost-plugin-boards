@@ -308,28 +308,12 @@ function sortCards(cards: Card[], lastCommentByCard: {[key: string]: CommentBloc
                     }
 
                     if (template.type === 'multiPerson') {
-                        if (Array.isArray(aValue) && aValue.length !== 0 && Object.keys(usersById).length > 0) {
-                            aValue = aValue.map((id) => {
-                                if (usersById[id] !== undefined) {
-                                    return usersById[id].username
-                                }
-                                return ''
-                            }).toString()
-                        } else if (Array.isArray(aValue)) {
-                            // When usersById is empty (e.g. during initial load before users are fetched),
-                            // convert array to string for localeCompare - avoid crash from array.localeCompare
-                            aValue = aValue.join(',')
+                        if (Array.isArray(aValue)) {
+                            aValue = aValue.map((id) => usersById[id]?.username ?? '').toString()
                         }
 
-                        if (Array.isArray(bValue) && bValue.length !== 0 && Object.keys(usersById).length > 0) {
-                            bValue = bValue.map((id) => {
-                                if (usersById[id] !== undefined) {
-                                    return usersById[id].username
-                                }
-                                return ''
-                            }).toString()
-                        } else if (Array.isArray(bValue)) {
-                            bValue = bValue.join(',')
+                        if (Array.isArray(bValue)) {
+                            bValue = bValue.map((id) => usersById[id]?.username ?? '').toString()
                         }
                     }
 
