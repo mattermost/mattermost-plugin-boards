@@ -908,20 +908,9 @@ func (s *SQLStore) runPostgresDeDuplicateCategoryBoardsMigration() error {
 	return nil
 }
 
-// RunFileOwnershipMigration moves existing files from the old 3-part storage path
-// (boards/YYYYMMDD/filename) to the new 4-part path (boards/YYYYMMDD/boardID/filename)
-// so that board ownership can be verified from the path alone.
-//
-// For each image/attachment block it:
-//  1. Extracts the filename and the block's boardID.
-//  2. Looks up the FileInfo to get the current storage path.
-//  3. If the path is the old 3-part format, moves the file via fb and updates FileInfo.Path.
-//
-// Files referenced by more than one board are migrated to the board of the first block
-// encountered; subsequent references are skipped with a warning.
-//
-// The migration is idempotent: it records completion in the system-settings table and
-// is a no-op if it has already run successfully.
+// RunFileOwnershipMigration moves files from boards/YYYYMMDD/filename to
+// boards/YYYYMMDD/boardID/filename so ownership can be verified from the path.
+// It is idempotent: completion is recorded in the system-settings table.
 func (s *SQLStore) RunFileOwnershipMigration(
 	moveFile func(oldPath, newPath string) error,
 	fileExists func(path string) (bool, error),
@@ -937,9 +926,11 @@ func (s *SQLStore) RunFileOwnershipMigration(
 
 	s.logger.Debug("== Running file ownership migration ====================")
 
-	// processedFiles tracks files we have already migrated so that a file
-	// referenced by multiple blocks is only moved once.
-	processedFiles := make(map[string]bool)
+	// processedFiles maps filename → owning boardID (first-reference-wins).
+	// Cross-board reuse of the same fileId is the exploit this migration
+	// fixes, so later references from other boards are intentionally skipped.
+	processedFiles := make(map[string]string)
+	hadErrors := false
 
 	for _, blockType := range []model.BlockType{model.TypeImage, model.TypeAttachment} {
 		for page := 0; ; page++ {
@@ -969,29 +960,36 @@ func (s *SQLStore) RunFileOwnershipMigration(
 					continue
 				}
 
-				if processedFiles[filename] {
-					s.logger.Warn("RunFileOwnershipMigration: file referenced by multiple boards, skipping duplicate",
+				if ownerBoardID, seen := processedFiles[filename]; seen {
+					s.logger.Warn("RunFileOwnershipMigration: file referenced by multiple boards; keeping original owner",
 						mlog.String("filename", filename),
-						mlog.String("boardID", block.BoardID),
+						mlog.String("ownerBoardID", ownerBoardID),
+						mlog.String("skippedBoardID", block.BoardID),
 					)
 					continue
 				}
 
-				if err := s.migrateFileToNewPath(moveFile, fileExists, block.BoardID, filename); err != nil {
-					s.logger.Warn("RunFileOwnershipMigration: failed to migrate file",
-						mlog.String("filename", filename),
-						mlog.String("boardID", block.BoardID),
-						mlog.Err(err),
-					)
-				} else {
-					processedFiles[filename] = true
-				}
+			if err := s.migrateFileToNewPath(moveFile, fileExists, block.BoardID, filename); err != nil {
+				s.logger.Warn("RunFileOwnershipMigration: failed to migrate file",
+					mlog.String("filename", filename),
+					mlog.String("boardID", block.BoardID),
+					mlog.Err(err),
+				)
+				hadErrors = true
+			} else {
+				processedFiles[filename] = block.BoardID
+			}
 			}
 
 			if len(blocks) < fileOwnershipMigrationBatchSize {
 				break
 			}
 		}
+	}
+
+	if hadErrors {
+		s.logger.Error("RunFileOwnershipMigration: completed with errors; migration will be retried on next startup")
+		return
 	}
 
 	s.logger.Debug("== File ownership migration complete ====================")
