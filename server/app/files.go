@@ -25,15 +25,6 @@ var errEmptyFilename = errors.New("IsFileArchived: empty filename not allowed")
 var ErrFileNotFound = errors.New("file not found")
 var ErrFileNotReferencedByBoard = errors.New("file not referenced by board")
 
-// stripBoardIDPrefix safely removes the 1-char type prefix from a boardID.
-// Returns empty string if boardID is too short.
-func stripBoardIDPrefix(boardID string) string {
-	if len(boardID) < 2 {
-		return ""
-	}
-	return boardID[1:]
-}
-
 func (a *App) SaveFile(reader io.Reader, teamID, boardID, filename string, asTemplate bool) (string, error) {
 	// NOTE: File extension includes the dot
 	fileExtension := strings.ToLower(filepath.Ext(filename))
@@ -60,9 +51,6 @@ func (a *App) SaveFile(reader io.Reader, teamID, boardID, filename string, asTem
 	fileInfo.Id = getFileInfoID(createdFilename)
 	fileInfo.Path = filePath
 	fileInfo.Size = fileSize
-	// PostId is VARCHAR(26). Boards IDs are 27 chars (1-char type prefix + 26 chars),
-	// so strip the prefix before storing.
-	fileInfo.PostId = stripBoardIDPrefix(boardID)
 
 	err := a.store.SaveFileInfo(fileInfo)
 	if err != nil {
@@ -106,13 +94,25 @@ func (a *App) ValidateFileOwnership(teamID, boardID, filename string) error {
 		return err
 	}
 	if fileInfo != nil {
-		// Fast path: PostId records the uploading board (prefix-stripped to 26 chars).
-		if fileInfo.PostId != "" && fileInfo.PostId == stripBoardIDPrefix(boardID) {
-			return nil
-		}
-		// Template files are stored at teamID/boardID/filename.
-		if filepath.ToSlash(fileInfo.Path) == filepath.ToSlash(filepath.Join(teamID, boardID, filename)) {
-			return nil
+		normalizedPath := filepath.ToSlash(fileInfo.Path)
+		if !strings.HasPrefix(normalizedPath, "boards/") {
+			// Template path: teamID/boardID/filename
+			expectedPath := filepath.ToSlash(filepath.Join(teamID, boardID, filename))
+			if normalizedPath == expectedPath {
+				return nil
+			}
+			// Template path exists but doesn't match this board — fall through to block-scan.
+		} else {
+			// Regular file: boards/YYYYMMDD/{boardID}/{filename} (new) or
+			// boards/YYYYMMDD/{filename} (old, no boardID in path).
+			parts := strings.SplitN(normalizedPath, "/", 4)
+			if len(parts) == 4 {
+				if parts[2] == boardID {
+					return nil
+				}
+				return model.NewErrPermission("file does not belong to the specified board")
+			}
+			// Old 3-part path has no board info — fall through to block-scan.
 		}
 	}
 	if err := a.validateFileReferencedByBoard(boardID, filename); err != nil {
@@ -124,8 +124,8 @@ func (a *App) ValidateFileOwnership(teamID, boardID, filename string) error {
 // validateFileOwnershipForBlockWrite verifies that a file belongs to the given board
 // before a block reference to it is persisted. It does not fall back to
 // validateFileReferencedByBoard because the new block has not been saved yet.
-// Regular files uploaded before PostId tracking was introduced have an empty PostId
-// and are allowed through for backward compatibility.
+// Files uploaded before boardID was included in the path have a 3-part path
+// (boards/YYYYMMDD/filename) and are allowed through for backward compatibility.
 func (a *App) validateFileOwnershipForBlockWrite(teamID, boardID, filename string) error {
 	fileInfo, err := a.GetFileInfo(filename)
 	if err != nil {
@@ -139,10 +139,9 @@ func (a *App) validateFileOwnershipForBlockWrite(teamID, boardID, filename strin
 		return nil
 	}
 
-	// Template files have path teamID/boardID/filename (no "boards/" prefix).
-	// Their board is always determinable from the path alone.
 	normalizedPath := filepath.ToSlash(fileInfo.Path)
-	if normalizedPath != "" && !strings.HasPrefix(normalizedPath, "boards/") {
+	if !strings.HasPrefix(normalizedPath, "boards/") {
+		// Template path: teamID/boardID/filename
 		expectedPath := filepath.ToSlash(filepath.Join(teamID, boardID, filename))
 		if normalizedPath == expectedPath {
 			return nil
@@ -150,14 +149,16 @@ func (a *App) validateFileOwnershipForBlockWrite(teamID, boardID, filename strin
 		return model.NewErrPermission("file does not belong to the specified board")
 	}
 
-	// Regular files: board is stored in PostId at upload time (prefix-stripped to 26 chars).
-	// Empty PostId means the file predates this tracking; allow for backward compatibility.
-	if fileInfo.PostId == "" {
-		return nil
-	}
-	if fileInfo.PostId != stripBoardIDPrefix(boardID) {
+	// Regular file: boards/YYYYMMDD/{boardID}/{filename} (new) or
+	// boards/YYYYMMDD/{filename} (old, no boardID in path).
+	parts := strings.SplitN(normalizedPath, "/", 4)
+	if len(parts) == 4 {
+		if parts[2] == boardID {
+			return nil
+		}
 		return model.NewErrPermission("file does not belong to the specified board")
 	}
+
 	return nil
 }
 
@@ -295,12 +296,14 @@ func getDestinationFilePath(isTemplate bool, teamID, boardID, filename string) (
 		return "", fmt.Errorf("invalid filename: %w", err)
 	}
 
-	// Template files skip the "boards/" prefix to avoid DataRetention deletion,
-	// which cleans all files under date-based subdirectories (boards/YYYYMMDD/).
+	// Template files are stored at teamID/boardID/filename (no "boards/" prefix)
+	// so they can be identified by path alone and are not affected by DataRetention.
 	if isTemplate {
 		return filepath.Join(teamID, boardID, filename), nil
 	}
-	return filepath.Join(utils.GetBaseFilePath(), filename), nil
+	// Regular files: boards/YYYYMMDD/{boardID}/{filename}
+	// The boardID in the path makes ownership verifiable without extra DB lookups.
+	return filepath.Join(utils.GetBaseFilePath(), boardID, filename), nil
 }
 
 // validatePathComponent ensures a path component contains only valid characters.
