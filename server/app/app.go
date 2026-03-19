@@ -54,6 +54,7 @@ type Services struct {
 	Logger           mlog.LoggerIFace
 	Permissions      permissions.PermissionsService
 	SkipTemplateInit bool
+	SkipMigrations   bool
 	ServicesAPI      servicesAPI
 }
 
@@ -98,7 +99,7 @@ func New(config *config.Configuration, wsAdapter ws.Adapter, services Services) 
 		blockChangeNotifier: utils.NewCallbackQueue("blockChangeNotifier", blockChangeNotifierQueueSize, blockChangeNotifierPoolSize, services.Logger),
 		servicesAPI:         services.ServicesAPI,
 	}
-	app.initialize(services.SkipTemplateInit)
+	app.initialize(services.SkipTemplateInit, services.SkipMigrations)
 	return app
 }
 

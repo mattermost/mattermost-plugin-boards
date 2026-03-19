@@ -52,6 +52,7 @@ func SetupTestHelper(t *testing.T) (*TestHelper, func()) {
 		Metrics:          metricsService,
 		Logger:           logger,
 		SkipTemplateInit: true,
+		SkipMigrations:   true,
 		Permissions:      permissions,
 	}
 	app2 := New(&cfg, wsserver, appServices)

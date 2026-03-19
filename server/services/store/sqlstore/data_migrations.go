@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -31,6 +32,9 @@ const (
 	TeamLessBoardsMigrationKey                = "TeamLessBoardsMigrationComplete"
 	DeletedMembershipBoardsMigrationKey       = "DeletedMembershipBoardsMigrationComplete"
 	DeDuplicateCategoryBoardTableMigrationKey = "DeDuplicateCategoryBoardTableComplete"
+	FileOwnershipMigrationKey                 = "FileOwnershipMigrationComplete"
+
+	fileOwnershipMigrationBatchSize = 500
 )
 
 func (s *SQLStore) getBlocksWithSameID(db sq.BaseRunner) ([]*model.Block, error) {
@@ -901,5 +905,173 @@ func (s *SQLStore) runPostgresDeDuplicateCategoryBoardsMigration() error {
 		s.logger.Error("Failed to de-duplicate data in category_boards table", mlog.Err(err))
 	}
 
+	return nil
+}
+
+// RunFileOwnershipMigration moves existing files from the old 3-part storage path
+// (boards/YYYYMMDD/filename) to the new 4-part path (boards/YYYYMMDD/boardID/filename)
+// so that board ownership can be verified from the path alone.
+//
+// For each image/attachment block it:
+//  1. Extracts the filename and the block's boardID.
+//  2. Looks up the FileInfo to get the current storage path.
+//  3. If the path is the old 3-part format, moves the file via fb and updates FileInfo.Path.
+//
+// Files referenced by more than one board are migrated to the board of the first block
+// encountered; subsequent references are skipped with a warning.
+//
+// The migration is idempotent: it records completion in the system-settings table and
+// is a no-op if it has already run successfully.
+func (s *SQLStore) RunFileOwnershipMigration(
+	moveFile func(oldPath, newPath string) error,
+	fileExists func(path string) (bool, error),
+) {
+	setting, err := s.GetSystemSetting(FileOwnershipMigrationKey)
+	if err != nil {
+		s.logger.Error("RunFileOwnershipMigration: failed to read migration state", mlog.Err(err))
+		return
+	}
+	if setting == "true" {
+		return
+	}
+
+	s.logger.Debug("== Running file ownership migration ====================")
+
+	// processedFiles tracks files we have already migrated so that a file
+	// referenced by multiple blocks is only moved once.
+	processedFiles := make(map[string]bool)
+
+	for _, blockType := range []model.BlockType{model.TypeImage, model.TypeAttachment} {
+		fileField := model.BlockFieldFileId
+		if blockType == model.TypeAttachment {
+			fileField = model.BlockFieldAttachmentId
+		}
+
+		for page := 0; ; page++ {
+			opts := model.QueryBlocksOptions{
+				BlockType: blockType,
+				Page:      page,
+				PerPage:   fileOwnershipMigrationBatchSize,
+			}
+
+			blocks, err := s.getBlocks(s.db, opts)
+			if err != nil {
+				s.logger.Error("RunFileOwnershipMigration: failed to fetch blocks",
+					mlog.String("blockType", string(blockType)),
+					mlog.Int("page", page),
+					mlog.Err(err),
+				)
+				return
+			}
+
+			for _, block := range blocks {
+				if block.DeleteAt != 0 {
+					continue
+				}
+
+				filename, _ := block.Fields[fileField].(string)
+				if filename == "" {
+					continue
+				}
+
+				if processedFiles[filename] {
+					s.logger.Warn("RunFileOwnershipMigration: file referenced by multiple boards, skipping duplicate",
+						mlog.String("filename", filename),
+						mlog.String("boardID", block.BoardID),
+					)
+					continue
+				}
+
+				if err := s.migrateFileToNewPath(moveFile, fileExists, block.BoardID, filename); err != nil {
+					s.logger.Warn("RunFileOwnershipMigration: failed to migrate file",
+						mlog.String("filename", filename),
+						mlog.String("boardID", block.BoardID),
+						mlog.Err(err),
+					)
+				}
+
+				processedFiles[filename] = true
+			}
+
+			if len(blocks) < fileOwnershipMigrationBatchSize {
+				break
+			}
+		}
+	}
+
+	s.logger.Debug("== File ownership migration complete ====================")
+
+	if err := s.SetSystemSetting(FileOwnershipMigrationKey, "true"); err != nil {
+		s.logger.Error("RunFileOwnershipMigration: failed to mark migration complete", mlog.Err(err))
+	}
+}
+
+// migrateFileToNewPath moves a single file from the old 3-part path
+// (boards/YYYYMMDD/filename) to the new 4-part path (boards/YYYYMMDD/boardID/filename)
+// and updates FileInfo.Path in the database.
+func (s *SQLStore) migrateFileToNewPath(
+	moveFile func(oldPath, newPath string) error,
+	fileExists func(path string) (bool, error),
+	boardID, filename string,
+) error {
+	// Derive the FileInfo ID: strip the 1-char type prefix from the base name.
+	// e.g. "7abc123.txt" → base "7abc123" → fileInfoID "abc123"
+	base := strings.SplitN(filename, ".", 2)[0]
+	if len(base) <= 1 {
+		return nil // filename too short to have a type prefix; skip
+	}
+	fileInfoID := base[1:]
+
+	fileInfo, err := s.GetFileInfo(fileInfoID)
+	if err != nil {
+		return err
+	}
+	if fileInfo == nil {
+		return nil
+	}
+
+	normalizedOldPath := filepath.ToSlash(fileInfo.Path)
+	parts := strings.SplitN(normalizedOldPath, "/", 4)
+
+	// Only migrate 3-part paths of the form boards/YYYYMMDD/filename.
+	// 4-part paths are already migrated; template paths don't start with "boards/".
+	if len(parts) != 3 || parts[0] != "boards" {
+		return nil
+	}
+
+	newPath := filepath.Join("boards", parts[1], boardID, parts[2])
+
+	exists, err := fileExists(normalizedOldPath)
+	if err != nil {
+		return fmt.Errorf("checking existence of %s: %w", normalizedOldPath, err)
+	}
+
+	if exists {
+		if err := moveFile(normalizedOldPath, newPath); err != nil {
+			return fmt.Errorf("moving %s to %s: %w", normalizedOldPath, newPath, err)
+		}
+	}
+	// If the file is no longer at the old location (partial previous run),
+	// we still update FileInfo.Path so the DB stays consistent.
+
+	fileInfo.Path = newPath
+	if err := s.SaveFileInfo(fileInfo); err != nil {
+		if exists {
+			// Attempt to roll back the file move to avoid an orphaned file.
+			if revertErr := moveFile(newPath, normalizedOldPath); revertErr != nil {
+				s.logger.Error("RunFileOwnershipMigration: failed to revert file move after DB error",
+					mlog.String("newPath", newPath),
+					mlog.String("oldPath", normalizedOldPath),
+					mlog.Err(revertErr),
+				)
+			}
+		}
+		return fmt.Errorf("updating FileInfo.Path in DB: %w", err)
+	}
+
+	s.logger.Debug("RunFileOwnershipMigration: migrated file",
+		mlog.String("oldPath", normalizedOldPath),
+		mlog.String("newPath", newPath),
+	)
 	return nil
 }
