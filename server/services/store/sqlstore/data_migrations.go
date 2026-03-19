@@ -942,11 +942,6 @@ func (s *SQLStore) RunFileOwnershipMigration(
 	processedFiles := make(map[string]bool)
 
 	for _, blockType := range []model.BlockType{model.TypeImage, model.TypeAttachment} {
-		fileField := model.BlockFieldFileId
-		if blockType == model.TypeAttachment {
-			fileField = model.BlockFieldAttachmentId
-		}
-
 		for page := 0; ; page++ {
 			opts := model.QueryBlocksOptions{
 				BlockType: blockType,
@@ -969,7 +964,7 @@ func (s *SQLStore) RunFileOwnershipMigration(
 					continue
 				}
 
-				filename, _ := block.Fields[fileField].(string)
+				filename, _ := block.Fields[model.BlockFieldFileId].(string)
 				if filename == "" {
 					continue
 				}
@@ -1054,8 +1049,7 @@ func (s *SQLStore) migrateFileToNewPath(
 	// If the file is no longer at the old location (partial previous run),
 	// we still update FileInfo.Path so the DB stays consistent.
 
-	fileInfo.Path = newPath
-	if err := s.SaveFileInfo(fileInfo); err != nil {
+	if err := s.updateFileInfoPath(s.db, fileInfo.Id, newPath); err != nil {
 		if exists {
 			// Attempt to roll back the file move to avoid an orphaned file.
 			if revertErr := moveFile(newPath, normalizedOldPath); revertErr != nil {

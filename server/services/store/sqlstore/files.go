@@ -97,6 +97,25 @@ func (s *SQLStore) saveFileInfo(db sq.BaseRunner, fileInfo *mmModel.FileInfo) er
 	return nil
 }
 
+func (s *SQLStore) updateFileInfoPath(db sq.BaseRunner, fileInfoID, newPath string) error {
+	query := s.getQueryBuilder(db).
+		Update("FileInfo").
+		Set("Path", newPath).
+		Where(sq.Eq{"Id": fileInfoID})
+
+	if _, err := query.Exec(); err != nil {
+		s.logger.Error(
+			"failed to update fileinfo path",
+			mlog.String("file_info_id", fileInfoID),
+			mlog.String("new_path", newPath),
+			mlog.Err(err),
+		)
+		return err
+	}
+
+	return nil
+}
+
 func (s *SQLStore) restoreFiles(db sq.BaseRunner, fileIDs []string) error {
 	if len(fileIDs) == 0 {
 		return nil
