@@ -969,16 +969,16 @@ func (s *SQLStore) RunFileOwnershipMigration(
 					continue
 				}
 
-			if err := s.migrateFileToNewPath(moveFile, fileExists, block.BoardID, filename); err != nil {
-				s.logger.Warn("RunFileOwnershipMigration: failed to migrate file",
-					mlog.String("filename", filename),
-					mlog.String("boardID", block.BoardID),
-					mlog.Err(err),
-				)
-				hadErrors = true
-			} else {
-				processedFiles[filename] = block.BoardID
-			}
+				if err := s.migrateFileToNewPath(moveFile, fileExists, block.BoardID, filename); err != nil {
+					s.logger.Warn("RunFileOwnershipMigration: failed to migrate file",
+						mlog.String("filename", filename),
+						mlog.String("boardID", block.BoardID),
+						mlog.Err(err),
+					)
+					hadErrors = true
+				} else {
+					processedFiles[filename] = block.BoardID
+				}
 			}
 
 			if len(blocks) < fileOwnershipMigrationBatchSize {
