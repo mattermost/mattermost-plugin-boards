@@ -782,8 +782,8 @@ func TestGetDestinationFilePath(t *testing.T) {
 		result, err := getDestinationFilePath(false, validTeamID, validBoardID3, "filename")
 		assert.NoError(t, err)
 		assert.NotContains(t, result, "templates")
-		assert.NotContains(t, result, validTeamID)  // Non-templates don't include teamID in path
-		assert.Contains(t, result, validBoardID3)   // boardID is included for ownership tracking
+		assert.NotContains(t, result, validTeamID) // Non-templates don't include teamID in path
+		assert.Contains(t, result, validBoardID3)  // boardID is included for ownership tracking
 		assert.Contains(t, result, "filename")
 	})
 

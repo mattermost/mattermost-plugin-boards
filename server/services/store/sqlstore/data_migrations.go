@@ -983,9 +983,9 @@ func (s *SQLStore) RunFileOwnershipMigration(
 						mlog.String("boardID", block.BoardID),
 						mlog.Err(err),
 					)
+				} else {
+					processedFiles[filename] = true
 				}
-
-				processedFiles[filename] = true
 			}
 
 			if len(blocks) < fileOwnershipMigrationBatchSize {
@@ -1034,7 +1034,7 @@ func (s *SQLStore) migrateFileToNewPath(
 		return nil
 	}
 
-	newPath := filepath.Join("boards", parts[1], boardID, parts[2])
+	newPath := filepath.ToSlash(filepath.Join("boards", parts[1], boardID, parts[2]))
 
 	exists, err := fileExists(normalizedOldPath)
 	if err != nil {
