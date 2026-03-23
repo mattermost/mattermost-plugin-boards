@@ -27,6 +27,7 @@ import {getFirstTeam, fetchTeams, Team} from './store/teams'
 import {getSidebarCategories, CategoryBoards} from './store/sidebar'
 import {getMySortedBoards} from './store/boards'
 import {UserSettings} from './userSettings'
+import {Constants} from './constants'
 import FBRoute from './route'
 
 declare let window: IAppWindow
@@ -91,6 +92,12 @@ function HomeToCurrentTeam(props: {path: string, exact: boolean}) {
                 }
 
                 const validBoardIds = new Set(myBoards.filter((b) => !b.deleteAt).map((b) => b.id))
+
+                // Check if we should skip auto-redirect (e.g., after error page cleared history)
+                const ignoreStoredUrls = sessionStorage.getItem(Constants.sessionStorageIgnoreStoredUrlsKey) === 'true'
+                if (ignoreStoredUrls) {
+                    return <Redirect to={`/team/${teamID}`}/>
+                }
 
                 if (UserSettings.lastBoardId) {
                     const lastBoardID = UserSettings.lastBoardId[teamID]
