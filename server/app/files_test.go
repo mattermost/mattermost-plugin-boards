@@ -1088,15 +1088,37 @@ func TestValidateFileOwnershipForBlockWrite(t *testing.T) {
 		assert.Contains(t, err.Error(), "file does not belong to the specified board")
 	})
 
-	t.Run("Should allow legacy file with old 3-part path for backward compatibility", func(t *testing.T) {
+	t.Run("Should allow legacy file with old 3-part path when block references it in this board", func(t *testing.T) {
 		fileInfo := &mm_model.FileInfo{
 			Id:   "validfile1234567890123456",
 			Path: "boards/20260317/" + filename, // old format: no boardID in path
 		}
+		existingBlock := &model.Block{
+			ID:      "bexistingblock12345678901234",
+			BoardID: validBoardID,
+			Fields:  map[string]interface{}{model.BlockFieldFileId: filename},
+		}
 		th.Store.EXPECT().GetFileInfo("validfile1234567890123456").Return(fileInfo, nil)
+		// validateFileReferencedByBoard always fetches both block types before scanning.
+		th.Store.EXPECT().GetBlocksWithType(validBoardID, string(model.TypeImage)).Return([]*model.Block{existingBlock}, nil)
+		th.Store.EXPECT().GetBlocksWithType(validBoardID, string(model.TypeAttachment)).Return([]*model.Block{}, nil)
 
 		err := th.App.validateFileOwnershipForBlockWrite(validTeamID, validBoardID, filename)
 		assert.NoError(t, err)
+	})
+
+	t.Run("Should reject legacy file with old 3-part path when not referenced by this board", func(t *testing.T) {
+		fileInfo := &mm_model.FileInfo{
+			Id:   "validfile1234567890123456",
+			Path: "boards/20260317/" + filename,
+		}
+		th.Store.EXPECT().GetFileInfo("validfile1234567890123456").Return(fileInfo, nil)
+		th.Store.EXPECT().GetBlocksWithType(validBoardID, string(model.TypeImage)).Return([]*model.Block{}, nil)
+		th.Store.EXPECT().GetBlocksWithType(validBoardID, string(model.TypeAttachment)).Return([]*model.Block{}, nil)
+
+		err := th.App.validateFileOwnershipForBlockWrite(validTeamID, validBoardID, filename)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "file does not belong to the specified board")
 	})
 
 	t.Run("Should allow file with no FileInfo record (very old upload)", func(t *testing.T) {

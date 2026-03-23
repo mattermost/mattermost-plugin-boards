@@ -10,24 +10,10 @@ import (
 )
 
 // initialize is called when the App is first created.
-func (a *App) initialize(skipTemplateInit bool, skipMigrations bool) {
+func (a *App) initialize(skipTemplateInit bool) {
 	if !skipTemplateInit {
 		if err := a.InitTemplates(); err != nil {
 			a.logger.Error(`InitializeTemplates failed`, mlog.Err(err))
-		}
-	}
-	if !skipMigrations {
-		// RunFileOwnershipMigration is a *sqlstore.SQLStore method not in the Store
-		// interface (the generator can't handle cross-package parameter types), so we
-		// call it via a narrow structural type assertion.
-		type fileOwnershipMigrator interface {
-			RunFileOwnershipMigration(
-				moveFile func(oldPath, newPath string) error,
-				fileExists func(path string) (bool, error),
-			)
-		}
-		if m, ok := a.store.(fileOwnershipMigrator); ok {
-			m.RunFileOwnershipMigration(a.filesBackend.MoveFile, a.filesBackend.FileExists)
 		}
 	}
 }

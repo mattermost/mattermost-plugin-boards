@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -32,9 +31,6 @@ const (
 	TeamLessBoardsMigrationKey                = "TeamLessBoardsMigrationComplete"
 	DeletedMembershipBoardsMigrationKey       = "DeletedMembershipBoardsMigrationComplete"
 	DeDuplicateCategoryBoardTableMigrationKey = "DeDuplicateCategoryBoardTableComplete"
-	FileOwnershipMigrationKey                 = "FileOwnershipMigrationComplete"
-
-	fileOwnershipMigrationBatchSize = 500
 )
 
 func (s *SQLStore) getBlocksWithSameID(db sq.BaseRunner) ([]*model.Block, error) {
@@ -905,165 +901,5 @@ func (s *SQLStore) runPostgresDeDuplicateCategoryBoardsMigration() error {
 		s.logger.Error("Failed to de-duplicate data in category_boards table", mlog.Err(err))
 	}
 
-	return nil
-}
-
-// RunFileOwnershipMigration moves files from boards/YYYYMMDD/filename to
-// boards/YYYYMMDD/boardID/filename so ownership can be verified from the path.
-// It is idempotent: completion is recorded in the system-settings table.
-func (s *SQLStore) RunFileOwnershipMigration(
-	moveFile func(oldPath, newPath string) error,
-	fileExists func(path string) (bool, error),
-) {
-	setting, err := s.GetSystemSetting(FileOwnershipMigrationKey)
-	if err != nil {
-		s.logger.Error("RunFileOwnershipMigration: failed to read migration state", mlog.Err(err))
-		return
-	}
-	if setting == "true" {
-		return
-	}
-
-	s.logger.Debug("== Running file ownership migration ====================")
-
-	// processedFiles maps filename → owning boardID (first-reference-wins).
-	// Cross-board reuse of the same fileId is the exploit this migration
-	// fixes, so later references from other boards are intentionally skipped.
-	processedFiles := make(map[string]string)
-	hadErrors := false
-
-	for _, blockType := range []model.BlockType{model.TypeImage, model.TypeAttachment} {
-		for page := 0; ; page++ {
-			opts := model.QueryBlocksOptions{
-				BlockType: blockType,
-				Page:      page,
-				PerPage:   fileOwnershipMigrationBatchSize,
-			}
-
-			blocks, err := s.getBlocks(s.db, opts)
-			if err != nil {
-				s.logger.Error("RunFileOwnershipMigration: failed to fetch blocks",
-					mlog.String("blockType", string(blockType)),
-					mlog.Int("page", page),
-					mlog.Err(err),
-				)
-				return
-			}
-
-			for _, block := range blocks {
-				if block.DeleteAt != 0 {
-					continue
-				}
-
-				filename, _ := block.Fields[model.BlockFieldFileId].(string)
-				if filename == "" {
-					continue
-				}
-
-				if ownerBoardID, seen := processedFiles[filename]; seen {
-					s.logger.Warn("RunFileOwnershipMigration: file referenced by multiple boards; keeping original owner",
-						mlog.String("filename", filename),
-						mlog.String("ownerBoardID", ownerBoardID),
-						mlog.String("skippedBoardID", block.BoardID),
-					)
-					continue
-				}
-
-				if err := s.migrateFileToNewPath(moveFile, fileExists, block.BoardID, filename); err != nil {
-					s.logger.Warn("RunFileOwnershipMigration: failed to migrate file",
-						mlog.String("filename", filename),
-						mlog.String("boardID", block.BoardID),
-						mlog.Err(err),
-					)
-					hadErrors = true
-				} else {
-					processedFiles[filename] = block.BoardID
-				}
-			}
-
-			if len(blocks) < fileOwnershipMigrationBatchSize {
-				break
-			}
-		}
-	}
-
-	if hadErrors {
-		s.logger.Error("RunFileOwnershipMigration: completed with errors; migration will be retried on next startup")
-		return
-	}
-
-	s.logger.Debug("== File ownership migration complete ====================")
-
-	if err := s.SetSystemSetting(FileOwnershipMigrationKey, "true"); err != nil {
-		s.logger.Error("RunFileOwnershipMigration: failed to mark migration complete", mlog.Err(err))
-	}
-}
-
-// migrateFileToNewPath moves a single file from the old 3-part path
-// (boards/YYYYMMDD/filename) to the new 4-part path (boards/YYYYMMDD/boardID/filename)
-// and updates FileInfo.Path in the database.
-func (s *SQLStore) migrateFileToNewPath(
-	moveFile func(oldPath, newPath string) error,
-	fileExists func(path string) (bool, error),
-	boardID, filename string,
-) error {
-	// Derive the FileInfo ID: strip the 1-char type prefix from the base name.
-	// e.g. "7abc123.txt" → base "7abc123" → fileInfoID "abc123"
-	base := strings.SplitN(filename, ".", 2)[0]
-	if len(base) <= 1 {
-		return nil // filename too short to have a type prefix; skip
-	}
-	fileInfoID := base[1:]
-
-	fileInfo, err := s.GetFileInfo(fileInfoID)
-	if err != nil {
-		return err
-	}
-	if fileInfo == nil {
-		return nil
-	}
-
-	normalizedOldPath := filepath.ToSlash(fileInfo.Path)
-	parts := strings.SplitN(normalizedOldPath, "/", 4)
-
-	// Only migrate 3-part paths of the form boards/YYYYMMDD/filename.
-	// 4-part paths are already migrated; template paths don't start with "boards/".
-	if len(parts) != 3 || parts[0] != "boards" {
-		return nil
-	}
-
-	newPath := filepath.ToSlash(filepath.Join("boards", parts[1], boardID, parts[2]))
-
-	exists, err := fileExists(normalizedOldPath)
-	if err != nil {
-		return fmt.Errorf("checking existence of %s: %w", normalizedOldPath, err)
-	}
-
-	if exists {
-		if err := moveFile(normalizedOldPath, newPath); err != nil {
-			return fmt.Errorf("moving %s to %s: %w", normalizedOldPath, newPath, err)
-		}
-	}
-	// If the file is no longer at the old location (partial previous run),
-	// we still update FileInfo.Path so the DB stays consistent.
-
-	if err := s.updateFileInfoPath(s.db, fileInfo.Id, newPath); err != nil {
-		if exists {
-			// Attempt to roll back the file move to avoid an orphaned file.
-			if revertErr := moveFile(newPath, normalizedOldPath); revertErr != nil {
-				s.logger.Error("RunFileOwnershipMigration: failed to revert file move after DB error",
-					mlog.String("newPath", newPath),
-					mlog.String("oldPath", normalizedOldPath),
-					mlog.Err(revertErr),
-				)
-			}
-		}
-		return fmt.Errorf("updating FileInfo.Path in DB: %w", err)
-	}
-
-	s.logger.Debug("RunFileOwnershipMigration: migrated file",
-		mlog.String("oldPath", normalizedOldPath),
-		mlog.String("newPath", newPath),
-	)
 	return nil
 }

@@ -122,10 +122,11 @@ func (a *App) ValidateFileOwnership(teamID, boardID, filename string) error {
 }
 
 // validateFileOwnershipForBlockWrite verifies that a file belongs to the given board
-// before a block reference to it is persisted. It does not fall back to
-// validateFileReferencedByBoard because the new block has not been saved yet.
-// Files uploaded before boardID was included in the path have a 3-part path
-// (boards/YYYYMMDD/filename) and are allowed through for backward compatibility.
+// before a block reference to it is persisted. Three path formats are handled:
+//
+//   - teamID/boardID/filename  (template)       → ownership from path
+//   - boards/YYYYMMDD/boardID/filename  (new)   → ownership from path
+//   - boards/YYYYMMDD/filename  (legacy)         → ad-hoc block scan
 func (a *App) validateFileOwnershipForBlockWrite(teamID, boardID, filename string) error {
 	fileInfo, err := a.GetFileInfo(filename)
 	if err != nil {
@@ -149,16 +150,21 @@ func (a *App) validateFileOwnershipForBlockWrite(teamID, boardID, filename strin
 		return model.NewErrPermission("file does not belong to the specified board")
 	}
 
-	// Regular file: boards/YYYYMMDD/{boardID}/{filename} (new) or
-	// boards/YYYYMMDD/{filename} (old, no boardID in path).
 	parts := strings.SplitN(normalizedPath, "/", 4)
 	if len(parts) == 4 {
+		// New format: boards/YYYYMMDD/boardID/filename — ownership from path.
 		if parts[2] == boardID {
 			return nil
 		}
 		return model.NewErrPermission("file does not belong to the specified board")
 	}
 
+	// Legacy 3-part path: boards/YYYYMMDD/filename — no boardID in path.
+	// Fall back to a block scan to verify the file is already referenced by
+	// this board. This is the same check used on the read path.
+	if err := a.validateFileReferencedByBoard(boardID, filename); err != nil {
+		return model.NewErrPermission("file does not belong to the specified board")
+	}
 	return nil
 }
 
