@@ -202,6 +202,11 @@ class Constants {
     static readonly noChannelID = '0'
 
     static readonly SystemUserID = 'system'
+
+    // SessionStorage keys for error handling
+    static readonly sessionStorageIgnoreStoredUrlsKey = 'board_ignore_stored_urls'
+    static readonly sessionStorageErrorRedirectCountKey = 'board_error_redirect_count'
+    static readonly sessionStorageErrorRedirectTimeKey = 'board_error_redirect_time'
 }
 
 export {Constants, Permission}

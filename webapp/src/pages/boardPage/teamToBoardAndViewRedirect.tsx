@@ -1,7 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import {useEffect} from 'react'
+import {useEffect, useRef} from 'react'
 import {generatePath, useHistory, useRouteMatch} from 'react-router-dom'
 
 import {getBoards, getCurrentBoardId} from '../../store/boards'
@@ -22,9 +22,26 @@ const TeamToBoardAndViewRedirect = (): null => {
     const boards = useAppSelector(getBoards)
     const teamId = match.params.teamId || UserSettings.lastTeamId || Constants.globalTeamId
 
+    // Use ref to persist ignore flag across re-renders
+    const ignoreStoredUrlsRef = useRef<boolean>(false)
+
+    useEffect(() => {
+        const ignoreFlag = sessionStorage.getItem(Constants.sessionStorageIgnoreStoredUrlsKey) === 'true'
+        ignoreStoredUrlsRef.current = ignoreFlag
+
+        if (ignoreFlag) {
+            sessionStorage.removeItem(Constants.sessionStorageIgnoreStoredUrlsKey)
+        }
+    }, [])
+
     useEffect(() => {
         let boardID = match.params.boardId
         if (!match.params.boardId) {
+            // Skip auto-redirect if flag was set on mount
+            if (ignoreStoredUrlsRef.current) {
+                return
+            }
+
             // first preference is for last visited board
             boardID = UserSettings.lastBoardId[teamId]
 
@@ -64,8 +81,9 @@ const TeamToBoardAndViewRedirect = (): null => {
         // when a view isn't open,
         // but the data is available, try opening a view
         if ((!viewID || viewID === '0') && boardId && boardId === match.params.boardId && boardViews && boardViews.length > 0) {
-            // most recent view gets the first preference
-            viewID = UserSettings.lastViewId[boardID]
+            if (!ignoreStoredUrlsRef.current) {
+                viewID = UserSettings.lastViewId[boardID]
+            }
             if (viewID) {
                 UserSettings.setLastViewId(boardID, viewID)
                 dispatch(setCurrentView(viewID))

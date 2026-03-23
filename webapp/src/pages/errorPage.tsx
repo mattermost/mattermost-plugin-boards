@@ -12,6 +12,8 @@ import './errorPage.scss'
 
 import {errorDefFromId, ErrorId} from '../errors'
 import {Utils} from '../utils'
+import {UserSettingKey} from '../userSettings'
+import {Constants} from '../constants'
 
 const ErrorPage = () => {
     const history = useHistory()
@@ -19,27 +21,38 @@ const ErrorPage = () => {
     const errid = queryParams.get('id')
     const errorDef = errorDefFromId(errid as ErrorId)
 
-    const handleButtonClick = useCallback((path: string | ((params: URLSearchParams) => string)) => {
+    const handleButtonClick = useCallback((path: string | ((params: URLSearchParams) => string), clearHistory: boolean) => {
         let url = '/'
         if (typeof path === 'function') {
             url = path(queryParams)
         } else if (path) {
             url = path as string
         }
-        if (url === window.location.origin) {
-            window.location.href = url
+
+        // Clear stored URLs and set flag to prevent auto-redirect to broken boards
+        if (clearHistory) {
+            localStorage.removeItem(UserSettingKey.LastBoardId)
+            localStorage.removeItem(UserSettingKey.LastViewId)
+            sessionStorage.setItem(Constants.sessionStorageIgnoreStoredUrlsKey, 'true')
+            sessionStorage.removeItem(Constants.sessionStorageErrorRedirectCountKey)
+            sessionStorage.removeItem(Constants.sessionStorageErrorRedirectTimeKey)
+        }
+
+        if (url === window.location.origin || clearHistory) {
+            const finalUrl = clearHistory ? Utils.getFrontendBaseURL(true) : url
+            window.location.href = finalUrl
         } else {
             history.push(url)
         }
-    }, [history])
+    }, [history, queryParams])
 
-    const makeButton = ((path: string | ((params: URLSearchParams) => string), txt: string, fill: boolean) => {
+    const makeButton = ((path: string | ((params: URLSearchParams) => string), txt: string, fill: boolean, clearHistory: boolean) => {
         return (
             <Button
                 filled={fill}
                 size='large'
                 onClick={async () => {
-                    handleButtonClick(path)
+                    handleButtonClick(path, clearHistory)
                 }}
             >
                 {txt}
@@ -48,7 +61,7 @@ const ErrorPage = () => {
     })
 
     if (!Utils.isFocalboardPlugin() && errid === ErrorId.NotLoggedIn) {
-        handleButtonClick(errorDef.button1Redirect)
+        handleButtonClick(errorDef.button1Redirect, errorDef.button1ClearHistory)
     }
 
     return (
@@ -66,10 +79,10 @@ const ErrorPage = () => {
                 <ErrorIllustration/>
                 <br/>
                 {
-                    (errorDef.button1Enabled ? makeButton(errorDef.button1Redirect, errorDef.button1Text, errorDef.button1Fill) : null)
+                    (errorDef.button1Enabled ? makeButton(errorDef.button1Redirect, errorDef.button1Text, errorDef.button1Fill, errorDef.button1ClearHistory) : null)
                 }
                 {
-                    (errorDef.button2Enabled ? makeButton(errorDef.button2Redirect, errorDef.button2Text, errorDef.button2Fill) : null)
+                    (errorDef.button2Enabled ? makeButton(errorDef.button2Redirect, errorDef.button2Text, errorDef.button2Fill, errorDef.button2ClearHistory) : null)
                 }
             </div>
         </div>

@@ -88,6 +88,37 @@ const BoardPage = (props: Props): JSX.Element => {
     const history = useHistory()
     const globalError = useAppSelector<string>(getGlobalError)
 
+    // Early parameter validation to prevent errors from malformed URLs
+    // This runs before any data loading or rendering logic
+    useEffect(() => {
+        // Validate boardId if present - should be a valid ID format (not contain 'error', 'plugins', etc.)
+        const boardId = match.params.boardId
+        if (boardId) {
+            // Check if boardId looks malformed (contains path segments like 'error', 'plugins', 'boards', etc.)
+            const malformedPatterns = ['/error', 'plugins/', 'boards/', 'team/']
+            const isMalformed = malformedPatterns.some(pattern => boardId.includes(pattern))
+
+            if (isMalformed) {
+                Utils.logWarn(`Detected malformed boardId in URL: ${boardId}`)
+                history.replace('/error?id=unknown')
+                return
+            }
+        }
+
+        // Validate viewId if present
+        const viewIdParam = match.params.viewId
+        if (viewIdParam) {
+            const malformedPatterns = ['/error', 'plugins/', 'boards/', 'team/']
+            const isMalformed = malformedPatterns.some(pattern => viewIdParam.includes(pattern))
+
+            if (isMalformed) {
+                Utils.logWarn(`Detected malformed viewId in URL: ${viewIdParam}`)
+                history.replace('/error?id=unknown')
+                return
+            }
+        }
+    }, [match.params.boardId, match.params.viewId, history])
+
     // if we're in a legacy route and not showing a shared board,
     // redirect to the new URL schema equivalent
     if (Utils.isFocalboardLegacy() && !props.readonly) {
