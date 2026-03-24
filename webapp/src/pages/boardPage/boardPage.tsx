@@ -4,7 +4,7 @@
 import React, {useEffect, useState, useMemo, useCallback} from 'react'
 import {batch} from 'react-redux'
 import {FormattedMessage, useIntl} from 'react-intl'
-import {useRouteMatch, useHistory} from 'react-router-dom'
+import {Redirect, useRouteMatch, useHistory} from 'react-router-dom'
 
 import Workspace from '../../components/workspace'
 import VersionMessage from '../../components/messages/versionMessage'
@@ -65,6 +65,8 @@ import WebsocketConnection from './websocketConnection'
 
 import './boardPage.scss'
 
+const MALFORMED_URL_PATTERNS = ['/error', 'plugins/', 'boards/', 'team/']
+
 type Props = {
     readonly?: boolean
     new?: boolean
@@ -88,36 +90,20 @@ const BoardPage = (props: Props): JSX.Element => {
     const history = useHistory()
     const globalError = useAppSelector<string>(getGlobalError)
 
-    // Early parameter validation to prevent errors from malformed URLs
-    // This runs before any data loading or rendering logic
-    useEffect(() => {
-        // Validate boardId if present - should be a valid ID format (not contain 'error', 'plugins', etc.)
+    // Synchronous URL validation - runs before any data loading effects
+    const isUrlMalformed = useMemo(() => {
         const boardId = match.params.boardId
-        if (boardId) {
-            // Check if boardId looks malformed (contains path segments like 'error', 'plugins', 'boards', etc.)
-            const malformedPatterns = ['/error', 'plugins/', 'boards/', 'team/']
-            const isMalformed = malformedPatterns.some(pattern => boardId.includes(pattern))
-
-            if (isMalformed) {
-                Utils.logWarn(`Detected malformed boardId in URL: ${boardId}`)
-                history.replace('/error?id=unknown')
-                return
-            }
+        if (boardId && MALFORMED_URL_PATTERNS.some(pattern => boardId.includes(pattern))) {
+            Utils.logWarn(`Detected malformed boardId in URL: ${boardId}`)
+            return true
         }
-
-        // Validate viewId if present
         const viewIdParam = match.params.viewId
-        if (viewIdParam) {
-            const malformedPatterns = ['/error', 'plugins/', 'boards/', 'team/']
-            const isMalformed = malformedPatterns.some(pattern => viewIdParam.includes(pattern))
-
-            if (isMalformed) {
-                Utils.logWarn(`Detected malformed viewId in URL: ${viewIdParam}`)
-                history.replace('/error?id=unknown')
-                return
-            }
+        if (viewIdParam && MALFORMED_URL_PATTERNS.some(pattern => viewIdParam.includes(pattern))) {
+            Utils.logWarn(`Detected malformed viewId in URL: ${viewIdParam}`)
+            return true
         }
-    }, [match.params.boardId, match.params.viewId, history])
+        return false
+    }, [match.params.boardId, match.params.viewId])
 
     // if we're in a legacy route and not showing a shared board,
     // redirect to the new URL schema equivalent
@@ -193,6 +179,7 @@ const BoardPage = (props: Props): JSX.Element => {
         }
 
         const dispatchLoadAction = () => {
+            if (isUrlMalformed || !match.params.boardId) return
             dispatch(loadAction(match.params.boardId))
         }
 
@@ -220,7 +207,7 @@ const BoardPage = (props: Props): JSX.Element => {
             wsClient.removeOnChange(incrementalBoardMemberUpdate, 'boardMembers')
             wsClient.removeOnReconnect(dispatchLoadAction)
         }
-    }, [me?.id, activeBoardId])
+    }, [me?.id, activeBoardId, isUrlMalformed, match.params.boardId])
 
     const onConfirmJoin = async () => {
         if (me) {
@@ -301,6 +288,7 @@ const BoardPage = (props: Props): JSX.Element => {
     }, [])
 
     useEffect(() => {
+        if (isUrlMalformed) return
         dispatch(loadAction(match.params.boardId))
 
         if (match.params.boardId) {
@@ -316,13 +304,12 @@ const BoardPage = (props: Props): JSX.Element => {
                 }
             }
         }
-    }, [teamId, match.params.boardId, viewId, me?.id])
+    }, [teamId, match.params.boardId, viewId, me?.id, isUrlMalformed])
 
     useEffect(() => {
-        if (match.params.boardId && !props.readonly && me) {
-            loadOrJoinBoard(me, teamId, match.params.boardId)
-        }
-    }, [teamId, match.params.boardId, me?.id])
+        if (isUrlMalformed || !match.params.boardId || props.readonly || !me) return
+        loadOrJoinBoard(me, teamId, match.params.boardId)
+    }, [teamId, match.params.boardId, me?.id, isUrlMalformed])
 
     // Track when board has been loaded at least once
     useEffect(() => {
@@ -334,10 +321,9 @@ const BoardPage = (props: Props): JSX.Element => {
     // When the board is removed from the store while viewing (e.g. user was removed via websocket),
     // re-verify access so we show access-denied instead of the template picker
     useEffect(() => {
-        if (match.params.boardId && !props.readonly && me && !currentBoard && boardWasLoaded) {
-            loadOrJoinBoard(me, teamId, match.params.boardId)
-        }
-    }, [teamId, match.params.boardId, me?.id, currentBoard, loadOrJoinBoard, boardWasLoaded])
+        if (isUrlMalformed || !match.params.boardId || props.readonly || !me || currentBoard || !boardWasLoaded) return
+        loadOrJoinBoard(me, teamId, match.params.boardId)
+    }, [teamId, match.params.boardId, me?.id, currentBoard, loadOrJoinBoard, boardWasLoaded, isUrlMalformed])
 
     const handleUnhideBoard = async (boardID: string) => {
         if (!me || !category) {
@@ -348,14 +334,11 @@ const BoardPage = (props: Props): JSX.Element => {
     }
 
     useEffect(() => {
-        if (!teamId || !match.params.boardId) {
-            return
-        }
-
+        if (isUrlMalformed || !teamId || !match.params.boardId) return
         if (hiddenBoardIDs.indexOf(match.params.boardId) >= 0) {
             handleUnhideBoard(match.params.boardId)
         }
-    }, [me?.id, teamId, match.params.boardId])
+    }, [me?.id, teamId, match.params.boardId, isUrlMalformed])
 
     if (props.readonly) {
         useEffect(() => {
@@ -368,6 +351,10 @@ const BoardPage = (props: Props): JSX.Element => {
     // Don't render board if access is denied - GlobalErrorRedirect will handle the redirect
     if (globalError === ErrorId.AccessDenied || globalError === ErrorId.InvalidReadOnlyBoard) {
         return <></>
+    }
+
+    if (isUrlMalformed) {
+        return <Redirect to="/error?id=unknown"/>
     }
 
     return (
