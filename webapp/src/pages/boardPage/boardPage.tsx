@@ -65,7 +65,7 @@ import WebsocketConnection from './websocketConnection'
 
 import './boardPage.scss'
 
-const MALFORMED_URL_PATTERNS = ['/error', 'plugins/', 'boards/', 'team/']
+const MALFORMED_URL_SEGMENTS = new Set(['error', 'plugins', 'boards', 'team'])
 
 type Props = {
     readonly?: boolean
@@ -92,18 +92,21 @@ const BoardPage = (props: Props): JSX.Element => {
 
     // Synchronous URL validation - runs before any data loading effects
     const isUrlMalformed = useMemo(() => {
-        const boardId = match.params.boardId
-        if (boardId && MALFORMED_URL_PATTERNS.some(pattern => boardId.includes(pattern))) {
+        const {boardId, viewId: viewIdParam, cardId} = match.params
+        if (boardId && MALFORMED_URL_SEGMENTS.has(boardId)) {
             Utils.logWarn(`Detected malformed boardId in URL: ${boardId}`)
             return true
         }
-        const viewIdParam = match.params.viewId
-        if (viewIdParam && MALFORMED_URL_PATTERNS.some(pattern => viewIdParam.includes(pattern))) {
+        if (viewIdParam && MALFORMED_URL_SEGMENTS.has(viewIdParam)) {
             Utils.logWarn(`Detected malformed viewId in URL: ${viewIdParam}`)
             return true
         }
+        if (cardId && MALFORMED_URL_SEGMENTS.has(cardId)) {
+            Utils.logWarn(`Detected malformed cardId in URL: ${cardId}`)
+            return true
+        }
         return false
-    }, [match.params.boardId, match.params.viewId])
+    }, [match.params.boardId, match.params.viewId, match.params.cardId])
 
     // if we're in a legacy route and not showing a shared board,
     // redirect to the new URL schema equivalent
