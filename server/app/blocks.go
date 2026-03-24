@@ -82,7 +82,8 @@ func (a *App) PatchBlockAndNotify(blockID string, blockPatch *model.BlockPatch, 
 
 	// Reject patches that reference files not belonging to this board.
 	if blockPatch.UpdatedFields != nil {
-		if err := a.validateFileRefsInFields(board.TeamID, oldBlock.BoardID, blockID, blockPatch.UpdatedFields); err != nil {
+		err = a.validateFileRefsInFields(board.TeamID, oldBlock.BoardID, blockID, blockPatch.UpdatedFields)
+		if err != nil {
 			return nil, err
 		}
 	}
