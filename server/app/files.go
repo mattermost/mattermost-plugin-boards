@@ -182,22 +182,14 @@ func (a *App) validateFileReferencedByBoard(boardID, filename string) error {
 		return err
 	}
 
-	// Check image blocks
 	for _, block := range imageBlocks {
 		if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID == filename {
 			return nil
 		}
-		if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok && attachmentID == filename {
-			return nil
-		}
 	}
 
-	// Check attachment blocks
 	for _, block := range attachmentBlocks {
 		if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID == filename {
-			return nil
-		}
-		if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok && attachmentID == filename {
 			return nil
 		}
 	}

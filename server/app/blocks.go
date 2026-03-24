@@ -143,6 +143,7 @@ func (a *App) PatchBlocksAndNotify(teamID string, blockPatches *model.BlockPatch
 	}
 
 	// Reject patches that reference files not belonging to the target board.
+	boardCache := make(map[string]*model.Board)
 	for i, patch := range blockPatches.BlockPatches {
 		if patch.UpdatedFields == nil {
 			continue
@@ -151,9 +152,14 @@ func (a *App) PatchBlocksAndNotify(teamID string, blockPatches *model.BlockPatch
 		if !ok {
 			continue
 		}
-		board, bErr := a.store.GetBoard(block.BoardID)
-		if bErr != nil {
-			return bErr
+		board, ok := boardCache[block.BoardID]
+		if !ok {
+			var bErr error
+			board, bErr = a.store.GetBoard(block.BoardID)
+			if bErr != nil {
+				return bErr
+			}
+			boardCache[block.BoardID] = board
 		}
 		if fileID, ok := patch.UpdatedFields[model.BlockFieldFileId].(string); ok && fileID != "" {
 			if ownershipErr := a.validateFileOwnershipForBlockWrite(board.TeamID, block.BoardID, fileID); ownershipErr != nil {
@@ -173,7 +179,7 @@ func (a *App) PatchBlocksAndNotify(teamID string, blockPatches *model.BlockPatch
 
 	a.blockChangeNotifier.Enqueue(func() error {
 		a.metrics.IncrementBlocksPatched(len(oldBlocks))
-		for i, blockID := range blockPatches.BlockIDs {
+		for _, blockID := range blockPatches.BlockIDs {
 			newBlock, err := a.store.GetBlock(blockID)
 			if err != nil {
 				return err
@@ -181,7 +187,7 @@ func (a *App) PatchBlocksAndNotify(teamID string, blockPatches *model.BlockPatch
 			a.wsAdapter.BroadcastBlockChange(teamID, newBlock)
 			a.webhook.NotifyUpdate(newBlock)
 			if !disableNotify {
-				a.notifyBlockChanged(notify.Update, newBlock, oldBlocks[i], modifiedByID)
+				a.notifyBlockChanged(notify.Update, newBlock, blockByID[blockID], modifiedByID)
 			}
 		}
 		return nil

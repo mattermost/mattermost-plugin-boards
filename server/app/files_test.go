@@ -475,6 +475,7 @@ func TestCopyCard(t *testing.T) {
 
 		mockedFileBackend := &mocks.FileBackend{}
 		th.App.filesBackend = mockedFileBackend
+		mockedFileBackend.On("FileExists", mock.AnythingOfType("string")).Return(true, nil)
 		mockedFileBackend.On("CopyFile", mock.Anything, mock.Anything).Return(nil)
 
 		updatedFileNames, err := th.App.CopyCardFiles(validTestBoardID, []*model.Block{imageBlock}, false)
@@ -514,6 +515,7 @@ func TestCopyCard(t *testing.T) {
 
 		mockedFileBackend := &mocks.FileBackend{}
 		th.App.filesBackend = mockedFileBackend
+		mockedFileBackend.On("FileExists", mock.AnythingOfType("string")).Return(true, nil)
 		mockedFileBackend.On("CopyFile", mock.Anything, mock.Anything).Return(nil)
 
 		updatedFileNames, err := th.App.CopyCardFiles(validTestBoardID, []*model.Block{attachmentBlock}, false)
@@ -522,8 +524,8 @@ func TestCopyCard(t *testing.T) {
 	})
 
 	t.Run("Board exists, image block, without FileInfo", func(t *testing.T) {
-		th.Store.EXPECT().GetBoard("boardID").Return(&model.Board{
-			ID:         "boardID",
+		th.Store.EXPECT().GetBoard(validTestBoardID).Return(&model.Board{
+			ID:         validTestBoardID,
 			TeamID:     "validteam12345678901234567",
 			IsTemplate: false,
 		}, nil)
@@ -532,9 +534,10 @@ func TestCopyCard(t *testing.T) {
 
 		mockedFileBackend := &mocks.FileBackend{}
 		th.App.filesBackend = mockedFileBackend
+		mockedFileBackend.On("FileExists", mock.AnythingOfType("string")).Return(true, nil)
 		mockedFileBackend.On("CopyFile", mock.Anything, mock.Anything).Return(nil)
 
-		updatedFileNames, err := th.App.CopyCardFiles("boardID", []*model.Block{imageBlock}, false)
+		updatedFileNames, err := th.App.CopyCardFiles(validTestBoardID, []*model.Block{imageBlock}, false)
 		assert.NoError(t, err)
 		assert.NotNil(t, imageBlock.Fields["fileId"].(string))
 		assert.NotNil(t, updatedFileNames[imageBlock.Fields["fileId"].(string)])
@@ -621,6 +624,7 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 
 		mockedFileBackend := &mocks.FileBackend{}
 		th.App.filesBackend = mockedFileBackend
+		mockedFileBackend.On("FileExists", mock.AnythingOfType("string")).Return(true, nil)
 		mockedFileBackend.On("CopyFile", mock.Anything, mock.Anything).Return(nil)
 
 		err := th.App.CopyAndUpdateCardFiles("bvalidtestboard123456789012", "userID", []*model.Block{imageBlock}, false)
@@ -641,6 +645,7 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 
 		mockedFileBackend := &mocks.FileBackend{}
 		th.App.filesBackend = mockedFileBackend
+		mockedFileBackend.On("FileExists", mock.AnythingOfType("string")).Return(true, nil)
 		mockedFileBackend.On("CopyFile", mock.Anything, mock.Anything).Return(nil)
 
 		err := th.App.CopyAndUpdateCardFiles(validTestBoardID2, "userID", []*model.Block{validImageBlock}, false)
@@ -669,7 +674,7 @@ func TestCopyCardFiles(t *testing.T) {
 		copiedBlocks := []*model.Block{
 			{
 				Type:    model.TypeImage,
-				Fields:  map[string]interface{}{"fileId": "7validFileID12345678901234.jpg"},
+				Fields:  map[string]interface{}{"fileId": "7validfileid12345678901234567.jpg"},
 				BoardID: destBoardID,
 			},
 		}
@@ -679,11 +684,17 @@ func TestCopyCardFiles(t *testing.T) {
 			TeamID:     "validteam12345678901234567",
 			IsTemplate: false,
 		}, nil)
-		th.Store.EXPECT().GetFileInfo("validFileID12345678901234").Return(nil, nil)
+		th.Store.EXPECT().GetBoard(destBoardID).Return(&model.Board{
+			ID:         destBoardID,
+			TeamID:     "validteam12345678901234567",
+			IsTemplate: false,
+		}, nil)
+		th.Store.EXPECT().GetFileInfo("validfileid12345678901234567").Return(nil, nil)
 		th.Store.EXPECT().SaveFileInfo(gomock.Any()).Return(nil)
 
 		mockedFileBackend := &mocks.FileBackend{}
 		th.App.filesBackend = mockedFileBackend
+		mockedFileBackend.On("FileExists", mock.AnythingOfType("string")).Return(true, nil)
 		mockedFileBackend.On("CopyFile", mock.Anything, mock.Anything).Return(nil)
 
 		newFileNames, err := th.App.CopyCardFiles(sourceBoardID, copiedBlocks, false)
