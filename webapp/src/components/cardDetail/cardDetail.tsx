@@ -59,7 +59,7 @@ type Props = {
     contents: Array<ContentBlock|ContentBlock[]>
     readonly: boolean
     onClose: () => void
-    onDelete: (block: Block) => void
+    onDelete: (block: Block) => void | Promise<void>
     addAttachment: () => void
 }
 

@@ -15,7 +15,7 @@ type ConfirmationDialogBoxProps = {
     subText?: string | ReactNode
     confirmButtonText?: string
     destructive?: boolean
-    onConfirm: () => void
+    onConfirm: () => void | Promise<void>
     onClose: () => void
 }
 
@@ -24,8 +24,13 @@ type Props = {
 }
 
 export const ConfirmationDialogBox = (props: Props) => {
-    const handleOnClose = useCallback(props.dialogBox.onClose, [])
-    const handleOnConfirm = useCallback(props.dialogBox.onConfirm, [])
+    const {onClose, onConfirm} = props.dialogBox
+    const handleOnClose = useCallback(() => {
+        onClose()
+    }, [onClose])
+    const handleOnConfirm = useCallback(() => {
+        onConfirm()
+    }, [onConfirm])
 
     return (
         <Dialog

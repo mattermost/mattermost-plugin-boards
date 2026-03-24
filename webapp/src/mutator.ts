@@ -28,19 +28,20 @@ import store from './store'
 import {updateBoards} from './store/boards'
 import {updateViews} from './store/views'
 import {updateCards} from './store/cards'
-import {updateAttachments} from './store/attachments'
+import {updateAttachments, selectBlocksForAttachmentSliceUpdate} from './store/attachments'
 import {updateComments} from './store/comments'
 import {updateContents} from './store/contents'
 import {addBoardUsers, removeBoardUsersById} from './store/users'
 
 function updateAllBoardsAndBlocks(boards: Board[], blocks: Block[]) {
     return batch(() => {
-        store.dispatch(updateBoards(boards.filter((b: Board) => b.deleteAt !== 0) as Board[]))
-        store.dispatch(updateViews(blocks.filter((b: Block) => b.type === 'view' || b.deleteAt !== 0) as BoardView[]))
-        store.dispatch(updateCards(blocks.filter((b: Block) => b.type === 'card' || b.deleteAt !== 0) as Card[]))
-        store.dispatch(updateAttachments(blocks.filter((b: Block) => b.type === 'attachment' || b.deleteAt !== 0) as AttachmentBlock[]))
-        store.dispatch(updateComments(blocks.filter((b: Block) => b.type === 'comment' || b.deleteAt !== 0) as CommentBlock[]))
-        store.dispatch(updateContents(blocks.filter((b: Block) => b.type !== 'card' && b.type !== 'view' && b.type !== 'board' && b.type !== 'comment') as ContentBlock[]))
+        const attachmentById = store.getState().attachments.attachments
+        store.dispatch(updateBoards(boards))
+        store.dispatch(updateViews(blocks.filter((b: Block) => b.type === 'view') as BoardView[]))
+        store.dispatch(updateCards(blocks.filter((b: Block) => b.type === 'card') as Card[]))
+        store.dispatch(updateAttachments(selectBlocksForAttachmentSliceUpdate(blocks, attachmentById)))
+        store.dispatch(updateComments(blocks.filter((b: Block) => b.type === 'comment') as CommentBlock[]))
+        store.dispatch(updateContents(blocks.filter((b: Block) => b.type !== 'card' && b.type !== 'view' && b.type !== 'board' && b.type !== 'comment' && b.type !== 'attachment') as ContentBlock[]))
     })
 }
 
@@ -174,6 +175,13 @@ class Mutator {
             async () => {
                 await beforeRedo?.()
                 await octoClient.deleteBlock(block.boardId, block.id)
+                if (block.type === 'attachment') {
+                    store.dispatch(updateAttachments([{
+                        ...block,
+                        type: 'attachment',
+                        deleteAt: block.deleteAt || Date.now(),
+                    } as AttachmentBlock]))
+                }
             },
             async () => {
                 await octoClient.undeleteBlock(block.boardId, block.id)

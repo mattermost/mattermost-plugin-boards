@@ -16,7 +16,7 @@ import {Permission} from '../../constants'
 
 type Props = {
     attachments: AttachmentBlock[]
-    onDelete: (block: Block) => void
+    onDelete: (block: Block) => void | Promise<void>
     addAttachment: () => void
 }
 

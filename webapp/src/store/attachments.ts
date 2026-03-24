@@ -4,11 +4,17 @@
 
 import {createSlice, PayloadAction} from '@reduxjs/toolkit'
 
+import {Block} from '../blocks/block'
 import {AttachmentBlock} from '../blocks/attachmentBlock'
 
 import {loadBoardData, initialReadOnlyLoad} from './initialLoad'
 
 import {RootState} from './index'
+
+/** Blocks that should be applied to the attachment slice (handles WS tombstones with missing/wrong `type` after hydrate). */
+export function selectBlocksForAttachmentSliceUpdate(blocks: readonly Block[], attachmentsById: {[key: string]: AttachmentBlock}): AttachmentBlock[] {
+    return blocks.filter((b) => b.type === 'attachment' || (b.deleteAt !== 0 && Boolean(attachmentsById[b.id]))) as AttachmentBlock[]
+}
 
 type AttachmentsState = {
     attachments: {[key: string]: AttachmentBlock}
@@ -25,16 +31,14 @@ const attachmentSlice = createSlice({
                     state.attachments[attachment.id] = attachment
                     if (!state.attachmentsByCard[attachment.parentId]) {
                         state.attachmentsByCard[attachment.parentId] = [attachment]
-                        return
-                    }
-                    if (state.attachmentsByCard[attachment.parentId].findIndex((a) => a.id === attachment.id) === -1) {
+                    } else if (state.attachmentsByCard[attachment.parentId].findIndex((a) => a.id === attachment.id) === -1) {
                         state.attachmentsByCard[attachment.parentId].push(attachment)
                     }
                 } else {
-                    const parentId = state.attachments[attachment.id]?.parentId
-                    if (!state.attachmentsByCard[parentId]) {
+                    const parentId = state.attachments[attachment.id]?.parentId || attachment.parentId
+                    if (!parentId || !state.attachmentsByCard[parentId]) {
                         delete state.attachments[attachment.id]
-                        return
+                        continue
                     }
                     for (let i = 0; i < state.attachmentsByCard[parentId].length; i++) {
                         if (state.attachmentsByCard[parentId][i].id === attachment.id) {
@@ -46,7 +50,10 @@ const attachmentSlice = createSlice({
             }
         },
         updateUploadPrecent: (state, action: PayloadAction<{blockId: string, uploadPercent: number}>) => {
-            state.attachments[action.payload.blockId].uploadingPercent = action.payload.uploadPercent
+            const entry = state.attachments[action.payload.blockId]
+            if (entry) {
+                entry.uploadingPercent = action.payload.uploadPercent
+            }
         },
     },
     extraReducers: (builder) => {
@@ -88,6 +95,6 @@ export function getCardAttachments(cardId: string): (state: RootState) => Attach
 
 export function getUploadPercent(blockId: string): (state: RootState) => number {
     return (state: RootState): number => {
-        return (state.attachments.attachments[blockId].uploadingPercent)
+        return state.attachments.attachments[blockId]?.uploadingPercent ?? 0
     }
 }

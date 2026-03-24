@@ -29,7 +29,7 @@ import Tooltip from './../../widgets/tooltip'
 
 type Props = {
     block: AttachmentBlock
-    onDelete?: (block: Block) => void
+    onDelete?: (block: Block) => void | Promise<void>
 }
 
 const AttachmentElement = (props: Props): JSX.Element|null => {
@@ -88,9 +88,16 @@ const AttachmentElement = (props: Props): JSX.Element|null => {
         }
     }, [fileInfo.extension])
 
-    const deleteAttachment = () => {
-        if (onDelete) {
-            onDelete(block)
+    const deleteAttachment = async () => {
+        if (!onDelete) {
+            setShowConfirmationDialogBox(false)
+            return
+        }
+        try {
+            await Promise.resolve(onDelete(block))
+            setShowConfirmationDialogBox(false)
+        } catch {
+            // leave dialog open on failure
         }
     }
 
