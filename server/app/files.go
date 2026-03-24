@@ -87,6 +87,13 @@ func (a *App) GetFileInfo(filename string) (*mm_model.FileInfo, error) {
 	return fileInfo, nil
 }
 
+// isBoardsFilePath reports whether a normalised file path is under the regular
+// boards storage root (boards/YYYYMMDD/...). Template files (teamID/boardID/filename)
+// return false.
+func isBoardsFilePath(normalizedPath string) bool {
+	return strings.HasPrefix(normalizedPath, utils.BoardsFilePathPrefix)
+}
+
 // ValidateFileOwnership checks if a file belongs to the specified board and team.
 func (a *App) ValidateFileOwnership(teamID, boardID, filename string) error {
 	fileInfo, err := a.GetFileInfo(filename)
@@ -95,7 +102,7 @@ func (a *App) ValidateFileOwnership(teamID, boardID, filename string) error {
 	}
 	if fileInfo != nil {
 		normalizedPath := filepath.ToSlash(fileInfo.Path)
-		if !strings.HasPrefix(normalizedPath, "boards/") {
+		if !isBoardsFilePath(normalizedPath) {
 			// Template path: teamID/boardID/filename
 			expectedPath := filepath.ToSlash(filepath.Join(teamID, boardID, filename))
 			if normalizedPath == expectedPath {
@@ -144,7 +151,7 @@ func (a *App) validateFileOwnershipForBlockWrite(teamID, boardID, filename strin
 	}
 
 	normalizedPath := filepath.ToSlash(fileInfo.Path)
-	if !strings.HasPrefix(normalizedPath, "boards/") {
+	if !isBoardsFilePath(normalizedPath) {
 		// Template path: teamID/boardID/filename
 		expectedPath := filepath.ToSlash(filepath.Join(teamID, boardID, filename))
 		if normalizedPath == expectedPath {
