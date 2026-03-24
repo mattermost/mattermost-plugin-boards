@@ -116,7 +116,10 @@ func (a *App) ValidateFileOwnership(teamID, boardID, filename string) error {
 		}
 	}
 	if err := a.validateFileReferencedByBoard(boardID, filename); err != nil {
-		return model.NewErrPermission("file does not belong to the specified board")
+		if errors.Is(err, ErrFileNotReferencedByBoard) {
+			return model.NewErrPermission("file does not belong to the specified board")
+		}
+		return err
 	}
 	return nil
 }
@@ -163,7 +166,10 @@ func (a *App) validateFileOwnershipForBlockWrite(teamID, boardID, filename strin
 	// Fall back to a block scan to verify the file is already referenced by
 	// this board. This is the same check used on the read path.
 	if err := a.validateFileReferencedByBoard(boardID, filename); err != nil {
-		return model.NewErrPermission("file does not belong to the specified board")
+		if errors.Is(err, ErrFileNotReferencedByBoard) {
+			return model.NewErrPermission("file does not belong to the specified board")
+		}
+		return err
 	}
 	return nil
 }
