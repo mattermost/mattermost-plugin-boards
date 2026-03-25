@@ -61,8 +61,7 @@ func (a *API) handleMoveBlockTo(w http.ResponseWriter, r *http.Request) {
 	where := mux.Vars(r)["where"]
 	userID := getUserID(r)
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to move block"))
+	if a.requireUserID(w, r, userID, "access denied to move block") {
 		return
 	}
 

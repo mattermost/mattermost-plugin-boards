@@ -59,8 +59,7 @@ func (a *API) handleArchiveExportBoard(w http.ResponseWriter, r *http.Request) {
 	boardID := vars["boardID"]
 	userID := getUserID(r)
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to archive export"))
+	if a.requireUserID(w, r, userID, "access denied to archive export") {
 		return
 	}
 
@@ -146,8 +145,7 @@ func (a *API) handleArchiveImport(w http.ResponseWriter, r *http.Request) {
 	teamID := vars["teamID"]
 
 	userID := getUserID(r)
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to archive import"))
+	if a.requireUserID(w, r, userID, "access denied to archive import") {
 		return
 	}
 
@@ -174,7 +172,11 @@ func (a *API) handleArchiveImport(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	auditRec := a.makeAuditRecord(r, "import", audit.Fail)
-	defer a.audit.LogRecord(audit.LevelModify, auditRec)
+	defer func() {
+		if a.audit != nil {
+			a.audit.LogRecord(audit.LevelModify, auditRec)
+		}
+	}()
 	auditRec.AddMeta("filename", handle.Filename)
 	auditRec.AddMeta("size", handle.Size)
 
@@ -224,8 +226,7 @@ func (a *API) handleArchiveExportTeam(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 	userID := getUserID(r)
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to archive export"))
+	if a.requireUserID(w, r, userID, "access denied to archive export") {
 		return
 	}
 

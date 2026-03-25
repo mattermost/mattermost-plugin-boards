@@ -220,8 +220,7 @@ func (a *API) handlePostBlocks(w http.ResponseWriter, r *http.Request) {
 	boardID := mux.Vars(r)["boardID"]
 	userID := getUserID(r)
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to create blocks"))
+	if a.requireUserID(w, r, userID, "access denied to create blocks") {
 		return
 	}
 
@@ -379,8 +378,7 @@ func (a *API) handleDeleteBlock(w http.ResponseWriter, r *http.Request) {
 	boardID := vars["boardID"]
 	blockID := vars["blockID"]
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to delete block"))
+	if a.requireUserID(w, r, userID, "access denied to delete block") {
 		return
 	}
 
@@ -462,8 +460,7 @@ func (a *API) handleUndeleteBlock(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	userID := getUserID(r)
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to undelete block"))
+	if a.requireUserID(w, r, userID, "access denied to undelete block") {
 		return
 	}
 
@@ -563,8 +560,7 @@ func (a *API) handlePatchBlock(w http.ResponseWriter, r *http.Request) {
 	boardID := vars["boardID"]
 	blockID := vars["blockID"]
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to patch block"))
+	if a.requireUserID(w, r, userID, "access denied to patch block") {
 		return
 	}
 
@@ -661,8 +657,7 @@ func (a *API) handlePatchBlocks(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 
 	// Check authentication first
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to patch blocks"))
+	if a.requireUserID(w, r, userID, "access denied to patch blocks") {
 		return
 	}
 
@@ -700,7 +695,7 @@ func (a *API) handlePatchBlocks(w http.ResponseWriter, r *http.Request) {
 			if model.IsErrNotFound(err) {
 				a.errorResponse(w, r, model.NewErrNotFound("block ID="+blockID))
 			} else {
-				a.errorResponse(w, r, model.NewErrForbidden("access denied to make board changes"))
+				a.errorResponse(w, r, err)
 			}
 			return
 		}
@@ -787,8 +782,7 @@ func (a *API) handleDuplicateBlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to board"))
+	if a.requireUserID(w, r, userID, "access denied to board") {
 		return
 	}
 

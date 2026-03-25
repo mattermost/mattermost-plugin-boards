@@ -70,8 +70,7 @@ func (a *API) handleCreateCard(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 	boardID := mux.Vars(r)["boardID"]
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to create card"))
+	if a.requireUserID(w, r, userID, "access denied to create card") {
 		return
 	}
 
@@ -175,8 +174,7 @@ func (a *API) handleGetCards(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 	boardID := mux.Vars(r)["boardID"]
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to fetch cards"))
+	if a.requireUserID(w, r, userID, "access denied to fetch cards") {
 		return
 	}
 
@@ -280,8 +278,7 @@ func (a *API) handlePatchCard(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 	cardID := mux.Vars(r)["cardID"]
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to patch card"))
+	if a.requireUserID(w, r, userID, "access denied to patch card") {
 		return
 	}
 
@@ -371,8 +368,7 @@ func (a *API) handleGetCard(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 	cardID := mux.Vars(r)["cardID"]
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to get card"))
+	if a.requireUserID(w, r, userID, "access denied to get card") {
 		return
 	}
 

@@ -53,8 +53,7 @@ func (a *API) handleCreateSubscription(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	userID := getUserID(r)
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to create subscription"))
+	if a.requireUserID(w, r, userID, "access denied to create subscription") {
 		return
 	}
 
@@ -155,8 +154,7 @@ func (a *API) handleDeleteSubscription(w http.ResponseWriter, r *http.Request) {
 	subscriberID := vars["subscriberID"]
 
 	userID := getUserID(r)
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to delete subscription"))
+	if a.requireUserID(w, r, userID, "access denied to delete subscription") {
 		return
 	}
 
@@ -216,8 +214,7 @@ func (a *API) handleGetSubscriptions(w http.ResponseWriter, r *http.Request) {
 	subscriberID := vars["subscriberID"]
 
 	userID := getUserID(r)
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to get subscriptions"))
+	if a.requireUserID(w, r, userID, "access denied to get subscriptions") {
 		return
 	}
 

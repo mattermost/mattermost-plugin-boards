@@ -57,8 +57,7 @@ func (a *API) handleGetChannel(w http.ResponseWriter, r *http.Request) {
 	channelID := mux.Vars(r)["channelID"]
 	userID := getUserID(r)
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to channel"))
+	if a.requireUserID(w, r, userID, "access denied to channel") {
 		return
 	}
 

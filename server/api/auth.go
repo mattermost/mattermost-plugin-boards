@@ -11,6 +11,16 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 )
 
+// requireUserID writes an unauthorized error response and returns true when
+// userID is empty, signalling the caller to abort request handling.
+func (a *API) requireUserID(w http.ResponseWriter, r *http.Request, userID, msg string) bool {
+	if userID == "" {
+		a.errorResponse(w, r, model.NewErrUnauthorized(msg))
+		return true
+	}
+	return false
+}
+
 func (a *API) sessionRequired(handler func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
 	return a.attachSession(handler)
 }

@@ -52,8 +52,7 @@ func (a *API) handleCreateBoardsAndBlocks(w http.ResponseWriter, r *http.Request
 
 	userID := getUserID(r)
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to create boards and blocks"))
+	if a.requireUserID(w, r, userID, "access denied to create boards and blocks") {
 		return
 	}
 
@@ -212,8 +211,7 @@ func (a *API) handlePatchBoardsAndBlocks(w http.ResponseWriter, r *http.Request)
 
 	userID := getUserID(r)
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to patch boards and blocks"))
+	if a.requireUserID(w, r, userID, "access denied to patch boards and blocks") {
 		return
 	}
 
@@ -345,8 +343,7 @@ func (a *API) handleDeleteBoardsAndBlocks(w http.ResponseWriter, r *http.Request
 
 	userID := getUserID(r)
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to delete boards and blocks"))
+	if a.requireUserID(w, r, userID, "access denied to delete boards and blocks") {
 		return
 	}
 

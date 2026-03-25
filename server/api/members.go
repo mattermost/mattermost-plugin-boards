@@ -55,8 +55,7 @@ func (a *API) handleGetMembersForBoard(w http.ResponseWriter, r *http.Request) {
 	boardID := mux.Vars(r)["boardID"]
 	userID := getUserID(r)
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to board members"))
+	if a.requireUserID(w, r, userID, "access denied to board members") {
 		return
 	}
 
@@ -152,8 +151,7 @@ func (a *API) handleAddMember(w http.ResponseWriter, r *http.Request) {
 	boardID := mux.Vars(r)["boardID"]
 	userID := getUserID(r)
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to add board member"))
+	if a.requireUserID(w, r, userID, "access denied to add board member") {
 		return
 	}
 
@@ -267,8 +265,7 @@ func (a *API) handleJoinBoard(w http.ResponseWriter, r *http.Request) {
 	allowAdmin := query.Has("allow_admin")
 
 	userID := getUserID(r)
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to join board"))
+	if a.requireUserID(w, r, userID, "access denied to join board") {
 		return
 	}
 
@@ -369,8 +366,7 @@ func (a *API) handleLeaveBoard(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	userID := getUserID(r)
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to leave board"))
+	if a.requireUserID(w, r, userID, "access denied to leave board") {
 		return
 	}
 
@@ -449,8 +445,7 @@ func (a *API) handleUpdateMember(w http.ResponseWriter, r *http.Request) {
 	paramsUserID := mux.Vars(r)["userID"]
 	userID := getUserID(r)
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to update board member"))
+	if a.requireUserID(w, r, userID, "access denied to update board member") {
 		return
 	}
 
@@ -553,8 +548,7 @@ func (a *API) handleDeleteMember(w http.ResponseWriter, r *http.Request) {
 	paramsUserID := mux.Vars(r)["userID"]
 	userID := getUserID(r)
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to delete board member"))
+	if a.requireUserID(w, r, userID, "access denied to delete board member") {
 		return
 	}
 

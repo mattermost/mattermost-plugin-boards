@@ -45,8 +45,7 @@ func (a *API) handleGetTeams(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	userID := getUserID(r)
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to teams"))
+	if a.requireUserID(w, r, userID, "access denied to teams") {
 		return
 	}
 
@@ -100,8 +99,7 @@ func (a *API) handleGetTeam(w http.ResponseWriter, r *http.Request) {
 	teamID := vars["teamID"]
 	userID := getUserID(r)
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to team"))
+	if a.requireUserID(w, r, userID, "access denied to team") {
 		return
 	}
 
@@ -179,8 +177,7 @@ func (a *API) handleGetTeamUsers(w http.ResponseWriter, r *http.Request) {
 	teamID := vars["teamID"]
 	userID := getUserID(r)
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to team users"))
+	if a.requireUserID(w, r, userID, "access denied to team users") {
 		return
 	}
 

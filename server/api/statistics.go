@@ -39,8 +39,7 @@ func (a *API) handleStatistics(w http.ResponseWriter, r *http.Request) {
 
 	// user must have right to access analytics
 	userID := getUserID(r)
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to statistics"))
+	if a.requireUserID(w, r, userID, "access denied to statistics") {
 		return
 	}
 

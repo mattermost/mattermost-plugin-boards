@@ -49,8 +49,7 @@ func (a *API) handleGetTemplates(w http.ResponseWriter, r *http.Request) {
 	teamID := mux.Vars(r)["teamID"]
 	userID := getUserID(r)
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to team templates"))
+	if a.requireUserID(w, r, userID, "access denied to team templates") {
 		return
 	}
 

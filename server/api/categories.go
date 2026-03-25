@@ -77,8 +77,7 @@ func (a *API) handleCreateCategory(w http.ResponseWriter, r *http.Request) {
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)
 
 	userID := getUserID(r)
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to create category"))
+	if a.requireUserID(w, r, userID, "access denied to create category") {
 		return
 	}
 
@@ -176,8 +175,7 @@ func (a *API) handleUpdateCategory(w http.ResponseWriter, r *http.Request) {
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)
 
 	userID := getUserID(r)
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to update category"))
+	if a.requireUserID(w, r, userID, "access denied to update category") {
 		return
 	}
 
@@ -253,8 +251,7 @@ func (a *API) handleDeleteCategory(w http.ResponseWriter, r *http.Request) {
 	categoryID := vars["categoryID"]
 
 	userID := getUserID(r)
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to delete category"))
+	if a.requireUserID(w, r, userID, "access denied to delete category") {
 		return
 	}
 
@@ -311,8 +308,7 @@ func (a *API) handleGetUserCategoryBoards(w http.ResponseWriter, r *http.Request
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	userID := getUserID(r)
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to categories"))
+	if a.requireUserID(w, r, userID, "access denied to categories") {
 		return
 	}
 
@@ -386,8 +382,7 @@ func (a *API) handleUpdateCategoryBoard(w http.ResponseWriter, r *http.Request) 
 	teamID := vars["teamID"]
 
 	userID := getUserID(r)
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to update category board"))
+	if a.requireUserID(w, r, userID, "access denied to update category board") {
 		return
 	}
 

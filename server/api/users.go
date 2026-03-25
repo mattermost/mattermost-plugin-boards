@@ -146,8 +146,7 @@ func (a *API) handleGetMe(w http.ResponseWriter, r *http.Request) {
 
 	userID := getUserID(r)
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to user"))
+	if a.requireUserID(w, r, userID, "access denied to user") {
 		return
 	}
 
@@ -210,8 +209,7 @@ func (a *API) handleGetMyMemberships(w http.ResponseWriter, r *http.Request) {
 
 	userID := getUserID(r)
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to memberships"))
+	if a.requireUserID(w, r, userID, "access denied to memberships") {
 		return
 	}
 
