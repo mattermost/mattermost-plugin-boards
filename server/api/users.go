@@ -269,7 +269,7 @@ func (a *API) handleGetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	auditRec := a.makeAuditRecord(r, "postBlocks", audit.Fail)
+	auditRec := a.makeAuditRecord(r, "getUser", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelRead, auditRec)
 	auditRec.AddMeta("userID", userID)
 

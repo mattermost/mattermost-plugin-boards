@@ -231,7 +231,11 @@ func (t *testServicesAPIForUnitTests) GetLicense() *mmModel.License {
 func (t *testServicesAPIForUnitTests) GetFileInfo(fileID string) (*mmModel.FileInfo, error) {
 	// Query the FileInfo table (Mattermost's table) to retrieve saved file info
 	// This matches what the real Mattermost servicesAPI would do
-	query := `SELECT Id, CreateAt, UpdateAt, DeleteAt, Path, ThumbnailPath, PreviewPath, Name, Extension, Size, MimeType, Width, Height, HasPreviewImage, MiniPreview, Content, RemoteId, CreatorId, PostId FROM FileInfo WHERE Id = $1`
+	placeholder := "$1"
+	if t.dbType == model.MysqlDBType {
+		placeholder = "?"
+	}
+	query := `SELECT Id, CreateAt, UpdateAt, DeleteAt, Path, ThumbnailPath, PreviewPath, Name, Extension, Size, MimeType, Width, Height, HasPreviewImage, MiniPreview, Content, RemoteId, CreatorId, PostId FROM FileInfo WHERE Id = ` + placeholder
 
 	var fileInfo mmModel.FileInfo
 	err := t.db.QueryRow(query, fileID).Scan(

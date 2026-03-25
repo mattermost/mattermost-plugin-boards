@@ -682,7 +682,17 @@ var (
 )
 
 func testGetSubTree2(t *testing.T, store store.Store) {
+	userID := testUserID
 	boardID := testBoardID
+
+	board := &model.Board{
+		ID:     boardID,
+		TeamID: testTeamID,
+		Type:   model.BoardTypeOpen,
+	}
+	_, err := store.InsertBoard(board, userID)
+	require.NoError(t, err)
+
 	blocks, err := store.GetBlocksForBoard(boardID)
 	require.NoError(t, err)
 	initialCount := len(blocks)
@@ -722,6 +732,14 @@ func testGetSubTree2(t *testing.T, store store.Store) {
 func testDeleteBlock(t *testing.T, store store.Store) {
 	userID := testUserID
 	boardID := testBoardID
+
+	board := &model.Board{
+		ID:     boardID,
+		TeamID: testTeamID,
+		Type:   model.BoardTypeOpen,
+	}
+	_, err := store.InsertBoard(board, userID)
+	require.NoError(t, err)
 
 	blocks, err := store.GetBlocksForBoard(boardID)
 	require.NoError(t, err)
@@ -780,6 +798,14 @@ func testDeleteBlock(t *testing.T, store store.Store) {
 func testUndeleteBlock(t *testing.T, store store.Store) {
 	boardID := testBoardID
 	userID := testUserID
+
+	board := &model.Board{
+		ID:     boardID,
+		TeamID: testTeamID,
+		Type:   model.BoardTypeOpen,
+	}
+	_, err := store.InsertBoard(board, userID)
+	require.NoError(t, err)
 
 	blocks, err := store.GetBlocksForBoard(boardID)
 	require.NoError(t, err)
@@ -873,7 +899,17 @@ func testUndeleteBlock(t *testing.T, store store.Store) {
 }
 
 func testGetBlocks(t *testing.T, store store.Store) {
+	userID := testUserID
 	boardID := testBoardID
+
+	board := &model.Board{
+		ID:     boardID,
+		TeamID: testTeamID,
+		Type:   model.BoardTypeOpen,
+	}
+	_, err := store.InsertBoard(board, userID)
+	require.NoError(t, err)
+
 	blocks, err := store.GetBlocksForBoard(boardID)
 	require.NoError(t, err)
 
@@ -1051,6 +1087,14 @@ func testGetBlock(t *testing.T, store store.Store) {
 }
 
 func testDuplicateBlock(t *testing.T, store store.Store) {
+	board := &model.Board{
+		ID:     testBoardID,
+		TeamID: testTeamID,
+		Type:   model.BoardTypeOpen,
+	}
+	_, err := store.InsertBoard(board, testUserID)
+	require.NoError(t, err)
+
 	blocksToInsert := subtreeSampleBlocks
 	blocksToInsert = append(blocksToInsert,
 		&model.Block{
@@ -1107,7 +1151,17 @@ func testDuplicateBlock(t *testing.T, store store.Store) {
 }
 
 func testGetBlockMetadata(t *testing.T, store store.Store) {
+	userID := testUserID
 	boardID := testBoardID
+
+	board := &model.Board{
+		ID:     boardID,
+		TeamID: testTeamID,
+		Type:   model.BoardTypeOpen,
+	}
+	_, err := store.InsertBoard(board, userID)
+	require.NoError(t, err)
+
 	blocks, err := store.GetBlocksForBoard(boardID)
 	require.NoError(t, err)
 

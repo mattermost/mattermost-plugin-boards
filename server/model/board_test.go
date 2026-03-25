@@ -4,7 +4,6 @@
 package model
 
 import (
-	"os"
 	"testing"
 
 	"github.com/mattermost/mattermost/server/public/model"
@@ -28,26 +27,39 @@ func TestBoardIsValid(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Should allow global team ID for valid board in test scenarios", func(t *testing.T) {
-		// Set test environment variable to allow GlobalTeamID
-		origEnv := os.Getenv("FOCALBOARD_UNIT_TESTING")
-		os.Setenv("FOCALBOARD_UNIT_TESTING", "1")
-		defer os.Setenv("FOCALBOARD_UNIT_TESTING", origEnv)
-
+	t.Run("Should allow global team ID for template boards", func(t *testing.T) {
 		board := &Board{
 			ID:          model.NewId(),
 			TeamID:      GlobalTeamID,
+			IsTemplate:  true,
 			CreatedBy:   model.NewId(),
 			ModifiedBy:  model.NewId(),
 			Type:        BoardTypeOpen,
 			MinimumRole: BoardRoleViewer,
-			Title:       "Valid Board",
+			Title:       "Valid Template",
 			CreateAt:    1234567890,
 			UpdateAt:    1234567890,
 		}
 		err := board.IsValid()
-		// GlobalTeamID ("0") is now allowed in test scenarios for integration tests
 		require.NoError(t, err)
+	})
+
+	t.Run("Should return error for global team ID on non-template board", func(t *testing.T) {
+		board := &Board{
+			ID:          model.NewId(),
+			TeamID:      GlobalTeamID,
+			IsTemplate:  false,
+			CreatedBy:   model.NewId(),
+			ModifiedBy:  model.NewId(),
+			Type:        BoardTypeOpen,
+			MinimumRole: BoardRoleViewer,
+			Title:       "Non-template Board",
+			CreateAt:    1234567890,
+			UpdateAt:    1234567890,
+		}
+		err := board.IsValid()
+		require.Error(t, err)
+		require.EqualError(t, err, "invalid-team-id")
 	})
 
 	t.Run("Should return error for invalid team ID", func(t *testing.T) {

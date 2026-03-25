@@ -18,22 +18,24 @@ func StoreTestDataRetention(t *testing.T, setup func(t *testing.T) (store.Store,
 		store, tearDown := setup(t)
 		defer tearDown()
 
-		// Generate new IDs for each test run to avoid conflicts
-		testBoardID := utils.NewID(utils.IDTypeBoard)
-		testCategoryID := utils.NewID(utils.IDTypeNone) // Categories don't have a specific ID type
+		for _, batchSize := range []int{0, 2, 10} {
+			// Generate fresh IDs for each invocation so that each call
+			// starts with a clean board and category, independent of any
+			// hard-deletes performed by the previous run.
+			boardID := utils.NewID(utils.IDTypeBoard)
+			categoryID := utils.NewID(utils.IDTypeNone)
 
-		category := model.Category{
-			ID:     testCategoryID,
-			Name:   "TestCategory",
-			UserID: testUserID,
-			TeamID: testTeamID,
+			category := model.Category{
+				ID:     categoryID,
+				Name:   "TestCategory",
+				UserID: testUserID,
+				TeamID: testTeamID,
+			}
+			err := store.CreateCategory(category)
+			require.NoError(t, err)
+
+			testRunDataRetention(t, store, batchSize, boardID, categoryID)
 		}
-		err := store.CreateCategory(category)
-		require.NoError(t, err)
-
-		testRunDataRetention(t, store, 0, testBoardID, testCategoryID)
-		testRunDataRetention(t, store, 2, testBoardID, testCategoryID)
-		testRunDataRetention(t, store, 10, testBoardID, testCategoryID)
 	})
 }
 
@@ -131,16 +133,13 @@ func testRunDataRetention(t *testing.T, store store.Store, batchSize int, testBo
 		require.True(t, model.IsErrNotFound(err), err)
 		require.Nil(t, sharing)
 
-		// Data retention deletes category_boards entries but not categories themselves
-		// Check that the category exists but has no boards
+		// Data retention deletes category_boards entries but not categories themselves.
+		// Assert the category was preserved and has no boards remaining.
 		categoryBoards, err := store.GetUserCategoryBoards(testUserID, testTeamID)
 		require.NoError(t, err)
-		// The category should exist but with no boards
-		if len(categoryBoards) > 0 {
-			// If category exists, it should have no board metadata
-			for _, cb := range categoryBoards {
-				require.Empty(t, cb.BoardMetadata, "category should have no boards after data retention")
-			}
+		require.NotEmpty(t, categoryBoards, "category should still exist after data retention")
+		for _, cb := range categoryBoards {
+			require.Empty(t, cb.BoardMetadata, "category should have no boards after data retention")
 		}
 	})
 }

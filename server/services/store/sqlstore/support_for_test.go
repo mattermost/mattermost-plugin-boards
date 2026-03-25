@@ -146,7 +146,8 @@ func setupTeamMembersTable(t *testing.T, db *sql.DB, dbType string) {
 				roles character varying(64),
 				deleteat bigint,
 				schemeuser boolean,
-				schemeadmin boolean
+				schemeadmin boolean,
+				PRIMARY KEY (teamid, userid)
 			);
 		`
 	case model.MysqlDBType:
@@ -157,7 +158,8 @@ func setupTeamMembersTable(t *testing.T, db *sql.DB, dbType string) {
 				Roles VARCHAR(64),
 				DeleteAt BIGINT,
 				SchemeUser BOOLEAN,
-				SchemeAdmin BOOLEAN
+				SchemeAdmin BOOLEAN,
+				PRIMARY KEY (TeamId, UserId)
 			) DEFAULT CHARACTER SET utf8mb4;
 		`
 	default:
@@ -369,7 +371,7 @@ func setupFileInfoTable(t *testing.T, db *sql.DB, dbType string) {
 	switch dbType {
 	case model.PostgresDBType:
 		createTableSQL = `
-			CREATE TABLE IF NOT EXISTS FileInfo (
+			CREATE TABLE IF NOT EXISTS fileinfo (
 				Id VARCHAR(26) NOT NULL,
 				CreatorId VARCHAR(26),
 				PostId VARCHAR(26),
@@ -435,17 +437,17 @@ func setupSessionsTable(t *testing.T, db *sql.DB, dbType string) {
 	switch dbType {
 	case model.PostgresDBType:
 		createTableSQL = `
-			CREATE TABLE IF NOT EXISTS Sessions (
-				Id character varying(26) NOT NULL PRIMARY KEY,
-				Token character varying(64),
-				CreateAt bigint,
-				ExpiresAt bigint,
-				LastActivityAt bigint,
-				UserId character varying(26),
-				Roles character varying(64),
-				IsOAuth boolean,
-				Props text,
-				DeviceId character varying(512)
+			CREATE TABLE IF NOT EXISTS sessions (
+				id character varying(26) NOT NULL PRIMARY KEY,
+				token character varying(64),
+				createat bigint,
+				expiresat bigint,
+				lastactivityat bigint,
+				userid character varying(26),
+				roles character varying(64),
+				isoauth boolean,
+				props text,
+				deviceid character varying(512)
 			);
 		`
 	case model.MysqlDBType:

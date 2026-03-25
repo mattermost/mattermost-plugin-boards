@@ -5,7 +5,6 @@ package integrationtests
 
 import (
 	"bytes"
-	"strings"
 	"testing"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/client"
@@ -119,13 +118,7 @@ func TestFileInfo(t *testing.T) {
 		th.CheckOK(resp)
 		require.NotNil(t, fileInfo)
 		require.NotNil(t, fileInfo.Id)
-		fileIDWithoutPrefix := file.FileID
-		if len(fileIDWithoutPrefix) > 0 && fileIDWithoutPrefix[0] == '7' {
-			fileIDWithoutPrefix = fileIDWithoutPrefix[1:]
-		}
-		if idx := strings.LastIndex(fileIDWithoutPrefix, "."); idx != -1 {
-			fileIDWithoutPrefix = fileIDWithoutPrefix[:idx]
-		}
+		fileIDWithoutPrefix := utils.RetrieveFileIDFromBlockFieldStorage(file.FileID)
 		require.Equal(t, fileIDWithoutPrefix, fileInfo.Id)
 	})
 }

@@ -26,6 +26,7 @@ func (s *SQLStore) activeCardsQuery(builder sq.StatementBuilderType, selectStr s
 		Join(s.tablePrefix + "boards bd on b.board_id=bd.id").
 		Where(sq.Eq{
 			"b.type":         model.TypeCard,
+			"b.delete_at":    0,
 			"bd.is_template": false,
 		})
 	if !includeDeleted {

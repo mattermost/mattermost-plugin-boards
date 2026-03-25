@@ -2125,6 +2125,8 @@ func TestGetTemplates(t *testing.T) {
 		require.NotNil(t, rBoards)
 		require.GreaterOrEqual(t, len(rBoards), 6)
 
+		var skippedTitles []string
+
 		t.Log("\n\n")
 		for _, board := range rBoards {
 			t.Logf("Test get template: %s - %s\n", board.Title, board.ID)
@@ -2141,7 +2143,8 @@ func TestGetTemplates(t *testing.T) {
 
 			rBoardsAndBlock, resp := th.Client.DuplicateBoard(board.ID, false, teamID)
 			if resp.StatusCode == 400 {
-				t.Logf("Skipping duplicate test for template %s due to file info limitations", board.Title)
+				t.Logf("Skipping duplicate test for template %q due to file info limitations (known issue)", board.Title)
+				skippedTitles = append(skippedTitles, board.Title)
 				continue
 			}
 			th.CheckOK(resp)
@@ -2163,6 +2166,10 @@ func TestGetTemplates(t *testing.T) {
 			th.CheckOK(resp)
 			require.NotNil(t, rBlocks2)
 			require.Equal(t, len(rBoardsAndBlock.Blocks), len(rBlocks2))
+		}
+
+		if len(skippedTitles) > 0 {
+			t.Skipf("skipped %d template(s) due to file info limitations: %v", len(skippedTitles), skippedTitles)
 		}
 		t.Log("\n\n")
 	})

@@ -155,8 +155,6 @@ func testGetUsedCardsCount(t *testing.T, store storeservice.Store) {
 
 	t.Run("should not take into account deleted cards", func(t *testing.T) {
 		// we create a ninth card on the first board with DeleteAt set
-		// Note: The current implementation counts deleted blocks (cards with DeleteAt set)
-		// because activeCardsQuery doesn't filter by b.delete_at = 0
 		card9 := &model.Block{
 			ID:       card9ID,
 			ParentID: board1ID,
@@ -166,22 +164,20 @@ func testGetUsedCardsCount(t *testing.T, store storeservice.Store) {
 		}
 		require.NoError(t, store.InsertBlock(card9, userID))
 
-		// Current implementation counts deleted cards, so expect 6 (5 original + 1 deleted)
+		// card9 has DeleteAt set so it should not be counted; total stays at 5
 		count, err := store.GetUsedCardsCount()
 		require.NoError(t, err)
-		require.EqualValues(t, 6, count)
+		require.EqualValues(t, 5, count)
 	})
 
 	t.Run("should not take into account cards from deleted boards", func(t *testing.T) {
 		require.NoError(t, store.DeleteBoard(board2ID, userID))
 
-		// After deleting board2, we should have:
-		// - 3 cards from board1 (card1, card2, card3)
-		// - 1 deleted card from board1 (card9) - current implementation counts deleted cards
-		// Total: 4
+		// After deleting board2 (card4, card5 excluded) and with card9 already excluded
+		// (DeleteAt != 0), only board1's 3 non-deleted cards remain.
 		count, err := store.GetUsedCardsCount()
 		require.NoError(t, err)
-		require.EqualValues(t, 4, count)
+		require.EqualValues(t, 3, count)
 	})
 }
 

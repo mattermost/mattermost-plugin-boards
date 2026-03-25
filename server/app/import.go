@@ -112,8 +112,6 @@ func (a *App) ImportArchive(r io.Reader, opt model.ImportArchiveOptions) error {
 
 // Update image and attachment blocks.
 func (a *App) fixImagesAttachments(boardMap map[string]*model.Board, fileMap map[string]string, teamID string, userID string) {
-	blockIDs := make([]string, 0)
-	blockPatches := make([]model.BlockPatch, 0)
 	for _, board := range boardMap {
 		if board.IsTemplate {
 			continue
@@ -128,6 +126,8 @@ func (a *App) fixImagesAttachments(boardMap map[string]*model.Board, fileMap map
 			return
 		}
 
+		blockIDs := make([]string, 0)
+		blockPatches := make([]model.BlockPatch, 0)
 		for _, block := range newBlocks {
 			if block.Type == "image" || block.Type == "attachment" {
 				fieldName := "fileId"
