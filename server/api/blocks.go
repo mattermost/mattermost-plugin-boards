@@ -661,9 +661,6 @@ func (a *API) handlePatchBlocks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	_ = vars["boardID"] // boardID is available but not used directly here
-
 	val := r.URL.Query().Get("disable_notify")
 	disableNotify := val == True
 
