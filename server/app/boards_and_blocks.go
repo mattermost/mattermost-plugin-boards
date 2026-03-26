@@ -11,6 +11,21 @@ import (
 )
 
 func (a *App) CreateBoardsAndBlocks(bab *model.BoardsAndBlocks, userID string, addMember bool) (*model.BoardsAndBlocks, error) {
+	// Reject blocks that reference files not belonging to their board.
+	boardsByID := make(map[string]*model.Board, len(bab.Boards))
+	for _, board := range bab.Boards {
+		boardsByID[board.ID] = board
+	}
+	for _, block := range bab.Blocks {
+		board, ok := boardsByID[block.BoardID]
+		if !ok {
+			continue
+		}
+		if err := a.validateFileRefsInFields(board.TeamID, block.BoardID, block.ID, block.Fields); err != nil {
+			return nil, err
+		}
+	}
+
 	var newBab *model.BoardsAndBlocks
 	var members []*model.BoardMember
 	var err error
@@ -67,6 +82,29 @@ func (a *App) PatchBoardsAndBlocks(pbab *model.PatchBoardsAndBlocks, userID stri
 	oldBlocksMap := map[string]*model.Block{}
 	for _, block := range oldBlocks {
 		oldBlocksMap[block.ID] = block
+	}
+
+	boardCache := make(map[string]*model.Board)
+	for i, patch := range pbab.BlockPatches {
+		if patch == nil || patch.UpdatedFields == nil {
+			continue
+		}
+		blockID := pbab.BlockIDs[i]
+		block, ok := oldBlocksMap[blockID]
+		if !ok {
+			continue
+		}
+		board, ok := boardCache[block.BoardID]
+		if !ok {
+			board, err = a.store.GetBoard(block.BoardID)
+			if err != nil {
+				return nil, err
+			}
+			boardCache[block.BoardID] = board
+		}
+		if err = a.validateFileRefsInFields(board.TeamID, block.BoardID, blockID, patch.UpdatedFields); err != nil {
+			return nil, err
+		}
 	}
 
 	bab, err := a.store.PatchBoardsAndBlocks(pbab, userID)
