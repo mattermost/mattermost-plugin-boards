@@ -12,7 +12,7 @@ import (
 )
 
 // requireUserID writes an unauthorized error response and returns true when
-// userID is empty, signalling the caller to abort request handling.
+// userID is empty, signaling the caller to abort request handling.
 func (a *API) requireUserID(w http.ResponseWriter, r *http.Request, userID, msg string) bool {
 	if userID == "" {
 		a.errorResponse(w, r, model.NewErrUnauthorized(msg))
