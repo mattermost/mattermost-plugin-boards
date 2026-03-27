@@ -1,7 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import {useEffect, useRef} from 'react'
+import {useEffect} from 'react'
 import {generatePath, useHistory, useRouteMatch} from 'react-router-dom'
 
 import {getBoards, getCurrentBoardId} from '../../store/boards'
@@ -22,23 +22,22 @@ const TeamToBoardAndViewRedirect = (): null => {
     const boards = useAppSelector(getBoards)
     const teamId = match.params.teamId || UserSettings.lastTeamId || Constants.globalTeamId
 
-    // Use ref to persist ignore flag across re-renders
-    const ignoreStoredUrlsRef = useRef<boolean>(false)
-
+    // Cleanup: Remove skipRedirect flag when component unmounts
     useEffect(() => {
-        const ignoreFlag = sessionStorage.getItem(Constants.sessionStorageIgnoreStoredUrlsKey) === 'true'
-        ignoreStoredUrlsRef.current = ignoreFlag
-
-        if (ignoreFlag) {
-            sessionStorage.removeItem(Constants.sessionStorageIgnoreStoredUrlsKey)
+        return () => {
+            sessionStorage.removeItem(Constants.sessionStorageSkipBoardRedirectKey)
         }
     }, [])
 
     useEffect(() => {
         let boardID = match.params.boardId
+
+        // Check if we should skip all auto-redirects (e.g., after error page)
+        const skipRedirect = sessionStorage.getItem(Constants.sessionStorageSkipBoardRedirectKey) === 'true'
+
         if (!match.params.boardId) {
-            // Skip auto-redirect if flag was set on mount
-            if (ignoreStoredUrlsRef.current) {
+            // Skip auto-redirect if flag is set
+            if (skipRedirect) {
                 return
             }
 
@@ -81,9 +80,7 @@ const TeamToBoardAndViewRedirect = (): null => {
         // when a view isn't open,
         // but the data is available, try opening a view
         if ((!viewID || viewID === '0') && boardId && boardId === match.params.boardId && boardViews && boardViews.length > 0) {
-            if (!ignoreStoredUrlsRef.current) {
-                viewID = UserSettings.lastViewId[boardID]
-            }
+            viewID = UserSettings.lastViewId[boardID]
             if (viewID) {
                 UserSettings.setLastViewId(boardID, viewID)
                 dispatch(setCurrentView(viewID))

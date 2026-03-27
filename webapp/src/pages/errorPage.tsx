@@ -28,13 +28,11 @@ const ErrorPage = () => {
             url = path as string
         }
 
-        // Clear stored URLs and set flag to prevent auto-redirect to broken boards
+        // Clear stored board/view IDs and set flag to skip all auto-redirects
         if (clearHistory) {
             localStorage.removeItem(UserSettingKey.LastBoardId)
             localStorage.removeItem(UserSettingKey.LastViewId)
-            sessionStorage.setItem(Constants.sessionStorageIgnoreStoredUrlsKey, 'true')
-            sessionStorage.removeItem(Constants.sessionStorageErrorRedirectCountKey)
-            sessionStorage.removeItem(Constants.sessionStorageErrorRedirectTimeKey)
+            sessionStorage.setItem(Constants.sessionStorageSkipBoardRedirectKey, 'true')
         }
 
         const finalUrl = clearHistory ? Utils.getFrontendBaseURL(true) : url
