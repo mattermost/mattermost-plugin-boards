@@ -206,7 +206,7 @@ func (a *App) validateFileReferencedByBoard(boardID, filename string) error {
 	}
 
 	for _, block := range attachmentBlocks {
-		if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID == filename {
+		if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok && attachmentID == filename {
 			return nil
 		}
 	}

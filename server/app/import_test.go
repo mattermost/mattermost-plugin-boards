@@ -198,6 +198,8 @@ func TestApp_ImportArchive(t *testing.T) {
 		th.Store.EXPECT().GetBlock(blockIDs[0]).Return(imageBlock, nil).AnyTimes()
 		th.Store.EXPECT().GetBlock(blockIDs[1]).Return(attachmentBlock, nil).AnyTimes()
 		th.Store.EXPECT().GetMembersForBoard(board.ID).AnyTimes().Return([]*model.BoardMember{}, nil)
+		th.Store.EXPECT().GetFileInfo("xhwgf5r15fr3dryfozf1dmy42r").Return(nil, model.NewErrNotFound("file"))
+		th.Store.EXPECT().GetFileInfo("xhwgf5r15fr3dryfozf1dmy44r").Return(nil, model.NewErrNotFound("file"))
 
 		th.Store.EXPECT().PatchBlocks(gomock.Any(), "my-userid").Return(nil)
 		th.App.fixImagesAttachments(boardMap, fileMap, "test-team", "my-userid")

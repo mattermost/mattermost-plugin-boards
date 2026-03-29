@@ -6,6 +6,7 @@ package app
 import (
 	"errors"
 	"io"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -205,8 +206,6 @@ func TestGetFileReader(t *testing.T) {
 
 func TestSaveFile(t *testing.T) {
 	th, _ := SetupTestHelper(t)
-	// validTeamID must be a valid 26-character Mattermost ID accepted by ValidateTeamID.
-	validTeamID := "abcdefghijklmnopqrstuvwxyz"
 	mockedReadCloseSeek := &mocks.ReadCloseSeeker{}
 
 	t.Run("should save file to file store with boardID in path", func(t *testing.T) {
@@ -240,7 +239,7 @@ func TestSaveFile(t *testing.T) {
 
 		th.Store.EXPECT().SaveFileInfo(gomock.Any()).DoAndReturn(func(info *mm_model.FileInfo) error {
 			normalizedPath := filepath.ToSlash(info.Path)
-			assert.Contains(t, normalizedPath, testBoardID)
+			assert.Contains(t, normalizedPath, validBoardID)
 			assert.Equal(t, "jpg", strings.Split(normalizedPath, ".")[1])
 			return nil
 		})
@@ -994,17 +993,6 @@ func TestValidateFileOwnership(t *testing.T) {
 			Path: "boards/20260317/" + validBoardID + "/" + filename,
 		}
 		th.Store.EXPECT().GetFileInfo("validfile1234567890123456").Return(fileInfo, nil)
-
-		// Mock block that references the file
-		block := &model.Block{
-			ID:      "blockid1234567890123456789",
-			BoardID: validBoardID,
-			Type:    model.TypeImage,
-			Fields:  map[string]interface{}{model.BlockFieldFileId: filename},
-		}
-		th.Store.EXPECT().GetBlocksWithType(validBoardID, model.TypeImage).Return([]*model.Block{block}, nil)
-		th.Store.EXPECT().GetBlocksWithType(validBoardID, model.TypeAttachment).Return([]*model.Block{}, nil)
-
 		err := th.App.ValidateFileOwnership(validTeamID, validBoardID, filename)
 		assert.NoError(t, err)
 	})
@@ -1015,11 +1003,6 @@ func TestValidateFileOwnership(t *testing.T) {
 			Path: "boards/20260317/" + otherBoardID + "/" + filename,
 		}
 		th.Store.EXPECT().GetFileInfo("validfile1234567890123456").Return(fileInfo, nil)
-
-		// Mock empty blocks for the requested board (file not referenced)
-		th.Store.EXPECT().GetBlocksWithType(validBoardID, model.TypeImage).Return([]*model.Block{}, nil)
-		th.Store.EXPECT().GetBlocksWithType(validBoardID, model.TypeAttachment).Return([]*model.Block{}, nil)
-
 		err := th.App.ValidateFileOwnership(validTeamID, validBoardID, filename)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "file does not belong to the specified board")
