@@ -91,24 +91,96 @@ func (a *App) GetFileInfo(filename string) (*mm_model.FileInfo, error) {
 	return fileInfo, nil
 }
 
+// isBoardsFilePath reports whether a normalised file path is under the regular
+// boards storage root (boards/YYYYMMDD/...). Template files (teamID/boardID/filename)
+// return false.
+func isBoardsFilePath(normalizedPath string) bool {
+	return strings.HasPrefix(normalizedPath, utils.BoardsFilePathPrefix)
+}
+
 // ValidateFileOwnership checks if a file belongs to the specified board and team.
 func (a *App) ValidateFileOwnership(teamID, boardID, filename string) error {
 	fileInfo, err := a.GetFileInfo(filename)
 	if err != nil {
 		return err
 	}
-	if fileInfo != nil && fileInfo.Path != "" && fileInfo.Path != emptyString {
-		expectedPath := filepath.Join(teamID, boardID, filename)
-		if fileInfo.Path == expectedPath {
+	if fileInfo != nil {
+		normalizedPath := filepath.ToSlash(fileInfo.Path)
+		if !isBoardsFilePath(normalizedPath) {
+			// Template path: teamID/boardID/filename
+			expectedPath := filepath.ToSlash(filepath.Join(teamID, boardID, filename))
+			if normalizedPath == expectedPath {
+				return nil
+			}
+			// Template path exists but doesn't match this board — fall through to block-scan.
+		} else {
+			// Regular file: boards/YYYYMMDD/{boardID}/{filename} (new) or
+			// boards/YYYYMMDD/{filename} (old, no boardID in path).
+			parts := strings.SplitN(normalizedPath, "/", 4)
+			if len(parts) == 4 {
+				if parts[2] == boardID {
+					return nil
+				}
+				return model.NewErrPermission("file does not belong to the specified board")
+			}
+			// Old 3-part path has no board info — fall through to block-scan.
+		}
+	}
+	if err := a.validateFileReferencedByBoard(boardID, filename); err != nil {
+		if errors.Is(err, ErrFileNotReferencedByBoard) {
+			return model.NewErrPermission("file does not belong to the specified board")
+		}
+		return err
+	}
+	return nil
+}
+
+// validateFileOwnershipForBlockWrite verifies that a file belongs to the given board
+// before a block reference to it is persisted. Three path formats are handled:
+//
+//   - teamID/boardID/filename  (template)       → ownership from path
+//   - boards/YYYYMMDD/boardID/filename  (new)   → ownership from path
+//   - boards/YYYYMMDD/filename  (legacy)         → ad-hoc block scan
+func (a *App) validateFileOwnershipForBlockWrite(teamID, boardID, filename string) error {
+	fileInfo, err := a.GetFileInfo(filename)
+	if err != nil {
+		if model.IsErrNotFound(err) {
+			return nil // no FileInfo record, allow for backward compatibility
+		}
+		return err
+	}
+
+	if fileInfo == nil {
+		return nil
+	}
+
+	normalizedPath := filepath.ToSlash(fileInfo.Path)
+	if !isBoardsFilePath(normalizedPath) {
+		// Template path: teamID/boardID/filename
+		expectedPath := filepath.ToSlash(filepath.Join(teamID, boardID, filename))
+		if normalizedPath == expectedPath {
 			return nil
 		}
-		if err := a.validateFileReferencedByBoard(boardID, filename); err != nil {
+		return model.NewErrPermission("file does not belong to the specified board")
+	}
+
+	parts := strings.SplitN(normalizedPath, "/", 4)
+	if len(parts) == 4 {
+		// New format: boards/YYYYMMDD/boardID/filename — ownership from path.
+		if parts[2] == boardID {
+			return nil
+		}
+		return model.NewErrPermission("file does not belong to the specified board")
+	}
+
+	// Legacy 3-part path: boards/YYYYMMDD/filename — no boardID in path.
+	// Fall back to a block scan to verify the file is already referenced by
+	// this board. This is the same check used on the read path.
+	if err := a.validateFileReferencedByBoard(boardID, filename); err != nil {
+		if errors.Is(err, ErrFileNotReferencedByBoard) {
 			return model.NewErrPermission("file does not belong to the specified board")
 		}
-	} else {
-		if err := a.validateFileReferencedByBoard(boardID, filename); err != nil {
-			return model.NewErrPermission("file does not belong to the specified board")
-		}
+		return err
 	}
 	return nil
 }
@@ -127,22 +199,14 @@ func (a *App) validateFileReferencedByBoard(boardID, filename string) error {
 		return err
 	}
 
-	// Check image blocks
 	for _, block := range imageBlocks {
 		if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID == filename {
 			return nil
 		}
-		if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok && attachmentID == filename {
-			return nil
-		}
 	}
 
-	// Check attachment blocks
 	for _, block := range attachmentBlocks {
 		if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID == filename {
-			return nil
-		}
-		if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok && attachmentID == filename {
 			return nil
 		}
 	}
@@ -250,13 +314,14 @@ func getDestinationFilePath(isTemplate bool, teamID, boardID, filename string) (
 		return "", fmt.Errorf("invalid filename: %w", err)
 	}
 
-	// if saving a file for a template, save using the "old method" that is /teamID/boardID/fileName
-	// this will prevent template files from being deleted by DataRetention,
-	// which deletes all files inside the "date" subdirectory
+	// Template files are stored at teamID/boardID/filename (no "boards/" prefix)
+	// so they can be identified by path alone and are not affected by DataRetention.
 	if isTemplate {
 		return filepath.Join(teamID, boardID, filename), nil
 	}
-	return filepath.Join(utils.GetBaseFilePath(), filename), nil
+	// Regular files: boards/YYYYMMDD/{boardID}/{filename}
+	// The boardID in the path makes ownership verifiable without extra DB lookups.
+	return filepath.Join(utils.GetBaseFilePath(), boardID, filename), nil
 }
 
 // validatePathComponent ensures a path component contains only valid characters.

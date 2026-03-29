@@ -11,6 +11,7 @@ enum ErrorId {
     NotLoggedIn = 'not-logged-in',
     InvalidReadOnlyBoard = 'invalid-read-only-board',
     BoardNotFound = 'board-not-found',
+    AccessDenied = 'access-denied',
 }
 
 type ErrorDef = {

@@ -23,6 +23,7 @@ import {Card} from '../../blocks/card'
 import {
     updateBoards,
     updateMembersEnsuringBoardsAndUsers,
+    getCurrentBoard,
     getCurrentBoardId,
     setCurrent as setCurrentBoard,
     fetchBoardMembers,
@@ -43,7 +44,8 @@ import {
     followBlock,
     unfollowBlock,
 } from '../../store/users'
-import {setGlobalError} from '../../store/globalError'
+import {setGlobalError, getGlobalError} from '../../store/globalError'
+import {ErrorId} from '../../errors'
 import {UserSettings} from '../../userSettings'
 
 import IconButton from '../../widgets/buttons/iconButton'
@@ -72,6 +74,7 @@ const BoardPage = (props: Props): JSX.Element => {
     const intl = useIntl()
     const activeBoardId = useAppSelector(getCurrentBoardId)
     const activeViewId = useAppSelector(getCurrentViewId)
+    const currentBoard = useAppSelector(getCurrentBoard)
     const dispatch = useAppDispatch()
     const match = useRouteMatch<{boardId: string, viewId: string, cardId?: string, teamId?: string}>()
     const [mobileWarningClosed, setMobileWarningClosed] = useState(UserSettings.mobileWarningClosed)
@@ -81,7 +84,9 @@ const BoardPage = (props: Props): JSX.Element => {
     const hiddenBoardIDs = useAppSelector(getHiddenBoardIDs)
     const category = useAppSelector(getCategoryOfBoard(activeBoardId))
     const [showJoinBoardDialog, setShowJoinBoardDialog] = useState<boolean>(false)
+    const [boardWasLoaded, setBoardWasLoaded] = useState(false)
     const history = useHistory()
+    const globalError = useAppSelector<string>(getGlobalError)
 
     // if we're in a legacy route and not showing a shared board,
     // redirect to the new URL schema equivalent
@@ -194,29 +199,65 @@ const BoardPage = (props: Props): JSX.Element => {
     }
 
     const joinBoard = async (myUser: IUser, boardTeamId: string, boardId: string, allowAdmin: boolean) => {
-        const member = await octoClient.joinBoard(boardId, allowAdmin)
-        if (!member) {
-            if (myUser.permissions?.find((s) => s === 'manage_system' || s === 'manage_team')) {
-                setShowJoinBoardDialog(true)
+        try {
+            const member = await octoClient.joinBoard(boardId, allowAdmin)
+            if (!member) {
+                if (myUser.permissions?.find((s) => s === 'manage_system' || s === 'manage_team')) {
+                    setShowJoinBoardDialog(true)
+                    return
+                }
+                UserSettings.setLastBoardID(boardTeamId, null)
+                UserSettings.setLastViewId(boardId, null)
+                dispatch(setGlobalError('board-not-found'))
                 return
             }
-            UserSettings.setLastBoardID(boardTeamId, null)
-            UserSettings.setLastViewId(boardId, null)
-            dispatch(setGlobalError('board-not-found'))
-            return
-        }
-        const result: any = await dispatch(loadBoardData(boardId))
-        if (result.payload.blocks.length > 0 && myUser.id) {
-            // set board as most recently viewed board
-            UserSettings.setLastBoardID(boardTeamId, boardId)
+            const result: any = await dispatch(loadBoardData(boardId))
+            if (result.type === loadBoardData.rejected.type) {
+                return
+            }
+            if (result.payload?.blocks?.length > 0 && myUser.id) {
+                UserSettings.setLastBoardID(boardTeamId, boardId)
+            }
+        } catch (error: unknown) {
+            const err = error as {status?: number; message?: string}
+            if (err?.status === 403 || err?.message === 'access-denied') {
+                // Check if user is admin before redirecting to access denied page
+                const isAdmin = myUser.permissions?.find((s) => s === 'manage_system' || s === 'manage_team')
+                if (isAdmin) {
+                    setShowJoinBoardDialog(true)
+                    return
+                }
+                UserSettings.setLastBoardID(boardTeamId, null)
+                UserSettings.setLastViewId(boardId, null)
+                dispatch(setGlobalError(ErrorId.AccessDenied))
+            } else {
+                dispatch(setGlobalError('board-not-found'))
+            }
         }
     }
 
     const loadOrJoinBoard = useCallback(async (myUser: IUser, boardTeamId: string, boardId: string) => {
         // and fetch its data
         const result: any = await dispatch(loadBoardData(boardId))
-        if (result.payload.blocks.length === 0 && myUser.id) {
-            joinBoard(myUser, boardTeamId, boardId, false)
+        if (result.type === loadBoardData.rejected.type) {
+            if (result.error?.message === ErrorId.AccessDenied) {
+                const isAdmin = myUser.permissions?.find((s) => s === 'manage_system' || s === 'manage_team')
+                if (isAdmin) {
+                    setShowJoinBoardDialog(true)
+                    return
+                }
+                UserSettings.setLastBoardID(boardTeamId, null)
+                UserSettings.setLastViewId(boardId, null)
+                dispatch(setGlobalError(ErrorId.AccessDenied))
+            }
+            return
+        }
+        if (result.payload?.blocks?.length === 0 && myUser.id) {
+            try {
+                await joinBoard(myUser, boardTeamId, boardId, false)
+            } catch (error: unknown) {
+                // Error already handled in joinBoard
+            }
         } else {
             // set board as most recently viewed board
             UserSettings.setLastBoardID(boardTeamId, boardId)
@@ -252,6 +293,21 @@ const BoardPage = (props: Props): JSX.Element => {
         }
     }, [teamId, match.params.boardId, me?.id])
 
+    // Track when board has been loaded at least once
+    useEffect(() => {
+        if (currentBoard) {
+            setBoardWasLoaded(true)
+        }
+    }, [currentBoard])
+
+    // When the board is removed from the store while viewing (e.g. user was removed via websocket),
+    // re-verify access so we show access-denied instead of the template picker
+    useEffect(() => {
+        if (match.params.boardId && !props.readonly && me && !currentBoard && boardWasLoaded) {
+            loadOrJoinBoard(me, teamId, match.params.boardId)
+        }
+    }, [teamId, match.params.boardId, me?.id, currentBoard, loadOrJoinBoard, boardWasLoaded])
+
     const handleUnhideBoard = async (boardID: string) => {
         if (!me || !category) {
             return
@@ -276,6 +332,11 @@ const BoardPage = (props: Props): JSX.Element => {
                 TelemetryClient.trackEvent(TelemetryCategory, TelemetryActions.ViewSharedBoard, {board: activeBoardId, view: activeViewId})
             }
         }, [activeBoardId, activeViewId])
+    }
+
+    // Don't render board if access is denied - GlobalErrorRedirect will handle the redirect
+    if (globalError === ErrorId.AccessDenied || globalError === ErrorId.InvalidReadOnlyBoard) {
+        return <></>
     }
 
     return (
@@ -327,10 +388,6 @@ const BoardPage = (props: Props): JSX.Element => {
                             />
                         </div>}
 
-                    {props.readonly && activeBoardId === undefined &&
-                        <div className='error'>
-                            {intl.formatMessage({id: 'BoardPage.syncFailed', defaultMessage: 'Board may be deleted or access revoked.'})}
-                        </div>}
                     {
 
                         // Don't display Templates page

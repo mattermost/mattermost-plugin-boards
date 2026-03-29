@@ -80,6 +80,14 @@ func (a *App) PatchBlockAndNotify(blockID string, blockPatch *model.BlockPatch, 
 		return nil, err
 	}
 
+	// Reject patches that reference files not belonging to this board.
+	if blockPatch.UpdatedFields != nil {
+		err = a.validateFileRefsInFields(board.TeamID, oldBlock.BoardID, blockID, blockPatch.UpdatedFields)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	err = a.store.PatchBlock(blockID, blockPatch, modifiedByID)
 	if err != nil {
 		return nil, err
@@ -122,13 +130,43 @@ func (a *App) PatchBlocksAndNotify(teamID string, blockPatches *model.BlockPatch
 		return err
 	}
 
+	// Build a lookup so we can pair each patch with its block regardless of DB return order.
+	blockByID := make(map[string]*model.Block, len(oldBlocks))
+	for _, b := range oldBlocks {
+		blockByID[b.ID] = b
+	}
+
+	// Reject patches that reference files not belonging to the target board.
+	boardCache := make(map[string]*model.Board)
+	for i, patch := range blockPatches.BlockPatches {
+		if patch.UpdatedFields == nil {
+			continue
+		}
+		block, ok := blockByID[blockPatches.BlockIDs[i]]
+		if !ok {
+			continue
+		}
+		board, ok := boardCache[block.BoardID]
+		if !ok {
+			var bErr error
+			board, bErr = a.store.GetBoard(block.BoardID)
+			if bErr != nil {
+				return bErr
+			}
+			boardCache[block.BoardID] = board
+		}
+		if err := a.validateFileRefsInFields(board.TeamID, block.BoardID, block.ID, patch.UpdatedFields); err != nil {
+			return err
+		}
+	}
+
 	if err := a.store.PatchBlocks(blockPatches, modifiedByID); err != nil {
 		return err
 	}
 
 	a.blockChangeNotifier.Enqueue(func() error {
 		a.metrics.IncrementBlocksPatched(len(oldBlocks))
-		for i, blockID := range blockPatches.BlockIDs {
+		for _, blockID := range blockPatches.BlockIDs {
 			newBlock, err := a.store.GetBlock(blockID)
 			if err != nil {
 				return err
@@ -136,11 +174,28 @@ func (a *App) PatchBlocksAndNotify(teamID string, blockPatches *model.BlockPatch
 			a.wsAdapter.BroadcastBlockChange(teamID, newBlock)
 			a.webhook.NotifyUpdate(newBlock)
 			if !disableNotify {
-				a.notifyBlockChanged(notify.Update, newBlock, oldBlocks[i], modifiedByID)
+				a.notifyBlockChanged(notify.Update, newBlock, blockByID[blockID], modifiedByID)
 			}
 		}
 		return nil
 	})
+	return nil
+}
+
+// validateFileRefsInFields checks that any file referenced in a block's field
+// map belongs to the given board. It checks both BlockFieldFileId and
+// BlockFieldAttachmentId. blockID is used only for error messages.
+func (a *App) validateFileRefsInFields(teamID, boardID, blockID string, fields map[string]interface{}) error {
+	if fileID, ok := fields[model.BlockFieldFileId].(string); ok && fileID != "" {
+		if err := a.validateFileOwnershipForBlockWrite(teamID, boardID, fileID); err != nil {
+			return fmt.Errorf("unauthorized file reference in block %s: %w", blockID, err)
+		}
+	}
+	if attachmentID, ok := fields[model.BlockFieldAttachmentId].(string); ok && attachmentID != "" {
+		if err := a.validateFileOwnershipForBlockWrite(teamID, boardID, attachmentID); err != nil {
+			return fmt.Errorf("unauthorized file reference in block %s: %w", blockID, err)
+		}
+	}
 	return nil
 }
 
@@ -152,6 +207,10 @@ func (a *App) InsertBlockAndNotify(block *model.Block, modifiedByID string, disa
 	board, bErr := a.store.GetBoard(block.BoardID)
 	if bErr != nil {
 		return bErr
+	}
+
+	if err := a.validateFileRefsInFields(board.TeamID, block.BoardID, block.ID, block.Fields); err != nil {
+		return err
 	}
 
 	err := a.store.InsertBlock(block, modifiedByID)
@@ -190,6 +249,13 @@ func (a *App) InsertBlocksAndNotify(blocks []*model.Block, modifiedByID string, 
 	board, err := a.store.GetBoard(boardID)
 	if err != nil {
 		return nil, err
+	}
+
+	// Reject blocks that reference files not belonging to this board.
+	for _, block := range blocks {
+		if err := a.validateFileRefsInFields(board.TeamID, boardID, block.ID, block.Fields); err != nil {
+			return nil, err
+		}
 	}
 
 	needsNotify := make([]*model.Block, 0, len(blocks))
