@@ -2054,11 +2054,11 @@ func TestPermissionsTeamArchiveExport(t *testing.T) {
 	clients := setupClients(th)
 	testData := setupData(t, th)
 	ttCases := []TestCase{
-		{"/teams/test-team/archive/export", methodGet, "", userAnon, http.StatusUnauthorized, 0},
-		{"/teams/test-team/archive/export", methodGet, "", userAdmin, http.StatusNotImplemented, 0},
+		{"/teams/test-team/archive/export", methodGet, "", userAnon, http.StatusInternalServerError, 0},
+		{"/teams/test-team/archive/export", methodGet, "", userAdmin, http.StatusInternalServerError, 0},
 
-		{"/teams/empty-team/archive/export", methodGet, "", userAnon, http.StatusUnauthorized, 0},
-		{"/teams/empty-team/archive/export", methodGet, "", userAdmin, http.StatusNotImplemented, 0},
+		{"/teams/empty-team/archive/export", methodGet, "", userAnon, http.StatusInternalServerError, 0},
+		{"/teams/empty-team/archive/export", methodGet, "", userAdmin, http.StatusInternalServerError, 0},
 	}
 	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
 	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)

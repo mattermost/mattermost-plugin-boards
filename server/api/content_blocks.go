@@ -61,10 +61,6 @@ func (a *API) handleMoveBlockTo(w http.ResponseWriter, r *http.Request) {
 	where := mux.Vars(r)["where"]
 	userID := getUserID(r)
 
-	if a.requireUserID(w, r, userID, "access denied to move block") {
-		return
-	}
-
 	if where != "after" && where != "before" {
 		a.errorResponse(w, r, model.NewErrBadRequest("invalid where parameter, use before or after"))
 		return

@@ -51,10 +51,6 @@ func (a *API) handleOnboard(w http.ResponseWriter, r *http.Request) {
 	teamID := mux.Vars(r)["teamID"]
 	userID := getUserID(r)
 
-	if a.requireUserID(w, r, userID, "access denied to onboard") {
-		return
-	}
-
 	if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionViewTeam) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to create board"))
 		return

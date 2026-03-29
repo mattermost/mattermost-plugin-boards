@@ -19,7 +19,6 @@ func (a *API) registerTeamsRoutes(r *mux.Router) {
 	r.HandleFunc("/teams/{teamID}", a.sessionRequired(a.handleGetTeam)).Methods("GET")
 	r.HandleFunc("/teams/{teamID}/users", a.sessionRequired(a.handleGetTeamUsers)).Methods("GET")
 	r.HandleFunc("/teams/{teamID}/users", a.sessionRequired(a.handleGetTeamUsersByID)).Methods("POST")
-	r.HandleFunc("/teams/{teamID}/archive/export", a.sessionRequired(a.handleArchiveExportTeam)).Methods("GET")
 }
 
 func (a *API) handleGetTeams(w http.ResponseWriter, r *http.Request) {
@@ -45,10 +44,6 @@ func (a *API) handleGetTeams(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	userID := getUserID(r)
-	if a.requireUserID(w, r, userID, "access denied to teams") {
-		return
-	}
-
 	teams, err := a.app.GetTeamsForUser(userID)
 	if err != nil {
 		a.errorResponse(w, r, err)
@@ -98,10 +93,6 @@ func (a *API) handleGetTeam(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	teamID := vars["teamID"]
 	userID := getUserID(r)
-
-	if a.requireUserID(w, r, userID, "access denied to team") {
-		return
-	}
 
 	if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionViewTeam) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to team"))
@@ -176,10 +167,6 @@ func (a *API) handleGetTeamUsers(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	teamID := vars["teamID"]
 	userID := getUserID(r)
-
-	if a.requireUserID(w, r, userID, "access denied to team users") {
-		return
-	}
 
 	query := r.URL.Query()
 	searchQuery := query.Get("search")

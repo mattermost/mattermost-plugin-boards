@@ -55,10 +55,6 @@ func (a *API) handleGetMembersForBoard(w http.ResponseWriter, r *http.Request) {
 	boardID := mux.Vars(r)["boardID"]
 	userID := getUserID(r)
 
-	if a.requireUserID(w, r, userID, "access denied to board members") {
-		return
-	}
-
 	// For template boards, require explicit board membership (not synthetic)
 	board, err := a.app.GetBoard(boardID)
 	if err != nil {
@@ -150,10 +146,6 @@ func (a *API) handleAddMember(w http.ResponseWriter, r *http.Request) {
 
 	boardID := mux.Vars(r)["boardID"]
 	userID := getUserID(r)
-
-	if a.requireUserID(w, r, userID, "access denied to add board member") {
-		return
-	}
 
 	board, err := a.app.GetBoard(boardID)
 	if err != nil {
@@ -265,10 +257,6 @@ func (a *API) handleJoinBoard(w http.ResponseWriter, r *http.Request) {
 	allowAdmin := query.Has("allow_admin")
 
 	userID := getUserID(r)
-	if a.requireUserID(w, r, userID, "access denied to join board") {
-		return
-	}
-
 	boardID := mux.Vars(r)["boardID"]
 	board, err := a.app.GetBoard(boardID)
 	if err != nil {
@@ -366,10 +354,6 @@ func (a *API) handleLeaveBoard(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	userID := getUserID(r)
-	if a.requireUserID(w, r, userID, "access denied to leave board") {
-		return
-	}
-
 	boardID := mux.Vars(r)["boardID"]
 
 	if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard) {
@@ -444,10 +428,6 @@ func (a *API) handleUpdateMember(w http.ResponseWriter, r *http.Request) {
 	boardID := mux.Vars(r)["boardID"]
 	paramsUserID := mux.Vars(r)["userID"]
 	userID := getUserID(r)
-
-	if a.requireUserID(w, r, userID, "access denied to update board member") {
-		return
-	}
 
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -547,10 +527,6 @@ func (a *API) handleDeleteMember(w http.ResponseWriter, r *http.Request) {
 	boardID := mux.Vars(r)["boardID"]
 	paramsUserID := mux.Vars(r)["userID"]
 	userID := getUserID(r)
-
-	if a.requireUserID(w, r, userID, "access denied to delete board member") {
-		return
-	}
 
 	if _, err := a.app.GetBoard(boardID); err != nil {
 		a.errorResponse(w, r, err)

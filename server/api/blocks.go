@@ -220,10 +220,6 @@ func (a *API) handlePostBlocks(w http.ResponseWriter, r *http.Request) {
 	boardID := mux.Vars(r)["boardID"]
 	userID := getUserID(r)
 
-	if a.requireUserID(w, r, userID, "access denied to create blocks") {
-		return
-	}
-
 	val := r.URL.Query().Get("disable_notify")
 	disableNotify := val == True
 
@@ -378,10 +374,6 @@ func (a *API) handleDeleteBlock(w http.ResponseWriter, r *http.Request) {
 	boardID := vars["boardID"]
 	blockID := vars["blockID"]
 
-	if a.requireUserID(w, r, userID, "access denied to delete block") {
-		return
-	}
-
 	val := r.URL.Query().Get("disable_notify")
 	disableNotify := val == True
 
@@ -460,10 +452,6 @@ func (a *API) handleUndeleteBlock(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	userID := getUserID(r)
-	if a.requireUserID(w, r, userID, "access denied to undelete block") {
-		return
-	}
-
 	vars := mux.Vars(r)
 	blockID := vars["blockID"]
 	boardID := vars["boardID"]
@@ -560,10 +548,6 @@ func (a *API) handlePatchBlock(w http.ResponseWriter, r *http.Request) {
 	boardID := vars["boardID"]
 	blockID := vars["blockID"]
 
-	if a.requireUserID(w, r, userID, "access denied to patch block") {
-		return
-	}
-
 	val := r.URL.Query().Get("disable_notify")
 	disableNotify := val == True
 
@@ -657,10 +641,6 @@ func (a *API) handlePatchBlocks(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 
 	// Check authentication first
-	if a.requireUserID(w, r, userID, "access denied to patch blocks") {
-		return
-	}
-
 	val := r.URL.Query().Get("disable_notify")
 	disableNotify := val == True
 
@@ -776,10 +756,6 @@ func (a *API) handleDuplicateBlock(w http.ResponseWriter, r *http.Request) {
 	board, err := a.app.GetBoard(boardID)
 	if err != nil {
 		a.errorResponse(w, r, err)
-		return
-	}
-
-	if a.requireUserID(w, r, userID, "access denied to board") {
 		return
 	}
 

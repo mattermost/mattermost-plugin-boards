@@ -53,10 +53,6 @@ func (a *API) handleCreateSubscription(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	userID := getUserID(r)
-	if a.requireUserID(w, r, userID, "access denied to create subscription") {
-		return
-	}
-
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		a.errorResponse(w, r, err)
@@ -154,10 +150,6 @@ func (a *API) handleDeleteSubscription(w http.ResponseWriter, r *http.Request) {
 	subscriberID := vars["subscriberID"]
 
 	userID := getUserID(r)
-	if a.requireUserID(w, r, userID, "access denied to delete subscription") {
-		return
-	}
-
 	auditRec := a.makeAuditRecord(r, "deleteSubscription", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)
 	auditRec.AddMeta("block_id", blockID)
@@ -214,10 +206,6 @@ func (a *API) handleGetSubscriptions(w http.ResponseWriter, r *http.Request) {
 	subscriberID := vars["subscriberID"]
 
 	userID := getUserID(r)
-	if a.requireUserID(w, r, userID, "access denied to get subscriptions") {
-		return
-	}
-
 	auditRec := a.makeAuditRecord(r, "getSubscriptions", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelRead, auditRec)
 	auditRec.AddMeta("subscriber_id", subscriberID)

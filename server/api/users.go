@@ -146,10 +146,6 @@ func (a *API) handleGetMe(w http.ResponseWriter, r *http.Request) {
 
 	userID := getUserID(r)
 
-	if a.requireUserID(w, r, userID, "access denied to user") {
-		return
-	}
-
 	var user *model.User
 	var err error
 
@@ -208,10 +204,6 @@ func (a *API) handleGetMyMemberships(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	userID := getUserID(r)
-
-	if a.requireUserID(w, r, userID, "access denied to memberships") {
-		return
-	}
 
 	auditRec := a.makeAuditRecord(r, "getMyBoardMemberships", audit.Fail)
 	auditRec.AddMeta("userID", userID)

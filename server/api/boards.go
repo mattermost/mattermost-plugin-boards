@@ -57,10 +57,6 @@ func (a *API) handleGetBoards(w http.ResponseWriter, r *http.Request) {
 	teamID := mux.Vars(r)["teamID"]
 	userID := getUserID(r)
 
-	if a.requireUserID(w, r, userID, "access denied to team boards") {
-		return
-	}
-
 	if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionViewTeam) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to team"))
 		return
@@ -129,10 +125,6 @@ func (a *API) handleCreateBoard(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	userID := getUserID(r)
-
-	if a.requireUserID(w, r, userID, "access denied to create board") {
-		return
-	}
 
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -339,10 +331,6 @@ func (a *API) handlePatchBoard(w http.ResponseWriter, r *http.Request) {
 	boardID := mux.Vars(r)["boardID"]
 	userID := getUserID(r)
 
-	if a.requireUserID(w, r, userID, "access denied to patch board") {
-		return
-	}
-
 	if _, err := a.app.GetBoard(boardID); err != nil {
 		a.errorResponse(w, r, err)
 		return
@@ -441,10 +429,6 @@ func (a *API) handleDeleteBoard(w http.ResponseWriter, r *http.Request) {
 	boardID := mux.Vars(r)["boardID"]
 	userID := getUserID(r)
 
-	if a.requireUserID(w, r, userID, "access denied to delete board") {
-		return
-	}
-
 	// Check if board exists
 	if _, err := a.app.GetBoard(boardID); err != nil {
 		a.errorResponse(w, r, err)
@@ -504,10 +488,6 @@ func (a *API) handleDuplicateBoard(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	asTemplate := query.Get("asTemplate")
 	toTeam := query.Get("toTeam")
-
-	if a.requireUserID(w, r, userID, "access denied to board") {
-		return
-	}
 
 	board, err := a.app.GetBoard(boardID)
 	if err != nil {
@@ -605,10 +585,6 @@ func (a *API) handleUndeleteBoard(w http.ResponseWriter, r *http.Request) {
 	boardID := vars["boardID"]
 	userID := getUserID(r)
 
-	if a.requireUserID(w, r, userID, "access denied to undelete board") {
-		return
-	}
-
 	auditRec := a.makeAuditRecord(r, "undeleteBoard", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)
 	auditRec.AddMeta("boardID", boardID)
@@ -662,10 +638,6 @@ func (a *API) handleGetBoardMetadata(w http.ResponseWriter, r *http.Request) {
 
 	boardID := mux.Vars(r)["boardID"]
 	userID := getUserID(r)
-
-	if a.requireUserID(w, r, userID, "access denied to board metadata") {
-		return
-	}
 
 	board, boardMetadata, err := a.app.GetBoardMetadata(boardID)
 	if err != nil {

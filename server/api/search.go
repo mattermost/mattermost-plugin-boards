@@ -60,10 +60,6 @@ func (a *API) handleSearchMyChannels(w http.ResponseWriter, r *http.Request) {
 	teamID := mux.Vars(r)["teamID"]
 	userID := getUserID(r)
 
-	if a.requireUserID(w, r, userID, "access denied to channels") {
-		return
-	}
-
 	if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionViewTeam) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to team"))
 		return
@@ -149,10 +145,6 @@ func (a *API) handleSearchBoards(w http.ResponseWriter, r *http.Request) {
 	}
 	userID := getUserID(r)
 
-	if a.requireUserID(w, r, userID, "access denied to channels") {
-		return
-	}
-
 	if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionViewTeam) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to team"))
 		return
@@ -236,10 +228,6 @@ func (a *API) handleSearchLinkableBoards(w http.ResponseWriter, r *http.Request)
 	term := r.URL.Query().Get("q")
 	userID := getUserID(r)
 
-	if a.requireUserID(w, r, userID, "access denied to channels") {
-		return
-	}
-
 	if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionViewTeam) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to team"))
 		return
@@ -316,10 +304,6 @@ func (a *API) handleSearchAllBoards(w http.ResponseWriter, r *http.Request) {
 
 	term := r.URL.Query().Get("q")
 	userID := getUserID(r)
-
-	if a.requireUserID(w, r, userID, "access denied to channels") {
-		return
-	}
 
 	if len(term) == 0 {
 		jsonStringResponse(w, http.StatusOK, "[]")

@@ -24,7 +24,6 @@ func (a *API) registerAchivesRoutes(r *mux.Router) {
 	// Archive APIs
 	r.HandleFunc("/boards/{boardID}/archive/export", a.sessionRequired(a.handleArchiveExportBoard)).Methods("GET")
 	r.HandleFunc("/teams/{teamID}/archive/import", a.sessionRequired(a.handleArchiveImport)).Methods("POST")
-	r.HandleFunc("/teams/{teamID}/archive/export", a.sessionRequired(a.handleArchiveExportTeam)).Methods("GET")
 }
 
 func (a *API) handleArchiveExportBoard(w http.ResponseWriter, r *http.Request) {
@@ -58,10 +57,6 @@ func (a *API) handleArchiveExportBoard(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	boardID := vars["boardID"]
 	userID := getUserID(r)
-
-	if a.requireUserID(w, r, userID, "access denied to archive export") {
-		return
-	}
 
 	// check user has permission to board
 	if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard) {
@@ -145,10 +140,6 @@ func (a *API) handleArchiveImport(w http.ResponseWriter, r *http.Request) {
 	teamID := vars["teamID"]
 
 	userID := getUserID(r)
-	if a.requireUserID(w, r, userID, "access denied to archive import") {
-		return
-	}
-
 	if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionViewTeam) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to create board"))
 		return
@@ -198,37 +189,3 @@ func (a *API) handleArchiveImport(w http.ResponseWriter, r *http.Request) {
 	auditRec.Success()
 }
 
-func (a *API) handleArchiveExportTeam(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation GET /teams/{teamID}/archive/export archiveExportTeam
-	//
-	// Exports an archive of all blocks for all the boards in a team.
-	//
-	// ---
-	// produces:
-	// - application/json
-	// parameters:
-	// - name: teamID
-	//   in: path
-	//   description: Id of team
-	//   required: true
-	//   type: string
-	// security:
-	// - BearerAuth: []
-	// responses:
-	//   '200':
-	//     description: success
-	//     content:
-	//       application-octet-stream:
-	//         type: string
-	//         format: binary
-	//   default:
-	//     description: internal error
-	//     schema:
-	//       "$ref": "#/definitions/ErrorResponse"
-	userID := getUserID(r)
-	if a.requireUserID(w, r, userID, "access denied to archive export") {
-		return
-	}
-
-	a.errorResponse(w, r, model.NewErrNotImplemented("not permitted in plugin mode"))
-}

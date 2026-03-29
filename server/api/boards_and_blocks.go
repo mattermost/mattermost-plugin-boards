@@ -52,10 +52,6 @@ func (a *API) handleCreateBoardsAndBlocks(w http.ResponseWriter, r *http.Request
 
 	userID := getUserID(r)
 
-	if a.requireUserID(w, r, userID, "access denied to create boards and blocks") {
-		return
-	}
-
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		a.errorResponse(w, r, err)
@@ -211,10 +207,6 @@ func (a *API) handlePatchBoardsAndBlocks(w http.ResponseWriter, r *http.Request)
 
 	userID := getUserID(r)
 
-	if a.requireUserID(w, r, userID, "access denied to patch boards and blocks") {
-		return
-	}
-
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		a.errorResponse(w, r, err)
@@ -342,10 +334,6 @@ func (a *API) handleDeleteBoardsAndBlocks(w http.ResponseWriter, r *http.Request
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	userID := getUserID(r)
-
-	if a.requireUserID(w, r, userID, "access denied to delete boards and blocks") {
-		return
-	}
 
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {

@@ -77,10 +77,6 @@ func (a *API) handleCreateCategory(w http.ResponseWriter, r *http.Request) {
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)
 
 	userID := getUserID(r)
-	if a.requireUserID(w, r, userID, "access denied to create category") {
-		return
-	}
-
 	// user can only create category for themselves
 	if category.UserID != userID {
 		message := fmt.Sprintf("userID %s and category userID %s mismatch", userID, category.UserID)
@@ -175,10 +171,6 @@ func (a *API) handleUpdateCategory(w http.ResponseWriter, r *http.Request) {
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)
 
 	userID := getUserID(r)
-	if a.requireUserID(w, r, userID, "access denied to update category") {
-		return
-	}
-
 	if categoryID != category.ID {
 		a.errorResponse(w, r, model.NewErrBadRequest("categoryID mismatch in patch and body"))
 		return
@@ -251,10 +243,6 @@ func (a *API) handleDeleteCategory(w http.ResponseWriter, r *http.Request) {
 	categoryID := vars["categoryID"]
 
 	userID := getUserID(r)
-	if a.requireUserID(w, r, userID, "access denied to delete category") {
-		return
-	}
-
 	auditRec := a.makeAuditRecord(r, "deleteCategory", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)
 
@@ -308,10 +296,6 @@ func (a *API) handleGetUserCategoryBoards(w http.ResponseWriter, r *http.Request
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	userID := getUserID(r)
-	if a.requireUserID(w, r, userID, "access denied to categories") {
-		return
-	}
-
 	vars := mux.Vars(r)
 	teamID := vars["teamID"]
 
@@ -382,10 +366,6 @@ func (a *API) handleUpdateCategoryBoard(w http.ResponseWriter, r *http.Request) 
 	teamID := vars["teamID"]
 
 	userID := getUserID(r)
-	if a.requireUserID(w, r, userID, "access denied to update category board") {
-		return
-	}
-
 	if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionViewTeam) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to team"))
 		return
