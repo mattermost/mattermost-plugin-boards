@@ -39,9 +39,8 @@ func (f *testMutexAPI) LogError(msg string, keyValuePairs ...interface{}) {
 
 // testServicesAPIForUnitTests provides a minimal servicesAPI implementation for unit tests.
 type testServicesAPIForUnitTests struct {
-	users  map[string]*model.User
-	db     *sql.DB
-	dbType string
+	users map[string]*model.User
+	db    *sql.DB
 }
 
 func (t *testServicesAPIForUnitTests) GetUserByID(userID string) (*mmModel.User, error) {
@@ -68,17 +67,9 @@ func (t *testServicesAPIForUnitTests) GetUserByID(userID string) (*mmModel.User,
 			DeleteAt int64
 		}
 
-		var query string
-		var args []interface{}
-		if t.dbType == model.PostgresDBType {
-			query = "SELECT id, username, email, createat, updateat, deleteat FROM users WHERE id = $1"
-			args = []interface{}{userID}
-		} else {
-			query = "SELECT Id, Username, Email, CreateAt, UpdateAt, DeleteAt FROM Users WHERE Id = ?"
-			args = []interface{}{userID}
-		}
-
-		err := t.db.QueryRow(query, args...).Scan(
+		err := t.db.QueryRow(
+			"SELECT id, username, email, createat, updateat, deleteat FROM users WHERE id = $1", userID,
+		).Scan(
 			&dbUser.ID, &dbUser.Username, &dbUser.Email, &dbUser.CreateAt, &dbUser.UpdateAt, &dbUser.DeleteAt)
 		if err == nil {
 			return &mmModel.User{
@@ -122,17 +113,9 @@ func (t *testServicesAPIForUnitTests) GetUserByEmail(email string) (*mmModel.Use
 			DeleteAt int64
 		}
 
-		var query string
-		var args []interface{}
-		if t.dbType == model.PostgresDBType {
-			query = "SELECT id, username, email, createat, updateat, deleteat FROM users WHERE email = $1"
-			args = []interface{}{email}
-		} else {
-			query = "SELECT Id, Username, Email, CreateAt, UpdateAt, DeleteAt FROM Users WHERE Email = ?"
-			args = []interface{}{email}
-		}
-
-		err := t.db.QueryRow(query, args...).Scan(
+		err := t.db.QueryRow(
+			"SELECT id, username, email, createat, updateat, deleteat FROM users WHERE email = $1", email,
+		).Scan(
 			&dbUser.ID, &dbUser.Username, &dbUser.Email, &dbUser.CreateAt, &dbUser.UpdateAt, &dbUser.DeleteAt)
 		if err == nil {
 			return &mmModel.User{
@@ -174,17 +157,9 @@ func (t *testServicesAPIForUnitTests) GetUserByUsername(username string) (*mmMod
 			DeleteAt int64
 		}
 
-		var query string
-		var args []interface{}
-		if t.dbType == model.PostgresDBType {
-			query = "SELECT id, username, email, createat, updateat, deleteat FROM users WHERE username = $1"
-			args = []interface{}{username}
-		} else {
-			query = "SELECT Id, Username, Email, CreateAt, UpdateAt, DeleteAt FROM Users WHERE Username = ?"
-			args = []interface{}{username}
-		}
-
-		err := t.db.QueryRow(query, args...).Scan(
+		err := t.db.QueryRow(
+			"SELECT id, username, email, createat, updateat, deleteat FROM users WHERE username = $1", username,
+		).Scan(
 			&dbUser.ID, &dbUser.Username, &dbUser.Email, &dbUser.CreateAt, &dbUser.UpdateAt, &dbUser.DeleteAt)
 		if err == nil {
 			return &mmModel.User{
@@ -231,11 +206,7 @@ func (t *testServicesAPIForUnitTests) GetLicense() *mmModel.License {
 func (t *testServicesAPIForUnitTests) GetFileInfo(fileID string) (*mmModel.FileInfo, error) {
 	// Query the FileInfo table (Mattermost's table) to retrieve saved file info
 	// This matches what the real Mattermost servicesAPI would do
-	placeholder := "$1"
-	if t.dbType == model.MysqlDBType {
-		placeholder = "?"
-	}
-	query := `SELECT Id, CreateAt, UpdateAt, DeleteAt, Path, ThumbnailPath, PreviewPath, Name, Extension, Size, MimeType, Width, Height, HasPreviewImage, MiniPreview, Content, RemoteId, CreatorId, PostId FROM FileInfo WHERE Id = ` + placeholder
+	query := `SELECT Id, CreateAt, UpdateAt, DeleteAt, Path, ThumbnailPath, PreviewPath, Name, Extension, Size, MimeType, Width, Height, HasPreviewImage, MiniPreview, Content, RemoteId, CreatorId, PostId FROM fileinfo WHERE id = $1`
 
 	var fileInfo mmModel.FileInfo
 	err := t.db.QueryRow(query, fileID).Scan(
@@ -303,8 +274,8 @@ func SetupTests(t *testing.T) (store.Store, func()) {
 
 	// Skip SQLite in plugin mode (not supported)
 	driverName := strings.TrimSpace(os.Getenv("TEST_DATABASE_DRIVERNAME"))
-	if driverName == "" || driverName == model.SqliteDBType {
-		driverName = "postgres" // Default to postgres
+	if driverName == "" {
+		driverName = "postgres"
 	}
 
 	// Use storetest.MakeSqlSettings to get proper test database setup (handles SSL, etc.)
@@ -333,7 +304,7 @@ func SetupTests(t *testing.T) (store.Store, func()) {
 	require.NoError(t, err)
 
 	// Create Mattermost tables needed for migrations (Playbooks approach)
-	setupMattermostTables(t, sqlDB, dbType)
+	setupMattermostTables(t, sqlDB)
 
 	// Create a minimal testServicesAPI for unit tests
 	// Include common test user IDs used by storetests
@@ -353,7 +324,7 @@ func SetupTests(t *testing.T) (store.Store, func()) {
 			UpdateAt: model.GetMillis(),
 		},
 	}
-	testServicesAPI := &testServicesAPIForUnitTests{users: testUsers, db: sqlDB, dbType: dbType}
+	testServicesAPI := &testServicesAPIForUnitTests{users: testUsers, db: sqlDB}
 
 	storeParams := Params{
 		DBType:           dbType,

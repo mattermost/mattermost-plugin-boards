@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mgdelacroix/foundation"
 )
 
@@ -31,8 +30,8 @@ func (th *TestHelper) IsSQLite() bool {
 
 func SetupPluginTestHelper(t *testing.T) (*TestHelper, func()) {
 	driverName := strings.TrimSpace(os.Getenv("TEST_DATABASE_DRIVERNAME"))
-	if driverName == "" || driverName == model.SqliteDBType {
-		t.Skip("Skipping plugin mode test for SQLite")
+	if driverName == "" {
+		t.Skip("Skipping plugin mode test: no database configured")
 	}
 
 	return setupTestHelper(t)

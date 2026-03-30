@@ -55,28 +55,20 @@ func (a *API) handleGetMembersForBoard(w http.ResponseWriter, r *http.Request) {
 	boardID := mux.Vars(r)["boardID"]
 	userID := getUserID(r)
 
-	// For template boards, require explicit board membership (not synthetic)
 	board, err := a.app.GetBoard(boardID)
 	if err != nil {
-		// Return 403 Forbidden instead of 404 Not Found for non-existing boards
-		// to avoid leaking information about board existence
-		if model.IsErrNotFound(err) {
-			a.errorResponse(w, r, model.NewErrPermission("access denied to board members"))
-			return
-		}
 		a.errorResponse(w, r, err)
 		return
 	}
 
 	if board.IsTemplate {
-		// Check for explicit board membership (not synthetic)
-		member, err2 := a.app.GetMemberForBoard(boardID, userID)
-		if err2 != nil || member == nil || member.Synthetic {
+		// For template boards, only explicitly-added members (not synthetic channel/team members) can list board members.
+		member, memberErr := a.app.GetMemberForBoard(boardID, userID)
+		if memberErr != nil || member == nil || member.Synthetic {
 			a.errorResponse(w, r, model.NewErrPermission("access denied to board members"))
 			return
 		}
-	} else if !board.IsTemplate {
-		// For non-template boards, use standard permission check
+	} else {
 		if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard) {
 			a.errorResponse(w, r, model.NewErrPermission("access denied to board members"))
 			return

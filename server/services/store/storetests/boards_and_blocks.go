@@ -201,9 +201,6 @@ func testPatchBoardsAndBlocks(t *testing.T, store store.Store) {
 	userID := testUserID
 
 	t.Run("on failure, nothing should be saved", func(t *testing.T) {
-		if store.DBType() == model.SqliteDBType {
-			t.Skip("No transactions support int sqlite")
-		}
 
 		initialTitle := "initial title"
 		newTitle := "new title"
@@ -258,9 +255,6 @@ func testPatchBoardsAndBlocks(t *testing.T, store store.Store) {
 	})
 
 	t.Run("should apply block size limits", func(t *testing.T) {
-		if store.DBType() == model.SqliteDBType {
-			t.Skip("No transactions support int sqlite")
-		}
 
 		initialTitle := "initial title"
 		newTitle := strings.Repeat("A", model.BlockTitleMaxRunes+1)
@@ -380,9 +374,6 @@ func testDeleteBoardsAndBlocks(t *testing.T, store store.Store) {
 	userID := testUserID
 
 	t.Run("should not delete anything if a block doesn't belong to any of the boards", func(t *testing.T) {
-		if store.DBType() == model.SqliteDBType {
-			t.Skip("No transactions support int sqlite")
-		}
 
 		newBoard1 := &model.Board{
 			ID:     utils.NewID(utils.IDTypeBoard),
@@ -458,9 +449,6 @@ func testDeleteBoardsAndBlocks(t *testing.T, store store.Store) {
 	})
 
 	t.Run("should not delete anything if a board doesn't exist", func(t *testing.T) {
-		if store.DBType() == model.SqliteDBType {
-			t.Skip("No transactions support int sqlite")
-		}
 
 		newBoard1 := &model.Board{
 			ID:     utils.NewID(utils.IDTypeBoard),
@@ -534,9 +522,6 @@ func testDeleteBoardsAndBlocks(t *testing.T, store store.Store) {
 	})
 
 	t.Run("should not delete anything if a block doesn't exist", func(t *testing.T) {
-		if store.DBType() == model.SqliteDBType {
-			t.Skip("No transactions support int sqlite")
-		}
 
 		newBoard1 := &model.Board{
 			ID:     utils.NewID(utils.IDTypeBoard),

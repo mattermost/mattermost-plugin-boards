@@ -427,7 +427,7 @@ func NewTestServerPluginMode(sqlSettings *mmModel.SqlSettings) *server.Server {
 	}
 
 	// Create Mattermost tables needed for migrations (Playbooks approach)
-	if err2 := sqlstore.SetupMattermostTablesForIntegration(sqlDB, cfg.DBType); err2 != nil {
+	if err2 := sqlstore.SetupMattermostTablesForIntegration(sqlDB); err2 != nil {
 		panic(fmt.Errorf("failed to setup Mattermost tables: %w", err2))
 	}
 

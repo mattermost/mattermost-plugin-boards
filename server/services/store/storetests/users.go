@@ -19,7 +19,6 @@ import (
 // dbHandle is an interface to access the database handle from the store.
 type dbHandle interface {
 	DBHandle() *sql.DB
-	DBType() string
 }
 
 //nolint:dupl
@@ -53,14 +52,10 @@ func testCreateAndGetUser(t *testing.T, store store.Store) {
 	require.NotNil(t, db)
 
 	// Insert user into Users table
-	dbType := dbStore.DBType()
-	var insertSQL string
-	if dbType == model.PostgresDBType {
-		insertSQL = `INSERT INTO users (id, username, email, createat, updateat, deleteat) VALUES ($1, $2, $3, $4, $5, $6)`
-	} else {
-		insertSQL = `INSERT INTO Users (Id, Username, Email, CreateAt, UpdateAt, DeleteAt) VALUES (?, ?, ?, ?, ?, ?)`
-	}
-	_, err := db.Exec(insertSQL, user.ID, user.Username, user.Email, user.CreateAt, user.UpdateAt, 0)
+	_, err := db.Exec(
+		`INSERT INTO users (id, username, email, createat, updateat, deleteat) VALUES ($1, $2, $3, $4, $5, $6)`,
+		user.ID, user.Username, user.Email, user.CreateAt, user.UpdateAt, 0,
+	)
 	require.NoError(t, err)
 
 	t.Run("GetUserByID", func(t *testing.T) {

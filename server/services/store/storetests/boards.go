@@ -144,15 +144,11 @@ func testGetBoardsForUserAndTeam(t *testing.T, store store.Store) {
 	dbStore, ok := store.(dbHandle)
 	require.True(t, ok, "store must implement dbHandle interface")
 	db := dbStore.DBHandle()
-	dbType := dbStore.DBType()
 
-	var insertSQL string
-	if dbType == model.PostgresDBType {
-		insertSQL = `INSERT INTO users (id, username, email, createat, updateat, deleteat) VALUES ($1, $2, $3, $4, $5, $6)`
-	} else {
-		insertSQL = `INSERT INTO Users (Id, Username, Email, CreateAt, UpdateAt, DeleteAt) VALUES (?, ?, ?, ?, ?, ?)`
-	}
-	_, err := db.Exec(insertSQL, userID, "test-user", "test@example.com", utils.GetMillis(), utils.GetMillis(), 0)
+	_, err := db.Exec(
+		`INSERT INTO users (id, username, email, createat, updateat, deleteat) VALUES ($1, $2, $3, $4, $5, $6)`,
+		userID, "test-user", "test@example.com", utils.GetMillis(), utils.GetMillis(), 0,
+	)
 	require.NoError(t, err)
 
 	t.Run("should return empty list if no results are found", func(t *testing.T) {
@@ -766,15 +762,11 @@ func testGetMembersForUser(t *testing.T, store store.Store) {
 		dbStore, ok := store.(dbHandle)
 		require.True(t, ok, "store must implement dbHandle interface")
 		db := dbStore.DBHandle()
-		dbType := dbStore.DBType()
 
-		var insertSQL string
-		if dbType == model.PostgresDBType {
-			insertSQL = `INSERT INTO users (id, username, email, createat, updateat, deleteat) VALUES ($1, $2, $3, $4, $5, $6)`
-		} else {
-			insertSQL = `INSERT INTO Users (Id, Username, Email, CreateAt, UpdateAt, DeleteAt) VALUES (?, ?, ?, ?, ?, ?)`
-		}
-		_, err := db.Exec(insertSQL, userID, "test-user", "test@example.com", utils.GetMillis(), utils.GetMillis(), 0)
+		_, err := db.Exec(
+			`INSERT INTO users (id, username, email, createat, updateat, deleteat) VALUES ($1, $2, $3, $4, $5, $6)`,
+			userID, "test-user", "test@example.com", utils.GetMillis(), utils.GetMillis(), 0,
+		)
 		require.NoError(t, err)
 
 		members, err := store.GetMembersForUser(userID)
@@ -839,27 +831,17 @@ func testSearchBoardsForUser(t *testing.T, store store.Store) {
 	dbStore, ok := store.(dbHandle)
 	require.True(t, ok, "store must implement dbHandle interface")
 	db := dbStore.DBHandle()
-	dbType := dbStore.DBType()
 
-	var insertSQL string
-	if dbType == model.PostgresDBType {
-		insertSQL = `INSERT INTO users (id, username, email, createat, updateat, deleteat) VALUES ($1, $2, $3, $4, $5, $6)`
-	} else {
-		insertSQL = `INSERT INTO Users (Id, Username, Email, CreateAt, UpdateAt, DeleteAt) VALUES (?, ?, ?, ?, ?, ?)`
-	}
-	_, err := db.Exec(insertSQL, userID, "test-user", "test@example.com", utils.GetMillis(), utils.GetMillis(), 0)
+	_, err := db.Exec(
+		`INSERT INTO users (id, username, email, createat, updateat, deleteat) VALUES ($1, $2, $3, $4, $5, $6)`,
+		userID, "test-user", "test@example.com", utils.GetMillis(), utils.GetMillis(), 0,
+	)
 	require.NoError(t, err)
 
 	// Insert user into TeamMembers table for both teams (required for SearchBoardsForUser to find public boards)
-	var insertTeamMemberSQL string
-	if dbType == model.PostgresDBType {
-		insertTeamMemberSQL = `INSERT INTO teammembers (teamid, userid, roles, deleteat) VALUES ($1, $2, $3, $4)`
-	} else {
-		insertTeamMemberSQL = `INSERT INTO TeamMembers (TeamId, UserId, Roles, DeleteAt) VALUES (?, ?, ?, ?)`
-	}
-	_, err = db.Exec(insertTeamMemberSQL, teamID1, userID, "", 0)
+	_, err = db.Exec(`INSERT INTO teammembers (teamid, userid, roles, deleteat) VALUES ($1, $2, $3, $4)`, teamID1, userID, "", 0)
 	require.NoError(t, err)
-	_, err = db.Exec(insertTeamMemberSQL, teamID2, userID, "", 0)
+	_, err = db.Exec(`INSERT INTO teammembers (teamid, userid, roles, deleteat) VALUES ($1, $2, $3, $4)`, teamID2, userID, "", 0)
 	require.NoError(t, err)
 
 	t.Run("should return empty if user is not a member of any board and there are no public boards on the team", func(t *testing.T) {

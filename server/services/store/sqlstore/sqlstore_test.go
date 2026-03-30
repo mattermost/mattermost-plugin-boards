@@ -8,7 +8,6 @@ import (
 
 	"github.com/mattermost/mattermost-plugin-boards/server/services/store/storetests"
 
-	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,14 +36,7 @@ func TestConcatenationSelector(t *testing.T) {
 	defer tearDown()
 
 	concatenationString := sqlStore.concatenationSelector("a", ",")
-	switch sqlStore.dbType {
-	case model.SqliteDBType:
-		require.Equal(t, concatenationString, "group_concat(a)")
-	case model.MysqlDBType:
-		require.Equal(t, concatenationString, "GROUP_CONCAT(a SEPARATOR ',')")
-	case model.PostgresDBType:
-		require.Equal(t, concatenationString, "string_agg(a, ',')")
-	}
+	require.Equal(t, "string_agg(a, ',')", concatenationString)
 }
 
 func TestElementInColumn(t *testing.T) {
@@ -52,12 +44,5 @@ func TestElementInColumn(t *testing.T) {
 	sqlStore := store.(*SQLStore)
 
 	inLiteral := sqlStore.elementInColumn("test_column")
-	switch sqlStore.dbType {
-	case model.SqliteDBType:
-		require.Equal(t, inLiteral, "instr(test_column, ?) > 0")
-	case model.MysqlDBType:
-		require.Equal(t, inLiteral, "instr(test_column, ?) > 0")
-	case model.PostgresDBType:
-		require.Equal(t, inLiteral, "position(? in test_column) > 0")
-	}
+	require.Equal(t, "position(? in test_column) > 0", inLiteral)
 }
