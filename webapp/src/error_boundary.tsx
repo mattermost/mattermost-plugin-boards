@@ -19,7 +19,9 @@ export default class ErrorBoundary extends React.Component<Props, State> {
     msg = 'Redirecting to error page...'
 
     handleError = (): void => {
-        if (window.location.pathname.endsWith('/error')) {
+        const frontendBase = Utils.getFrontendBaseURL()
+        const expectedErrorPathname = frontendBase ? `/${frontendBase}/error` : '/error'
+        if (window.location.pathname === expectedErrorPathname) {
             return
         }
 

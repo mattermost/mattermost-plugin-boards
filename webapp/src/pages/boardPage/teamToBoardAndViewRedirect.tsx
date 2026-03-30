@@ -22,12 +22,13 @@ const TeamToBoardAndViewRedirect = (): null => {
     const boards = useAppSelector(getBoards)
     const teamId = match.params.teamId || UserSettings.lastTeamId || Constants.globalTeamId
 
-    // Cleanup: Remove skipRedirect flag when component unmounts
+    // Clear skip flag once the URL includes a boardId. The component stays mounted when
+    // navigating from /team/:teamId to /team/:teamId/:boardId, so unmount cleanup would not run.
     useEffect(() => {
-        return () => {
+        if (match.params.boardId) {
             sessionStorage.removeItem(Constants.sessionStorageSkipBoardRedirectKey)
         }
-    }, [])
+    }, [match.params.boardId])
 
     useEffect(() => {
         let boardID = match.params.boardId

@@ -291,20 +291,17 @@ const BoardPage = (props: Props): JSX.Element => {
     }, [])
 
     useEffect(() => {
-        if (isUrlMalformed) return
+        if (isUrlMalformed || !match.params.boardId) return
+
         dispatch(loadAction(match.params.boardId))
+        dispatch(setCurrentBoard(match.params.boardId))
 
-        if (match.params.boardId) {
-            // set the active board
-            dispatch(setCurrentBoard(match.params.boardId))
-
-            if (viewId !== Constants.globalTeamId) {
-                // reset current, even if empty string
-                dispatch(setCurrentView(viewId))
-                if (viewId) {
-                    // don't reset per board if empty string
-                    UserSettings.setLastViewId(match.params.boardId, viewId)
-                }
+        if (viewId !== Constants.globalTeamId) {
+            // reset current, even if empty string
+            dispatch(setCurrentView(viewId))
+            if (viewId) {
+                // don't reset per board if empty string
+                UserSettings.setLastViewId(match.params.boardId, viewId)
             }
         }
     }, [teamId, match.params.boardId, viewId, me?.id, isUrlMalformed])
