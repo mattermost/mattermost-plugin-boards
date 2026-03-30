@@ -40,7 +40,6 @@ jobs:
         env:
           POSTGRES_USER: mmuser
           POSTGRES_PASSWORD: mostest
-          POSTGRES_DB: focalboard_test
           POSTGRES_HOST_AUTH_METHOD: trust
         options: >-
           --health-cmd pg_isready
@@ -51,7 +50,7 @@ jobs:
           - 5432:5432
     env:
       TEST_DATABASE_DRIVERNAME: postgres
-      TEST_DATABASE_SOURCE: postgres://mmuser:mostest@localhost:5432/focalboard_test?sslmode=disable
+      TEST_DATABASE_SOURCE: postgres://mmuser:mostest@localhost:5432/mmuser?sslmode=disable
       FOCALBOARD_STORE_TEST_DB_TYPE: postgres
       FOCALBOARD_STORE_TEST_DOCKER_PORT: "5432"
     steps:
