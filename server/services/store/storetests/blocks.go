@@ -613,7 +613,6 @@ func testPatchBlocks(t *testing.T, store store.Store) {
 	})
 
 	t.Run("invalid block id, nothing updated existing blocks", func(t *testing.T) {
-
 		title := "Another Title"
 		blockPatch := model.BlockPatch{
 			Title: &title,

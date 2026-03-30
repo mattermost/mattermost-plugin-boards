@@ -73,11 +73,9 @@ func (a *API) handleGetMembersForBoard(w http.ResponseWriter, r *http.Request) {
 			a.errorResponse(w, r, model.NewErrPermission("access denied to board members"))
 			return
 		}
-	} else {
-		if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard) {
-			a.errorResponse(w, r, model.NewErrPermission("access denied to board members"))
-			return
-		}
+	} else if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard) {
+		a.errorResponse(w, r, model.NewErrPermission("access denied to board members"))
+		return
 	}
 
 	auditRec := a.makeAuditRecord(r, "getMembersForBoard", audit.Fail)
