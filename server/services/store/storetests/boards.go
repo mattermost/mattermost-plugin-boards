@@ -137,19 +137,8 @@ func testGetBoard(t *testing.T, store store.Store) {
 }
 
 func testGetBoardsForUserAndTeam(t *testing.T, store store.Store) {
-	// Create a valid Mattermost user ID (26 characters)
 	userID := mmModel.NewId()
-
-	// Insert user into Mattermost Users table
-	dbStore, ok := store.(dbHandle)
-	require.True(t, ok, "store must implement dbHandle interface")
-	db := dbStore.DBHandle()
-
-	_, err := db.Exec(
-		`INSERT INTO users (id, username, email, createat, updateat, deleteat) VALUES ($1, $2, $3, $4, $5, $6)`,
-		userID, "test-user", "test@example.com", utils.GetMillis(), utils.GetMillis(), 0,
-	)
-	require.NoError(t, err)
+	insertTestUser(t, store, userID, "test-user", "test@example.com")
 
 	t.Run("should return empty list if no results are found", func(t *testing.T) {
 		boards, err := store.GetBoardsForUserAndTeam(userID, testTeamID, true)
@@ -757,17 +746,8 @@ func testGetMembersForBoard(t *testing.T, store store.Store) {
 
 func testGetMembersForUser(t *testing.T, store store.Store) {
 	t.Run("should return empty list if there are no memberships for a user", func(t *testing.T) {
-		// Create a valid Mattermost user ID (26 characters) and insert into database
 		userID := mmModel.NewId()
-		dbStore, ok := store.(dbHandle)
-		require.True(t, ok, "store must implement dbHandle interface")
-		db := dbStore.DBHandle()
-
-		_, err := db.Exec(
-			`INSERT INTO users (id, username, email, createat, updateat, deleteat) VALUES ($1, $2, $3, $4, $5, $6)`,
-			userID, "test-user", "test@example.com", utils.GetMillis(), utils.GetMillis(), 0,
-		)
-		require.NoError(t, err)
+		insertTestUser(t, store, userID, "test-user", "test@example.com")
 
 		members, err := store.GetMembersForUser(userID)
 		require.NoError(t, err)
@@ -824,25 +804,11 @@ func testDeleteMember(t *testing.T, store store.Store) {
 func testSearchBoardsForUser(t *testing.T, store store.Store) {
 	teamID1 := mmModel.NewId()
 	teamID2 := mmModel.NewId()
-	// Create a valid Mattermost user ID (26 characters) and insert into database
 	userID := mmModel.NewId()
 
-	// Insert user into Mattermost Users table
-	dbStore, ok := store.(dbHandle)
-	require.True(t, ok, "store must implement dbHandle interface")
-	db := dbStore.DBHandle()
-
-	_, err := db.Exec(
-		`INSERT INTO users (id, username, email, createat, updateat, deleteat) VALUES ($1, $2, $3, $4, $5, $6)`,
-		userID, "test-user", "test@example.com", utils.GetMillis(), utils.GetMillis(), 0,
-	)
-	require.NoError(t, err)
-
-	// Insert user into TeamMembers table for both teams (required for SearchBoardsForUser to find public boards)
-	_, err = db.Exec(`INSERT INTO teammembers (teamid, userid, roles, deleteat) VALUES ($1, $2, $3, $4)`, teamID1, userID, "", 0)
-	require.NoError(t, err)
-	_, err = db.Exec(`INSERT INTO teammembers (teamid, userid, roles, deleteat) VALUES ($1, $2, $3, $4)`, teamID2, userID, "", 0)
-	require.NoError(t, err)
+	insertTestUser(t, store, userID, "test-user", "test@example.com")
+	insertTestTeamMember(t, store, teamID1, userID)
+	insertTestTeamMember(t, store, teamID2, userID)
 
 	t.Run("should return empty if user is not a member of any board and there are no public boards on the team", func(t *testing.T) {
 		boards, err2 := store.SearchBoardsForUser("", model.BoardSearchFieldTitle, userID, true)
@@ -857,7 +823,7 @@ func testSearchBoardsForUser(t *testing.T, store store.Store) {
 		Title:      "Public Board with admin",
 		Properties: map[string]any{"foo": "bar1"},
 	}
-	_, _, err = store.InsertBoardWithAdmin(board1, userID)
+	_, _, err := store.InsertBoardWithAdmin(board1, userID)
 	require.NoError(t, err)
 
 	board2 := &model.Board{

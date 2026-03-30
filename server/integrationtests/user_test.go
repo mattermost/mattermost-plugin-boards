@@ -142,7 +142,6 @@ func TestTeamUploadFile(t *testing.T) {
 
 		// Use unauthenticated client
 		th.Client = client.NewClient(th.Server.Config().ServerRoot, "")
-		// Generate a valid Mattermost team ID (26 characters)
 		teamID := mmModel.NewId()
 		boardID := utils.NewID(utils.IDTypeBoard)
 		data := randomBytes(t, 1024)
@@ -157,7 +156,6 @@ func TestTeamUploadFile(t *testing.T) {
 
 		clients := setupClients(th)
 		th.Client = clients.TeamMember
-		// Generate a valid Mattermost team ID (26 characters) for file operations
 		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Type:   model.BoardTypeOpen,
@@ -182,7 +180,6 @@ func TestTeamUploadFile(t *testing.T) {
 		clients := setupClients(th)
 		th.Client = clients.TeamMember
 		th.Client2 = clients.Viewer
-		// Generate a valid Mattermost team ID (26 characters) for file operations
 		teamID := mmModel.NewId()
 		newBoard := &model.Board{
 			Type:   model.BoardTypeOpen,

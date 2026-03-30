@@ -4,7 +4,6 @@
 package storetests
 
 import (
-	"database/sql"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -16,11 +15,6 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 )
 
-// dbHandle is an interface to access the database handle from the store.
-type dbHandle interface {
-	DBHandle() *sql.DB
-}
-
 //nolint:dupl
 func StoreTestUserStore(t *testing.T, setup func(t *testing.T) (store.Store, func())) {
 	t.Run("CreateAndGetUser", func(t *testing.T) {
@@ -31,8 +25,6 @@ func StoreTestUserStore(t *testing.T, setup func(t *testing.T) (store.Store, fun
 }
 
 func testCreateAndGetUser(t *testing.T, store store.Store) {
-	// Mattermost user IDs are 26 characters (not 27 like blocks)
-	// Use mmModel.NewId() directly to get a 26-character ID
 	user := &model.User{
 		ID:       mmModel.NewId(),
 		Username: "damao",
@@ -41,22 +33,7 @@ func testCreateAndGetUser(t *testing.T, store store.Store) {
 		UpdateAt: utils.GetMillis(),
 	}
 
-	// Insert user into the Mattermost Users table
-	// We need to access the underlying database to insert the user
-	// The store interface doesn't expose DB access, so we'll use type assertion
-	dbStore, ok := store.(dbHandle)
-	require.True(t, ok, "store must implement dbHandle interface")
-
-	// Get the database connection from the store
-	db := dbStore.DBHandle()
-	require.NotNil(t, db)
-
-	// Insert user into Users table
-	_, err := db.Exec(
-		`INSERT INTO users (id, username, email, createat, updateat, deleteat) VALUES ($1, $2, $3, $4, $5, $6)`,
-		user.ID, user.Username, user.Email, user.CreateAt, user.UpdateAt, 0,
-	)
-	require.NoError(t, err)
+	insertTestUser(t, store, user.ID, user.Username, user.Email)
 
 	t.Run("GetUserByID", func(t *testing.T) {
 		got, err := store.GetUserByID(user.ID)

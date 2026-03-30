@@ -144,7 +144,6 @@ func (f *FakePermissionPluginAPI) HasPermissionToTeam(userID string, teamID stri
 }
 
 func (*FakePermissionPluginAPI) HasPermissionToChannel(userID string, channelID string, permission *mmModel.Permission) bool {
-	// Accept any valid Mattermost ID format (26 characters) or test channel IDs
 	// This allows tests to use dynamically generated channel IDs or hardcoded test IDs
 	if mmModel.IsValidId(channelID) {
 		return true

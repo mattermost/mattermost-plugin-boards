@@ -67,7 +67,6 @@ func TestPostBlock(t *testing.T) {
 	clients := setupClients(th)
 	th.Client = clients.TeamMember
 
-	// Use a valid Mattermost team ID (26 characters)
 	teamID := mmModel.NewId()
 	board := th.CreateBoard(teamID, model.BoardTypeOpen)
 
@@ -183,7 +182,6 @@ func TestPatchBlock(t *testing.T) {
 
 	initialID := utils.NewID(utils.IDTypeBlock)
 
-	// Use a valid Mattermost team ID (26 characters)
 	teamID := mmModel.NewId()
 	board := th.CreateBoard(teamID, model.BoardTypeOpen)
 	time.Sleep(10 * time.Millisecond)
@@ -284,7 +282,6 @@ func TestDeleteBlock(t *testing.T) {
 	clients := setupClients(th)
 	th.Client = clients.TeamMember
 
-	// Use a valid Mattermost team ID (26 characters)
 	teamID := mmModel.NewId()
 	board := th.CreateBoard(teamID, model.BoardTypeOpen)
 	time.Sleep(10 * time.Millisecond)

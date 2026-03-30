@@ -27,7 +27,6 @@ type PluginTestStore struct {
 }
 
 func NewPluginTestStore(innerStore store.Store) *PluginTestStore {
-	// Generate valid Mattermost team IDs (26 characters) instead of hardcoded strings
 	testTeamID := mmModel.NewId()
 	otherTeamID := mmModel.NewId()
 	emptyTeamID := mmModel.NewId()
@@ -103,7 +102,6 @@ func (s *PluginTestStore) GetTeam(id string) (*model.Team, error) {
 	case s.emptyTeam.ID:
 		return s.emptyTeam, nil
 	}
-	// For any valid Mattermost ID (26 characters), return a mock team
 	if mmModel.IsValidId(id) {
 		return &model.Team{ID: id, Title: "Test Team"}, nil
 	}

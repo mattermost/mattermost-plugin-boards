@@ -65,6 +65,12 @@ func TestUploadFile(t *testing.T) {
 		testBoard := th.CreateBoard(teamID, model.BoardTypeOpen)
 
 		config := th.Server.App().GetConfig()
+		origMaxFileSize := config.MaxFileSize
+		defer func() {
+			config.MaxFileSize = origMaxFileSize
+			th.Server.App().SetConfig(config)
+		}()
+
 		config.MaxFileSize = 1
 		th.Server.App().SetConfig(config)
 
@@ -72,7 +78,7 @@ func TestUploadFile(t *testing.T) {
 		th.CheckRequestEntityTooLarge(resp)
 		require.Nil(t, file)
 
-		config.MaxFileSize = 100000
+		config.MaxFileSize = origMaxFileSize
 		th.Server.App().SetConfig(config)
 
 		file, resp = th.Client.TeamUploadFile(teamID, testBoard.ID, bytes.NewBuffer([]byte("test")))
