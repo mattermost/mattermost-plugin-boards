@@ -239,7 +239,7 @@ type testServicesAPI struct {
 func (t *testServicesAPI) GetUserByID(userID string) (*mmModel.User, error) {
 	user := t.users[userID]
 	if user == nil {
-		return nil, fmt.Errorf("%w: %s", ErrUserNotFound, userID)
+		return nil, mmModel.NewAppError("GetUserByID", "app.user.get.app_error", nil, "user not found: "+userID, http.StatusNotFound)
 	}
 	// Convert Boards model.User to Mattermost model.User
 	return &mmModel.User{
