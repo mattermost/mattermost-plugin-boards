@@ -57,6 +57,11 @@ func (a *API) handleGetMembersForBoard(w http.ResponseWriter, r *http.Request) {
 
 	board, err := a.app.GetBoard(boardID)
 	if err != nil {
+		// Return 403 instead of 404 to avoid leaking whether the board exists.
+		if model.IsErrNotFound(err) {
+			a.errorResponse(w, r, model.NewErrPermission("access denied to board members"))
+			return
+		}
 		a.errorResponse(w, r, err)
 		return
 	}
