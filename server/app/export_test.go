@@ -4,6 +4,7 @@
 package app
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -32,31 +33,31 @@ func TestSanitizeArchiveFilename(t *testing.T) {
 	t.Run("path traversal with .. is rejected", func(t *testing.T) {
 		_, err := sanitizeArchiveFilename("../../etc/passwd")
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "path traversal")
+		assert.True(t, errors.Is(err, ErrInvalidFilenamePathTraversal))
 	})
 
 	t.Run("traversal embedded in path is rejected", func(t *testing.T) {
 		_, err := sanitizeArchiveFilename("subdir/../../etc/passwd")
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "path traversal")
+		assert.True(t, errors.Is(err, ErrInvalidFilenamePathTraversal))
 	})
 
 	t.Run("filename that is just .. is rejected", func(t *testing.T) {
 		_, err := sanitizeArchiveFilename("..")
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "path traversal")
+		assert.True(t, errors.Is(err, ErrInvalidFilenamePathTraversal))
 	})
 
 	t.Run("root path is rejected", func(t *testing.T) {
 		_, err := sanitizeArchiveFilename("/")
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid filename")
+		assert.True(t, errors.Is(err, ErrInvalidFilename))
 	})
 
 	t.Run("dot path is rejected", func(t *testing.T) {
 		_, err := sanitizeArchiveFilename(".")
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid filename")
+		assert.True(t, errors.Is(err, ErrInvalidFilename))
 	})
 
 	t.Run("absolute path returns base name only", func(t *testing.T) {

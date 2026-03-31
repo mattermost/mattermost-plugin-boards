@@ -6,6 +6,7 @@ package app
 import (
 	"archive/zip"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"path"
@@ -19,6 +20,9 @@ import (
 
 var (
 	newline = []byte{'\n'}
+
+	ErrInvalidFilenamePathTraversal = errors.New("invalid filename in export (path traversal)")
+	ErrInvalidFilename              = errors.New("invalid filename in export")
 )
 
 func (a *App) ExportArchive(w io.Writer, opt model.ExportArchiveOptions) (errs error) {
@@ -206,11 +210,11 @@ func (a *App) writeArchiveBoardLine(w io.Writer, board model.Board) error {
 // and returns the base name component to prevent Zip Slip vulnerabilities.
 func sanitizeArchiveFilename(filename string) (string, error) {
 	if strings.Contains(filename, "..") {
-		return "", fmt.Errorf("invalid filename in export (path traversal): %q", filename)
+		return "", fmt.Errorf("%w: %q", ErrInvalidFilenamePathTraversal, filename)
 	}
 	safe := path.Base(filename)
 	if safe == "." || safe == "/" {
-		return "", fmt.Errorf("invalid filename in export: %q", filename)
+		return "", fmt.Errorf("%w: %q", ErrInvalidFilename, filename)
 	}
 	return safe, nil
 }
