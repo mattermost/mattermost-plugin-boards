@@ -46,13 +46,13 @@ func (a *App) ExportArchive(w io.Writer, opt model.ExportArchiveOptions) (errs e
 
 	if err := a.writeArchiveVersion(zw); err != nil {
 		merr.Append(err)
-		return
+		return nil
 	}
 
 	for _, board := range boards {
 		if err := a.writeArchiveBoard(zw, board, opt); err != nil {
 			merr.Append(fmt.Errorf("cannot export board %s: %w", board.ID, err))
-			return
+			return nil
 		}
 	}
 	return nil
