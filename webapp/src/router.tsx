@@ -97,7 +97,7 @@ function HomeToCurrentTeam(props: {path: string, exact: boolean}) {
                     const lastViewID = UserSettings.lastViewId[lastBoardID]
 
                     if (lastBoardID) {
-                        if (!validBoardIds.has(lastBoardID)) {
+                        if (validBoardIds.size > 0 && !validBoardIds.has(lastBoardID)) {
                             let fallbackBoardId: string | null = null
                             for (const category of categories) {
                                 const visible = category.boardMetadata.find((m) => !m.hidden && validBoardIds.has(m.boardID))
