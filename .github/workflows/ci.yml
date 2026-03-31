@@ -13,7 +13,6 @@ env:
  EXCLUDE_ENTERPRISE: true
 
 permissions:
-  id-token: write
   contents: read
 
 jobs:
