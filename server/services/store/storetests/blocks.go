@@ -125,21 +125,29 @@ func testInsertBlock(t *testing.T, store store.Store) {
 	})
 
 	t.Run("invalid rootid", func(t *testing.T) {
+		currBlocks, err2 := store.GetBlocksForBoard(boardID)
+		require.NoError(t, err2)
+		currCount := len(currBlocks)
+
 		block := &model.Block{
 			ID:         utils.NewID(utils.IDTypeBlock),
 			BoardID:    "",
 			ModifiedBy: userID,
 		}
 
-		err2 := store.InsertBlock(block, userID)
-		require.Error(t, err2)
+		err3 := store.InsertBlock(block, userID)
+		require.Error(t, err3)
 
-		blocks2, err3 := store.GetBlocksForBoard(boardID)
-		require.NoError(t, err3)
-		require.Len(t, blocks2, initialCount+1)
+		blocks2, err4 := store.GetBlocksForBoard(boardID)
+		require.NoError(t, err4)
+		require.Len(t, blocks2, currCount)
 	})
 
 	t.Run("invalid fields data", func(t *testing.T) {
+		currBlocks, err2 := store.GetBlocksForBoard(boardID)
+		require.NoError(t, err2)
+		currCount := len(currBlocks)
+
 		block := &model.Block{
 			ID:         utils.NewID(utils.IDTypeBlock),
 			BoardID:    boardID,
@@ -147,12 +155,12 @@ func testInsertBlock(t *testing.T, store store.Store) {
 			Fields:     map[string]interface{}{"no-serialiable-value": t.Run},
 		}
 
-		err2 := store.InsertBlock(block, userID)
-		require.Error(t, err2)
+		err3 := store.InsertBlock(block, userID)
+		require.Error(t, err3)
 
-		blocks2, err3 := store.GetBlocksForBoard(boardID)
-		require.NoError(t, err3)
-		require.Len(t, blocks2, initialCount+1)
+		blocks2, err4 := store.GetBlocksForBoard(boardID)
+		require.NoError(t, err4)
+		require.Len(t, blocks2, currCount)
 	})
 
 	t.Run("block with title too large", func(t *testing.T) {
@@ -237,9 +245,13 @@ func testInsertBlock(t *testing.T, store store.Store) {
 		}
 		err = store.InsertBlock(newBlock, testUserID4)
 		require.NoError(t, err)
-		// created by is not altered for existing blocks
-		require.Equal(t, testUserID3, newBlock.CreatedBy)
-		require.Equal(t, "New Title", newBlock.Title)
+
+		// verify persisted state rather than in-memory struct
+		persistedBlock, err2 := store.GetBlock(testBlockID2)
+		require.NoError(t, err2)
+		// created_by in DB is preserved from original insert, not overwritten by update
+		require.Equal(t, testUserID2, persistedBlock.CreatedBy)
+		require.Equal(t, "New Title", persistedBlock.Title)
 	})
 
 	t.Run("update existing block with title too large", func(t *testing.T) {

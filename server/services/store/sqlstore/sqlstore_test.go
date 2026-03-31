@@ -40,8 +40,9 @@ func TestConcatenationSelector(t *testing.T) {
 }
 
 func TestElementInColumn(t *testing.T) {
-	store, _ := SetupTests(t)
+	store, tearDown := SetupTests(t)
 	sqlStore := store.(*SQLStore)
+	defer tearDown()
 
 	inLiteral := sqlStore.elementInColumn("test_column")
 	require.Equal(t, "position(? in test_column) > 0", inLiteral)

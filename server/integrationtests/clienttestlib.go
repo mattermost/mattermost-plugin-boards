@@ -231,9 +231,8 @@ func getTestConfig(sqlSettings *mmModel.SqlSettings) (*config.Configuration, err
 
 // testServicesAPI provides a servicesAPI implementation for tests.
 type testServicesAPI struct {
-	users  map[string]*model.User
-	db     *sql.DB
-	dbType string
+	users map[string]*model.User
+	db    *sql.DB
 }
 
 func (t *testServicesAPI) GetUserByID(userID string) (*mmModel.User, error) {
@@ -331,12 +330,7 @@ func (t *testServicesAPI) GetLicense() *mmModel.License {
 func (t *testServicesAPI) GetFileInfo(fileID string) (*mmModel.FileInfo, error) {
 	// Query the FileInfo table (Mattermost's table) to retrieve saved file info
 	// This matches what the real Mattermost servicesAPI would do
-	var query string
-	if t.dbType == model.PostgresDBType {
-		query = `SELECT Id, CreateAt, UpdateAt, DeleteAt, Path, ThumbnailPath, PreviewPath, Name, Extension, Size, MimeType, Width, Height, HasPreviewImage, MiniPreview, Content, RemoteId, CreatorId, PostId FROM FileInfo WHERE Id = $1`
-	} else {
-		query = `SELECT Id, CreateAt, UpdateAt, DeleteAt, Path, ThumbnailPath, PreviewPath, Name, Extension, Size, MimeType, Width, Height, HasPreviewImage, MiniPreview, Content, RemoteId, CreatorId, PostId FROM FileInfo WHERE Id = ?`
-	}
+	query := `SELECT Id, CreateAt, UpdateAt, DeleteAt, Path, ThumbnailPath, PreviewPath, Name, Extension, Size, MimeType, Width, Height, HasPreviewImage, MiniPreview, Content, RemoteId, CreatorId, PostId FROM fileinfo WHERE id = $1`
 
 	var fileInfo mmModel.FileInfo
 	err := t.db.QueryRow(query, fileID).Scan(
@@ -491,7 +485,7 @@ func NewTestServerPluginMode(sqlSettings *mmModel.SqlSettings) *server.Server {
 		TablePrefix:      cfg.DBTablePrefix,
 		Logger:           logger,
 		DB:               sqlDB,
-		ServicesAPI:      &testServicesAPI{users: testUsers, db: sqlDB, dbType: cfg.DBType},
+		ServicesAPI:      &testServicesAPI{users: testUsers, db: sqlDB},
 		NewMutexFn: func(name string) (*cluster.Mutex, error) {
 			// Create a mutex using a test API that does nothing
 			// This allows migrations to run without actual cluster coordination
@@ -638,7 +632,6 @@ func (th *TestHelper) TearDown() {
 	os.RemoveAll(th.Server.Config().FilesPath)
 
 	// Cleanup database using storetest.CleanupSqlSettings
-	// This handles both SQLite files and PostgreSQL/MySQL databases
 	// Note: t.Cleanup() will also try to clean up, so we mark it as done to prevent double cleanup
 	if th.sqlSettings != nil && !th.cleanupDone {
 		storetest.CleanupSqlSettings(th.sqlSettings)
@@ -783,34 +776,20 @@ func (th *TestHelper) CheckNotImplemented(r *client.Response) {
 // This is useful for tests that need to ensure a user is a team member so that
 // SearchBoardsForTeam can find public boards associated with that team.
 func (th *TestHelper) AddUserToTeamMembers(teamID, userID string) error {
-	dbType := th.Server.Config().DBType
 	connectionString := th.Server.Config().DBConfigString
-	db, err := sql.Open(dbType, connectionString)
+	db, err := sql.Open(model.PostgresDBType, connectionString)
 	if err != nil {
 		return err
 	}
 	defer db.Close()
 
-	if dbType == model.PostgresDBType {
-		// PostgreSQL uses lowercase table and column names
-		// Check if record exists first to avoid constraint errors
-		var count int
-		checkSQL := `SELECT COUNT(*) FROM teammembers WHERE teamid = $1 AND userid = $2`
-		err = db.QueryRow(checkSQL, teamID, userID).Scan(&count)
-		if err != nil {
-			return err
-		}
-		if count == 0 {
-			insertTeamMemberSQL := `INSERT INTO teammembers (teamid, userid, roles, deleteat) VALUES ($1, $2, $3, $4)`
-			_, err = db.Exec(insertTeamMemberSQL, teamID, userID, "member", 0)
-			if err != nil {
-				return err
-			}
-		}
-	} else {
-		// MySQL uses camel case
-		insertTeamMemberSQL := `INSERT IGNORE INTO TeamMembers (TeamId, UserId, Roles, DeleteAt) VALUES (?, ?, ?, ?)`
-		_, err = db.Exec(insertTeamMemberSQL, teamID, userID, "member", 0)
+	var count int
+	err = db.QueryRow(`SELECT COUNT(*) FROM teammembers WHERE teamid = $1 AND userid = $2`, teamID, userID).Scan(&count)
+	if err != nil {
+		return err
+	}
+	if count == 0 {
+		_, err = db.Exec(`INSERT INTO teammembers (teamid, userid, roles, deleteat) VALUES ($1, $2, $3, $4)`, teamID, userID, "member", 0)
 		if err != nil {
 			return err
 		}
