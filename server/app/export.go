@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"path"
+	"strings"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/wiggin77/merror"
@@ -200,9 +202,27 @@ func (a *App) writeArchiveBoardLine(w io.Writer, board model.Board) error {
 	return err
 }
 
+// sanitizeArchiveFilename rejects filenames containing path traversal sequences
+// and returns the base name component to prevent Zip Slip vulnerabilities.
+func sanitizeArchiveFilename(filename string) (string, error) {
+	if strings.Contains(filename, "..") {
+		return "", fmt.Errorf("invalid filename in export (path traversal): %q", filename)
+	}
+	safe := path.Base(filename)
+	if safe == "." || safe == "/" {
+		return "", fmt.Errorf("invalid filename in export: %q", filename)
+	}
+	return safe, nil
+}
+
 // writeArchiveFile writes a single file to the archive.
 func (a *App) writeArchiveFile(zw *zip.Writer, filename string, boardID string, opt model.ExportArchiveOptions) error {
-	dest, err := zw.Create(boardID + "/" + filename)
+	safeFilename, err := sanitizeArchiveFilename(filename)
+	if err != nil {
+		return err
+	}
+
+	dest, err := zw.Create(boardID + "/" + safeFilename)
 	if err != nil {
 		return err
 	}
