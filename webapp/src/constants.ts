@@ -202,6 +202,9 @@ class Constants {
     static readonly noChannelID = '0'
 
     static readonly SystemUserID = 'system'
+
+    // SessionStorage key to skip board auto-redirects after error
+    static readonly sessionStorageSkipBoardRedirectKey = 'skip_board_redirect'
 }
 
 export {Constants, Permission}
