@@ -27,6 +27,7 @@ type Plugin struct {
 }
 
 func (p *Plugin) OnActivate() error {
+	//nolint:staticcheck // QF1008: prefer to keep explicit MattermostPlugin qualifier
 	client := pluginapi.NewClient(p.MattermostPlugin.API, p.MattermostPlugin.Driver)
 
 	logger, _ := mlog.NewLogger()
@@ -40,6 +41,7 @@ func (p *Plugin) OnActivate() error {
 		return err
 	}
 
+	//nolint:staticcheck // QF1008: prefer to keep explicit MattermostPlugin qualifier
 	adapter := newServiceAPIAdapter(p.MattermostPlugin.API, client.Store, logger)
 
 	boardsApp, err := boards.NewBoardsApp(adapter, manifest)
