@@ -942,7 +942,7 @@ func testSearchBoardsForUser(t *testing.T, store store.Store) {
 			boards, err := store.SearchBoardsForUser(tc.Term, tc.SearchField, tc.UserID, tc.IncludePublic)
 			require.NoError(t, err)
 
-			boardIDs := []string{}
+			boardIDs := make([]string, 0, len(boards))
 			for _, board := range boards {
 				boardIDs = append(boardIDs, board.ID)
 			}

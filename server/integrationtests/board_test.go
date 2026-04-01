@@ -572,7 +572,7 @@ func TestSearchBoards(t *testing.T) {
 				boards, resp := tc.Client.SearchBoardsForTeam(teamID, tc.Term)
 				th.CheckOK(resp)
 
-				boardIDs := []string{}
+				boardIDs := make([]string, 0, len(boards))
 				for _, board := range boards {
 					boardIDs = append(boardIDs, board.ID)
 				}
@@ -2065,7 +2065,7 @@ func TestDuplicateBoard(t *testing.T) {
 		for _, categoryBoard := range userCategoryBoards {
 			for _, boardMetadata := range categoryBoard.BoardMetadata {
 				if boardMetadata.BoardID == duplicateBoard.ID {
-					duplicateBoardCategoryID = categoryBoard.Category.ID
+					duplicateBoardCategoryID = categoryBoard.ID
 				}
 			}
 		}

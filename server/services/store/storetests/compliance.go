@@ -109,7 +109,7 @@ func testGetBoardsComplianceHistory(t *testing.T, store store.Store) {
 
 	boardsTeam1 := createTestBoards(t, store, team1, testUserID, 11)
 	boardsTeam2 := createTestBoards(t, store, team2, testUserID, 7)
-	boardsAdded := make([]*model.Board, 0)
+	boardsAdded := make([]*model.Board, 0, len(boardsTeam1)+len(boardsTeam2))
 	boardsAdded = append(boardsAdded, boardsTeam1...)
 	boardsAdded = append(boardsAdded, boardsTeam2...)
 

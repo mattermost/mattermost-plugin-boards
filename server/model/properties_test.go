@@ -15,19 +15,20 @@ import (
 type MockResolver struct{}
 
 func (r MockResolver) GetUserByID(userID string) (*User, error) {
-	if userID == "user_id_1" {
+	switch userID {
+	case "user_id_1":
 		return &User{
 			ID:       "user_id_1",
 			Username: "username_1",
 		}, nil
-	} else if userID == "user_id_2" {
+	case "user_id_2":
 		return &User{
 			ID:       "user_id_2",
 			Username: "username_2",
 		}, nil
+	default:
+		return nil, nil
 	}
-
-	return nil, nil
 }
 
 func Test_parsePropertySchema(t *testing.T) {

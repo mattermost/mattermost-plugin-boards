@@ -1,80 +1,111 @@
+version: "2"
 run:
-  timeout: 5m
   modules-download-mode: readonly
-
-linters-settings:
-  gofmt:
-    simplify: true
-  goimports:
-    local-prefixes: github.com/mattermost/mattermost-starter-template
-  golint:
-    min-confidence: 0
-  govet:
-    enable-all: true
-    disable:
-      - fieldalignment
-  misspell:
-    locale: US
-  lll:
-    line-length: 150
-  revive:
-    enableAllRules: true
-    rules:
-      - name: exported
-        disabled: true
-
 linters:
-  disable-all: true
+  default: none
+  enable:
+    - asciicheck
+    - bodyclose
+    - copyloopvar
+    - dogsled
+    - durationcheck
+    - err113
+    - errorlint
+    - exhaustive
+    - gocritic
+    - gocyclo
+    - godot
+    - goheader
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - govet
+    - ineffassign
+    - makezero
+    - misspell
+    - nakedret
+    - nolintlint
+    - prealloc
+    - revive
+    - staticcheck
+    - unconvert
+    - unparam
+    - unused
+    - whitespace
   settings:
     govet:
-      enable:
-        - shadow
+      disable:
+        - fieldalignment
+      enable-all: true
+    lll:
+      line-length: 150
+    misspell:
+      locale: US
+    revive:
+      rules:
+        - name: exported
+          disabled: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - unused
+        path: server/manifest.go
+      - linters:
+          - unused
+        path: server/configuration.go
+      - linters:
+          - bodyclose
+        path: _test\.go
+      # QF1008 - ignoring for now and must be revisited after bumping lint version.
+      - linters:
+          - staticcheck
+        text: QF1008
+        path: app/category_boards.go
+      - linters:
+          - staticcheck
+        text: QF1008
+        path: plugin.go
+      - linters:
+          - staticcheck
+        text: QF1008
+        path: services/metrics/service.go
+      - linters:
+          - staticcheck
+        text: QF1008
+        path: web/webserver.go
+      # QF1003: this file is using boardTypes undefined in the models - must be revisited after bumping lint version.
+      - linters:
+          - staticcheck
+        text: QF1003
+        path: store/sqlstore/data_migrations.go
+    paths:
+      - product/boards_product.go
+      - services/store/sqlstore/migrations
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
   enable:
     - gofmt
     - goimports
-    - ineffassign
-    - unparam
-    - govet
-    - bodyclose
-    - durationcheck
-    - errorlint
-    - exhaustive
-    - copyloopvar
-    - gosec
-    - makezero
-    - staticcheck
-    - prealloc
-    - asciicheck
-    - dogsled
-    - gocritic
-    - godot
-    - err113
-    - goheader
-    - revive
-    - nakedret
-    - gomodguard
-    - goprintffuncname
-    - gosimple
-    - misspell
-    - nolintlint
-    - typecheck
-    - unconvert
-    - unused
-    - whitespace
-    - gocyclo
-
-issues:
-  exclude-files:
-    - product/boards_product.go
-    - services/store/sqlstore/migrations
-  exclude-rules:
-    - path: server/manifest.go
-      linters:
-        - unused
-    - path: server/configuration.go
-      linters:
-        - unused
-    - path: _test\.go
-      linters:
-        - bodyclose
-        - scopelint # https://github.com/kyoh86/scopelint/issues/4
+  settings:
+    gofmt:
+      simplify: true
+    goimports:
+      local-prefixes:
+        # todo: update to the correct module name after bumping lint version.
+        - github.com/mattermost/mattermost-starter-template
+  exclusions:
+    generated: lax
+    paths:
+      - product/boards_product.go
+      - services/store/sqlstore/migrations
+      - third_party$
+      - builtin$
+      - examples$

@@ -58,14 +58,11 @@ func createBoardsConfig(mmconfig mm_model.Config, baseURL string, serverID strin
 		enableTelemetry = *mmconfig.LogSettings.EnableDiagnostics
 	}
 
-	enablePublicSharedBoards := false
-	if mmconfig.PluginSettings.Plugins[PluginName][SharedBoardsName] == true {
-		enablePublicSharedBoards = true
-	}
+	enablePublicSharedBoards := mmconfig.PluginSettings.Plugins[PluginName][SharedBoardsName] == true
 
 	enableBoardsDeletion := false
 	if mmconfig.DataRetentionSettings.EnableBoardsDeletion != nil {
-		enableBoardsDeletion = true
+		enableBoardsDeletion = *mmconfig.DataRetentionSettings.EnableBoardsDeletion
 	}
 
 	featureFlags := parseFeatureFlags(mmconfig.FeatureFlags.ToMap())

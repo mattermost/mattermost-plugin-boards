@@ -78,10 +78,7 @@ func (b *BoardsApp) OnConfigurationChange() error {
 	}
 	mmconfig := b.servicesAPI.GetConfig()
 
-	enableShareBoards := false
-	if mmconfig.PluginSettings.Plugins[PluginName][SharedBoardsName] == true {
-		enableShareBoards = true
-	}
+	enableShareBoards := mmconfig.PluginSettings.Plugins[PluginName][SharedBoardsName] == true
 
 	configuration := &configuration{
 		EnablePublicSharedBoards: enableShareBoards,
@@ -90,10 +87,8 @@ func (b *BoardsApp) OnConfigurationChange() error {
 	b.server.Config().EnablePublicSharedBoards = enableShareBoards
 
 	// handle Data Retention settings
-	enableBoardsDeletion := false
-	if mmconfig.DataRetentionSettings.EnableBoardsDeletion != nil {
-		enableBoardsDeletion = true
-	}
+	enableBoardsDeletion := mmconfig.DataRetentionSettings.EnableBoardsDeletion != nil
+
 	b.server.Config().EnableDataRetention = enableBoardsDeletion
 	b.server.Config().DataRetentionDays = *mmconfig.DataRetentionSettings.BoardsRetentionDays
 	b.server.Config().TeammateNameDisplay = *mmconfig.TeamSettings.TeammateNameDisplay
