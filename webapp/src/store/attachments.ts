@@ -88,6 +88,6 @@ export function getCardAttachments(cardId: string): (state: RootState) => Attach
 
 export function getUploadPercent(blockId: string): (state: RootState) => number {
     return (state: RootState): number => {
-        return (state.attachments.attachments[blockId].uploadingPercent)
+        return state.attachments.attachments[blockId]?.uploadingPercent ?? 0
     }
 }
