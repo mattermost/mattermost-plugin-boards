@@ -194,6 +194,7 @@ const BoardPage = (props: Props): JSX.Element => {
         }
 
         const dispatchLoadAction = () => {
+            if (!match.params.boardId) return
             dispatch(loadAction(match.params.boardId))
         }
 
@@ -221,7 +222,7 @@ const BoardPage = (props: Props): JSX.Element => {
             wsClient.removeOnChange(incrementalBoardMemberUpdate, 'boardMembers')
             wsClient.removeOnReconnect(dispatchLoadAction)
         }
-    }, [me?.id, activeBoardId])
+    }, [me?.id, activeBoardId, match.params.boardId])
 
     const onConfirmJoin = async () => {
         if (me) {
@@ -302,27 +303,24 @@ const BoardPage = (props: Props): JSX.Element => {
     }, [])
 
     useEffect(() => {
+        if (!match.params.boardId) return
+
         dispatch(loadAction(match.params.boardId))
+        dispatch(setCurrentBoard(match.params.boardId))
 
-        if (match.params.boardId) {
-            // set the active board
-            dispatch(setCurrentBoard(match.params.boardId))
-
-            if (viewId !== Constants.globalTeamId) {
-                // reset current, even if empty string
-                dispatch(setCurrentView(viewId))
-                if (viewId) {
-                    // don't reset per board if empty string
-                    UserSettings.setLastViewId(match.params.boardId, viewId)
-                }
+        if (viewId !== Constants.globalTeamId) {
+            // reset current, even if empty string
+            dispatch(setCurrentView(viewId))
+            if (viewId) {
+                // don't reset per board if empty string
+                UserSettings.setLastViewId(match.params.boardId, viewId)
             }
         }
     }, [teamId, match.params.boardId, viewId, me?.id])
 
     useEffect(() => {
-        if (match.params.boardId && !props.readonly && me) {
-            loadOrJoinBoard(me, teamId, match.params.boardId)
-        }
+        if (!match.params.boardId || props.readonly || !me) return
+        loadOrJoinBoard(me, teamId, match.params.boardId)
     }, [teamId, match.params.boardId, me?.id])
 
     // Track when board has been loaded at least once
@@ -335,9 +333,8 @@ const BoardPage = (props: Props): JSX.Element => {
     // When the board is removed from the store while viewing (e.g. user was removed via websocket),
     // re-verify access so we show access-denied instead of the template picker
     useEffect(() => {
-        if (match.params.boardId && !props.readonly && me && !currentBoard && boardWasLoaded) {
-            loadOrJoinBoard(me, teamId, match.params.boardId)
-        }
+        if (!match.params.boardId || props.readonly || !me || currentBoard || !boardWasLoaded) return
+        loadOrJoinBoard(me, teamId, match.params.boardId)
     }, [teamId, match.params.boardId, me?.id, currentBoard, loadOrJoinBoard, boardWasLoaded])
 
     const handleUnhideBoard = async (boardID: string) => {
@@ -349,10 +346,7 @@ const BoardPage = (props: Props): JSX.Element => {
     }
 
     useEffect(() => {
-        if (!teamId || !match.params.boardId) {
-            return
-        }
-
+        if (!teamId || !match.params.boardId) return
         if (hiddenBoardIDs.indexOf(match.params.boardId) >= 0) {
             handleUnhideBoard(match.params.boardId)
         }

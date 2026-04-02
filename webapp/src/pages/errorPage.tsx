@@ -2,7 +2,7 @@
 // See LICENSE.txt for license information.
 
 import React, {useCallback} from 'react'
-import {useHistory, useLocation} from 'react-router-dom'
+import {useLocation} from 'react-router-dom'
 import {FormattedMessage} from 'react-intl'
 
 import ErrorIllustration from '../svg/error-illustration'
@@ -16,7 +16,6 @@ import {UserSettingKey} from '../userSettings'
 import {Constants} from '../constants'
 
 const ErrorPage = () => {
-    const history = useHistory()
     const queryParams = new URLSearchParams(useLocation().search)
     const errid = queryParams.get('id')
     const errorDef = errorDefFromId(errid as ErrorId)
@@ -29,22 +28,16 @@ const ErrorPage = () => {
             url = path as string
         }
 
-        // Clear stored URLs and set flag to prevent auto-redirect to broken boards
+        // Clear stored board/view IDs and set flag to skip all auto-redirects
         if (clearHistory) {
             localStorage.removeItem(UserSettingKey.LastBoardId)
             localStorage.removeItem(UserSettingKey.LastViewId)
-            sessionStorage.setItem(Constants.sessionStorageIgnoreStoredUrlsKey, 'true')
-            sessionStorage.removeItem(Constants.sessionStorageErrorRedirectCountKey)
-            sessionStorage.removeItem(Constants.sessionStorageErrorRedirectTimeKey)
+            sessionStorage.setItem(Constants.sessionStorageSkipBoardRedirectKey, 'true')
         }
 
-        if (url === window.location.origin || clearHistory) {
-            const finalUrl = clearHistory ? Utils.getFrontendBaseURL(true) : url
-            window.location.href = finalUrl
-        } else {
-            history.push(url)
-        }
-    }, [history, queryParams])
+        const finalUrl = clearHistory ? Utils.getFrontendBaseURL(true) : url
+        window.location.href = finalUrl
+    }, [queryParams])
 
     const makeButton = ((path: string | ((params: URLSearchParams) => string), txt: string, fill: boolean, clearHistory: boolean) => {
         return (

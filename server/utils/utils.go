@@ -126,6 +126,9 @@ func DedupeStringArr(arr []string) []string {
 	return dedupedArr
 }
 
+// BoardsFilePathPrefix is the root directory for all regular board file uploads.
+const BoardsFilePathPrefix = "boards/"
+
 func GetBaseFilePath() string {
 	return path.Join("boards", time.Now().Format("20060102"))
 }

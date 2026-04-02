@@ -6,6 +6,7 @@ package app
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/notify"
@@ -359,7 +360,9 @@ func (a *App) PatchBoard(patch *model.BoardPatch, boardID, userID string) (*mode
 			username = user.Username
 		}
 
-		boardLink := utils.MakeBoardLink(a.config.ServerRoot, updatedBoard.TeamID, updatedBoard.ID)
+		// Use /boards path for channel notification links so boards open in-app (not in pop-up)
+		boardsRoot := strings.Replace(a.config.ServerRoot, "/plugins/focalboard", "/boards", 1)
+		boardLink := utils.MakeBoardLink(boardsRoot, updatedBoard.TeamID, updatedBoard.ID)
 		title := updatedBoard.Title
 		if title == "" {
 			title = "Untitled board" // todo: localize this when server has i18n
