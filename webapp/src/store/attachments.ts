@@ -46,7 +46,11 @@ const attachmentSlice = createSlice({
             }
         },
         updateUploadPrecent: (state, action: PayloadAction<{blockId: string, uploadPercent: number}>) => {
-            state.attachments[action.payload.blockId].uploadingPercent = action.payload.uploadPercent
+            const attachment = state.attachments[action.payload.blockId]
+            if (!attachment) {
+                return
+            }
+            attachment.uploadingPercent = action.payload.uploadPercent
         },
     },
     extraReducers: (builder) => {
