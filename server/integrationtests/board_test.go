@@ -504,7 +504,6 @@ func TestGetAllBlocksForBoard(t *testing.T) {
 }
 
 func TestSearchBoards(t *testing.T) {
-	t.Skip("Skipping TestSearchBoards - will be fixed separately")
 	t.Run("a non authenticated user should be rejected", func(t *testing.T) {
 		th := SetupTestHelperPluginMode(t)
 		defer th.TearDown()
@@ -524,13 +523,13 @@ func TestSearchBoards(t *testing.T) {
 		th.Client = clients.TeamMember
 		th.Client2 = clients.Viewer
 
-		teamID := mmModel.NewId()
+		testTeamID, otherTeamID, _ := th.GetTestTeamIDs()
 		user1 := th.GetUser1()
 
 		board1 := &model.Board{
 			Title:  "public board where user1 is admin",
 			Type:   model.BoardTypeOpen,
-			TeamID: teamID,
+			TeamID: testTeamID,
 		}
 		rBoard1, err := th.Server.App().CreateBoard(board1, user1.ID, true)
 		require.NoError(t, err)
@@ -538,7 +537,7 @@ func TestSearchBoards(t *testing.T) {
 		board2 := &model.Board{
 			Title:  "public board where user1 is not member",
 			Type:   model.BoardTypeOpen,
-			TeamID: teamID,
+			TeamID: testTeamID,
 		}
 		rBoard2, err := th.Server.App().CreateBoard(board2, user1.ID, false)
 		require.NoError(t, err)
@@ -546,7 +545,7 @@ func TestSearchBoards(t *testing.T) {
 		board3 := &model.Board{
 			Title:  "private board where user1 is admin",
 			Type:   model.BoardTypePrivate,
-			TeamID: teamID,
+			TeamID: testTeamID,
 		}
 		rBoard3, err := th.Server.App().CreateBoard(board3, user1.ID, true)
 		require.NoError(t, err)
@@ -554,13 +553,11 @@ func TestSearchBoards(t *testing.T) {
 		board4 := &model.Board{
 			Title:  "private board where user1 is not member",
 			Type:   model.BoardTypePrivate,
-			TeamID: teamID,
+			TeamID: testTeamID,
 		}
 		_, err = th.Server.App().CreateBoard(board4, user1.ID, false)
 		require.NoError(t, err)
 
-		// Get dynamically generated team IDs from the test store
-		_, otherTeamID, _ := th.GetTestTeamIDs()
 		board5 := &model.Board{
 			Title:  "private board where user1 is admin, but in other team",
 			Type:   model.BoardTypePrivate,
@@ -609,7 +606,7 @@ func TestSearchBoards(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.Name, func(t *testing.T) {
-				boards, resp := tc.Client.SearchBoardsForTeam(teamID, tc.Term)
+				boards, resp := tc.Client.SearchBoardsForTeam(testTeamID, tc.Term)
 				th.CheckOK(resp)
 
 				boardIDs := []string{}

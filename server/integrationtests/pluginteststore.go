@@ -300,22 +300,33 @@ func (s *PluginTestStore) GetChannel(teamID, channel string) (*mmModel.Channel, 
 }
 
 func (s *PluginTestStore) SearchBoardsForUser(term string, field model.BoardSearchField, userID string, includePublicBoards bool) ([]*model.Board, error) {
-	boards, err := s.Store.SearchBoardsForUser(term, field, userID, includePublicBoards)
-	if err != nil {
-		return nil, err
+	// Guests only see boards they are directly a member of. The underlying SQL
+	// query for includePublicBoards=false uses only the board_members table,
+	// so it works correctly without any Mattermost TeamMembers data.
+	if !includePublicBoards {
+		return s.Store.SearchBoardsForUser(term, field, userID, false)
 	}
 
+	// For non-guests we iterate over the user's teams and call
+	// SearchBoardsForUserInTeam for each one. That query finds open boards
+	// directly by team_id, so it never touches the Mattermost TeamMembers
+	// table (which is absent in the integration-test database).
 	teams, err := s.GetTeamsForUser(userID)
 	if err != nil {
 		return nil, err
 	}
 
+	seen := map[string]bool{}
 	resultBoards := []*model.Board{}
-	for _, board := range boards {
-		for _, team := range teams {
-			if team.ID == board.TeamID {
+	for _, team := range teams {
+		teamBoards, err := s.Store.SearchBoardsForUserInTeam(team.ID, term, userID)
+		if err != nil {
+			return nil, err
+		}
+		for _, board := range teamBoards {
+			if !seen[board.ID] {
+				seen[board.ID] = true
 				resultBoards = append(resultBoards, board)
-				break
 			}
 		}
 	}

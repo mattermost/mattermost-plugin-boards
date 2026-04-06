@@ -345,7 +345,6 @@ func TestPermissionsGetTeamBoards(t *testing.T) {
 }
 
 func TestPermissionsSearchTeamBoards(t *testing.T) {
-	t.Skip("Skipping TestPermissionsSearchTeamBoards - search tests will be fixed separately")
 	ttCases := []TestCase{
 		// Search boards
 		{"/teams/test-team/boards/search?q=b", methodGet, "", userAnon, http.StatusUnauthorized, 0},
@@ -365,7 +364,6 @@ func TestPermissionsSearchTeamBoards(t *testing.T) {
 	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 func TestPermissionsSearchTeamLinkableBoards(t *testing.T) {
-	t.Skip("Skipping TestPermissionsSearchTeamLinkableBoards - search tests will be fixed separately")
 	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 	clients := setupClients(th)

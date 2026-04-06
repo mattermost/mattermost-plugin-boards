@@ -612,7 +612,6 @@ var (
 	ErrRegisterFail   = errors.New("register failed")
 	ErrUserNotFound   = errors.New("user not found")
 	ErrNotImplemented = errors.New("not implemented")
-	ErrUnknownError   = errors.New("unknown error")
 )
 
 func (th *TestHelper) TearDown() {
