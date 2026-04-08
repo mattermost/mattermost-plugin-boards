@@ -55,9 +55,6 @@ jobs:
       s3-prefix: "mattermost-plugin-boards"
 
   e2e:
-    permissions:
-      contents: read
-      id-token: write
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
