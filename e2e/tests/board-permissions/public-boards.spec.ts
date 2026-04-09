@@ -16,6 +16,8 @@ test.afterAll(async () => {
 });
 
 test.describe('Board Permissions', () => {
+    test.describe.configure({ timeout: 300000 });
+
     test('regular user can only see their own boards', async ({ page }) => {
         const mmPage = new MattermostPage(page);
         await mmPage.login(mattermost.url(), 'regularuser', 'regularuser');

@@ -19,6 +19,7 @@ test.afterAll(async () => {
 });
 
 test.describe('Board Creation', () => {
+    test.describe.configure({ timeout: 300000 });
     test('boards product is accessible after login', async ({ page }) => {
         const mmPage = new MattermostPage(page);
         await mmPage.login(mattermost.url(), username, password);

@@ -82,39 +82,51 @@ export default class MattermostContainer {
         }
     }
 
+    private execOrThrow = async (cmd: string[]): Promise<{ exitCode: number; output: string; stdout: string; stderr: string }> => {
+        const result = await this.container.exec(cmd)
+        if (result.exitCode !== 0) {
+            throw new Error(
+                `Command failed: ${cmd.join(' ')}\n` +
+                `Exit code: ${result.exitCode}\n` +
+                `Output: ${result.output}\n` +
+                `Stdout: ${result.stdout}\n` +
+                `Stderr: ${result.stderr}`
+            )
+        }
+        return result
+    }
+
     createAdmin = async (email: string, username: string, password: string) => {
-        await this.container.exec(["mmctl", "--local", "user", "create", "--email", email, "--username", username, "--password", password, "--system-admin", "--email-verified"])
+        await this.execOrThrow(["mmctl", "--local", "user", "create", "--email", email, "--username", username, "--password", password, "--system-admin", "--email-verified"])
     }
 
     createUser = async (email: string, username: string, password: string) => {
-        await this.container.exec(["mmctl", "--local", "user", "create", "--email", email, "--username", username, "--password", password, "--email-verified"])
+        await this.execOrThrow(["mmctl", "--local", "user", "create", "--email", email, "--username", username, "--password", password, "--email-verified"])
     }
 
     createTeam = async (name: string, displayName: string) => {
-        await this.container.exec(["mmctl", "--local", "team", "create", "--name", name, "--display-name", displayName])
+        await this.execOrThrow(["mmctl", "--local", "team", "create", "--name", name, "--display-name", displayName])
     }
 
     addUserToTeam = async (username: string, teamname: string) => {
-        await this.container.exec(["mmctl", "--local", "team", "users", "add", teamname, username])
+        await this.execOrThrow(["mmctl", "--local", "team", "users", "add", teamname, username])
     }
 
     getLogs = async (lines: number): Promise<string> => {
-        const {output} = await this.container.exec(["mmctl", "--local", "logs", "--number", lines.toString()])
+        const {output} = await this.execOrThrow(["mmctl", "--local", "logs", "--number", lines.toString()])
         return output
     }
 
     setSiteURL = async () => {
         const url = this.url()
-        await this.container.exec(["mmctl", "--local", "config", "set", "ServiceSettings.SiteURL", url])
-        const containerPort = this.container.getMappedPort(8065)
-        await this.container.exec(["mmctl", "--local", "config", "set", "ServiceSettings.ListenAddress", `${containerPort}`])
+        await this.execOrThrow(["mmctl", "--local", "config", "set", "ServiceSettings.SiteURL", url])
     }
 
     installPlugin = async (pluginPath: string, pluginID: string, pluginConfig?: PluginConfigInput) => {
         await this.container.copyFilesToContainer([{source: pluginPath, target: `/tmp/plugin.tar.gz`}])
 
-        await this.container.exec(["mmctl", "--local", "plugin", "add", '/tmp/plugin.tar.gz'])
-        await this.container.exec(["mmctl", "--local", "plugin", "enable", pluginID])
+        await this.execOrThrow(["mmctl", "--local", "plugin", "add", '/tmp/plugin.tar.gz'])
+        await this.execOrThrow(["mmctl", "--local", "plugin", "enable", pluginID])
 
         // Set config via plugin admin API (replaces mmctl config patch)
         if (pluginConfig) {
@@ -246,15 +258,20 @@ export default class MattermostContainer {
             })
             .start()
 
-        await this.setSiteURL()
-        await this.createAdmin(this.email, this.username, this.password)
-        await this.createTeam(this.teamName, this.teamDisplayName)
-        await this.addUserToTeam(this.username, this.teamName)
+        try {
+            await this.setSiteURL()
+            await this.createAdmin(this.email, this.username, this.password)
+            await this.createTeam(this.teamName, this.teamDisplayName)
+            await this.addUserToTeam(this.username, this.teamName)
 
-        for (const plugin of this.plugins) {
-            await this.installPlugin(plugin.path, plugin.id, plugin.config)
+            for (const plugin of this.plugins) {
+                await this.installPlugin(plugin.path, plugin.id, plugin.config)
+            }
+
+            return this
+        } catch (err) {
+            await this.stop().catch(() => undefined)
+            throw err
         }
-
-        return this
     }
 }

@@ -4,16 +4,18 @@ import * as path from 'path';
 import MattermostContainer from './mmcontainer';
 
 const RunContainer = async (): Promise<MattermostContainer> => {
-  let filename = "";
   const distPath = path.join(__dirname, "../../dist/");
-  fs.readdirSync(distPath).forEach(file => {
-    if (file.endsWith(".tar.gz")) {
-      filename = path.join(distPath, file);
+  const matches = fs.readdirSync(distPath).filter(f => f.endsWith(".tar.gz"));
+  if (matches.length > 1) {
+    for (const match of matches) {
+      fs.unlinkSync(path.join(distPath, match));
     }
-  })
-  if (filename === "") {
-    throw("No tar.gz file found in dist folder")
+    throw new Error(`Multiple tar.gz files found in ${distPath}: ${matches.join(", ")} — all removed. Run 'make dist' to rebuild.`);
   }
+  if (matches.length === 0) {
+    throw new Error(`No tar.gz file found in ${distPath}. Run 'make dist' to build.`);
+  }
+  const filename = path.join(distPath, matches[0]);
 
   const mattermost = await new MattermostContainer()
     .withPlugin(filename, "focalboard")
