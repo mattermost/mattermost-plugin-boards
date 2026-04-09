@@ -67,18 +67,40 @@ export default class MattermostContainer {
     }
 
     stop = async () => {
+        let firstError: unknown;
+
         if (this.pgContainer) {
-            await this.pgContainer.stop()
+            try {
+                await this.pgContainer.stop()
+            } catch (err) {
+                firstError ??= err;
+            }
         }
         if (this.container) {
-            await this.container.stop()
+            try {
+                await this.container.stop()
+            } catch (err) {
+                firstError ??= err;
+            }
         }
         if (this.network) {
-            await this.network.stop()
+            try {
+                await this.network.stop()
+            } catch (err) {
+                firstError ??= err;
+            }
         }
         if (this.logStream && !this.logStream.destroyed && !this.logStream.writableEnded) {
-            this.isLogStreamClosed = true;
-            await new Promise<void>((resolve) => this.logStream.end(resolve));
+            try {
+                this.isLogStreamClosed = true;
+                await new Promise<void>((resolve) => this.logStream.end(resolve));
+            } catch (err) {
+                firstError ??= err;
+            }
+        }
+
+        if (firstError) {
+            throw firstError;
         }
     }
 
