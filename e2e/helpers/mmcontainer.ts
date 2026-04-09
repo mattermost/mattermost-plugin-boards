@@ -45,7 +45,7 @@ export default class MattermostContainer {
         return `http://${host}:${containerPort}`
     }
 
-    db = async (): Client => {
+    db = async (): Promise<Client> => {
         const port = this.pgContainer.getMappedPort(5432)
         const host = this.pgContainer.getHost()
         const database = "mattermost_test"
@@ -185,12 +185,16 @@ export default class MattermostContainer {
     }
 
     withConfigFile = (cfg: string): MattermostContainer => {
-        const cfgFile = {
-            source: cfg,
-            target: "/etc/mattermost.json",
+        const target = "/etc/mattermost.json";
+        this.configFile = this.configFile.filter(f => f.target !== target);
+        this.configFile.push({ source: cfg, target });
+
+        // Remove any existing -c flag pair before adding the new one
+        const flagIndex = this.command.indexOf("-c");
+        if (flagIndex !== -1) {
+            this.command.splice(flagIndex, 2);
         }
-        this.configFile.push(cfgFile)
-        this.command.push("-c", "/etc/mattermost.json")
+        this.command.push("-c", target);
         return this
     }
 
@@ -234,53 +238,53 @@ export default class MattermostContainer {
         console.log(`\n🚀 Starting Mattermost container`);
         console.log(`   Image: ${image}${isCustomImage ? ' (custom via MM_IMAGE)' : ' (default)'}`);
 
-        this.network = await new Network().start()
-        this.pgContainer = await new PostgreSqlContainer("postgres:15")
-            .withExposedPorts(5432)
-            .withDatabase("mattermost_test")
-            .withUsername("user")
-            .withPassword("pass")
-            .withNetworkMode(this.network.getName())
-            .withWaitStrategy(Wait.forLogMessage("database system is ready to accept connections"))
-            .withNetworkAliases("db")
-            .start()
-
-        this.container = await new GenericContainer(image)
-            .withPlatform('linux/amd64')
-            .withEnvironment(this.envs)
-            .withExposedPorts(8065)
-            .withNetwork(this.network)
-            .withNetworkAliases("mattermost")
-            .withCommand(this.command)
-            .withWaitStrategy(Wait.forLogMessage("Server is listening on"))
-            .withCopyFilesToContainer(this.configFile)
-            .withLogConsumer((stream) => {
-                // Create log file with timestamp
-                const fs = require('fs');
-                const logDir = 'logs';
-                if (!fs.existsSync(logDir)){
-                    fs.mkdirSync(logDir);
-                }
-                this.logStream = fs.createWriteStream(`${logDir}/server-logs.log`, {flags: 'a'});
-                this.isLogStreamClosed = false;
-
-                stream.on('data', (data: string | Buffer) => {
-                    const logLine = String(data);
-
-                    // Write all logs to file
-                    if (this.logStream && !this.isLogStreamClosed) {
-                        this.logStream.write(logLine + '\n');
-                    }
-
-                    // Only print plugin logs to console in non-CI environments
-                    if (!process.env.CI && logLine.includes('"plugin_id":"focalboard"')) {
-                        console.log(logLine);
-                    }
-                });
-            })
-            .start()
-
         try {
+            this.network = await new Network().start()
+            this.pgContainer = await new PostgreSqlContainer("postgres:15")
+                .withExposedPorts(5432)
+                .withDatabase("mattermost_test")
+                .withUsername("user")
+                .withPassword("pass")
+                .withNetworkMode(this.network.getName())
+                .withWaitStrategy(Wait.forLogMessage("database system is ready to accept connections"))
+                .withNetworkAliases("db")
+                .start()
+
+            this.container = await new GenericContainer(image)
+                .withPlatform('linux/amd64')
+                .withEnvironment(this.envs)
+                .withExposedPorts(8065)
+                .withNetwork(this.network)
+                .withNetworkAliases("mattermost")
+                .withCommand(this.command)
+                .withWaitStrategy(Wait.forLogMessage("Server is listening on"))
+                .withCopyFilesToContainer(this.configFile)
+                .withLogConsumer((stream) => {
+                    // Create log file with timestamp
+                    const fs = require('fs');
+                    const logDir = 'logs';
+                    if (!fs.existsSync(logDir)){
+                        fs.mkdirSync(logDir);
+                    }
+                    this.logStream = fs.createWriteStream(`${logDir}/server-logs.log`, {flags: 'a'});
+                    this.isLogStreamClosed = false;
+
+                    stream.on('data', (data: string | Buffer) => {
+                        const logLine = String(data);
+
+                        // Write all logs to file
+                        if (this.logStream && !this.isLogStreamClosed) {
+                            this.logStream.write(logLine + '\n');
+                        }
+
+                        // Only print plugin logs to console in non-CI environments
+                        if (!process.env.CI && logLine.includes('"plugin_id":"focalboard"')) {
+                            console.log(logLine);
+                        }
+                    });
+                })
+                .start()
+
             await this.setSiteURL()
             await this.createAdmin(this.email, this.username, this.password)
             await this.createTeam(this.teamName, this.teamDisplayName)
