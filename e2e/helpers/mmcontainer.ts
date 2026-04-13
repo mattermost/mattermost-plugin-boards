@@ -257,6 +257,7 @@ export default class MattermostContainer {
                 .withNetwork(this.network)
                 .withNetworkAliases("mattermost")
                 .withCommand(this.command)
+                .withStartupTimeout(120000)
                 .withWaitStrategy(Wait.forLogMessage("Server is listening on"))
                 .withCopyFilesToContainer(this.configFile)
                 .withLogConsumer((stream) => {

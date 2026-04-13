@@ -13,6 +13,15 @@ const groups = {
         'tests/board-creation/basic-board.spec.ts',
         'tests/board-permissions/public-boards.spec.ts',
     ],
+    'e2e-shard-2': [
+        'tests/card-management/card-crud.spec.ts',
+        'tests/board-views/view-switching.spec.ts',
+        'tests/board-management/board-title.spec.ts',
+    ],
+    'e2e-shard-3': [
+        'tests/board-features/view-features.spec.ts',
+        'tests/board-features/card-properties.spec.ts',
+    ],
 };
 
 function walkSpecFiles(dirPath) {
