@@ -12,6 +12,7 @@ const groups = {
     'e2e-shard-1': [
         'tests/board-creation/basic-board.spec.ts',
         'tests/board-permissions/public-boards.spec.ts',
+        'tests/board-permissions/board-member-roles.spec.ts',
     ],
     'e2e-shard-2': [
         'tests/card-management/card-crud.spec.ts',
