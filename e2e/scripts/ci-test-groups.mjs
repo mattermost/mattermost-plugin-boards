@@ -25,6 +25,7 @@ const groups = {
     'e2e-shard-3': [
         'tests/board-features/view-features.spec.ts',
         'tests/board-features/card-properties.spec.ts',
+        'tests/channel-management/channel-board-link.spec.ts',
     ],
 };
 

@@ -423,11 +423,11 @@ test.describe('Comment Permissions', () => {
         // Admin has DeleteOthersComments permission — hover to reveal the options menu
         // (CSS hides .MenuWrapper by default and shows it only on .Comment:hover).
         await comment.hover();
-        const menuWrapper = comment.locator('.comment-header .MenuWrapper');
-        await expect(menuWrapper).toBeVisible({ timeout: 5000 });
 
-        // Click the options icon to open the menu.
-        await menuWrapper.locator('button.IconButton').click();
+        // Click the options icon directly with force:true since the MenuWrapper is
+        // revealed only via CSS :hover and Playwright's visibility check races with
+        // the CSS state change in headless mode.
+        await comment.locator('.comment-header .MenuWrapper button.IconButton').click({ force: true });
         await expect(page.locator('.Menu.noselect')).toBeVisible({ timeout: 5000 });
 
         // The Delete item should be present and clickable.
@@ -467,17 +467,16 @@ test.describe('Comment Permissions', () => {
         await expect(ownComment).toBeVisible({ timeout: 10000 });
         await expect(othersComment).toBeVisible({ timeout: 5000 });
 
-        // Commenter CAN see the delete option on their own comment — hover to reveal the options menu.
+        // Commenter CAN see the delete option on their own comment.
         // NOTE: the Commenter role only has CommentBoardCards permission, not a write permission.
         // The server rejects the actual DELETE request with 403. This test therefore only verifies
-        // the client-side UI gate (own comment shows the menu; others' comment does not).
-        await ownComment.hover();
-        await expect(ownComment.locator('.comment-header .MenuWrapper')).toBeVisible({ timeout: 5000 });
+        // the client-side UI gate: the MenuWrapper button is rendered in the DOM for own comments
+        // (readonly=false), but absent entirely for others' comments (readonly=true in comment.tsx).
+        await expect(ownComment.locator('.comment-header .MenuWrapper button.IconButton')).toBeAttached();
 
-        // Commenter CANNOT see the delete option on another user's comment — MenuWrapper is not
+        // Commenter CANNOT see the delete option on another user's comment — the MenuWrapper is not
         // rendered at all when readonly=true in comment.tsx.
-        await othersComment.hover();
-        await expect(othersComment.locator('.comment-header .MenuWrapper')).not.toBeVisible({ timeout: 5000 });
+        await expect(othersComment.locator('.comment-header .MenuWrapper')).not.toBeAttached();
 
         await ctx.close();
     });
