@@ -156,7 +156,10 @@ export const getCurrentViewGroupBy = createSelector(
         if (!currentView) {
             return undefined
         }
-        return currentBoard.cardProperties.find((o) => o.id === currentView.fields.groupById)
+        // cardProperties can be null when a board is fetched from the API without that field
+        // (e.g. boards created via REST API where the Go nil slice serialises as JSON null).
+        // The client stores boards as-is without normalising through createBoard(), so guard here.
+        return (currentBoard.cardProperties || []).find((o) => o.id === currentView.fields.groupById)
     },
 )
 
@@ -170,6 +173,7 @@ export const getCurrentViewDisplayBy = createSelector(
         if (!currentView) {
             return undefined
         }
-        return currentBoard.cardProperties.find((o) => o.id === currentView.fields.dateDisplayPropertyId)
+        // Same null-guard as getCurrentViewGroupBy above.
+        return (currentBoard.cardProperties || []).find((o) => o.id === currentView.fields.dateDisplayPropertyId)
     },
 )

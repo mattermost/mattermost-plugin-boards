@@ -13,8 +13,11 @@ const groups = {
         'tests/board-creation/basic-board.spec.ts',
         'tests/board-permissions/public-boards.spec.ts',
         'tests/board-permissions/board-member-roles.spec.ts',
+        'tests/board-permissions/comment-permissions.spec.ts',
+        'tests/board-permissions/sidebar-categories.spec.ts',
     ],
     'e2e-shard-2': [
+        'tests/board-creation/template-selector.spec.ts',
         'tests/card-management/card-crud.spec.ts',
         'tests/board-views/view-switching.spec.ts',
         'tests/board-management/board-title.spec.ts',
