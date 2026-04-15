@@ -61,6 +61,12 @@ export class MattermostPage {
         await this.page.getByTestId('channel_view').waitFor({ state: 'visible', timeout: channelTimeout });
     }
 
+    static async loginAndWait(page: Page, url: string, username: string, password: string): Promise<MattermostPage> {
+        const mmPage = new MattermostPage(page);
+        await mmPage.login(url, username, password);
+        return mmPage;
+    }
+
     async navigateToBoardsFromUrl(baseUrl: string) {
         await this.page.goto(`${baseUrl}/boards`, { waitUntil: 'domcontentloaded', timeout: 60000 });
 

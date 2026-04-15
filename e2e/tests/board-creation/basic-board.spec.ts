@@ -21,9 +21,7 @@ test.afterAll(async () => {
 test.describe('Board Creation', () => {
     test.describe.configure({ timeout: 300000 });
     test('boards product is accessible after login', async ({ page }) => {
-        const mmPage = new MattermostPage(page);
-        await mmPage.login(mattermost.url(), username, password);
-        await page.getByTestId('channel_view').waitFor({ state: 'visible', timeout: 30000 });
+        const mmPage = await MattermostPage.loginAndWait(page, mattermost.url(), username, password);
 
         await mmPage.navigateToBoardsFromUrl(mattermost.url());
 
@@ -32,9 +30,7 @@ test.describe('Board Creation', () => {
     });
 
     test('can create an empty board', async ({ page }) => {
-        const mmPage = new MattermostPage(page);
-        await mmPage.login(mattermost.url(), username, password);
-        await page.getByTestId('channel_view').waitFor({ state: 'visible', timeout: 30000 });
+        const mmPage = await MattermostPage.loginAndWait(page, mattermost.url(), username, password);
 
         await mmPage.navigateToBoardsFromUrl(mattermost.url());
 
@@ -48,9 +44,7 @@ test.describe('Board Creation', () => {
     });
 
     test('new board appears in the sidebar', async ({ page }) => {
-        const mmPage = new MattermostPage(page);
-        await mmPage.login(mattermost.url(), 'admin', 'admin');
-        await page.getByTestId('channel_view').waitFor({ state: 'visible', timeout: 30000 });
+        const mmPage = await MattermostPage.loginAndWait(page, mattermost.url(), 'admin', 'admin');
 
         await mmPage.navigateToBoardsFromUrl(mattermost.url());
 

@@ -19,9 +19,7 @@ test.describe('Board Permissions', () => {
     test.describe.configure({ timeout: 300000 });
 
     test('regular user can only see their own boards', async ({ page }) => {
-        const mmPage = new MattermostPage(page);
-        await mmPage.login(mattermost.url(), 'regularuser', 'regularuser');
-        await page.getByTestId('channel_view').waitFor({ state: 'visible', timeout: 30000 });
+        const mmPage = await MattermostPage.loginAndWait(page, mattermost.url(), 'regularuser', 'regularuser');
 
         await mmPage.navigateToBoardsFromUrl(mattermost.url());
 
@@ -35,9 +33,7 @@ test.describe('Board Permissions', () => {
     });
 
     test('second user has an independent board workspace', async ({ page }) => {
-        const mmPage = new MattermostPage(page);
-        await mmPage.login(mattermost.url(), 'seconduser', 'seconduser');
-        await page.getByTestId('channel_view').waitFor({ state: 'visible', timeout: 30000 });
+        const mmPage = await MattermostPage.loginAndWait(page, mattermost.url(), 'seconduser', 'seconduser');
 
         await mmPage.navigateToBoardsFromUrl(mattermost.url());
 
