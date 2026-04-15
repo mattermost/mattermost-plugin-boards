@@ -3,9 +3,7 @@ import { test, expect } from '@playwright/test';
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { MattermostPage } from 'helpers/mm';
-
-const username = 'regularuser';
-const password = 'regularuser';
+import { Users } from 'helpers/users';
 
 let mattermost: MattermostContainer;
 
@@ -21,7 +19,7 @@ test.afterAll(async () => {
 test.describe('Board Creation', () => {
     test.describe.configure({ timeout: 300000 });
     test('boards product is accessible after login', async ({ page }) => {
-        const mmPage = await MattermostPage.loginAndWait(page, mattermost.url(), username, password);
+        const mmPage = await MattermostPage.loginAndWait(page, mattermost.url(), Users.regularUser.username, Users.regularUser.password);
 
         await mmPage.navigateToBoardsFromUrl(mattermost.url());
 
@@ -30,7 +28,7 @@ test.describe('Board Creation', () => {
     });
 
     test('can create an empty board', async ({ page }) => {
-        const mmPage = await MattermostPage.loginAndWait(page, mattermost.url(), username, password);
+        const mmPage = await MattermostPage.loginAndWait(page, mattermost.url(), Users.regularUser.username, Users.regularUser.password);
 
         await mmPage.navigateToBoardsFromUrl(mattermost.url());
 
@@ -44,7 +42,7 @@ test.describe('Board Creation', () => {
     });
 
     test('new board appears in the sidebar', async ({ page }) => {
-        const mmPage = await MattermostPage.loginAndWait(page, mattermost.url(), 'admin', 'admin');
+        const mmPage = await MattermostPage.loginAndWait(page, mattermost.url(), Users.admin.username, Users.admin.password);
 
         await mmPage.navigateToBoardsFromUrl(mattermost.url());
 

@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { MattermostPage } from 'helpers/mm';
+import { Users } from 'helpers/users';
 
 let mattermost: MattermostContainer;
 
@@ -19,7 +20,7 @@ test.describe('Board Permissions', () => {
     test.describe.configure({ timeout: 300000 });
 
     test('regular user can only see their own boards', async ({ page }) => {
-        const mmPage = await MattermostPage.loginAndWait(page, mattermost.url(), 'regularuser', 'regularuser');
+        const mmPage = await MattermostPage.loginAndWait(page, mattermost.url(), Users.regularUser.username, Users.regularUser.password);
 
         await mmPage.navigateToBoardsFromUrl(mattermost.url());
 
@@ -33,7 +34,7 @@ test.describe('Board Permissions', () => {
     });
 
     test('second user has an independent board workspace', async ({ page }) => {
-        const mmPage = await MattermostPage.loginAndWait(page, mattermost.url(), 'seconduser', 'seconduser');
+        const mmPage = await MattermostPage.loginAndWait(page, mattermost.url(), Users.secondUser.username, Users.secondUser.password);
 
         await mmPage.navigateToBoardsFromUrl(mattermost.url());
 
