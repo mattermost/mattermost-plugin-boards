@@ -3,6 +3,7 @@ import { test, expect, type Page } from '@playwright/test';
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { MattermostPage } from 'helpers/mm';
+import { createBoardViaApi } from 'helpers/boards';
 
 const username = 'regularuser';
 const password = 'regularuser';
@@ -118,24 +119,10 @@ test.describe('Board Management', () => {
         await titleInput.press('Enter');
         await expect(page.locator('.octo-sidebar-list')).toContainText('First Board', { timeout: 10000 });
 
-        // Create second board via REST API (the Add Board Dropdown is unreliable due to React event timing)
+        // Create second board via API (the Add Board Dropdown is unreliable due to React event timing)
         const adminClient = await mattermost.getAdminClient();
-        const teams = await adminClient.getMyTeams();
-        const teamId = teams[0]?.id;
-        expect(teamId).toBeTruthy();
-
-        const resp = await page.request.post(
-            `${mattermost.url()}/plugins/focalboard/api/v2/boards`,
-            {
-                headers: {
-                    'Authorization': `Bearer ${(adminClient as any).token}`,
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                data: { teamId, title: 'Second Board', type: 'O' },
-            }
-        );
-        expect(resp.ok()).toBeTruthy();
+        const token = (adminClient as any).token as string;
+        await createBoardViaApi(mattermost, 'Second Board', token);
 
         // WebSocket push updates the sidebar automatically; both boards should be listed
         const sidebarList = page.locator('.octo-sidebar-list');
