@@ -6,6 +6,7 @@ import { test, expect, type Browser, type Page } from '@playwright/test';
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { MattermostPage } from 'helpers/mm';
+import { createBoardViaApi, getBoardMeta, seedWelcomePageViewed, addBoardMember } from 'helpers/boards';
 
 const adminUser = 'admin';
 const adminPass = 'admin';
@@ -26,72 +27,6 @@ test.afterAll(async () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // API Helpers
 // ─────────────────────────────────────────────────────────────────────────────
-
-/** Create a board via the Focalboard REST API, returns the board id. */
-async function createBoardViaApi(title: string, token: string): Promise<string> {
-    const adminClient = await mattermost.getAdminClient();
-    const teams = await adminClient.getMyTeams();
-    const teamId = teams[0]?.id ?? '';
-
-    const resp = await fetch(`${mattermost.url()}/plugins/focalboard/api/v2/boards`, {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-        // cardProperties must be [] — Go nil slice serialises as null which crashes
-        // getCurrentViewGroupBy when it calls null.find().
-        body: JSON.stringify({ teamId, title, type: 'O', cardProperties: [] }),
-    });
-    if (!resp.ok) throw new Error(`Failed to create board: ${resp.status}`);
-    return ((await resp.json()) as { id: string }).id;
-}
-
-/** Create a default board view; returns teamId and viewId needed for direct board URLs. */
-async function createBoardView(boardId: string, token: string): Promise<{ teamId: string; viewId: string }> {
-    const adminClient = await mattermost.getAdminClient();
-    const teams = await adminClient.getMyTeams();
-    const teamId = teams[0]?.id ?? '';
-
-    const now = Date.now();
-    const viewBlockId = `view${boardId.substring(0, 8)}${now}`.replace(/[^a-z0-9]/gi, '').substring(0, 26);
-    const resp = await fetch(`${mattermost.url()}/plugins/focalboard/api/v2/boards/${boardId}/blocks`, {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: JSON.stringify([{
-            id: viewBlockId,
-            boardId,
-            parentId: boardId,
-            type: 'view',
-            title: 'Board View',
-            schema: 1,
-            createAt: now,
-            updateAt: now,
-            fields: {
-                viewType: 'board',
-                cardOrder: [],
-                sortOptions: [],
-                visiblePropertyIds: [],
-                visibleOptionIds: [],
-                hiddenOptionIds: [],
-                collapsedOptionIds: [],
-                filter: { operation: 'and', filters: [] },
-                columnWidths: {},
-                columnCalculations: {},
-                kanbanCalculations: {},
-                defaultTemplateId: '',
-            },
-        }]),
-    });
-    if (!resp.ok) throw new Error(`Failed to create board view: ${resp.status}`);
-    const created = (await resp.json()) as Array<{ id: string }>;
-    return { teamId, viewId: created[0]?.id ?? '' };
-}
 
 /**
  * Create a custom sidebar category via the Focalboard categories API.
@@ -123,50 +58,6 @@ async function createCategoryViaApi(name: string, userId: string, token: string)
     });
     if (!resp.ok) throw new Error(`Failed to create category: ${resp.status}`);
     return ((await resp.json()) as { id: string }).id;
-}
-
-/** Add a user to a board with the given role. */
-async function addBoardMember(
-    boardId: string,
-    userId: string,
-    role: 'admin' | 'editor' | 'commenter' | 'viewer',
-    token: string,
-): Promise<void> {
-    const resp = await fetch(`${mattermost.url()}/plugins/focalboard/api/v2/boards/${boardId}/members`, {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: JSON.stringify({
-            boardId,
-            userId,
-            schemeAdmin: role === 'admin',
-            schemeEditor: role === 'editor',
-            schemeCommenter: role === 'commenter',
-            schemeViewer: role === 'viewer',
-        }),
-    });
-    if (!resp.ok) throw new Error(`Failed to add board member: ${resp.status}`);
-}
-
-/**
- * Pre-seed welcomePageViewed so FBRoute never redirects to /welcome.
- * Without this, the welcome page's goForward() during a render cycle triggers a
- * React rendering error caught by the ErrorBoundary → /boards/error?id=unknown.
- */
-async function seedWelcomePageViewed(userId: string, token: string): Promise<void> {
-    const resp = await fetch(`${mattermost.url()}/plugins/focalboard/api/v2/users/${userId}/config`, {
-        method: 'PUT',
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: JSON.stringify({ updatedFields: { welcomePageViewed: '1' } }),
-    });
-    if (!resp.ok) throw new Error(`Failed to seed welcomePageViewed: ${resp.status}`);
 }
 
 /**
@@ -258,10 +149,10 @@ test.describe('Sidebar Categories', () => {
     test('user can create a custom category from the sidebar menu', async ({ browser }) => {
         const adminClient = await mattermost.getAdminClient();
         const token = (adminClient as any).token as string;
-        const boardId = await createBoardViaApi('Create Category Board', token);
-        const { teamId, viewId } = await createBoardView(boardId, token);
+        const boardId = await createBoardViaApi(mattermost, 'Create Category Board', token);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, token);
         const adminProfile = await adminClient.getMe();
-        await seedWelcomePageViewed(adminProfile.id, token);
+        await seedWelcomePageViewed(mattermost, adminProfile.id, token);
 
         const { ctx, page } = await loginAndOpenBoard(browser, adminUser, adminPass, teamId, boardId, viewId);
 
@@ -289,10 +180,10 @@ test.describe('Sidebar Categories', () => {
     test('default Boards category only exposes Create New Category — no Rename or Delete', async ({ browser }) => {
         const adminClient = await mattermost.getAdminClient();
         const token = (adminClient as any).token as string;
-        const boardId = await createBoardViaApi('Default Category Board', token);
-        const { teamId, viewId } = await createBoardView(boardId, token);
+        const boardId = await createBoardViaApi(mattermost, 'Default Category Board', token);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, token);
         const adminProfile = await adminClient.getMe();
-        await seedWelcomePageViewed(adminProfile.id, token);
+        await seedWelcomePageViewed(mattermost, adminProfile.id, token);
 
         const { ctx, page } = await loginAndOpenBoard(browser, adminUser, adminPass, teamId, boardId, viewId);
 
@@ -317,11 +208,11 @@ test.describe('Sidebar Categories', () => {
         const adminClient = await mattermost.getAdminClient();
         const token = (adminClient as any).token as string;
         const adminProfile = await adminClient.getMe();
-        const boardId = await createBoardViaApi('Rename Category Board', token);
-        const { teamId, viewId } = await createBoardView(boardId, token);
+        const boardId = await createBoardViaApi(mattermost, 'Rename Category Board', token);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, token);
         // Pre-create the category via API so the test starts with it already present.
         await createCategoryViaApi('Old Category Name', adminProfile.id, token);
-        await seedWelcomePageViewed(adminProfile.id, token);
+        await seedWelcomePageViewed(mattermost, adminProfile.id, token);
 
         const { ctx, page } = await loginAndOpenBoard(browser, adminUser, adminPass, teamId, boardId, viewId);
 
@@ -359,10 +250,10 @@ test.describe('Sidebar Categories', () => {
         const adminClient = await mattermost.getAdminClient();
         const token = (adminClient as any).token as string;
         const adminProfile = await adminClient.getMe();
-        const boardId = await createBoardViaApi('Delete Category Board', token);
-        const { teamId, viewId } = await createBoardView(boardId, token);
+        const boardId = await createBoardViaApi(mattermost, 'Delete Category Board', token);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, token);
         await createCategoryViaApi('Temporary Category', adminProfile.id, token);
-        await seedWelcomePageViewed(adminProfile.id, token);
+        await seedWelcomePageViewed(mattermost, adminProfile.id, token);
 
         const { ctx, page } = await loginAndOpenBoard(browser, adminUser, adminPass, teamId, boardId, viewId);
 
@@ -400,9 +291,9 @@ test.describe('Sidebar Categories', () => {
         const adminClient = await mattermost.getAdminClient();
         const token = (adminClient as any).token as string;
         const adminProfile = await adminClient.getMe();
-        const boardId = await createBoardViaApi('Collapse Test Board', token);
-        const { teamId, viewId } = await createBoardView(boardId, token);
-        await seedWelcomePageViewed(adminProfile.id, token);
+        const boardId = await createBoardViaApi(mattermost, 'Collapse Test Board', token);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, token);
+        await seedWelcomePageViewed(mattermost, adminProfile.id, token);
 
         const { ctx, page } = await loginAndOpenBoard(browser, adminUser, adminPass, teamId, boardId, viewId);
 
@@ -429,10 +320,10 @@ test.describe('Sidebar Categories', () => {
         const adminClient = await mattermost.getAdminClient();
         const token = (adminClient as any).token as string;
         const adminProfile = await adminClient.getMe();
-        const boardId = await createBoardViaApi('Move Board Test', token);
-        const { teamId, viewId } = await createBoardView(boardId, token);
+        const boardId = await createBoardViaApi(mattermost, 'Move Board Test', token);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, token);
         await createCategoryViaApi('Target Category', adminProfile.id, token);
-        await seedWelcomePageViewed(adminProfile.id, token);
+        await seedWelcomePageViewed(mattermost, adminProfile.id, token);
 
         const { ctx, page } = await loginAndOpenBoard(browser, adminUser, adminPass, teamId, boardId, viewId);
 
@@ -483,11 +374,11 @@ test.describe('Sidebar Categories', () => {
         const adminProfile = await adminClient.getMe();
 
         // Create two boards so hiding the active one switches to the other (not a blank state).
-        const boardId = await createBoardViaApi('Board To Hide', token);
-        const { teamId, viewId } = await createBoardView(boardId, token);
-        const boardId2 = await createBoardViaApi('Anchor Board', token);
-        await createBoardView(boardId2, token);
-        await seedWelcomePageViewed(adminProfile.id, token);
+        const boardId = await createBoardViaApi(mattermost, 'Board To Hide', token);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, token);
+        const boardId2 = await createBoardViaApi(mattermost, 'Anchor Board', token);
+        await getBoardMeta(mattermost, boardId2, token);
+        await seedWelcomePageViewed(mattermost, adminProfile.id, token);
 
         const { ctx, page } = await loginAndOpenBoard(browser, adminUser, adminPass, teamId, boardId, viewId);
 
@@ -526,13 +417,13 @@ test.describe('Sidebar Categories', () => {
 
         // Create an open board and give regularuser Viewer access to it so they
         // can see the boards sidebar.
-        const boardId = await createBoardViaApi('Viewer Category Board', adminToken);
-        const { teamId, viewId } = await createBoardView(boardId, adminToken);
+        const boardId = await createBoardViaApi(mattermost, 'Viewer Category Board', adminToken);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, adminToken);
         const regularClient = await mattermost.getClient(regularUser, regularPass);
         const regularProfile = await regularClient.getMe();
         const regularToken = (regularClient as any).token as string;
-        await addBoardMember(boardId, regularProfile.id, 'viewer', adminToken);
-        await seedWelcomePageViewed(regularProfile.id, regularToken);
+        await addBoardMember(mattermost, boardId, regularProfile.id, 'viewer', adminToken);
+        await seedWelcomePageViewed(mattermost, regularProfile.id, regularToken);
 
         const { ctx, page } = await loginAndOpenBoard(browser, regularUser, regularPass, teamId, boardId, viewId);
 
@@ -572,15 +463,15 @@ test.describe('Sidebar Categories', () => {
         const adminClient = await mattermost.getAdminClient();
         const adminToken = (adminClient as any).token as string;
 
-        const boardId = await createBoardViaApi('Viewer Delete Category Board', adminToken);
-        const { teamId, viewId } = await createBoardView(boardId, adminToken);
+        const boardId = await createBoardViaApi(mattermost, 'Viewer Delete Category Board', adminToken);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, adminToken);
         const regularClient = await mattermost.getClient(regularUser, regularPass);
         const regularProfile = await regularClient.getMe();
         const regularToken = (regularClient as any).token as string;
-        await addBoardMember(boardId, regularProfile.id, 'viewer', adminToken);
+        await addBoardMember(mattermost, boardId, regularProfile.id, 'viewer', adminToken);
         // Pre-create the category as the viewer (their personal category).
         await createCategoryViaApi('Viewer Temp Category', regularProfile.id, regularToken);
-        await seedWelcomePageViewed(regularProfile.id, regularToken);
+        await seedWelcomePageViewed(mattermost, regularProfile.id, regularToken);
 
         const { ctx, page } = await loginAndOpenBoard(browser, regularUser, regularPass, teamId, boardId, viewId);
 

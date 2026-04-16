@@ -6,6 +6,7 @@ import { test, expect } from '@playwright/test';
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { MattermostPage } from 'helpers/mm';
+import { createBoardViaApi } from 'helpers/boards';
 
 const adminUser = 'admin';
 const adminPass = 'admin';
@@ -24,30 +25,6 @@ test.afterAll(async () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // API Helpers
 // ─────────────────────────────────────────────────────────────────────────────
-
-async function getTeamId(): Promise<string> {
-    const adminClient = await mattermost.getAdminClient();
-    const teams = await adminClient.getMyTeams();
-    return teams[0]?.id ?? '';
-}
-
-/** Create a regular board via API; returns board id. */
-async function createBoardViaApi(title: string, token: string): Promise<string> {
-    const teamId = await getTeamId();
-    const resp = await fetch(`${mattermost.url()}/plugins/focalboard/api/v2/boards`, {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-        // cardProperties must be [] — Go nil slice serialises as null which crashes
-        // getCurrentViewGroupBy when it calls null.find().
-        body: JSON.stringify({ teamId, title, type: 'O', cardProperties: [] }),
-    });
-    if (!resp.ok) throw new Error(`Failed to create board: ${resp.status}`);
-    return ((await resp.json()) as { id: string }).id;
-}
 
 /** Open the Boards RHS panel via the App Bar button. */
 async function openBoardsRHS(page: import('@playwright/test').Page): Promise<void> {
@@ -84,7 +61,7 @@ test.describe('Channel-Board Linking', () => {
         const boardTitle = `RHS Link Test ${Date.now()}`;
 
         // Create a board to link
-        await createBoardViaApi(boardTitle, token);
+        await createBoardViaApi(mattermost, boardTitle, token);
 
         const mmPage = new MattermostPage(page);
         await mmPage.login(mattermost.url(), adminUser, adminPass);
@@ -128,7 +105,7 @@ test.describe('Channel-Board Linking', () => {
         const boardTitle = `RHS Unlink Test ${Date.now()}`;
 
         // Create a board to link
-        await createBoardViaApi(boardTitle, token);
+        await createBoardViaApi(mattermost, boardTitle, token);
 
         const mmPage = new MattermostPage(page);
         await mmPage.login(mattermost.url(), adminUser, adminPass);

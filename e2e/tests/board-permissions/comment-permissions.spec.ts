@@ -6,6 +6,7 @@ import { test, expect } from '@playwright/test';
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { MattermostPage } from 'helpers/mm';
+import { createBoardViaApi, getBoardMeta, seedWelcomePageViewed, addBoardMember } from 'helpers/boards';
 
 const adminUser = 'admin';
 const adminPass = 'admin';
@@ -28,82 +29,6 @@ test.afterAll(async () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // API Helpers
 // ─────────────────────────────────────────────────────────────────────────────
-
-/** Create a board via the Focalboard REST API, returns the new board's id. */
-async function createBoardViaApi(title: string, type: 'O' | 'P', token: string): Promise<string> {
-    const adminClient = await mattermost.getAdminClient();
-    const teams = await adminClient.getMyTeams();
-    const teamId = teams[0]?.id;
-    if (!teamId) {
-        throw new Error('No team found');
-    }
-
-    const resp = await fetch(`${mattermost.url()}/plugins/focalboard/api/v2/boards`, {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-        // cardProperties must be [] (not omitted) — Go nil slice serialises as null,
-        // which causes board.cardProperties to be null in the Redux store and crashes
-        // the getCurrentViewGroupBy selector when it calls null.find().
-        body: JSON.stringify({ teamId, title, type, cardProperties: [] }),
-    });
-    if (!resp.ok) {
-        throw new Error(`Failed to create board: ${resp.status}`);
-    }
-    return ((await resp.json()) as { id: string }).id;
-}
-
-/** Create a view block for a board, returns the view's id. */
-async function createBoardView(boardId: string, token: string): Promise<{ teamId: string; viewId: string }> {
-    const adminClient = await mattermost.getAdminClient();
-    const teams = await adminClient.getMyTeams();
-    const teamId = teams[0]?.id ?? '';
-
-    const now = Date.now();
-    const viewBlockId = `view${boardId.substring(0, 8)}${now}`.replace(/[^a-z0-9]/gi, '').substring(0, 26);
-    const headers = {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-    };
-
-    const createResp = await fetch(`${mattermost.url()}/plugins/focalboard/api/v2/boards/${boardId}/blocks`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify([{
-            id: viewBlockId,
-            boardId,
-            parentId: boardId,
-            type: 'view',
-            title: 'Board View',
-            schema: 1,
-            createAt: now,
-            updateAt: now,
-            fields: {
-                viewType: 'board',
-                cardOrder: [],
-                sortOptions: [],
-                visiblePropertyIds: [],
-                visibleOptionIds: [],
-                hiddenOptionIds: [],
-                collapsedOptionIds: [],
-                filter: { operation: 'and', filters: [] },
-                columnWidths: {},
-                columnCalculations: {},
-                kanbanCalculations: {},
-                defaultTemplateId: '',
-            },
-        }]),
-    });
-    if (!createResp.ok) {
-        throw new Error(`Failed to create board view: ${createResp.status}`);
-    }
-    const created = (await createResp.json()) as Array<{ id: string }>;
-    return { teamId, viewId: created[0]?.id ?? '' };
-}
 
 /** Create a card block on a board, returns the card's id. */
 async function createCardViaApi(boardId: string, title: string, token: string): Promise<string> {
@@ -172,55 +97,6 @@ async function createCommentViaApi(boardId: string, cardId: string, text: string
     return data[0]?.id ?? commentId;
 }
 
-/** Add a user to a board with the given role. */
-async function addBoardMember(
-    boardId: string,
-    userId: string,
-    role: 'admin' | 'editor' | 'commenter' | 'viewer',
-    token: string,
-): Promise<void> {
-    const body = {
-        boardId,
-        userId,
-        schemeAdmin: role === 'admin',
-        schemeEditor: role === 'editor',
-        schemeCommenter: role === 'commenter',
-        schemeViewer: role === 'viewer',
-    };
-    const resp = await fetch(`${mattermost.url()}/plugins/focalboard/api/v2/boards/${boardId}/members`, {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: JSON.stringify(body),
-    });
-    if (!resp.ok) {
-        throw new Error(`Failed to add board member: ${resp.status}`);
-    }
-}
-
-/**
- * Pre-seed welcomePageViewed so FBRoute never redirects to /welcome.
- * Without this, the welcome page's goForward() during a render cycle triggers a
- * React rendering error caught by the ErrorBoundary → /boards/error?id=unknown.
- */
-async function seedWelcomePageViewed(userId: string, userToken: string): Promise<void> {
-    const resp = await fetch(`${mattermost.url()}/plugins/focalboard/api/v2/users/${userId}/config`, {
-        method: 'PUT',
-        headers: {
-            Authorization: `Bearer ${userToken}`,
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: JSON.stringify({ updatedFields: { welcomePageViewed: '1' } }),
-    });
-    if (!resp.ok) {
-        throw new Error(`Failed to seed welcomePageViewed: ${resp.status}`);
-    }
-}
-
 /**
  * Log in as `username`, navigate directly to the card URL, and wait for the
  * card dialog to appear. Returns after the `.Dialog.cardDialog` is visible.
@@ -271,15 +147,15 @@ test.describe('Comment Permissions', () => {
         const adminClient = await mattermost.getAdminClient();
         const token = (adminClient as any).token as string;
 
-        const boardId = await createBoardViaApi('Viewer Comment Board', 'O', token);
-        const { teamId, viewId } = await createBoardView(boardId, token);
+        const boardId = await createBoardViaApi(mattermost, 'Viewer Comment Board', token);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, token);
         const cardId = await createCardViaApi(boardId, 'Viewer Card', token);
 
         const viewerClient = await mattermost.getClient(regularUser, regularPass);
         const viewerProfile = await viewerClient.getMe();
         const viewerToken = (viewerClient as any).token as string;
-        await addBoardMember(boardId, viewerProfile.id, 'viewer', token);
-        await seedWelcomePageViewed(viewerProfile.id, viewerToken);
+        await addBoardMember(mattermost, boardId, viewerProfile.id, 'viewer', token);
+        await seedWelcomePageViewed(mattermost, viewerProfile.id, viewerToken);
 
         const { ctx, page } = await openCardAsUser(browser, regularUser, regularPass, teamId, boardId, viewId, cardId);
 
@@ -293,15 +169,15 @@ test.describe('Comment Permissions', () => {
         const adminClient = await mattermost.getAdminClient();
         const token = (adminClient as any).token as string;
 
-        const boardId = await createBoardViaApi('Commenter Add Comment Board', 'O', token);
-        const { teamId, viewId } = await createBoardView(boardId, token);
+        const boardId = await createBoardViaApi(mattermost, 'Commenter Add Comment Board', token);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, token);
         const cardId = await createCardViaApi(boardId, 'Commenter Card', token);
 
         const commenterClient = await mattermost.getClient(regularUser, regularPass);
         const commenterProfile = await commenterClient.getMe();
         const commenterToken = (commenterClient as any).token as string;
-        await addBoardMember(boardId, commenterProfile.id, 'commenter', token);
-        await seedWelcomePageViewed(commenterProfile.id, commenterToken);
+        await addBoardMember(mattermost, boardId, commenterProfile.id, 'commenter', token);
+        await seedWelcomePageViewed(mattermost, commenterProfile.id, commenterToken);
 
         const { ctx, page } = await openCardAsUser(browser, regularUser, regularPass, teamId, boardId, viewId, cardId);
 
@@ -330,15 +206,15 @@ test.describe('Comment Permissions', () => {
         const adminClient = await mattermost.getAdminClient();
         const token = (adminClient as any).token as string;
 
-        const boardId = await createBoardViaApi('Editor Add Comment Board', 'O', token);
-        const { teamId, viewId } = await createBoardView(boardId, token);
+        const boardId = await createBoardViaApi(mattermost, 'Editor Add Comment Board', token);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, token);
         const cardId = await createCardViaApi(boardId, 'Editor Card', token);
 
         const editorClient = await mattermost.getClient(regularUser, regularPass);
         const editorProfile = await editorClient.getMe();
         const editorToken = (editorClient as any).token as string;
-        await addBoardMember(boardId, editorProfile.id, 'editor', token);
-        await seedWelcomePageViewed(editorProfile.id, editorToken);
+        await addBoardMember(mattermost, boardId, editorProfile.id, 'editor', token);
+        await seedWelcomePageViewed(mattermost, editorProfile.id, editorToken);
 
         const { ctx, page } = await openCardAsUser(browser, regularUser, regularPass, teamId, boardId, viewId, cardId);
 
@@ -363,14 +239,14 @@ test.describe('Comment Permissions', () => {
         const adminClient = await mattermost.getAdminClient();
         const token = (adminClient as any).token as string;
 
-        const boardId = await createBoardViaApi('Admin Add Comment Board', 'O', token);
-        const { teamId, viewId } = await createBoardView(boardId, token);
+        const boardId = await createBoardViaApi(mattermost, 'Admin Add Comment Board', token);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, token);
         const cardId = await createCardViaApi(boardId, 'Admin Card', token);
 
         // Admin is the board creator — no need to addBoardMember.
         // Seed welcomePageViewed for the admin user as well.
         const adminProfile = await adminClient.getMe();
-        await seedWelcomePageViewed(adminProfile.id, token);
+        await seedWelcomePageViewed(mattermost, adminProfile.id, token);
 
         const { ctx, page } = await openCardAsUser(browser, adminUser, adminPass, teamId, boardId, viewId, cardId);
 
@@ -399,20 +275,20 @@ test.describe('Comment Permissions', () => {
         const adminClient = await mattermost.getAdminClient();
         const adminToken = (adminClient as any).token as string;
 
-        const boardId = await createBoardViaApi('Admin Delete Comment Board', 'O', adminToken);
-        const { teamId, viewId } = await createBoardView(boardId, adminToken);
+        const boardId = await createBoardViaApi(mattermost, 'Admin Delete Comment Board', adminToken);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, adminToken);
         const cardId = await createCardViaApi(boardId, 'Delete Test Card', adminToken);
 
         // Create a comment as regularuser so the admin can attempt to delete it.
         const regularClient = await mattermost.getClient(regularUser, regularPass);
         const regularProfile = await regularClient.getMe();
         const regularToken = (regularClient as any).token as string;
-        await addBoardMember(boardId, regularProfile.id, 'commenter', adminToken);
+        await addBoardMember(mattermost, boardId, regularProfile.id, 'commenter', adminToken);
         await createCommentViaApi(boardId, cardId, 'Commenter comment to delete', regularToken);
 
         // Seed welcomePageViewed for admin.
         const adminProfile = await adminClient.getMe();
-        await seedWelcomePageViewed(adminProfile.id, adminToken);
+        await seedWelcomePageViewed(mattermost, adminProfile.id, adminToken);
 
         const { ctx, page } = await openCardAsUser(browser, adminUser, adminPass, teamId, boardId, viewId, cardId);
 
@@ -443,8 +319,8 @@ test.describe('Comment Permissions', () => {
         const adminClient = await mattermost.getAdminClient();
         const adminToken = (adminClient as any).token as string;
 
-        const boardId = await createBoardViaApi('Commenter Delete Board', 'O', adminToken);
-        const { teamId, viewId } = await createBoardView(boardId, adminToken);
+        const boardId = await createBoardViaApi(mattermost, 'Commenter Delete Board', adminToken);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, adminToken);
         const cardId = await createCardViaApi(boardId, 'Commenter Delete Card', adminToken);
 
         // Create a comment as admin (the "other" user's comment).
@@ -453,8 +329,8 @@ test.describe('Comment Permissions', () => {
         const regularClient = await mattermost.getClient(regularUser, regularPass);
         const regularProfile = await regularClient.getMe();
         const regularToken = (regularClient as any).token as string;
-        await addBoardMember(boardId, regularProfile.id, 'commenter', adminToken);
-        await seedWelcomePageViewed(regularProfile.id, regularToken);
+        await addBoardMember(mattermost, boardId, regularProfile.id, 'commenter', adminToken);
+        await seedWelcomePageViewed(mattermost, regularProfile.id, regularToken);
 
         // Create a comment as the commenter (their own comment).
         const ownCommentId = await createCommentViaApi(boardId, cardId, 'Commenter own comment', regularToken);
@@ -495,8 +371,8 @@ test.describe('Comment Permissions', () => {
         const adminClient = await mattermost.getAdminClient();
         const adminToken = (adminClient as any).token as string;
 
-        const boardId = await createBoardViaApi('Viewer Delete Board', 'O', adminToken);
-        const { teamId, viewId } = await createBoardView(boardId, adminToken);
+        const boardId = await createBoardViaApi(mattermost, 'Viewer Delete Board', adminToken);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, adminToken);
         const cardId = await createCardViaApi(boardId, 'Viewer Delete Card', adminToken);
 
         // Create a comment as admin.
@@ -505,8 +381,8 @@ test.describe('Comment Permissions', () => {
         const viewerClient = await mattermost.getClient(regularUser, regularPass);
         const viewerProfile = await viewerClient.getMe();
         const viewerToken = (viewerClient as any).token as string;
-        await addBoardMember(boardId, viewerProfile.id, 'viewer', adminToken);
-        await seedWelcomePageViewed(viewerProfile.id, viewerToken);
+        await addBoardMember(mattermost, boardId, viewerProfile.id, 'viewer', adminToken);
+        await seedWelcomePageViewed(mattermost, viewerProfile.id, viewerToken);
 
         const { ctx, page } = await openCardAsUser(browser, regularUser, regularPass, teamId, boardId, viewId, cardId);
 

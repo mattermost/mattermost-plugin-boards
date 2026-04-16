@@ -3,6 +3,7 @@ import { test, expect, type Page } from '@playwright/test';
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { MattermostPage } from 'helpers/mm';
+import { createBoardViaApi, getBoardMeta, seedWelcomePageViewed, addBoardMember } from 'helpers/boards';
 
 const adminUser = 'admin';
 const adminPass = 'admin';
@@ -49,8 +50,8 @@ async function setupBoard(page: Page, username: string, password: string, boardT
         // when the user already has boards, so we avoid it entirely.
         const userClient = await mattermost.getClient(username, password);
         const userToken = (userClient as any).token as string;
-        const boardId = await createBoardViaApi(boardTitle, 'O', userToken);
-        const { teamId, viewId } = await getBoardMeta(boardId, userToken);
+        const boardId = await createBoardViaApi(mattermost, boardTitle, userToken);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, userToken);
         await page.goto(
             `${mattermost.url()}/boards/team/${teamId}/${boardId}/${viewId}`,
             { waitUntil: 'domcontentloaded', timeout: 30000 },
@@ -64,152 +65,6 @@ async function setupBoard(page: Page, username: string, password: string, boardT
 async function openShareDialog(page: Page): Promise<void> {
     await page.locator('.ShareBoardButton button').click();
     await expect(page.locator('.ShareBoardDialog')).toBeVisible({ timeout: 10000 });
-}
-
-/** Create a board via the Focalboard REST API, returns the new board's id. */
-async function createBoardViaApi(
-    title: string,
-    type: 'O' | 'P',
-    token: string,
-): Promise<string> {
-    const adminClient = await mattermost.getAdminClient();
-    const teams = await adminClient.getMyTeams();
-    const teamId = teams[0]?.id;
-    if (!teamId) {
-        throw new Error('No team found');
-    }
-
-    const resp = await fetch(
-        `${mattermost.url()}/plugins/focalboard/api/v2/boards`,
-        {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            body: JSON.stringify({ teamId, title, type, cardProperties: [] }),
-        },
-    );
-    if (!resp.ok) {
-        throw new Error(`Failed to create board: ${resp.status}`);
-    }
-    const data = (await resp.json()) as { id: string };
-    return data.id;
-}
-
-/** Return (teamId, defaultViewId) for a board — needed for the full board URL.
- *  Views are blocks of type "view"; there is no /views endpoint.
- *  If the board has no views (newly created via API), one is created first. */
-async function getBoardMeta(boardId: string, token: string): Promise<{ teamId: string; viewId: string }> {
-    const adminClient = await mattermost.getAdminClient();
-    const teams = await adminClient.getMyTeams();
-    const teamId = teams[0]?.id ?? '';
-
-    const headers = {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-    };
-
-    // Boards created via API have no views — create a default board view.
-    // The server requires id, createAt, and updateAt fields.
-    const now = Date.now();
-    const viewBlockId = `view-${boardId.substring(0, 8)}-${now}`.replace(/[^a-z0-9]/gi, '').substring(0, 26);
-    const createResp = await fetch(
-        `${mattermost.url()}/plugins/focalboard/api/v2/boards/${boardId}/blocks`,
-        {
-            method: 'POST',
-            headers,
-            body: JSON.stringify([{
-                id: viewBlockId,
-                boardId,
-                parentId: boardId,
-                type: 'view',
-                title: 'Board View',
-                schema: 1,
-                createAt: now,
-                updateAt: now,
-                fields: {
-                    viewType: 'board',
-                    cardOrder: [],
-                    sortOptions: [],
-                    visiblePropertyIds: [],
-                    visibleOptionIds: [],
-                    hiddenOptionIds: [],
-                    collapsedOptionIds: [],
-                    filter: { operation: 'and', filters: [] },
-                    columnWidths: {},
-                    columnCalculations: {},
-                    kanbanCalculations: {},
-                    defaultTemplateId: '',
-                },
-            }]),
-        },
-    );
-    if (!createResp.ok) {
-        throw new Error(`Failed to create board view: ${createResp.status}`);
-    }
-    const created = (await createResp.json()) as Array<{ id: string }>;
-    const viewId = created[0]?.id ?? '';
-    return { teamId, viewId };
-}
-
-/**
- * Pre-seed the Focalboard welcomePageViewed config for a user so that the
- * welcome page never appears on first boards visit. Without this, FBRoute
- * redirects to /welcome on the first load (after fetchMe sets loggedIn=true
- * with empty myConfig), and the welcome page's goForward() call during a
- * render cycle triggers a React rendering error caught by ErrorBoundary.
- */
-async function seedWelcomePageViewed(userId: string, userToken: string): Promise<void> {
-    const resp = await fetch(
-        `${mattermost.url()}/plugins/focalboard/api/v2/users/${userId}/config`,
-        {
-            method: 'PUT',
-            headers: {
-                Authorization: `Bearer ${userToken}`,
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            body: JSON.stringify({ updatedFields: { welcomePageViewed: '1' } }),
-        },
-    );
-    if (!resp.ok) {
-        throw new Error(`Failed to seed welcomePageViewed: ${resp.status}`);
-    }
-}
-
-/** Add a user to a board with the given scheme flags. */
-async function addBoardMember(
-    boardId: string,
-    userId: string,
-    role: 'admin' | 'editor' | 'commenter' | 'viewer',
-    token: string,
-): Promise<void> {
-    const body = {
-        boardId,
-        userId,
-        schemeAdmin: role === 'admin',
-        schemeEditor: role === 'editor',
-        schemeCommenter: role === 'commenter',
-        schemeViewer: role === 'viewer',
-    };
-    const resp = await fetch(
-        `${mattermost.url()}/plugins/focalboard/api/v2/boards/${boardId}/members`,
-        {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            body: JSON.stringify(body),
-        },
-    );
-    if (!resp.ok) {
-        throw new Error(`Failed to add board member: ${resp.status}`);
-    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -361,14 +216,14 @@ test.describe('Board Member Roles', () => {
         const token = (adminClient as any).token as string;
 
         // Create a private board (type 'P') via API.
-        const boardId = await createBoardViaApi('Hidden Private Board', 'P', token);
+        const boardId = await createBoardViaApi(mattermost, 'Hidden Private Board', token, 'P');
         expect(boardId).toBeTruthy();
 
         // Pre-seed welcomePageViewed so navigateToBoardsFromUrl never hits the welcome redirect.
         const secondClient = await mattermost.getClient(secondUser, secondPass);
         const secondProfile = await secondClient.getMe();
         const secondToken = (secondClient as any).token as string;
-        await seedWelcomePageViewed(secondProfile.id, secondToken);
+        await seedWelcomePageViewed(mattermost, secondProfile.id, secondToken);
 
         // Log in as seconduser and verify the board does NOT appear in the sidebar.
         const ctx = await browser.newContext();
@@ -395,23 +250,23 @@ test.describe('Board Member Roles', () => {
         const token = (adminClient as any).token as string;
 
         // Create an open board so seconduser can access it.
-        const boardId = await createBoardViaApi('Viewer Role Board', 'O', token);
+        const boardId = await createBoardViaApi(mattermost, 'Viewer Role Board', token);
         expect(boardId).toBeTruthy();
 
         // Look up seconduser's MM id so we can add them as Viewer.
         const secondClient = await mattermost.getClient(secondUser, secondPass);
         const secondProfile = await secondClient.getMe();
         const secondToken = (secondClient as any).token as string;
-        await addBoardMember(boardId, secondProfile.id, 'viewer', token);
+        await addBoardMember(mattermost, boardId, secondProfile.id, 'viewer', token);
 
         // Create a default view and get team/view IDs for the direct board URL.
-        const { teamId, viewId } = await getBoardMeta(boardId, token);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, token);
 
         // Pre-seed welcomePageViewed so FBRoute never redirects to /welcome.
         // Without this, the welcome page's goForward() call during a render cycle
         // (triggered by patchProps after skip) mounts BoardPage mid-render and
         // causes a React rendering error caught by the ErrorBoundary.
-        await seedWelcomePageViewed(secondProfile.id, secondToken);
+        await seedWelcomePageViewed(mattermost, secondProfile.id, secondToken);
 
         const ctx = await browser.newContext();
         const secondPage = await ctx.newPage();
@@ -448,18 +303,18 @@ test.describe('Board Member Roles', () => {
         const adminClient = await mattermost.getAdminClient();
         const token = (adminClient as any).token as string;
 
-        const boardId = await createBoardViaApi('Editor Role Board', 'O', token);
+        const boardId = await createBoardViaApi(mattermost, 'Editor Role Board', token);
         expect(boardId).toBeTruthy();
 
         const secondClient = await mattermost.getClient(secondUser, secondPass);
         const secondProfile = await secondClient.getMe();
         const secondToken = (secondClient as any).token as string;
-        await addBoardMember(boardId, secondProfile.id, 'editor', token);
+        await addBoardMember(mattermost, boardId, secondProfile.id, 'editor', token);
 
-        const { teamId, viewId } = await getBoardMeta(boardId, token);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, token);
 
         // Pre-seed welcomePageViewed to prevent the welcome page render-cycle error.
-        await seedWelcomePageViewed(secondProfile.id, secondToken);
+        await seedWelcomePageViewed(mattermost, secondProfile.id, secondToken);
 
         const ctx = await browser.newContext();
         const secondPage = await ctx.newPage();

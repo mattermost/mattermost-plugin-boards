@@ -6,6 +6,7 @@ import { test, expect, type Browser, type Page } from '@playwright/test';
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { MattermostPage } from 'helpers/mm';
+import { getTeamId, createBoardViaApi, getBoardMeta, seedWelcomePageViewed } from 'helpers/boards';
 
 const adminUser = 'admin';
 const adminPass = 'admin';
@@ -25,77 +26,12 @@ test.afterAll(async () => {
 // API Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function getTeamId(): Promise<string> {
-    const adminClient = await mattermost.getAdminClient();
-    const teams = await adminClient.getMyTeams();
-    return teams[0]?.id ?? '';
-}
-
-/** Create a regular board via API; returns board id. */
-async function createBoardViaApi(title: string, token: string): Promise<string> {
-    const teamId = await getTeamId();
-    const resp = await fetch(`${mattermost.url()}/plugins/focalboard/api/v2/boards`, {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-        // cardProperties must be [] — Go nil slice serialises as null which crashes
-        // getCurrentViewGroupBy when it calls null.find().
-        body: JSON.stringify({ teamId, title, type: 'O', cardProperties: [] }),
-    });
-    if (!resp.ok) throw new Error(`Failed to create board: ${resp.status}`);
-    return ((await resp.json()) as { id: string }).id;
-}
-
-/** Create a default board view; returns viewId. */
-async function createBoardView(boardId: string, token: string): Promise<string> {
-    const now = Date.now();
-    const viewBlockId = `view${boardId.substring(0, 8)}${now}`.replace(/[^a-z0-9]/gi, '').substring(0, 26);
-    const resp = await fetch(`${mattermost.url()}/plugins/focalboard/api/v2/boards/${boardId}/blocks`, {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: JSON.stringify([{
-            id: viewBlockId,
-            boardId,
-            parentId: boardId,
-            type: 'view',
-            title: 'Board View',
-            schema: 1,
-            createAt: now,
-            updateAt: now,
-            fields: {
-                viewType: 'board',
-                cardOrder: [],
-                sortOptions: [],
-                visiblePropertyIds: [],
-                visibleOptionIds: [],
-                hiddenOptionIds: [],
-                collapsedOptionIds: [],
-                filter: { operation: 'and', filters: [] },
-                columnWidths: {},
-                columnCalculations: {},
-                kanbanCalculations: {},
-                defaultTemplateId: '',
-            },
-        }]),
-    });
-    if (!resp.ok) throw new Error(`Failed to create board view: ${resp.status}`);
-    const created = (await resp.json()) as Array<{ id: string }>;
-    return created[0]?.id ?? '';
-}
-
 /**
  * Create a board template via the Focalboard boards API with isTemplate=true.
  * Templates belong to the team and appear in the template selector for all team members.
  */
 async function createTemplateViaApi(title: string, token: string): Promise<string> {
-    const teamId = await getTeamId();
+    const teamId = await getTeamId(mattermost);
     const resp = await fetch(`${mattermost.url()}/plugins/focalboard/api/v2/boards`, {
         method: 'POST',
         headers: {
@@ -114,27 +50,19 @@ async function createTemplateViaApi(title: string, token: string): Promise<strin
     // teamToBoardAndViewRedirect's `boardViews.length > 0` guard is never satisfied,
     // setCurrentView is never dispatched, and workspace.tsx renders null instead of
     // <CenterPanel> — so .BoardComponent never appears.
-    await createBoardView(templateId, token);
+    await getBoardMeta(mattermost, templateId, token);
 
     return templateId;
 }
 
-/**
- * Pre-seed welcomePageViewed so FBRoute never redirects to /welcome.
- * Without this the welcome page's goForward() during a render cycle triggers a
- * React rendering error caught by the ErrorBoundary → /boards/error?id=unknown.
- */
-async function seedWelcomePageViewed(userId: string, token: string): Promise<void> {
-    const resp = await fetch(`${mattermost.url()}/plugins/focalboard/api/v2/users/${userId}/config`, {
-        method: 'PUT',
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: JSON.stringify({ updatedFields: { welcomePageViewed: '1' } }),
-    });
-    if (!resp.ok) throw new Error(`Failed to seed welcomePageViewed: ${resp.status}`);
+/** Fetch the admin token + team id, and seed welcomePageViewed for the admin user. */
+async function setupAdmin(): Promise<{ token: string; teamId: string }> {
+    const adminClient = await mattermost.getAdminClient();
+    const token = (adminClient as any).token as string;
+    const adminProfile = await adminClient.getMe();
+    const teamId = await getTeamId(mattermost);
+    await seedWelcomePageViewed(mattermost, adminProfile.id, token);
+    return { token, teamId };
 }
 
 /**
@@ -212,11 +140,7 @@ test.describe('Template Selector', () => {
     // ─────────────────────────────────────────────────────────────────────────
 
     test('template list is populated with global templates', async ({ page }) => {
-        const adminClient = await mattermost.getAdminClient();
-        const token = (adminClient as any).token as string;
-        const adminProfile = await adminClient.getMe();
-        const teamId = await getTeamId();
-        await seedWelcomePageViewed(adminProfile.id, token);
+        const { teamId } = await setupAdmin();
 
         const mmPage = new MattermostPage(page);
         await mmPage.login(mattermost.url(), adminUser, adminPass);
@@ -231,11 +155,7 @@ test.describe('Template Selector', () => {
     });
 
     test('first template is selected by default', async ({ page }) => {
-        const adminClient = await mattermost.getAdminClient();
-        const token = (adminClient as any).token as string;
-        const adminProfile = await adminClient.getMe();
-        const teamId = await getTeamId();
-        await seedWelcomePageViewed(adminProfile.id, token);
+        const { teamId } = await setupAdmin();
 
         const mmPage = new MattermostPage(page);
         await mmPage.login(mattermost.url(), adminUser, adminPass);
@@ -248,11 +168,7 @@ test.describe('Template Selector', () => {
     });
 
     test('clicking a different template makes it active', async ({ page }) => {
-        const adminClient = await mattermost.getAdminClient();
-        const token = (adminClient as any).token as string;
-        const adminProfile = await adminClient.getMe();
-        const teamId = await getTeamId();
-        await seedWelcomePageViewed(adminProfile.id, token);
+        const { teamId } = await setupAdmin();
 
         const mmPage = new MattermostPage(page);
         await mmPage.login(mattermost.url(), adminUser, adminPass);
@@ -283,11 +199,7 @@ test.describe('Template Selector', () => {
     // ─────────────────────────────────────────────────────────────────────────
 
     test('"Use this template" creates a board and opens it in the editor', async ({ page }) => {
-        const adminClient = await mattermost.getAdminClient();
-        const token = (adminClient as any).token as string;
-        const adminProfile = await adminClient.getMe();
-        const teamId = await getTeamId();
-        await seedWelcomePageViewed(adminProfile.id, token);
+        const { teamId } = await setupAdmin();
 
         const mmPage = new MattermostPage(page);
         await mmPage.login(mattermost.url(), adminUser, adminPass);
@@ -313,13 +225,9 @@ test.describe('Template Selector', () => {
     // ─────────────────────────────────────────────────────────────────────────
 
     test('template selector opens via the sidebar add-board button', async ({ browser }) => {
-        const adminClient = await mattermost.getAdminClient();
-        const token = (adminClient as any).token as string;
-        const adminProfile = await adminClient.getMe();
-        const teamId = await getTeamId();
-        const boardId = await createBoardViaApi('Sidebar Trigger Board', token);
-        const viewId = await createBoardView(boardId, token);
-        await seedWelcomePageViewed(adminProfile.id, token);
+        const { token } = await setupAdmin();
+        const boardId = await createBoardViaApi(mattermost, 'Sidebar Trigger Board', token);
+        const { teamId, viewId } = await getBoardMeta(mattermost, boardId, token);
 
         const { ctx, page } = await loginAndOpenBoard(browser, adminUser, adminPass, teamId, boardId, viewId);
 
@@ -348,12 +256,8 @@ test.describe('Template Selector', () => {
     // ─────────────────────────────────────────────────────────────────────────
 
     test('custom template created via API appears in the template list', async ({ browser }) => {
-        const adminClient = await mattermost.getAdminClient();
-        const token = (adminClient as any).token as string;
-        const adminProfile = await adminClient.getMe();
-        const teamId = await getTeamId();
+        const { token, teamId } = await setupAdmin();
         await createTemplateViaApi('E2E Custom Template', token);
-        await seedWelcomePageViewed(adminProfile.id, token);
 
         const ctx = await browser.newContext();
         const page = await ctx.newPage();
@@ -372,12 +276,8 @@ test.describe('Template Selector', () => {
     });
 
     test('custom template can be used to create a board', async ({ browser }) => {
-        const adminClient = await mattermost.getAdminClient();
-        const token = (adminClient as any).token as string;
-        const adminProfile = await adminClient.getMe();
-        const teamId = await getTeamId();
+        const { token, teamId } = await setupAdmin();
         await createTemplateViaApi('E2E Usable Template', token);
-        await seedWelcomePageViewed(adminProfile.id, token);
 
         const ctx = await browser.newContext();
         const page = await ctx.newPage();
@@ -400,12 +300,8 @@ test.describe('Template Selector', () => {
     });
 
     test('custom template can be deleted via the template selector', async ({ browser }) => {
-        const adminClient = await mattermost.getAdminClient();
-        const token = (adminClient as any).token as string;
-        const adminProfile = await adminClient.getMe();
-        const teamId = await getTeamId();
+        const { token, teamId } = await setupAdmin();
         await createTemplateViaApi('E2E Deletable Template', token);
-        await seedWelcomePageViewed(adminProfile.id, token);
 
         const ctx = await browser.newContext();
         const page = await ctx.newPage();
@@ -443,11 +339,7 @@ test.describe('Template Selector', () => {
     // ─────────────────────────────────────────────────────────────────────────
 
     test('"Create new template" opens a blank template board for editing', async ({ page }) => {
-        const adminClient = await mattermost.getAdminClient();
-        const token = (adminClient as any).token as string;
-        const adminProfile = await adminClient.getMe();
-        const teamId = await getTeamId();
-        await seedWelcomePageViewed(adminProfile.id, token);
+        const { teamId } = await setupAdmin();
 
         const mmPage = new MattermostPage(page);
         await mmPage.login(mattermost.url(), adminUser, adminPass);
