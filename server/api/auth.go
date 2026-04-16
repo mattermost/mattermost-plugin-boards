@@ -12,7 +12,13 @@ import (
 )
 
 func (a *API) sessionRequired(handler func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
-	return a.attachSession(handler)
+	return a.attachSession(func(w http.ResponseWriter, r *http.Request) {
+		if getUserID(r) == "" {
+			a.errorResponse(w, r, model.NewErrUnauthorized("access denied"))
+			return
+		}
+		handler(w, r)
+	})
 }
 
 func (a *API) attachSession(handler func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {

@@ -247,12 +247,17 @@ func (bm *BoardsMigrator) MigrateToStep(step int) error {
 }
 
 func (bm *BoardsMigrator) Interceptors() map[int]func() error {
-	return map[int]func() error{
-		18: bm.store.RunDeletedMembershipBoardsMigration,
+	interceptors := map[int]func() error{
 		35: func() error {
 			return bm.store.RunDeDuplicateCategoryBoardsMigration(35)
 		},
 	}
+	// Step 18 interceptor queries Mattermost core tables (e.g. TeamMembers)
+	// that only exist when Mattermost migrations have been applied (plugin mode).
+	if bm.withMattermostMigrations {
+		interceptors[18] = bm.store.RunDeletedMembershipBoardsMigration
+	}
+	return interceptors
 }
 
 func (bm *BoardsMigrator) TearDown() error {

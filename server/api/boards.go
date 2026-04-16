@@ -257,6 +257,10 @@ func (a *API) handleGetBoard(w http.ResponseWriter, r *http.Request) {
 				a.errorResponse(w, r, err)
 				return
 			}
+			if board.IsTemplate && isGuest {
+				a.errorResponse(w, r, model.NewErrPermission("guests are not allowed to get board templates"))
+				return
+			}
 			if isGuest {
 				if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard) {
 					a.errorResponse(w, r, model.NewErrPermission("access denied to board"))
@@ -325,12 +329,12 @@ func (a *API) handlePatchBoard(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	boardID := mux.Vars(r)["boardID"]
+	userID := getUserID(r)
+
 	if _, err := a.app.GetBoard(boardID); err != nil {
 		a.errorResponse(w, r, err)
 		return
 	}
-
-	userID := getUserID(r)
 
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -485,11 +489,6 @@ func (a *API) handleDuplicateBoard(w http.ResponseWriter, r *http.Request) {
 	asTemplate := query.Get("asTemplate")
 	toTeam := query.Get("toTeam")
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to board"))
-		return
-	}
-
 	board, err := a.app.GetBoard(boardID)
 	if err != nil {
 		a.errorResponse(w, r, err)
@@ -582,12 +581,9 @@ func (a *API) handleUndeleteBoard(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
-	userID := session.UserID
-
 	vars := mux.Vars(r)
 	boardID := vars["boardID"]
+	userID := getUserID(r)
 
 	auditRec := a.makeAuditRecord(r, "undeleteBoard", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)

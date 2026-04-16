@@ -6,8 +6,11 @@ package app
 import (
 	"archive/zip"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"path"
+	"strings"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/wiggin77/merror"
@@ -17,6 +20,9 @@ import (
 
 var (
 	newline = []byte{'\n'}
+
+	ErrInvalidFilenamePathTraversal = errors.New("invalid filename in export (path traversal)")
+	ErrInvalidFilename              = errors.New("invalid filename in export")
 )
 
 func (a *App) ExportArchive(w io.Writer, opt model.ExportArchiveOptions) (errs error) {
@@ -33,18 +39,20 @@ func (a *App) ExportArchive(w io.Writer, opt model.ExportArchiveOptions) (errs e
 	// wrap the writer in a zip.
 	zw := zip.NewWriter(w)
 	defer func() {
-		merr.Append(zw.Close())
+		if err := zw.Close(); err != nil {
+			merr.Append(err)
+		}
 	}()
 
 	if err := a.writeArchiveVersion(zw); err != nil {
 		merr.Append(err)
-		return
+		return nil
 	}
 
 	for _, board := range boards {
 		if err := a.writeArchiveBoard(zw, board, opt); err != nil {
 			merr.Append(fmt.Errorf("cannot export board %s: %w", board.ID, err))
-			return
+			return nil
 		}
 	}
 	return nil
@@ -200,9 +208,27 @@ func (a *App) writeArchiveBoardLine(w io.Writer, board model.Board) error {
 	return err
 }
 
+// sanitizeArchiveFilename rejects filenames containing path traversal sequences
+// and returns the base name component to prevent Zip Slip vulnerabilities.
+func sanitizeArchiveFilename(filename string) (string, error) {
+	if strings.Contains(filename, "..") {
+		return "", fmt.Errorf("%w: %q", ErrInvalidFilenamePathTraversal, filename)
+	}
+	safe := path.Base(filename)
+	if safe == "." || safe == "/" {
+		return "", fmt.Errorf("%w: %q", ErrInvalidFilename, filename)
+	}
+	return safe, nil
+}
+
 // writeArchiveFile writes a single file to the archive.
 func (a *App) writeArchiveFile(zw *zip.Writer, filename string, boardID string, opt model.ExportArchiveOptions) error {
-	dest, err := zw.Create(boardID + "/" + filename)
+	safeFilename, err := sanitizeArchiveFilename(filename)
+	if err != nil {
+		return err
+	}
+
+	dest, err := zw.Create(boardID + "/" + safeFilename)
 	if err != nil {
 		return err
 	}
@@ -214,6 +240,15 @@ func (a *App) writeArchiveFile(zw *zip.Writer, filename string, boardID string, 
 	if err != nil {
 		// just log this; image file is missing but we'll still export an equivalent board
 		a.logger.Error("image file missing for export",
+			mlog.String("filename", filename),
+			mlog.String("team_id", opt.TeamID),
+			mlog.String("board_id", boardID),
+		)
+		return nil
+	}
+	if fileReader == nil {
+		// fileReader is nil even though there's no error, this shouldn't happen but handle it gracefully
+		a.logger.Error("file reader is nil for export",
 			mlog.String("filename", filename),
 			mlog.String("team_id", opt.TeamID),
 			mlog.String("board_id", boardID),
@@ -234,6 +269,9 @@ func (a *App) getBoardsForArchive(boardIDs []string) ([]model.Board, error) {
 		b, err := a.GetBoard(id)
 		if err != nil {
 			return nil, fmt.Errorf("could not fetch board %s: %w", id, err)
+		}
+		if b == nil {
+			return nil, fmt.Errorf("%w: %s", ErrBoardIsNil, id)
 		}
 
 		boards = append(boards, *b)
