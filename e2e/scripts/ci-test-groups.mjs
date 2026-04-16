@@ -8,26 +8,7 @@ const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const e2eRoot = path.resolve(scriptDirectory, '..');
 const testsRoot = path.resolve(e2eRoot, 'tests');
 
-const groups = {
-    'e2e-shard-1': [
-        'tests/board-creation/basic-board.spec.ts',
-        'tests/board-permissions/public-boards.spec.ts',
-        'tests/board-permissions/board-member-roles.spec.ts',
-        'tests/board-permissions/comment-permissions.spec.ts',
-        'tests/board-permissions/sidebar-categories.spec.ts',
-    ],
-    'e2e-shard-2': [
-        'tests/board-creation/template-selector.spec.ts',
-        'tests/card-management/card-crud.spec.ts',
-        'tests/board-views/view-switching.spec.ts',
-        'tests/board-management/board-title.spec.ts',
-    ],
-    'e2e-shard-3': [
-        'tests/board-features/view-features.spec.ts',
-        'tests/board-features/card-properties.spec.ts',
-        'tests/channel-management/channel-board-link.spec.ts',
-    ],
-};
+const NUM_SHARDS = parseInt(process.env.E2E_SHARDS || '3', 10);
 
 function walkSpecFiles(dirPath) {
     const entries = fs.readdirSync(dirPath, {withFileTypes: true});
@@ -44,6 +25,20 @@ function walkSpecFiles(dirPath) {
         return [path.relative(e2eRoot, absolutePath).replaceAll(path.sep, '/')];
     });
 }
+
+function buildGroups(numShards) {
+    const allSpecs = walkSpecFiles(testsRoot).sort();
+    const result = {};
+    for (let i = 1; i <= numShards; i++) {
+        result[`e2e-shard-${i}`] = [];
+    }
+    allSpecs.forEach((spec, idx) => {
+        result[`e2e-shard-${(idx % numShards) + 1}`].push(spec);
+    });
+    return result;
+}
+
+const groups = buildGroups(NUM_SHARDS);
 
 function flattenGroupSelection(groupNames) {
     return groupNames.flatMap((groupName) => {
