@@ -37,21 +37,24 @@ async function setupBoard(page: Page, username: string, password: string, boardT
     await mmPage.navigateToBoardsFromUrl(mattermost.url());
 
     const boardComponent = page.locator('.BoardComponent');
-    const boardLoaded = await boardComponent
-        .waitFor({ state: 'visible', timeout: 5000 })
-        .then(() => true)
-        .catch(() => false);
+    const sidebarList = page.locator('.octo-sidebar-list');
+    const boardItem = sidebarList.locator('.octo-sidebar-item').filter({ hasText: boardTitle });
 
-    if (!boardLoaded) {
-        await expect(page.locator('.BoardTemplateSelector')).toBeVisible({ timeout: 15000 });
-        await page.locator('.templates-sidebar__footer button').click();
-        await expect(boardComponent).toBeVisible({ timeout: 15000 });
-
-        const titleInput = page.locator('.ViewTitle .Editable');
-        await titleInput.click();
-        await titleInput.fill(boardTitle);
-        await titleInput.press('Enter');
-        await expect(page.locator('.octo-sidebar-list')).toContainText(boardTitle, { timeout: 10000 });
+    // If the board already exists in the sidebar, click it directly.
+    if (await boardItem.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await boardItem.click();
+    } else {
+        // Create the board via API and navigate to it directly.
+        // UI-based creation (BoardTemplateSelector / Add Board Dropdown) is unreliable
+        // when the user already has boards, so we avoid it entirely.
+        const userClient = await mattermost.getClient(username, password);
+        const userToken = (userClient as any).token as string;
+        const boardId = await createBoardViaApi(boardTitle, 'O', userToken);
+        const { teamId, viewId } = await getBoardMeta(boardId, userToken);
+        await page.goto(
+            `${mattermost.url()}/boards/team/${teamId}/${boardId}/${viewId}`,
+            { waitUntil: 'domcontentloaded', timeout: 30000 },
+        );
     }
 
     await expect(boardComponent).toBeVisible({ timeout: 15000 });
@@ -361,6 +364,12 @@ test.describe('Board Member Roles', () => {
         const boardId = await createBoardViaApi('Hidden Private Board', 'P', token);
         expect(boardId).toBeTruthy();
 
+        // Pre-seed welcomePageViewed so navigateToBoardsFromUrl never hits the welcome redirect.
+        const secondClient = await mattermost.getClient(secondUser, secondPass);
+        const secondProfile = await secondClient.getMe();
+        const secondToken = (secondClient as any).token as string;
+        await seedWelcomePageViewed(secondProfile.id, secondToken);
+
         // Log in as seconduser and verify the board does NOT appear in the sidebar.
         const ctx = await browser.newContext();
         const secondPage = await ctx.newPage();
@@ -369,8 +378,8 @@ test.describe('Board Member Roles', () => {
         await secondPage.getByTestId('channel_view').waitFor({ state: 'visible', timeout: 30000 });
         await mmPage.navigateToBoardsFromUrl(mattermost.url());
 
-        // Wait for the sidebar to finish loading.
-        await secondPage.locator('.Sidebar.octo-sidebar').waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
+        // Fail fast if the Boards sidebar never becomes visible.
+        await expect(secondPage.locator('.Sidebar.octo-sidebar')).toBeVisible({ timeout: 15000 });
 
         await expect(secondPage.locator('.octo-sidebar-list')).not.toContainText('Hidden Private Board', { timeout: 5000 });
 

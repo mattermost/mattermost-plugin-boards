@@ -457,7 +457,7 @@ test.describe('Comment Permissions', () => {
         await seedWelcomePageViewed(regularProfile.id, regularToken);
 
         // Create a comment as the commenter (their own comment).
-        await createCommentViaApi(boardId, cardId, 'Commenter own comment', regularToken);
+        const ownCommentId = await createCommentViaApi(boardId, cardId, 'Commenter own comment', regularToken);
 
         const { ctx, page } = await openCardAsUser(browser, regularUser, regularPass, teamId, boardId, viewId, cardId);
 
@@ -467,12 +467,22 @@ test.describe('Comment Permissions', () => {
         await expect(ownComment).toBeVisible({ timeout: 10000 });
         await expect(othersComment).toBeVisible({ timeout: 5000 });
 
-        // Commenter CAN see the delete option on their own comment.
-        // NOTE: the Commenter role only has CommentBoardCards permission, not a write permission.
-        // The server rejects the actual DELETE request with 403. This test therefore only verifies
-        // the client-side UI gate: the MenuWrapper button is rendered in the DOM for own comments
-        // (readonly=false), but absent entirely for others' comments (readonly=true in comment.tsx).
-        await expect(ownComment.locator('.comment-header .MenuWrapper button.IconButton')).toBeAttached();
+        // Commenter role only has CommentBoardCards permission, not delete. Verify the server
+        // rejects the DELETE request with 403 even for their own comment.
+        const deleteResp = await fetch(
+            `${mattermost.url()}/plugins/focalboard/api/v2/boards/${boardId}/blocks/${ownCommentId}`,
+            {
+                method: 'DELETE',
+                headers: {
+                    Authorization: `Bearer ${regularToken}`,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            },
+        );
+        expect(deleteResp.status).toBe(403);
+
+        // The comment must still be visible — no optimistic removal on 403.
+        await expect(ownComment).toBeVisible({ timeout: 5000 });
 
         // Commenter CANNOT see the delete option on another user's comment — the MenuWrapper is not
         // rendered at all when readonly=true in comment.tsx.

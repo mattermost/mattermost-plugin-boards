@@ -107,10 +107,16 @@ test.describe('Board Management', () => {
         await page.getByTestId('channel_view').waitFor({ state: 'visible', timeout: 30000 });
         await mmPage.navigateToBoardsFromUrl(mattermost.url());
 
-        // Create first board
+        // Create first board and name it
         await expect(page.locator('.BoardTemplateSelector')).toBeVisible({ timeout: 15000 });
         await page.locator('.templates-sidebar__footer button').click();
         await expect(page.locator('.BoardComponent')).toBeVisible({ timeout: 15000 });
+
+        const titleInput = page.locator('.ViewTitle .Editable');
+        await titleInput.click();
+        await titleInput.fill('First Board');
+        await titleInput.press('Enter');
+        await expect(page.locator('.octo-sidebar-list')).toContainText('First Board', { timeout: 10000 });
 
         // Create second board via REST API (the Add Board Dropdown is unreliable due to React event timing)
         const adminClient = await mattermost.getAdminClient();
@@ -131,7 +137,9 @@ test.describe('Board Management', () => {
         );
         expect(resp.ok()).toBeTruthy();
 
-        // WebSocket push updates the sidebar automatically
-        await expect(page.locator('.octo-sidebar-list')).toContainText('Second Board', { timeout: 15000 });
+        // WebSocket push updates the sidebar automatically; both boards should be listed
+        const sidebarList = page.locator('.octo-sidebar-list');
+        await expect(sidebarList).toContainText('First Board', { timeout: 15000 });
+        await expect(sidebarList).toContainText('Second Board', { timeout: 15000 });
     });
 });
