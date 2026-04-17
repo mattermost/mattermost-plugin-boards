@@ -1244,6 +1244,36 @@ func (mr *MockStoreMockRecorder) InsertBoardWithAdmin(board, userID interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertBoardWithAdmin", reflect.TypeOf((*MockStore)(nil).InsertBoardWithAdmin), board, userID)
 }
 
+// IncrementBoardCardCount mocks base method.
+func (m *MockStore) IncrementBoardCardCount(boardID string) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IncrementBoardCardCount", boardID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IncrementBoardCardCount indicates an expected call of IncrementBoardCardCount.
+func (mr *MockStoreMockRecorder) IncrementBoardCardCount(boardID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncrementBoardCardCount", reflect.TypeOf((*MockStore)(nil).IncrementBoardCardCount), boardID)
+}
+
+// GetCardByTicketCode mocks base method.
+func (m *MockStore) GetCardByTicketCode(boardPrefix string, cardNumber int64, teamID string) (*model.Block, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCardByTicketCode", boardPrefix, cardNumber, teamID)
+	ret0, _ := ret[0].(*model.Block)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCardByTicketCode indicates an expected call of GetCardByTicketCode.
+func (mr *MockStoreMockRecorder) GetCardByTicketCode(boardPrefix, cardNumber, teamID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardByTicketCode", reflect.TypeOf((*MockStore)(nil).GetCardByTicketCode), boardPrefix, cardNumber, teamID)
+}
+
 // PatchBlock mocks base method.
 func (m *MockStore) PatchBlock(blockID string, blockPatch *model.BlockPatch, userID string) error {
 	m.ctrl.T.Helper()

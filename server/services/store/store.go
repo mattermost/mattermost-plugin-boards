@@ -83,6 +83,10 @@ type Store interface {
 	InsertBoard(board *model.Board, userID string) (*model.Board, error)
 	// @withTransaction
 	InsertBoardWithAdmin(board *model.Board, userID string) (*model.Board, *model.BoardMember, error)
+	// IncrementBoardCardCount atomically increments the card_count for a board and returns the new count.
+	IncrementBoardCardCount(boardID string) (int64, error)
+	// GetCardByTicketCode returns a card block matching the given board prefix and card number.
+	GetCardByTicketCode(boardPrefix string, cardNumber int64, teamID string) (*model.Block, error)
 	// @withTransaction
 	PatchBoard(boardID string, boardPatch *model.BoardPatch, userID string) (*model.Board, error)
 	GetBoard(id string) (*model.Board, error)
