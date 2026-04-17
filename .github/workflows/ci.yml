@@ -49,8 +49,6 @@ jobs:
 
   dist:
     runs-on: ubuntu-22.04
-    needs:
-      - webapp-test
     permissions:
       id-token: write
     steps:
