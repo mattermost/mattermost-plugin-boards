@@ -13,6 +13,9 @@ env:
  EXCLUDE_ENTERPRISE: true
  GO_VERSION: 1.24.6
 
+permissions:
+  contents: read
+
 jobs:
   webapp-test:
     runs-on: ubuntu-22.04

@@ -110,11 +110,18 @@ func (pd PropDef) GetValue(v interface{}, resolver PropValueResolver) (string, e
 			usernames := make([]string, len(userIDs))
 
 			for i, userIDInterface := range userIDs {
-				userID := userIDInterface.(string)
+				userID, ok := userIDInterface.(string)
+				if !ok {
+					// Handle non-string values gracefully
+					usernames[i] = fmt.Sprintf("%v", userIDInterface)
+					continue
+				}
 
 				user, err := resolver.GetUserByID(userID)
 				if err != nil {
-					return "", err
+					// If user lookup fails, use the userID as fallback
+					usernames[i] = userID
+					continue
 				}
 				if user == nil {
 					usernames[i] = userID
@@ -125,6 +132,8 @@ func (pd PropDef) GetValue(v interface{}, resolver PropValueResolver) (string, e
 
 			return strings.Join(usernames, ", "), nil
 		}
+		// If no resolver, return empty string for multiPerson
+		return "", nil
 
 	case "multiSelect":
 		// v is a slice of strings containing option ids
@@ -155,9 +164,17 @@ func (pd PropDef) GetValue(v interface{}, resolver PropValueResolver) (string, e
 func (pd PropDef) ParseDate(s string) (string, error) {
 	// s is a JSON snippet of the form: {"from":1642161600000, "to":1642161600000} in milliseconds UTC
 	// The UI does not yet support date ranges.
+
+	// Handle empty or whitespace-only strings
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return "", ErrInvalidDate
+	}
+
 	var m map[string]int64
 	if err := json.Unmarshal([]byte(s), &m); err != nil {
-		return s, err
+		// If it's not valid JSON, return the original string with error.
+		return s, fmt.Errorf("invalid date format (expected JSON): %w", err)
 	}
 	tsFrom, ok := m["from"]
 	if !ok {

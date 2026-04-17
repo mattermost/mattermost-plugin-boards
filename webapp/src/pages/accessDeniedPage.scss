@@ -1,0 +1,40 @@
+.AccessDeniedPage {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    > div {
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .title {
+        color: var(--center-channel-color, #3F4350);
+        text-align: center;
+        font-family: Metropolis;
+        font-size: 28px;
+        font-style: normal;
+        font-weight: 600;
+        line-height: 36px;
+        margin-bottom: 8px;
+    }
+
+    .subtitle {
+        color: rgba(var(--center-channel-color-rgb), 0.75);
+        text-align: center;
+        font-family: "Open Sans";
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 20px;
+        max-width: 600px;
+    }
+
+    svg {
+        margin: 24px 0;
+    }
+}
