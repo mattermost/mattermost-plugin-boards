@@ -3,7 +3,7 @@ import { test, expect, type Page } from '@playwright/test';
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { MattermostPage } from 'helpers/mm';
-import { createBoardViaApi } from 'helpers/boards';
+import { createBoardViaApi, getBoardMeta } from 'helpers/boards';
 
 const username = 'regularuser';
 const password = 'regularuser';
@@ -35,18 +35,16 @@ test.describe('Board Management', () => {
         if (await sidebarItem.isVisible({ timeout: 3000 }).catch(() => false)) {
             await sidebarItem.click();
         } else {
-            // Board not found — create it via the template selector.
-            await expect(page.locator('.BoardTemplateSelector')).toBeVisible({ timeout: 15000 });
-            await page.locator('.templates-sidebar__footer button').click();
-            await expect(boardComponent).toBeVisible({ timeout: 15000 });
-
-            await expect(page.locator('.ViewTitle .Editable.title')).toHaveAttribute('placeholder', /[Uu]ntitled/, { timeout: 10000 });
-            const titleInput = page.locator('.ViewTitle .Editable');
-            await titleInput.click();
-            await titleInput.fill(boardTitle);
-            await titleInput.press('Enter');
-
-            await expect(page.locator('.octo-sidebar-list')).toContainText(boardTitle, { timeout: 10000 });
+            // Create via API and navigate directly — the template selector only
+            // appears for users with no boards, so UI creation is unreliable here.
+            const userClient = await mattermost.getClient(username, password);
+            const userToken = (userClient as any).token as string;
+            const boardId = await createBoardViaApi(mattermost, boardTitle, userToken);
+            const { teamId, viewId } = await getBoardMeta(mattermost, boardId, userToken);
+            await page.goto(
+                `${mattermost.url()}/boards/team/${teamId}/${boardId}/${viewId}`,
+                { waitUntil: 'domcontentloaded', timeout: 30000 },
+            );
         }
 
         await expect(boardComponent).toBeVisible({ timeout: 15000 });
