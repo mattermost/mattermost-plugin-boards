@@ -61,13 +61,21 @@ func PrepareNewTestDatabase() (dbType string, connectionString string, err error
 		_ = file.Close()
 	} else if port := strings.TrimSpace(os.Getenv("FOCALBOARD_STORE_TEST_DOCKER_PORT")); port != "" {
 		// docker unit tests take priority over any DSN env vars
+		// Host defaults to localhost; override via FOCALBOARD_STORE_TEST_DOCKER_HOST
+		// for environments where the DB service is not reachable on localhost
+		// (e.g. GitHub Actions jobs running inside a container, where service
+		// containers are addressable only by their service name).
+		host := strings.TrimSpace(os.Getenv("FOCALBOARD_STORE_TEST_DOCKER_HOST"))
+		if host == "" {
+			host = "localhost"
+		}
 		var template string
 		switch dbType {
 		case model.MysqlDBType:
-			template = "%s:mostest@tcp(localhost:%s)/%s?charset=utf8mb4,utf8&writeTimeout=30s"
+			template = "%s:mostest@tcp(" + host + ":%s)/%s?charset=utf8mb4,utf8&writeTimeout=30s"
 			rootUser = "root"
 		case model.PostgresDBType:
-			template = "postgres://%s:mostest@localhost:%s/%s?sslmode=disable\u0026connect_timeout=10"
+			template = "postgres://%s:mostest@" + host + ":%s/%s?sslmode=disable\u0026connect_timeout=10"
 			rootUser = "mmuser"
 		default:
 			return "", "", newErrInvalidDBType(dbType)

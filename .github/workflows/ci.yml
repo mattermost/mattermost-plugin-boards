@@ -144,7 +144,6 @@ jobs:
         env:
           POSTGRES_USER: mmuser
           POSTGRES_PASSWORD: mostest
-          POSTGRES_DB: mattermost_test
           POSTGRES_HOST_AUTH_METHOD: trust
         options: >-
           --health-cmd pg_isready
@@ -163,7 +162,8 @@ jobs:
       FIPS_ENABLED: "true"
       TEST_DATABASE_DRIVERNAME: postgres
       FOCALBOARD_STORE_TEST_DB_TYPE: postgres
-      FOCALBOARD_STORE_TEST_CONN_STRING: "postgres://mmuser:mostest@postgres:5432/mattermost_test?sslmode=disable&connect_timeout=10"
+      FOCALBOARD_STORE_TEST_DOCKER_PORT: "5432"
+      FOCALBOARD_STORE_TEST_DOCKER_HOST: postgres
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
