@@ -22,32 +22,31 @@ test.afterAll(async () => {
 test.describe('Board Management', () => {
     test.describe.configure({ timeout: 300000 });
 
-    async function createBoard(page: Page, username: string, password: string): Promise<void> {
+    async function setupBoard(page: Page, username: string, password: string, boardTitle: string): Promise<void> {
         const mmPage = new MattermostPage(page);
         await mmPage.login(mattermost.url(), username, password);
         await page.getByTestId('channel_view').waitFor({ state: 'visible', timeout: 30000 });
         await mmPage.navigateToBoardsFromUrl(mattermost.url());
 
         const boardComponent = page.locator('.BoardComponent');
-        const boardAlreadyLoaded = await boardComponent
-            .waitFor({ state: 'visible', timeout: 5000 })
-            .then(() => true)
-            .catch(() => false);
+        const sidebarItem = page.locator('.octo-sidebar-list .octo-sidebar-item').filter({ hasText: boardTitle });
 
-        if (!boardAlreadyLoaded) {
+        // If the board already exists in the sidebar, click it directly.
+        if (await sidebarItem.isVisible({ timeout: 3000 }).catch(() => false)) {
+            await sidebarItem.click();
+        } else {
+            // Board not found — create it via the template selector.
             await expect(page.locator('.BoardTemplateSelector')).toBeVisible({ timeout: 15000 });
             await page.locator('.templates-sidebar__footer button').click();
             await expect(boardComponent).toBeVisible({ timeout: 15000 });
 
-            // New board: verify untitled placeholder shows on the right, then name it.
             await expect(page.locator('.ViewTitle .Editable.title')).toHaveAttribute('placeholder', /[Uu]ntitled/, { timeout: 10000 });
             const titleInput = page.locator('.ViewTitle .Editable');
             await titleInput.click();
-            await titleInput.fill('Test Board');
+            await titleInput.fill(boardTitle);
             await titleInput.press('Enter');
 
-            // Verify the name now appears in the sidebar.
-            await expect(page.locator('.octo-sidebar-list')).toContainText('Test Board', { timeout: 10000 });
+            await expect(page.locator('.octo-sidebar-list')).toContainText(boardTitle, { timeout: 10000 });
         }
 
         await expect(boardComponent).toBeVisible({ timeout: 15000 });
@@ -68,7 +67,7 @@ test.describe('Board Management', () => {
     });
 
     test('can rename a board', async ({ page }) => {
-        await createBoard(page, username, password);
+        await setupBoard(page, username, password, 'Test Board');
 
         // Click the board title to make it editable
         const titleLocator = page.locator('.ViewTitle .Editable');
@@ -83,7 +82,7 @@ test.describe('Board Management', () => {
     });
 
     test('renamed board title persists after navigation', async ({ page }) => {
-        await createBoard(page, username, password);
+        await setupBoard(page, username, password, 'Test Board');
 
         // Rename the board
         const titleLocator = page.locator('.ViewTitle .Editable');
