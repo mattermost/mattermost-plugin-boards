@@ -39,10 +39,11 @@ const MarkdownEditor = (props: Props): JSX.Element => {
 
     const selectedTeam = useAppSelector(getCurrentTeam)
     const channelNamesMap = useMemo(() => {
-        if (!selectedTeam) {
+        const windowStore = (window as any).store
+        if (!selectedTeam || !windowStore) {
             return EMPTY_CHANNEL_NAMES_MAP
         }
-        return getChannelsNameMapInTeam((window as any).store.getState(), selectedTeam.id)
+        return getChannelsNameMapInTeam(windowStore.getState(), selectedTeam.id)
     }, [selectedTeam?.id])
 
     const previewElement = (

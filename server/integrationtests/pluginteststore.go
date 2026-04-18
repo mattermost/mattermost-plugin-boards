@@ -27,6 +27,9 @@ type PluginTestStore struct {
 }
 
 func NewPluginTestStore(innerStore store.Store) *PluginTestStore {
+	testTeamID := mmModel.NewId()
+	otherTeamID := mmModel.NewId()
+	emptyTeamID := mmModel.NewId()
 	return &PluginTestStore{
 		Store: innerStore,
 		users: map[string]*model.User{
@@ -81,9 +84,9 @@ func NewPluginTestStore(innerStore store.Store) *PluginTestStore {
 				IsGuest:  true,
 			},
 		},
-		testTeam:  &model.Team{ID: "test-team", Title: "Test Team"},
-		otherTeam: &model.Team{ID: "other-team", Title: "Other Team"},
-		emptyTeam: &model.Team{ID: "empty-team", Title: "Empty Team"},
+		testTeam:  &model.Team{ID: testTeamID, Title: "Test Team"},
+		otherTeam: &model.Team{ID: otherTeamID, Title: "Other Team"},
+		emptyTeam: &model.Team{ID: emptyTeamID, Title: "Empty Team"},
 		baseTeam:  &model.Team{ID: "0", Title: "Base Team"},
 	}
 }
@@ -92,12 +95,15 @@ func (s *PluginTestStore) GetTeam(id string) (*model.Team, error) {
 	switch id {
 	case "0":
 		return s.baseTeam, nil
-	case "other-team":
+	case s.otherTeam.ID:
 		return s.otherTeam, nil
-	case "test-team", testTeamID:
+	case s.testTeam.ID:
 		return s.testTeam, nil
-	case "empty-team":
+	case s.emptyTeam.ID:
 		return s.emptyTeam, nil
+	}
+	if mmModel.IsValidId(id) {
+		return &model.Team{ID: id, Title: "Test Team"}, nil
 	}
 	return nil, errTestStore
 }
@@ -294,22 +300,33 @@ func (s *PluginTestStore) GetChannel(teamID, channel string) (*mmModel.Channel, 
 }
 
 func (s *PluginTestStore) SearchBoardsForUser(term string, field model.BoardSearchField, userID string, includePublicBoards bool) ([]*model.Board, error) {
-	boards, err := s.Store.SearchBoardsForUser(term, field, userID, includePublicBoards)
-	if err != nil {
-		return nil, err
+	// Guests only see boards they are directly a member of. The underlying SQL
+	// query for includePublicBoards=false uses only the board_members table,
+	// so it works correctly without any Mattermost TeamMembers data.
+	if !includePublicBoards {
+		return s.Store.SearchBoardsForUser(term, field, userID, false)
 	}
 
+	// For non-guests we iterate over the user's teams and call
+	// SearchBoardsForUserInTeam for each one. That query finds open boards
+	// directly by team_id, so it never touches the Mattermost TeamMembers
+	// table (which is absent in the integration-test database).
 	teams, err := s.GetTeamsForUser(userID)
 	if err != nil {
 		return nil, err
 	}
 
+	seen := map[string]bool{}
 	resultBoards := []*model.Board{}
-	for _, board := range boards {
-		for _, team := range teams {
-			if team.ID == board.TeamID {
+	for _, team := range teams {
+		teamBoards, err := s.Store.SearchBoardsForUserInTeam(team.ID, term, userID)
+		if err != nil {
+			return nil, err
+		}
+		for _, board := range teamBoards {
+			if !seen[board.ID] {
+				seen[board.ID] = true
 				resultBoards = append(resultBoards, board)
-				break
 			}
 		}
 	}
@@ -338,4 +355,31 @@ func (s *PluginTestStore) GetLicense() *mmModel.License {
 	}
 
 	return license
+}
+
+// PostMessage is a no-op for tests - we don't actually need to post messages.
+func (s *PluginTestStore) PostMessage(message, postType, channelID string) error {
+	// No-op for tests - just return nil
+	return nil
+}
+
+// SendMessage is a no-op for tests - we don't actually need to send messages.
+func (s *PluginTestStore) SendMessage(message, postType string, receipts []string) error {
+	// No-op for tests - just return nil
+	return nil
+}
+
+// GetTestTeamID returns the test team ID for use in integration tests.
+func (s *PluginTestStore) GetTestTeamID() string {
+	return s.testTeam.ID
+}
+
+// GetOtherTeamID returns the other team ID for use in integration tests.
+func (s *PluginTestStore) GetOtherTeamID() string {
+	return s.otherTeam.ID
+}
+
+// GetEmptyTeamID returns the empty team ID for use in integration tests.
+func (s *PluginTestStore) GetEmptyTeamID() string {
+	return s.emptyTeam.ID
 }

@@ -68,9 +68,11 @@ func TestHasPermissionToBoard(t *testing.T) {
 			model.PermissionDeleteBoard,
 			model.PermissionManageBoardRoles,
 			model.PermissionShareBoard,
+			model.PermissionDeleteOthersComments,
 			model.PermissionManageBoardCards,
-			model.PermissionViewBoard,
 			model.PermissionManageBoardProperties,
+			model.PermissionCommentBoardCards,
+			model.PermissionViewBoard,
 		}
 
 		hasNotPermissionTo := []*mmModel.Permission{}
@@ -87,8 +89,9 @@ func TestHasPermissionToBoard(t *testing.T) {
 
 		hasPermissionTo := []*mmModel.Permission{
 			model.PermissionManageBoardCards,
-			model.PermissionViewBoard,
 			model.PermissionManageBoardProperties,
+			model.PermissionCommentBoardCards,
+			model.PermissionViewBoard,
 		}
 
 		hasNotPermissionTo := []*mmModel.Permission{
@@ -96,6 +99,7 @@ func TestHasPermissionToBoard(t *testing.T) {
 			model.PermissionDeleteBoard,
 			model.PermissionManageBoardRoles,
 			model.PermissionShareBoard,
+			model.PermissionDeleteOthersComments,
 		}
 
 		th.checkBoardPermissions("editor", member, hasPermissionTo, hasNotPermissionTo)
@@ -109,6 +113,7 @@ func TestHasPermissionToBoard(t *testing.T) {
 		}
 
 		hasPermissionTo := []*mmModel.Permission{
+			model.PermissionCommentBoardCards,
 			model.PermissionViewBoard,
 		}
 
@@ -117,6 +122,7 @@ func TestHasPermissionToBoard(t *testing.T) {
 			model.PermissionDeleteBoard,
 			model.PermissionManageBoardRoles,
 			model.PermissionShareBoard,
+			model.PermissionDeleteOthersComments,
 			model.PermissionManageBoardCards,
 			model.PermissionManageBoardProperties,
 		}
@@ -140,33 +146,78 @@ func TestHasPermissionToBoard(t *testing.T) {
 			model.PermissionDeleteBoard,
 			model.PermissionManageBoardRoles,
 			model.PermissionShareBoard,
+			model.PermissionDeleteOthersComments,
 			model.PermissionManageBoardCards,
 			model.PermissionManageBoardProperties,
+			model.PermissionCommentBoardCards,
 		}
 
 		th.checkBoardPermissions("viewer", member, hasPermissionTo, hasNotPermissionTo)
 	})
 
-	t.Run("Manage Team Permission ", func(t *testing.T) {
-		member := &model.BoardMember{
-			UserID:       "user-id",
-			BoardID:      "board-id",
-			SchemeViewer: true,
-		}
+	t.Run("MinimumRole override promotes permissions", func(t *testing.T) {
+		t.Run("MinimumRole admin grants admin permissions to viewer scheme member", func(t *testing.T) {
+			member := &model.BoardMember{
+				UserID:       "user-id",
+				BoardID:      "board-id",
+				SchemeViewer: true,
+				MinimumRole:  "admin",
+			}
 
-		hasPermissionTo := []*mmModel.Permission{
-			model.PermissionViewBoard,
-		}
+			hasPermissionTo := []*mmModel.Permission{
+				model.PermissionManageBoardType,
+				model.PermissionDeleteBoard,
+				model.PermissionManageBoardRoles,
+				model.PermissionShareBoard,
+				model.PermissionDeleteOthersComments,
+				model.PermissionManageBoardCards,
+				model.PermissionManageBoardProperties,
+				model.PermissionCommentBoardCards,
+				model.PermissionViewBoard,
+			}
 
-		hasNotPermissionTo := []*mmModel.Permission{
-			model.PermissionManageBoardType,
-			model.PermissionDeleteBoard,
-			model.PermissionManageBoardRoles,
-			model.PermissionShareBoard,
-			model.PermissionManageBoardCards,
-			model.PermissionManageBoardProperties,
-		}
+			th.checkBoardPermissions("viewer-with-admin-minimum-role", member, hasPermissionTo, []*mmModel.Permission{})
+		})
 
-		th.checkBoardPermissions("viewer", member, hasPermissionTo, hasNotPermissionTo)
+		t.Run("MinimumRole editor grants editor permissions to viewer scheme member", func(t *testing.T) {
+			member := &model.BoardMember{
+				UserID:       "user-id",
+				BoardID:      "board-id",
+				SchemeViewer: true,
+				MinimumRole:  "editor",
+			}
+
+			hasPermissionTo := []*mmModel.Permission{
+				model.PermissionManageBoardCards,
+				model.PermissionManageBoardProperties,
+				model.PermissionCommentBoardCards,
+				model.PermissionViewBoard,
+			}
+
+			hasNotPermissionTo := []*mmModel.Permission{
+				model.PermissionManageBoardType,
+				model.PermissionDeleteBoard,
+				model.PermissionManageBoardRoles,
+				model.PermissionShareBoard,
+				model.PermissionDeleteOthersComments,
+			}
+
+			th.checkBoardPermissions("viewer-with-editor-minimum-role", member, hasPermissionTo, hasNotPermissionTo)
+		})
+	})
+}
+
+func TestHasPermissionToChannel(t *testing.T) {
+	th := SetupTestHelper(t)
+
+	t.Run("empty input should always unauthorize", func(t *testing.T) {
+		assert.False(t, th.permissions.HasPermissionToChannel("", "channel-id", model.PermissionManageBoardCards))
+		assert.False(t, th.permissions.HasPermissionToChannel("user-id", "", model.PermissionManageBoardCards))
+		assert.False(t, th.permissions.HasPermissionToChannel("user-id", "channel-id", nil))
+	})
+
+	t.Run("all users have all permissions on channels", func(t *testing.T) {
+		hasPermission := th.permissions.HasPermissionToChannel("user-id", "channel-id", model.PermissionManageBoardCards)
+		assert.True(t, hasPermission)
 	})
 }

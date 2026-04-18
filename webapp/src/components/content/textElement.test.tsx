@@ -67,6 +67,11 @@ describe('components/content/TextElement', () => {
         clientConfig: {
             value: {},
         },
+        teams: {
+            current: null,
+            currentId: '',
+            allTeams: [],
+        },
     }
     const store = mockStateStore([], state)
 

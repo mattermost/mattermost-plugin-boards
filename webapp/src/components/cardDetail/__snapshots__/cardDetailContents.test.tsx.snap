@@ -18,9 +18,11 @@ exports[`components/cardDetail/cardDetailContents should match snapshot 1`] = `
           class="octo-editor-preview octo-placeholder"
           data-testid="preview-element"
         >
-          <p>
-            Add a description...
-          </p>
+          <div
+            class="mocked-message-html"
+          >
+            Test Comment
+          </div>
         </div>
       </div>
     </div>
