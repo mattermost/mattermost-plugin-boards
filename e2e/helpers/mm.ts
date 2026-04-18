@@ -84,6 +84,13 @@ export class MattermostPage {
         } else if (first === 'timeout') {
             throw new Error('Boards did not load: neither the welcome page nor the boards UI appeared within 30s');
         }
+
+        // The Boards "Welcome To Boards" tour overlay renders inside .Workspace, so
+        // boardsReady may resolve while the overlay is still visible. Dismiss it if present.
+        const tourSkip = this.page.locator('text=No thanks, I\'ll figure it out myself');
+        if (await tourSkip.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await tourSkip.click();
+        }
     }
 }
 
