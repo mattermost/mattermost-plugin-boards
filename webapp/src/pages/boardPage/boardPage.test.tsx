@@ -99,8 +99,8 @@ describe('pages/boardPage', () => {
         }))
 
         // Default: joinBoard/octoClient stubs
-        mockedOctoClient.joinBoard.mockResolvedValue(null)
-        mockedOctoClient.unhideBoard.mockResolvedValue(undefined)
+        mockedOctoClient.joinBoard.mockResolvedValue(undefined)
+        mockedOctoClient.unhideBoard.mockResolvedValue({} as Response)
     })
 
     const renderBoardPage = (history: ReturnType<typeof createMemoryHistory>) => {

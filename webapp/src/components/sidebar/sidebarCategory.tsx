@@ -39,6 +39,7 @@ import {TOUR_SIDEBAR, SidebarTourSteps, TOUR_BOARD, FINISHED} from '../../compon
 import telemetryClient, {TelemetryActions, TelemetryCategory} from '../../telemetry/telemetryClient'
 
 import {getCurrentTeam} from '../../store/teams'
+import {getMySortedBoards} from '../../store/boards'
 
 import ConfirmationDialogBox, {ConfirmationDialogBoxProps} from '../confirmationDialogBox'
 
@@ -83,6 +84,7 @@ const SidebarCategory = (props: Props) => {
     const noCardOpen = !currentCard
     const team = useAppSelector(getCurrentTeam)
     const teamID = team?.id || ''
+    const allMyBoards = useAppSelector(getMySortedBoards)
 
     const menuWrapperRef = useRef<HTMLDivElement>(null)
 
@@ -190,15 +192,34 @@ const SidebarCategory = (props: Props) => {
                 let targetBoardId: string | undefined
                 if (props.boards.length > 1) {
                     const deleteIndex = props.boards.findIndex((board) => board.id === deleteBoard.id)
-                    const nextIndex = deleteIndex + 1 === props.boards.length ? deleteIndex - 1 : deleteIndex + 1
-                    targetBoardId = props.boards[nextIndex].id
+                    for (let i = deleteIndex + 1; i < props.boards.length && !targetBoardId; i++) {
+                        if (isBoardVisible(props.boards[i].id) && !props.boards[i].isTemplate) {
+                            targetBoardId = props.boards[i].id
+                        }
+                    }
+                    for (let i = deleteIndex - 1; i >= 0 && !targetBoardId; i--) {
+                        if (isBoardVisible(props.boards[i].id) && !props.boards[i].isTemplate) {
+                            targetBoardId = props.boards[i].id
+                        }
+                    }
                 }
 
                 if (!targetBoardId) {
                     for (const category of props.allCategories) {
-                        const other = category.boardMetadata.find((m) => m.boardID !== deleteBoard.id)
-                        if (other) {
-                            targetBoardId = other.boardID
+                        for (const m of category.boardMetadata) {
+                            if (m.boardID === deleteBoard.id) {
+                                continue
+                            }
+                            if (!isBoardVisible(m.boardID, m)) {
+                                continue
+                            }
+                            const board = allMyBoards.find((b) => b.id === m.boardID)
+                            if (board && !board.isTemplate) {
+                                targetBoardId = m.boardID
+                                break
+                            }
+                        }
+                        if (targetBoardId) {
                             break
                         }
                     }
@@ -221,7 +242,7 @@ const SidebarCategory = (props: Props) => {
                 showBoard(deleteBoard.id)
             },
         )
-    }, [showBoard, deleteBoard, props.boards, props.categoryBoards.id, teamID])
+    }, [showBoard, deleteBoard, props.boards, props.categoryBoards.id, teamID, allMyBoards])
 
     const updateCategory = useCallback(async (value: boolean) => {
         const updatedCategory: Category = {
