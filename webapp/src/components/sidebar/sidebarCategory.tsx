@@ -242,7 +242,7 @@ const SidebarCategory = (props: Props) => {
                 showBoard(deleteBoard.id)
             },
         )
-    }, [showBoard, deleteBoard, props.boards, props.categoryBoards.id, teamID, allMyBoards])
+    }, [showBoard, deleteBoard, props.boards, props.allCategories, props.categoryBoards.id, teamID, allMyBoards, intl, isBoardVisible, match.path, history])
 
     const updateCategory = useCallback(async (value: boolean) => {
         const updatedCategory: Category = {
