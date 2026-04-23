@@ -187,18 +187,33 @@ const SidebarCategory = (props: Props) => {
             deleteBoard,
             intl.formatMessage({id: 'Sidebar.delete-board', defaultMessage: 'Delete board'}),
             async () => {
-                let nextBoardId: number | undefined
+                let targetBoardId: string | undefined
                 if (props.boards.length > 1) {
-                    const deleteBoardIndex = props.boards.findIndex((board) => board.id === deleteBoard.id)
-                    nextBoardId = deleteBoardIndex + 1 === props.boards.length ? deleteBoardIndex - 1 : deleteBoardIndex + 1
+                    const deleteIndex = props.boards.findIndex((board) => board.id === deleteBoard.id)
+                    const nextIndex = deleteIndex + 1 === props.boards.length ? deleteIndex - 1 : deleteIndex + 1
+                    targetBoardId = props.boards[nextIndex].id
                 }
 
-                if (nextBoardId) {
-                // This delay is needed because WSClient has a default 100 ms notification delay before updates
-                    setTimeout(() => {
-                        showBoard(props.boards[nextBoardId as number].id)
-                    }, 120)
+                if (!targetBoardId) {
+                    for (const category of props.allCategories) {
+                        const other = category.boardMetadata.find((m) => m.boardID !== deleteBoard.id)
+                        if (other) {
+                            targetBoardId = other.boardID
+                            break
+                        }
+                    }
                 }
+
+                // This delay is needed because WSClient has a default 100 ms notification delay before updates
+                setTimeout(() => {
+                    if (targetBoardId) {
+                        showBoard(targetBoardId)
+                    } else {
+                        // No boards left — navigate to the template selector
+                        const teamBasePath = match.path.split('/:boardId')[0]
+                        history.push(generatePath(teamBasePath, {teamId: teamID}))
+                    }
+                }, 120)
             },
             async () => {
                 // Restore the board to the category it was deleted from
