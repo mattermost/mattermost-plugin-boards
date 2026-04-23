@@ -99,8 +99,8 @@ describe('pages/boardPage', () => {
         }))
 
         // Default: joinBoard/octoClient stubs
-        mockedOctoClient.joinBoard = jest.fn().mockResolvedValue(null)
-        mockedOctoClient.unhideBoard = jest.fn().mockResolvedValue(undefined)
+        mockedOctoClient.joinBoard.mockResolvedValue(null)
+        mockedOctoClient.unhideBoard.mockResolvedValue(undefined)
     })
 
     const renderBoardPage = (history: ReturnType<typeof createMemoryHistory>) => {
@@ -126,7 +126,7 @@ describe('pages/boardPage', () => {
         history.push = jest.fn()
 
         // getBoard returns undefined/null → board was deleted
-        mockedOctoClient.getBoard = jest.fn().mockResolvedValue(undefined)
+        mockedOctoClient.getBoard.mockResolvedValue(undefined)
 
         renderBoardPage(history)
 
@@ -143,7 +143,7 @@ describe('pages/boardPage', () => {
         history.push = jest.fn()
 
         // getBoard returns a board object → board exists (private, not yet joined)
-        mockedOctoClient.getBoard = jest.fn().mockResolvedValue({id: 'private-board-id', title: 'Private Board'})
+        mockedOctoClient.getBoard.mockResolvedValue({id: 'private-board-id', title: 'Private Board'} as any)
 
         renderBoardPage(history)
 
