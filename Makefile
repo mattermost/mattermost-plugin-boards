@@ -267,6 +267,30 @@ ifneq ($(wildcard ./build/sync/plan/.),)
 	cd ./build/sync && $(GO) test -v $(GO_TEST_FLAGS) ./...
 endif
 
+## Runs e2e tests using Playwright. Requires dist/ to be built first.
+e2e/node_modules: e2e/package.json
+	cd e2e && $(NPM) install
+	touch $@
+
+.PHONY: e2e
+e2e: e2e/node_modules
+	cd e2e && npx playwright test
+
+## Installs Playwright browser binaries (Chromium + system deps).
+.PHONY: e2e-install-browsers
+e2e-install-browsers: e2e/node_modules
+	cd e2e && npx playwright install chromium --with-deps
+
+## Validates that all e2e spec files are assigned to a CI shard.
+.PHONY: e2e-validate-shards
+e2e-validate-shards: e2e/node_modules
+	cd e2e && node scripts/ci-test-groups.mjs validate
+
+## Installs deps, validates shards, and runs e2e tests (Chromium only). Used in CI.
+.PHONY: e2e-ci
+e2e-ci: e2e-install-browsers e2e-validate-shards
+	cd e2e && npx playwright test --project=chromium
+
 ## Creates a coverage report for the server code.
 .PHONY: coverage
 coverage: webapp/node_modules
@@ -393,7 +417,7 @@ generate: ## Install and run code generators.
 	cd server; go install github.com/golang/mock/mockgen@v1.6.0
 	cd server; go generate ./...
 
-server-ci: server-lint
+server-ci: server-lint server-test ## Run linters and tests on server code.
 
 server-lint: ## Run linters on server code.
 	@if ! [ -x "$$(command -v golangci-lint)" ]; then \

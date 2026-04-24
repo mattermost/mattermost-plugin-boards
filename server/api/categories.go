@@ -76,12 +76,10 @@ func (a *API) handleCreateCategory(w http.ResponseWriter, r *http.Request) {
 	auditRec := a.makeAuditRecord(r, "createCategory", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)
 
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
-
+	userID := getUserID(r)
 	// user can only create category for themselves
-	if category.UserID != session.UserID {
-		message := fmt.Sprintf("userID %s and category userID %s mismatch", session.UserID, category.UserID)
+	if category.UserID != userID {
+		message := fmt.Sprintf("userID %s and category userID %s mismatch", userID, category.UserID)
 		a.errorResponse(w, r, model.NewErrBadRequest(message))
 		return
 	}
@@ -94,7 +92,7 @@ func (a *API) handleCreateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !a.permissions.HasPermissionToTeam(session.UserID, teamID, model.PermissionViewTeam) {
+	if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionViewTeam) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to team"))
 		return
 	}
@@ -172,16 +170,14 @@ func (a *API) handleUpdateCategory(w http.ResponseWriter, r *http.Request) {
 	auditRec := a.makeAuditRecord(r, "updateCategory", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)
 
+	userID := getUserID(r)
 	if categoryID != category.ID {
 		a.errorResponse(w, r, model.NewErrBadRequest("categoryID mismatch in patch and body"))
 		return
 	}
 
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
-
 	// user can only update category for themselves
-	if category.UserID != session.UserID {
+	if category.UserID != userID {
 		a.errorResponse(w, r, model.NewErrBadRequest("user ID mismatch in session and category"))
 		return
 	}
@@ -192,7 +188,7 @@ func (a *API) handleUpdateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !a.permissions.HasPermissionToTeam(session.UserID, teamID, model.PermissionViewTeam) {
+	if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionViewTeam) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to team"))
 		return
 	}
@@ -242,18 +238,15 @@ func (a *API) handleDeleteCategory(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
 	vars := mux.Vars(r)
-
-	userID := session.UserID
 	teamID := vars["teamID"]
 	categoryID := vars["categoryID"]
 
+	userID := getUserID(r)
 	auditRec := a.makeAuditRecord(r, "deleteCategory", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)
 
-	if !a.permissions.HasPermissionToTeam(session.UserID, teamID, model.PermissionViewTeam) {
+	if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionViewTeam) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to team"))
 		return
 	}
@@ -302,17 +295,14 @@ func (a *API) handleGetUserCategoryBoards(w http.ResponseWriter, r *http.Request
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
-	userID := session.UserID
-
+	userID := getUserID(r)
 	vars := mux.Vars(r)
 	teamID := vars["teamID"]
 
 	auditRec := a.makeAuditRecord(r, "getUserCategoryBoards", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)
 
-	if !a.permissions.HasPermissionToTeam(session.UserID, teamID, model.PermissionViewTeam) {
+	if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionViewTeam) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to team"))
 		return
 	}
@@ -375,11 +365,8 @@ func (a *API) handleUpdateCategoryBoard(w http.ResponseWriter, r *http.Request) 
 	boardID := vars["boardID"]
 	teamID := vars["teamID"]
 
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
-	userID := session.UserID
-
-	if !a.permissions.HasPermissionToTeam(session.UserID, teamID, model.PermissionViewTeam) {
+	userID := getUserID(r)
+	if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionViewTeam) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to team"))
 		return
 	}

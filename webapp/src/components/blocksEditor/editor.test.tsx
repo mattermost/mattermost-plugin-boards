@@ -38,6 +38,11 @@ describe('components/blocksEditor/editor', () => {
         clientConfig: {
             value: {},
         },
+        teams: {
+            current: null,
+            currentId: '',
+            allTeams: [],
+        },
     }
     const store = mockStateStore([], state)
 

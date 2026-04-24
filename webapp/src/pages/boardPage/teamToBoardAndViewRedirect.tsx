@@ -22,9 +22,26 @@ const TeamToBoardAndViewRedirect = (): null => {
     const boards = useAppSelector(getBoards)
     const teamId = match.params.teamId || UserSettings.lastTeamId || Constants.globalTeamId
 
+    // Clear skip flag once the URL includes a boardId. The component stays mounted when
+    // navigating from /team/:teamId to /team/:teamId/:boardId, so unmount cleanup would not run.
+    useEffect(() => {
+        if (match.params.boardId) {
+            sessionStorage.removeItem(Constants.sessionStorageSkipBoardRedirectKey)
+        }
+    }, [match.params.boardId])
+
     useEffect(() => {
         let boardID = match.params.boardId
+
+        // Check if we should skip all auto-redirects (e.g., after error page)
+        const skipRedirect = sessionStorage.getItem(Constants.sessionStorageSkipBoardRedirectKey) === 'true'
+
         if (!match.params.boardId) {
+            // Skip auto-redirect if flag is set
+            if (skipRedirect) {
+                return
+            }
+
             // first preference is for last visited board
             boardID = UserSettings.lastBoardId[teamId]
 
@@ -64,7 +81,6 @@ const TeamToBoardAndViewRedirect = (): null => {
         // when a view isn't open,
         // but the data is available, try opening a view
         if ((!viewID || viewID === '0') && boardId && boardId === match.params.boardId && boardViews && boardViews.length > 0) {
-            // most recent view gets the first preference
             viewID = UserSettings.lastViewId[boardID]
             if (viewID) {
                 UserSettings.setLastViewId(boardID, viewID)

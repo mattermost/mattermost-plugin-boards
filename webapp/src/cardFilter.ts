@@ -137,43 +137,43 @@ class CardFilter {
                 }
                 return dateValue.from === numericFilter
             }
-            return filter.values[0]?.toLowerCase() === value
+            return filter.values[0]?.toLowerCase() === (value as string || '').toLowerCase()
         }
         case 'contains': {
             if (filter.values.length === 0) {
                 return true
             }
-            return (value as string || '').includes(filter.values[0]?.toLowerCase())
+            return (value as string || '').toLowerCase().includes(filter.values[0]?.toLowerCase())
         }
         case 'notContains': {
             if (filter.values.length === 0) {
                 return true
             }
-            return !(value as string || '').includes(filter.values[0]?.toLowerCase())
+            return !(value as string || '').toLowerCase().includes(filter.values[0]?.toLowerCase())
         }
         case 'startsWith': {
             if (filter.values.length === 0) {
                 return true
             }
-            return (value as string || '').startsWith(filter.values[0]?.toLowerCase())
+            return (value as string || '').toLowerCase().startsWith(filter.values[0]?.toLowerCase())
         }
         case 'notStartsWith': {
             if (filter.values.length === 0) {
                 return true
             }
-            return !(value as string || '').startsWith(filter.values[0]?.toLowerCase())
+            return !(value as string || '').toLowerCase().startsWith(filter.values[0]?.toLowerCase())
         }
         case 'endsWith': {
             if (filter.values.length === 0) {
                 return true
             }
-            return (value as string || '').endsWith(filter.values[0]?.toLowerCase())
+            return (value as string || '').toLowerCase().endsWith(filter.values[0]?.toLowerCase())
         }
         case 'notEndsWith': {
             if (filter.values.length === 0) {
                 return true
             }
-            return !(value as string || '').endsWith(filter.values[0]?.toLowerCase())
+            return !(value as string || '').toLowerCase().endsWith(filter.values[0]?.toLowerCase())
         }
         case 'isBefore': {
             if (filter.values.length === 0) {

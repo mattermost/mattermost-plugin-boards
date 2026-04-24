@@ -451,10 +451,7 @@ func (a *API) handleUndeleteBlock(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
-	userID := session.UserID
-
+	userID := getUserID(r)
 	vars := mux.Vars(r)
 	blockID := vars["blockID"]
 	boardID := vars["boardID"]
@@ -641,13 +638,9 @@ func (a *API) handlePatchBlocks(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
-	userID := session.UserID
+	userID := getUserID(r)
 
-	vars := mux.Vars(r)
-	teamID := vars["teamID"]
-
+	// Check authentication first
 	val := r.URL.Query().Get("disable_notify")
 	disableNotify := val == True
 
@@ -670,15 +663,25 @@ func (a *API) handlePatchBlocks(w http.ResponseWriter, r *http.Request) {
 		auditRec.AddMeta("block_"+strconv.FormatInt(int64(i), 10), patches.BlockIDs[i])
 	}
 
+	// Get teamID from the first block's board
+	var teamID string
 	for _, blockID := range patches.BlockIDs {
 		var block *model.Block
 		block, err = a.app.GetBlockByID(blockID)
 		if err != nil {
-			a.errorResponse(w, r, model.NewErrForbidden("access denied to make board changes"))
+			if model.IsErrNotFound(err) {
+				a.errorResponse(w, r, model.NewErrNotFound("block ID="+blockID))
+			} else {
+				a.errorResponse(w, r, err)
+			}
+			return
+		}
+		if block == nil {
+			a.errorResponse(w, r, model.NewErrNotFound("block ID="+blockID))
 			return
 		}
 		if !a.permissions.HasPermissionToBoard(userID, block.BoardID, model.PermissionManageBoardCards) {
-			a.errorResponse(w, r, model.NewErrPermission("access denied to make board changesa"))
+			a.errorResponse(w, r, model.NewErrPermission("access denied to make board changes"))
 			return
 		}
 		if block.Type == model.TypeComment && block.CreatedBy != userID {
@@ -686,6 +689,14 @@ func (a *API) handlePatchBlocks(w http.ResponseWriter, r *http.Request) {
 				a.errorResponse(w, r, model.NewErrPermission("access denied to modify others' comments"))
 				return
 			}
+		}
+		if teamID == "" {
+			board, bErr := a.app.GetBoard(block.BoardID)
+			if bErr != nil {
+				a.errorResponse(w, r, bErr)
+				return
+			}
+			teamID = board.TeamID
 		}
 	}
 
@@ -745,11 +756,6 @@ func (a *API) handleDuplicateBlock(w http.ResponseWriter, r *http.Request) {
 	board, err := a.app.GetBoard(boardID)
 	if err != nil {
 		a.errorResponse(w, r, err)
-		return
-	}
-
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to board"))
 		return
 	}
 

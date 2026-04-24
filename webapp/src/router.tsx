@@ -1,7 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useEffect, useMemo} from 'react'
+import React, {useEffect, useMemo, useState} from 'react'
 import {
     Router,
     Redirect,
@@ -17,10 +17,12 @@ import {IAppWindow} from './types'
 import BoardPage from './pages/boardPage/boardPage'
 import WelcomePage from './pages/welcome/welcomePage'
 import ErrorPage from './pages/errorPage'
+import AccessDeniedPage from './pages/accessDeniedPage'
 import {Utils} from './utils'
 import octoClient from './octoClient'
 import {setGlobalError, getGlobalError} from './store/globalError'
 import {useAppSelector, useAppDispatch} from './store/hooks'
+import {ErrorId} from './errors'
 import {getFirstTeam, fetchTeams, Team} from './store/teams'
 import {getSidebarCategories, CategoryBoards} from './store/sidebar'
 import {getMySortedBoards} from './store/boards'
@@ -38,27 +40,64 @@ function HomeToCurrentTeam(props: {path: string, exact: boolean}) {
             component={() => {
                 const firstTeam = useAppSelector<Team|null>(getFirstTeam)
                 const dispatch = useAppDispatch()
+                const [teamsFetched, setTeamsFetched] = useState(false)
+                const [teamsFetchError, setTeamsFetchError] = useState(false)
+                const categories = useAppSelector<CategoryBoards[]>(getSidebarCategories)
+                const myBoards = useAppSelector(getMySortedBoards)
+                const history = useHistory()
+
                 useEffect(() => {
-                    dispatch(fetchTeams())
-                }, [])
+                    const loadTeams = async () => {
+                        try {
+                            const result = await dispatch(fetchTeams())
+                            if (fetchTeams.rejected.match(result)) {
+                                setTeamsFetchError(true)
+                            } else if (fetchTeams.fulfilled.match(result)) {
+                                const teams = result.payload as Team[]
+                                const windowTeamID = (window.getCurrentTeamId && window.getCurrentTeamId()) || ''
+                                const lastTeamID = UserSettings.lastTeamId
+                                
+                                if (teams.length === 0 && !windowTeamID && !lastTeamID) {
+                                    setTeamsFetchError(true)
+                                }
+                            }
+                            setTeamsFetched(true)
+                        } catch (error) {
+                            setTeamsFetchError(true)
+                            setTeamsFetched(true)
+                        }
+                    }
+                    loadTeams()
+                }, [dispatch])
 
                 let teamID = (window.getCurrentTeamId && window.getCurrentTeamId()) || ''
                 const lastTeamID = UserSettings.lastTeamId
-                if (!teamID && !firstTeam && !lastTeamID) {
+                const hasNoTeamId = !teamID && !firstTeam && !lastTeamID
+                
+                if (teamsFetchError && hasNoTeamId) {
+                    history.replace('/error?id=unknown')
+                    return null
+                }
+                
+                if (hasNoTeamId && !teamsFetched) {
                     return <></>
                 }
+                
                 teamID = teamID || lastTeamID || firstTeam?.id || ''
+                
+                if (!teamID && teamsFetched) {
+                    history.replace('/error?id=unknown')
+                    return null
+                }
+
+                const validBoardIds = new Set(myBoards.filter((b) => !b.deleteAt).map((b) => b.id))
 
                 if (UserSettings.lastBoardId) {
                     const lastBoardID = UserSettings.lastBoardId[teamID]
                     const lastViewID = UserSettings.lastViewId[lastBoardID]
 
                     if (lastBoardID) {
-                        const categories = useAppSelector<CategoryBoards[]>(getSidebarCategories)
-                        const myBoards = useAppSelector(getMySortedBoards)
-                        const validBoardIds = new Set(myBoards.filter((b) => !b.deleteAt).map((b) => b.id))
-
-                        if (!validBoardIds.has(lastBoardID)) {
+                        if (validBoardIds.size > 0 && !validBoardIds.has(lastBoardID)) {
                             let fallbackBoardId: string | null = null
                             for (const category of categories) {
                                 const visible = category.boardMetadata.find((m) => !m.hidden && validBoardIds.has(m.boardID))
@@ -76,14 +115,31 @@ function HomeToCurrentTeam(props: {path: string, exact: boolean}) {
                             UserSettings.setLastBoardID(teamID, null)
                             return <Redirect to={`/team/${teamID}`}/>
                         }
-                    }
 
-                    if (lastBoardID && lastViewID) {
-                        return <Redirect to={`/team/${teamID}/${lastBoardID}/${lastViewID}`}/>
+                        if (lastBoardID && lastViewID) {
+                            return <Redirect to={`/team/${teamID}/${lastBoardID}/${lastViewID}`}/>
+                        }
+                        if (lastBoardID) {
+                            return <Redirect to={`/team/${teamID}/${lastBoardID}`}/>
+                        }
                     }
-                    if (lastBoardID) {
-                        return <Redirect to={`/team/${teamID}/${lastBoardID}`}/>
+                }
+
+                if (validBoardIds.size === 0) {
+                    return <Redirect to={`/team/${teamID}`}/>
+                }
+
+                let firstBoardId: string | null = null
+                for (const category of categories) {
+                    const visible = category.boardMetadata.find((m) => !m.hidden && validBoardIds.has(m.boardID))
+                    if (visible) {
+                        firstBoardId = visible.boardID
+                        break
                     }
+                }
+
+                if (firstBoardId) {
+                    return <Redirect to={`/team/${teamID}/${firstBoardId}`}/>
                 }
 
                 return <Redirect to={`/team/${teamID}`}/>
@@ -119,13 +175,26 @@ function GlobalErrorRedirect() {
     const globalError = useAppSelector<string>(getGlobalError)
     const dispatch = useAppDispatch()
     const history = useHistory()
+    const location = useLocation()
 
     useEffect(() => {
         if (globalError) {
+            // Don't redirect if we're already on an error page
+            if (location.pathname === '/error' || location.pathname === '/access-denied') {
+                dispatch(setGlobalError(''))
+                return
+            }
+
             dispatch(setGlobalError(''))
-            history.replace(`/error?id=${globalError}`)
+            // Redirect to access denied page for access denied errors
+            if (globalError === ErrorId.AccessDenied || globalError === ErrorId.InvalidReadOnlyBoard) {
+                const currentPath = location.pathname + location.search
+                history.replace(`/access-denied?r=${encodeURIComponent(currentPath)}`)
+            } else {
+                history.replace(`/error?id=${globalError}`)
+            }
         }
-    }, [globalError, history])
+    }, [globalError, history, location, dispatch])
 
     return null
 }
@@ -169,6 +238,9 @@ const FocalboardRouter = (props: Props): JSX.Element => {
                 <FBRoute path='/error'>
                     <ErrorPage/>
                 </FBRoute>
+                <FBRoute path='/access-denied'>
+                    <AccessDeniedPage/>
+                </FBRoute>
                 <FBRoute path={['/team/:teamId/new/:channelId']}>
                     <BoardPage new={true}/>
                 </FBRoute>
@@ -189,6 +261,14 @@ const FocalboardRouter = (props: Props): JSX.Element => {
                 <FBRoute path={['/workspace/:workspaceId/shared/:boardId?/:viewId?/:cardId?', '/workspace/:workspaceId/:boardId?/:viewId?/:cardId?']}>
                     <WorkspaceToTeamRedirect/>
                 </FBRoute>
+                <FBRoute
+                    loginRequired={true}
+                    path='/team/'
+                    exact={true}
+                    component={() => {
+                        return <Redirect to='/'/>
+                    }}
+                />
                 <FBRoute
                     loginRequired={true}
                     path='/team/:teamId/:boardId?/:viewId?/:cardId?'
