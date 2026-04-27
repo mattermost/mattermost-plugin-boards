@@ -11,6 +11,7 @@ import messages_fr from '../i18n/fr.json'
 import messages_id from '../i18n/id.json'
 import messages_it from '../i18n/it.json'
 import messages_ja from '../i18n/ja.json'
+import messages_ko from '../i18n/ko.json'
 import messages_nl from '../i18n/nl.json'
 import messages_oc from '../i18n/oc.json'
 import messages_ptBr from '../i18n/pt_BR.json'
@@ -22,7 +23,7 @@ import messages_zhHant from '../i18n/zh_Hant.json'
 
 import {UserSettings} from './userSettings'
 
-const supportedLanguages = ['ca', 'de', 'el', 'en', 'es', 'fr', 'id', 'it', 'ja', 'nl', 'oc', 'pt-br', 'ru', 'sv', 'tr', 'zh-cn', 'zh-tw']
+const supportedLanguages = ['ca', 'de', 'el', 'en', 'es', 'fr', 'id', 'it', 'ja', 'ko', 'nl', 'oc', 'pt-br', 'ru', 'sv', 'tr', 'zh-cn', 'zh-tw']
 
 export function getMessages(lang: string): {[key: string]: string} {
     switch (lang) {
@@ -42,6 +43,8 @@ export function getMessages(lang: string): {[key: string]: string} {
         return messages_it
     case 'ja':
         return messages_ja
+    case 'ko':
+        return messages_ko
     case 'nl':
         return messages_nl
     case 'oc':
@@ -58,8 +61,10 @@ export function getMessages(lang: string): {[key: string]: string} {
         return messages_zhHans
     case 'zh-tw':
         return messages_zhHant
+    case 'en':
+        return messages_en
     }
-    return messages_en
+    return messages_ko
 }
 export function getCurrentLanguage(): string {
     let lang = UserSettings.language
@@ -69,7 +74,7 @@ export function getCurrentLanguage(): string {
         } else if (supportedLanguages.includes(navigator.language.split(/[-_]/)[0])) {
             lang = navigator.language.split(/[-_]/)[0]
         } else {
-            lang = 'en'
+            lang = 'ko'
         }
     }
     return lang
