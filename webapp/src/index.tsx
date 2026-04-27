@@ -125,8 +125,6 @@ let browserHistory: History<unknown>
 const MainApp = (props: Props) => {
     useEffect(() => {
         // Note: the host webapp owns the `app__body` class on `document.body` across product navigation.
-        // Adding/removing it here caused a persistent white flash when navigating Boards → Channels because
-        // this cleanup removed `app__body` before any other consumer could keep it applied (MM-67913).
         document.body.classList.add('focalboard-body')
         const root = document.getElementById('root')
         if (root) {
