@@ -10,6 +10,7 @@ import {GlobalState} from '@mattermost/types/store'
 import {selectTeam} from 'mattermost-redux/actions/teams'
 
 import appBarIcon from '../static/app-bar-icon.png'
+import pagesAppBarIcon from '../static/pages-app-bar-icon.svg'
 
 import {setMattermostTheme} from './theme'
 import FocalboardIcon from './widgets/icons/logo'
@@ -166,6 +167,9 @@ export default class Plugin {
     channelHeaderButtonId?: string
     rhsId?: string
     boardSelectorId?: string
+    pagesRhsId?: string
+    pageSelectorId?: string
+    togglePagesRHS?: unknown
     registry?: PluginRegistry
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
@@ -307,19 +311,72 @@ export default class Plugin {
 
             this.channelHeaderButtonId = registry.registerChannelHeaderButtonAction(<FocalboardIcon />, () => mmStore.dispatch(toggleRHSPlugin), 'Boards', 'Boards')
 
-            this.registry.registerProduct(
-                '/boards',
-                'product-boards',
-                'Boards',
-                '/boards',
-                MainApp,
-                HeaderComponent,
-                () => null,
-                true,
+            // RHS for "Pages in this channel" (parallels RHSChannelBoards).
+            const RHSChannelPages = require('./components/rhsChannelPages').default
+            const pagesRhs = this.registry.registerRightHandSidebarComponent(
+                () => (
+                    <ReduxProvider store={store}>
+                        <WithWebSockets manifest={manifest} webSocketClient={null as unknown as MMWebSocketClient}>
+                            <RHSChannelPages/>
+                        </WithWebSockets>
+                    </ReduxProvider>
+                ),
+                <span style={{padding: '0 8px'}}>{'Pages'}</span>,
             )
+            this.pagesRhsId = pagesRhs.rhsId
+            this.togglePagesRHS = pagesRhs.toggleRHSPlugin
+
+            try {
+                const boardsId = this.registry.registerProduct(
+                    '/boards',
+                    'product-boards',
+                    'Boards',
+                    '/boards',
+                    MainApp,
+                    HeaderComponent,
+                    () => null,
+                    true,
+                )
+                // eslint-disable-next-line no-console
+                console.log('[focalboard] Boards product registered, id=', boardsId)
+            } catch (e) {
+                // eslint-disable-next-line no-console
+                console.error('[focalboard] Boards product registration FAILED:', e)
+            }
+
+            // Pages product — second top-level entry in the MM global header.
+            // Both products share MainApp/Redux/router; /boards/pages is
+            // intercepted by router.tsx and bounces the user to /team/{currentTeam}/pages.
+            // See docs/PAGES_PLAN.md (Model Y).
+            try {
+                const pagesId = this.registry.registerProduct(
+                    '/boards',
+                    'notebook-outline', // verified present in @mattermost/compass-icons IconGlyphs (file-document-outline was silently missing -> blank icon)
+                    'Pages',
+                    '/boards/pages',
+                    MainApp,
+                    HeaderComponent,
+                    () => null,
+                    true,
+                )
+                // eslint-disable-next-line no-console
+                console.log('[focalboard] Pages product registered, id=', pagesId)
+            } catch (e) {
+                // eslint-disable-next-line no-console
+                console.error('[focalboard] Pages product registration FAILED:', e)
+            }
 
             if (this.registry.registerAppBarComponent) {
                 this.registry.registerAppBarComponent(Utils.buildURL(appBarIcon, true), () => mmStore.dispatch(toggleRHSPlugin), intl.formatMessage({id: 'AppBar.Tooltip', defaultMessage: 'Toggle Linked Boards'}))
+
+                // Pages AppBar icon — navigates to the Pages product (same as
+                // clicking the global header product switcher entry). RHS panel
+                // for "pages in this channel" is a Phase 2 add-on.
+                this.registry.registerAppBarComponent(
+                    Utils.buildURL(pagesAppBarIcon, true),
+                    () => mmStore.dispatch(this.togglePagesRHS as never),
+                    'Toggle Pages in this channel',
+                )
             }
 
             if (this.registry.registerActionAfterChannelCreation) {
@@ -380,6 +437,16 @@ export default class Plugin {
             <ReduxProvider store={store}>
                 <WithWebSockets manifest={manifest} webSocketClient={props.webSocketClient}>
                     <BoardSelector />
+                </WithWebSockets>
+            </ReduxProvider>
+        ))
+
+        // PageSelector — modal for "Link pages" flow (mirrors BoardSelector)
+        const PageSelector = require('./components/pageSelector').default
+        this.pageSelectorId = this.registry.registerRootComponent((props: {webSocketClient: MMWebSocketClient}) => (
+            <ReduxProvider store={store}>
+                <WithWebSockets manifest={manifest} webSocketClient={props.webSocketClient}>
+                    <PageSelector/>
                 </WithWebSockets>
             </ReduxProvider>
         ))

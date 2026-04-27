@@ -24,6 +24,11 @@ const (
 	TypeImage      = "image"
 	TypeAttachment = "attachment"
 	TypeDivider    = "divider"
+	// TypePage represents a page in a doc-board (Pages feature).
+	// A page block carries metadata only; its content lives in page_content.
+	// Tree hierarchy is encoded via parent_id pointing to the doc-board (top-level)
+	// or another page block (sub-page).
+	TypePage = "page"
 )
 
 func (bt BlockType) String() string {
@@ -51,6 +56,8 @@ func BlockTypeFromString(s string) (BlockType, error) {
 		return TypeAttachment, nil
 	case "divider":
 		return TypeDivider, nil
+	case "page":
+		return TypePage, nil
 	}
 	return TypeUnknown, ErrInvalidBlockType{s}
 }
@@ -68,6 +75,8 @@ func BlockType2IDType(blockType BlockType) utils.IDType {
 		return utils.IDTypeBlock
 	case TypeImage, TypeAttachment:
 		return utils.IDTypeAttachment
+	case TypePage:
+		return utils.IDTypeBlock
 	}
 	return utils.IDTypeNone
 }

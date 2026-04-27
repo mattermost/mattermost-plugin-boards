@@ -1095,6 +1095,113 @@ class OctoClient {
             headers: this.headers(),
         }))
     }
+
+    // ─────────────────────────────────────────────────────────────────
+    // Pages feature (Model Y — team-scoped).
+    // See docs/PAGES_PLAN.md.
+    // ─────────────────────────────────────────────────────────────────
+
+    async createPage(teamID: string, parentID: string, title: string): Promise<Response> {
+        const path = `/api/v2/teams/${encodeURIComponent(teamID)}/pages`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({
+            method: 'POST',
+            headers: this.headers(),
+            body: JSON.stringify({parentId: parentID || '', title}),
+        }))
+    }
+
+    async getPagesForTeam(teamID: string): Promise<Response> {
+        const path = `/api/v2/teams/${encodeURIComponent(teamID)}/pages`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({
+            method: 'GET',
+            headers: this.headers(),
+        }))
+    }
+
+    async getPage(pageID: string): Promise<Response> {
+        const path = `/api/v2/pages/${encodeURIComponent(pageID)}`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({
+            method: 'GET',
+            headers: this.headers(),
+        }))
+    }
+
+    async getPageContent(pageID: string): Promise<Response> {
+        const path = `/api/v2/pages/${encodeURIComponent(pageID)}/content`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({
+            method: 'GET',
+            headers: this.headers(),
+        }))
+    }
+
+    async savePageContent(pageID: string, tiptapJson: unknown): Promise<Response> {
+        const path = `/api/v2/pages/${encodeURIComponent(pageID)}/content`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({
+            method: 'PUT',
+            headers: this.headers(),
+            body: JSON.stringify({tiptapJson}),
+        }))
+    }
+
+    // Cross-references (board ↔ page)
+    async getBoardPageRefs(boardID: string): Promise<Response> {
+        const path = `/api/v2/boards/${encodeURIComponent(boardID)}/page-refs`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({method: 'GET', headers: this.headers()}))
+    }
+
+    async linkBoardToPage(boardID: string, pageID: string, label?: string, sortOrder?: number): Promise<Response> {
+        const path = `/api/v2/boards/${encodeURIComponent(boardID)}/page-refs/${encodeURIComponent(pageID)}`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({
+            method: 'POST',
+            headers: this.headers(),
+            body: JSON.stringify({label: label || '', sortOrder: sortOrder || 0}),
+        }))
+    }
+
+    async unlinkBoardFromPage(boardID: string, pageID: string): Promise<Response> {
+        const path = `/api/v2/boards/${encodeURIComponent(boardID)}/page-refs/${encodeURIComponent(pageID)}`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({method: 'DELETE', headers: this.headers()}))
+    }
+
+    async getPageBoardRefs(pageID: string): Promise<Response> {
+        const path = `/api/v2/pages/${encodeURIComponent(pageID)}/board-refs`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({method: 'GET', headers: this.headers()}))
+    }
+
+    async linkPageToBoard(pageID: string, boardID: string, label?: string): Promise<Response> {
+        const path = `/api/v2/pages/${encodeURIComponent(pageID)}/board-refs/${encodeURIComponent(boardID)}`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({
+            method: 'POST',
+            headers: this.headers(),
+            body: JSON.stringify({label: label || ''}),
+        }))
+    }
+
+    async unlinkPageFromBoard(pageID: string, boardID: string): Promise<Response> {
+        const path = `/api/v2/pages/${encodeURIComponent(pageID)}/board-refs/${encodeURIComponent(boardID)}`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({method: 'DELETE', headers: this.headers()}))
+    }
+
+    // page ↔ channel pinning
+    async getPagesForChannel(channelID: string): Promise<Response> {
+        const path = `/api/v2/channels/${encodeURIComponent(channelID)}/pages`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({method: 'GET', headers: this.headers()}))
+    }
+
+    async linkPageToChannel(pageID: string, channelID: string): Promise<Response> {
+        const path = `/api/v2/pages/${encodeURIComponent(pageID)}/channels/${encodeURIComponent(channelID)}`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({method: 'POST', headers: this.headers()}))
+    }
+
+    async unlinkPageFromChannel(pageID: string, channelID: string): Promise<Response> {
+        const path = `/api/v2/pages/${encodeURIComponent(pageID)}/channels/${encodeURIComponent(channelID)}`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({method: 'DELETE', headers: this.headers()}))
+    }
+
+    async getPageChannelLinks(pageID: string): Promise<Response> {
+        const path = `/api/v2/pages/${encodeURIComponent(pageID)}/channels`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({method: 'GET', headers: this.headers()}))
+    }
 }
 
 const octoClient = new OctoClient()

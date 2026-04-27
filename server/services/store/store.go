@@ -170,6 +170,27 @@ type Store interface {
 	GetBoardsComplianceHistory(opts model.QueryBoardsComplianceHistoryOptions) ([]*model.BoardHistory, bool, error)
 	GetBlocksComplianceHistory(opts model.QueryBlocksComplianceHistoryOptions) ([]*model.BlockHistory, bool, error)
 
+	// Pages feature — Model Y (team-scoped pages + cross-references).
+	// See docs/PAGES_PLAN.md.
+	CreatePage(p *model.Page, content []byte) (*model.Page, error)
+	GetPage(id string) (*model.Page, error)
+	GetPagesForTeam(teamID string) ([]*model.Page, error)
+	GetChildPages(teamID, parentID string) ([]*model.Page, error)
+	GetPageContent(pageID string) (*model.PageContent, error)
+	UpsertPageContent(pageID string, tiptapJSON []byte, modifiedBy string) error
+	// Cross-references — board ↔ page (bidirectional)
+	LinkBoardToPage(boardID, pageID, addedBy, label string, sortOrder int64) error
+	UnlinkBoardFromPage(boardID, pageID string) error
+	GetBoardPageRefs(boardID string) ([]*model.BoardPageRef, error)
+	LinkPageToBoard(pageID, boardID, addedBy, label string) error
+	UnlinkPageFromBoard(pageID, boardID string) error
+	GetPageBoardRefs(pageID string) ([]*model.PageBoardRef, error)
+	// page ↔ channel pinning (used by AppBar RHS "pages in this channel")
+	LinkPageToChannel(pageID, channelID, pinnedBy string) error
+	UnlinkPageFromChannel(pageID, channelID string) error
+	GetPagesForChannel(channelID string) ([]*model.Page, error)
+	GetPageChannelLinks(pageID string) ([]*model.PageChannelLink, error)
+
 	// For unit testing only
 	DeleteBoardRecord(boardID, modifiedBy string) error
 	DeleteBlockRecord(blockID, modifiedBy string) error

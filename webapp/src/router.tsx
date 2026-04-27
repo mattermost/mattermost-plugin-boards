@@ -28,6 +28,7 @@ import {getSidebarCategories, CategoryBoards} from './store/sidebar'
 import {getMySortedBoards} from './store/boards'
 import {UserSettings} from './userSettings'
 import FBRoute from './route'
+import DocPage from './pages/DocPage'
 
 declare let window: IAppWindow
 
@@ -243,6 +244,67 @@ const FocalboardRouter = (props: Props): JSX.Element => {
                 </FBRoute>
                 <FBRoute path={['/team/:teamId/new/:channelId']}>
                     <BoardPage new={true}/>
+                </FBRoute>
+
+                {/* Pages feature — team-scoped pages (Model Y, see docs/PAGES_PLAN.md) */}
+                {/* /pages is the switcher link from the global header product entry. */}
+                {/* Imperative navigation via history.replace because <Redirect> does not always */}
+                {/* fire reliably when the route was reached via an external (MM product switcher) */}
+                {/* URL change rather than an internal React Router push. */}
+                <FBRoute
+                    loginRequired={true}
+                    exact={true}
+                    path='/pages'
+                    component={() => {
+                        const firstTeam = useAppSelector<Team|null>(getFirstTeam)
+                        const dispatch = useAppDispatch()
+                        const history = useHistory()
+                        const [status, setStatus] = useState<string>('Locating team…')
+
+                        useEffect(() => {
+                            let cancelled = false
+                            const go = async () => {
+                                let team = firstTeam
+                                if (!team) {
+                                    setStatus('Loading teams…')
+                                    const result = await dispatch(fetchTeams())
+                                    if (cancelled) {
+                                        return
+                                    }
+                                    if (fetchTeams.fulfilled.match(result)) {
+                                        const teams = (result.payload as Team[]) || []
+                                        team = teams[0] || null
+                                    }
+                                }
+                                const wTid = (window.getCurrentTeamId && window.getCurrentTeamId()) || ''
+                                const tid = wTid || team?.id || ''
+                                if (cancelled) {
+                                    return
+                                }
+                                if (tid) {
+                                    setStatus('Redirecting…')
+                                    history.replace(`/team/${tid}/pages`)
+                                } else {
+                                    setStatus('No team found. Please join a team first.')
+                                }
+                            }
+                            go()
+                            return () => { cancelled = true }
+                            // eslint-disable-next-line react-hooks/exhaustive-deps
+                        }, [])
+
+                        return (
+                            <div style={{padding: 32, textAlign: 'center', color: '#6b7280'}}>
+                                {status}
+                            </div>
+                        )
+                    }}
+                />
+                <FBRoute
+                    loginRequired={true}
+                    path='/team/:teamId/pages/:pageId?'
+                >
+                    <DocPage/>
                 </FBRoute>
 
                 <FBRoute path={['/team/:teamId/shared/:boardId?/:viewId?/:cardId?', '/shared/:boardId?/:viewId?/:cardId?']}>

@@ -1676,3 +1676,233 @@ func (mr *MockStoreMockRecorder) UpsertTeamSignupToken(team interface{}) *gomock
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertTeamSignupToken", reflect.TypeOf((*MockStore)(nil).UpsertTeamSignupToken), team)
 }
+
+// ─────────────────────────────────────────────────────────────────
+// Pages feature — hand-written mocks (Phase 1 vertical slice).
+// Regenerate via `go:generate mockgen` once the interface stabilizes.
+// ─────────────────────────────────────────────────────────────────
+
+// CreatePage mocks base method.
+func (m *MockStore) CreatePage(p *model.Page, content []byte) (*model.Page, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreatePage", p, content)
+	ret0, _ := ret[0].(*model.Page)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreatePage indicates an expected call of CreatePage.
+func (mr *MockStoreMockRecorder) CreatePage(p, content interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePage", reflect.TypeOf((*MockStore)(nil).CreatePage), p, content)
+}
+
+// GetPage mocks base method.
+func (m *MockStore) GetPage(id string) (*model.Page, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPage", id)
+	ret0, _ := ret[0].(*model.Page)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPage indicates an expected call of GetPage.
+func (mr *MockStoreMockRecorder) GetPage(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPage", reflect.TypeOf((*MockStore)(nil).GetPage), id)
+}
+
+// GetChildPages mocks base method.
+func (m *MockStore) GetChildPages(teamID, parentID string) ([]*model.Page, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetChildPages", teamID, parentID)
+	ret0, _ := ret[0].([]*model.Page)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetChildPages indicates an expected call of GetChildPages.
+func (mr *MockStoreMockRecorder) GetChildPages(teamID, parentID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChildPages", reflect.TypeOf((*MockStore)(nil).GetChildPages), teamID, parentID)
+}
+
+// GetPagesForTeam mocks base method.
+func (m *MockStore) GetPagesForTeam(teamID string) ([]*model.Page, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPagesForTeam", teamID)
+	ret0, _ := ret[0].([]*model.Page)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPagesForTeam indicates an expected call of GetPagesForTeam.
+func (mr *MockStoreMockRecorder) GetPagesForTeam(teamID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPagesForTeam", reflect.TypeOf((*MockStore)(nil).GetPagesForTeam), teamID)
+}
+
+// LinkBoardToPage mocks base method.
+func (m *MockStore) LinkBoardToPage(boardID, pageID, addedBy, label string, sortOrder int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LinkBoardToPage", boardID, pageID, addedBy, label, sortOrder)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// LinkBoardToPage indicates an expected call of LinkBoardToPage.
+func (mr *MockStoreMockRecorder) LinkBoardToPage(boardID, pageID, addedBy, label, sortOrder interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LinkBoardToPage", reflect.TypeOf((*MockStore)(nil).LinkBoardToPage), boardID, pageID, addedBy, label, sortOrder)
+}
+
+// UnlinkBoardFromPage mocks base method.
+func (m *MockStore) UnlinkBoardFromPage(boardID, pageID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UnlinkBoardFromPage", boardID, pageID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UnlinkBoardFromPage indicates an expected call of UnlinkBoardFromPage.
+func (mr *MockStoreMockRecorder) UnlinkBoardFromPage(boardID, pageID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnlinkBoardFromPage", reflect.TypeOf((*MockStore)(nil).UnlinkBoardFromPage), boardID, pageID)
+}
+
+// GetBoardPageRefs mocks base method.
+func (m *MockStore) GetBoardPageRefs(boardID string) ([]*model.BoardPageRef, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBoardPageRefs", boardID)
+	ret0, _ := ret[0].([]*model.BoardPageRef)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBoardPageRefs indicates an expected call of GetBoardPageRefs.
+func (mr *MockStoreMockRecorder) GetBoardPageRefs(boardID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBoardPageRefs", reflect.TypeOf((*MockStore)(nil).GetBoardPageRefs), boardID)
+}
+
+// LinkPageToBoard mocks base method.
+func (m *MockStore) LinkPageToBoard(pageID, boardID, addedBy, label string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LinkPageToBoard", pageID, boardID, addedBy, label)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// LinkPageToBoard indicates an expected call of LinkPageToBoard.
+func (mr *MockStoreMockRecorder) LinkPageToBoard(pageID, boardID, addedBy, label interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LinkPageToBoard", reflect.TypeOf((*MockStore)(nil).LinkPageToBoard), pageID, boardID, addedBy, label)
+}
+
+// UnlinkPageFromBoard mocks base method.
+func (m *MockStore) UnlinkPageFromBoard(pageID, boardID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UnlinkPageFromBoard", pageID, boardID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UnlinkPageFromBoard indicates an expected call of UnlinkPageFromBoard.
+func (mr *MockStoreMockRecorder) UnlinkPageFromBoard(pageID, boardID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnlinkPageFromBoard", reflect.TypeOf((*MockStore)(nil).UnlinkPageFromBoard), pageID, boardID)
+}
+
+// GetPageBoardRefs mocks base method.
+func (m *MockStore) GetPageBoardRefs(pageID string) ([]*model.PageBoardRef, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPageBoardRefs", pageID)
+	ret0, _ := ret[0].([]*model.PageBoardRef)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPageBoardRefs indicates an expected call of GetPageBoardRefs.
+func (mr *MockStoreMockRecorder) GetPageBoardRefs(pageID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPageBoardRefs", reflect.TypeOf((*MockStore)(nil).GetPageBoardRefs), pageID)
+}
+
+// LinkPageToChannel mocks base method.
+func (m *MockStore) LinkPageToChannel(pageID, channelID, pinnedBy string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LinkPageToChannel", pageID, channelID, pinnedBy)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+func (mr *MockStoreMockRecorder) LinkPageToChannel(pageID, channelID, pinnedBy interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LinkPageToChannel", reflect.TypeOf((*MockStore)(nil).LinkPageToChannel), pageID, channelID, pinnedBy)
+}
+
+// UnlinkPageFromChannel mocks base method.
+func (m *MockStore) UnlinkPageFromChannel(pageID, channelID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UnlinkPageFromChannel", pageID, channelID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+func (mr *MockStoreMockRecorder) UnlinkPageFromChannel(pageID, channelID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnlinkPageFromChannel", reflect.TypeOf((*MockStore)(nil).UnlinkPageFromChannel), pageID, channelID)
+}
+
+// GetPagesForChannel mocks base method.
+func (m *MockStore) GetPagesForChannel(channelID string) ([]*model.Page, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPagesForChannel", channelID)
+	ret0, _ := ret[0].([]*model.Page)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+func (mr *MockStoreMockRecorder) GetPagesForChannel(channelID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPagesForChannel", reflect.TypeOf((*MockStore)(nil).GetPagesForChannel), channelID)
+}
+
+// GetPageChannelLinks mocks base method.
+func (m *MockStore) GetPageChannelLinks(pageID string) ([]*model.PageChannelLink, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPageChannelLinks", pageID)
+	ret0, _ := ret[0].([]*model.PageChannelLink)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+func (mr *MockStoreMockRecorder) GetPageChannelLinks(pageID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPageChannelLinks", reflect.TypeOf((*MockStore)(nil).GetPageChannelLinks), pageID)
+}
+
+// GetPageContent mocks base method.
+func (m *MockStore) GetPageContent(pageID string) (*model.PageContent, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPageContent", pageID)
+	ret0, _ := ret[0].(*model.PageContent)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPageContent indicates an expected call of GetPageContent.
+func (mr *MockStoreMockRecorder) GetPageContent(pageID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPageContent", reflect.TypeOf((*MockStore)(nil).GetPageContent), pageID)
+}
+
+// UpsertPageContent mocks base method.
+func (m *MockStore) UpsertPageContent(pageID string, tiptapJSON []byte, modifiedBy string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertPageContent", pageID, tiptapJSON, modifiedBy)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpsertPageContent indicates an expected call of UpsertPageContent.
+func (mr *MockStoreMockRecorder) UpsertPageContent(pageID, tiptapJSON, modifiedBy interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertPageContent", reflect.TypeOf((*MockStore)(nil).UpsertPageContent), pageID, tiptapJSON, modifiedBy)
+}

@@ -41,6 +41,11 @@
 		"@mattermost/desktop-api": "5.10.0-2",
 		"@reduxjs/toolkit": "^1.8.0",
 		"@tippyjs/react": "4.2.6",
+		"@tiptap/extension-collaboration": "^2.27.2",
+		"@tiptap/extension-collaboration-cursor": "^2.26.2",
+		"@tiptap/pm": "^2.27.2",
+		"@tiptap/react": "^2.27.2",
+		"@tiptap/starter-kit": "^2.27.2",
 		"color": "^4.2.1",
 		"draft-js": "^0.11.7",
 		"emoji-mart": "^3.0.1",
@@ -63,7 +68,9 @@
 		"react-intl": "^5.20.0",
 		"react-redux": "7.2.4",
 		"react-router-dom": "5.3.4",
-		"react-select": "^5.2.2"
+		"react-select": "^5.2.2",
+		"y-protocols": "^1.0.7",
+		"yjs": "^13.6.30"
 	},
 	"jest": {
 		"moduleNameMapper": {
