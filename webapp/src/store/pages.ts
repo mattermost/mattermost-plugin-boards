@@ -96,6 +96,21 @@ export const savePageContent = createAsyncThunk<
     },
 )
 
+export const deletePage = createAsyncThunk<
+    string,
+    {pageId: string; cascade: boolean}
+>(
+    'pages/delete',
+    async ({pageId, cascade}) => {
+        const resp = await client.deletePage(pageId, cascade)
+        if (!resp.ok) {
+            const txt = await resp.text()
+            throw new Error(`deletePage failed: HTTP ${resp.status} ${txt}`)
+        }
+        return pageId
+    },
+)
+
 // ─── Slice ───────────────────────────────────────────────────────────
 
 const pagesSlice = createSlice({
@@ -182,6 +197,18 @@ const pagesSlice = createSlice({
             const list = state.childrenByParent[p.parentId] || []
             if (!list.includes(p.id)) {
                 state.childrenByParent[p.parentId] = [...list, p.id]
+            }
+        })
+        builder.addCase(deletePage.fulfilled, (state, action) => {
+            const id = action.payload
+            const p = state.pages[id]
+            delete state.pages[id]
+            delete state.contents[id]
+            if (p) {
+                const list = state.childrenByParent[p.parentId]
+                if (list) {
+                    state.childrenByParent[p.parentId] = list.filter((x) => x !== id)
+                }
             }
         })
     },

@@ -71,30 +71,39 @@ export default function DocPage(): JSX.Element {
     }
 
     return (
-        <div style={{display: 'grid', gridTemplateColumns: '280px 1fr', height: '100vh'}}>
-            <aside style={{borderRight: '1px solid #e5e7eb', overflow: 'auto'}}>
+        <div className='DocPage focalboard-body' style={{display: 'grid', gridTemplateColumns: '240px 1fr', height: '100%'}}>
+            <aside
+                className='Sidebar octo-sidebar'
+                style={{
+                    background: 'rgba(var(--sidebar-bg-rgb), 1)',
+                    color: 'rgba(var(--sidebar-text-rgb), 0.72)',
+                    overflow: 'auto',
+                }}
+            >
                 <DocSidebar
                     teamId={teamId}
                     activePageId={pageId}
                     onSelect={onSelect}
                 />
             </aside>
-            <main style={{padding: 24, overflow: 'auto'}}>
+            <main style={{padding: 24, overflow: 'auto', background: 'var(--center-channel-bg)'}}>
                 {pageId ? (
                     <PageView pageId={pageId}/>
                 ) : (
-                    <div style={{textAlign: 'center', padding: 64, color: '#6b7280'}}>
+                    <div style={{textAlign: 'center', padding: 64, color: 'rgba(var(--center-channel-color-rgb), 0.56)'}}>
                         <h2>{'No pages yet'}</h2>
                         <button
                             onClick={onCreateFirst}
                             disabled={creating}
                             style={{
                                 padding: '8px 16px',
-                                background: '#1f2530',
-                                color: 'white',
+                                background: 'var(--button-bg)',
+                                color: 'var(--button-color)',
                                 border: 0,
-                                borderRadius: 6,
+                                borderRadius: 4,
                                 cursor: 'pointer',
+                                fontSize: 14,
+                                fontWeight: 600,
                             }}
                         >
                             {creating ? 'Creating…' : 'Create first page'}

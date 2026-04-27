@@ -1143,6 +1143,15 @@ class OctoClient {
         }))
     }
 
+    async saveYjsSnapshot(pageID: string, stateB64: string, tiptapJson: unknown): Promise<Response> {
+        const path = `/api/v2/pages/${encodeURIComponent(pageID)}/yjs-snapshot`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({
+            method: 'PUT',
+            headers: this.headers(),
+            body: JSON.stringify({stateB64, tiptapJson}),
+        }))
+    }
+
     // Cross-references (board ↔ page)
     async getBoardPageRefs(boardID: string): Promise<Response> {
         const path = `/api/v2/boards/${encodeURIComponent(boardID)}/page-refs`
@@ -1201,6 +1210,30 @@ class OctoClient {
     async getPageChannelLinks(pageID: string): Promise<Response> {
         const path = `/api/v2/pages/${encodeURIComponent(pageID)}/channels`
         return fetch(this.getBaseURL() + path, Client4.getOptions({method: 'GET', headers: this.headers()}))
+    }
+
+    async deletePage(pageID: string, cascade: boolean): Promise<Response> {
+        const qs = cascade ? '?cascade=true' : '?cascade=false'
+        const path = `/api/v2/pages/${encodeURIComponent(pageID)}${qs}`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({method: 'DELETE', headers: this.headers()}))
+    }
+
+    async movePage(pageID: string, newParentID: string, sortOrder = 0): Promise<Response> {
+        const path = `/api/v2/pages/${encodeURIComponent(pageID)}/move`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({
+            method: 'POST',
+            headers: this.headers(),
+            body: JSON.stringify({parentId: newParentID, sortOrder}),
+        }))
+    }
+
+    async duplicatePage(pageID: string, cascade: boolean): Promise<Response> {
+        const qs = cascade ? '?cascade=true' : '?cascade=false'
+        const path = `/api/v2/pages/${encodeURIComponent(pageID)}/duplicate${qs}`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({
+            method: 'POST',
+            headers: this.headers(),
+        }))
     }
 }
 

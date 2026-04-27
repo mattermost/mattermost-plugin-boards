@@ -44,6 +44,8 @@ import wsClient, {
     ACTION_UPDATE_BOARD_CATEGORY,
     ACTION_UPDATE_BOARD,
     ACTION_REORDER_CATEGORIES,
+    ACTION_UPDATE_PAGE_YJS,
+    ACTION_UPDATE_PAGE_YJS_AWARENESS,
 } from './wsclient'
 import manifest from './manifest'
 import ErrorBoundary from './error_boundary'
@@ -203,6 +205,8 @@ export default class Plugin {
         this.registry?.registerWebSocketEventHandler(`custom_${productID}_${ACTION_UPDATE_CARD_LIMIT_TIMESTAMP}`, (e: any) => wsClient.updateCardLimitTimestampHandler(e.data))
         this.registry?.registerWebSocketEventHandler(`custom_${productID}_${ACTION_UPDATE_SUBSCRIPTION}`, (e: any) => wsClient.updateSubscriptionHandler(e.data))
         this.registry?.registerWebSocketEventHandler(`custom_${productID}_${ACTION_REORDER_CATEGORIES}`, (e) => wsClient.updateHandler(e.data))
+        this.registry?.registerWebSocketEventHandler(`custom_${productID}_${ACTION_UPDATE_PAGE_YJS}`, (e: any) => wsClient.pageYjsHandler(e.data))
+        this.registry?.registerWebSocketEventHandler(`custom_${productID}_${ACTION_UPDATE_PAGE_YJS_AWARENESS}`, (e: any) => wsClient.pageYjsAwarenessHandler(e.data))
 
         this.registry?.registerWebSocketEventHandler('plugin_statuses_changed', (e: any) => wsClient.pluginStatusesChangedHandler(e.data))
         this.registry?.registerPostTypeComponent('custom_cloud_upgrade_nudge', CloudUpgradeNudge)

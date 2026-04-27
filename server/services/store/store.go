@@ -178,6 +178,7 @@ type Store interface {
 	GetChildPages(teamID, parentID string) ([]*model.Page, error)
 	GetPageContent(pageID string) (*model.PageContent, error)
 	UpsertPageContent(pageID string, tiptapJSON []byte, modifiedBy string) error
+	SaveYjsSnapshot(pageID string, yjsState []byte, derivedTiptapJSON []byte, modifiedBy string) error
 	// Cross-references — board ↔ page (bidirectional)
 	LinkBoardToPage(boardID, pageID, addedBy, label string, sortOrder int64) error
 	UnlinkBoardFromPage(boardID, pageID string) error
@@ -190,6 +191,10 @@ type Store interface {
 	UnlinkPageFromChannel(pageID, channelID string) error
 	GetPagesForChannel(channelID string) ([]*model.Page, error)
 	GetPageChannelLinks(pageID string) ([]*model.PageChannelLink, error)
+	// page lifecycle
+	DeletePage(id string, cascade bool, modifiedBy string) error
+	MovePage(id, newParentID string, sortOrder int64, modifiedBy string) error
+	DuplicatePage(id, newParentID string, cascade bool, modifiedBy string) (string, error)
 
 	// For unit testing only
 	DeleteBoardRecord(boardID, modifiedBy string) error

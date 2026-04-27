@@ -25,6 +25,10 @@ const (
 	websocketActionUpdateCardLimitTimestamp = "UPDATE_CARD_LIMIT_TIMESTAMP"
 	websocketActionReorderCategories        = "REORDER_CATEGORIES"
 	websocketActionReorderCategoryBoards    = "REORDER_CATEGORY_BOARDS"
+	websocketActionSendYjsUpdate            = "SEND_YJS_UPDATE"            // client → server: relay a Y.Doc update
+	websocketActionUpdatePageYjs            = "UPDATE_PAGE_YJS"            // server → clients: a Y.Doc update for a page
+	websocketActionSendYjsAwareness         = "SEND_YJS_AWARENESS"         // client → server: relay an Awareness update
+	websocketActionUpdatePageYjsAwareness   = "UPDATE_PAGE_YJS_AWARENESS"  // server → clients: an Awareness update for a page
 )
 
 type Store interface {

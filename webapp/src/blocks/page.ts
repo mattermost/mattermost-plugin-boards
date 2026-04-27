@@ -47,7 +47,12 @@ export type TiptapDoc = {
 export type PageContent = {
     pageId: string
     tiptapJson?: TiptapDoc
-    yjsState?: Uint8Array
+
+    // yjsState comes from the server as a base64-encoded string
+    // (Go's json.Marshal serializes []byte as base64). Empty/undefined
+    // means the page has no Y.Doc snapshot yet — clients then bootstrap
+    // from tiptapJson.
+    yjsState?: string
     yjsUpdatesCount: number
     lastSnapshotAt: number
     updateAt: number

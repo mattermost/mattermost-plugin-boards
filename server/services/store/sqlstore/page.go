@@ -259,6 +259,54 @@ func (s *SQLStore) UpsertPageContent(pageID string, tiptapJSON []byte, modifiedB
 	return nil
 }
 
+// SaveYjsSnapshot writes both yjs_state and the derived tiptap_json. Server
+// is a dumb relay — it does not interpret Y.Doc state. Reject empty snapshots
+// to guard against zero-state overwrites.
+func (s *SQLStore) SaveYjsSnapshot(pageID string, yjsState []byte, derivedTiptapJSON []byte, modifiedBy string) error {
+	if pageID == "" {
+		return errors.New("pageID is required")
+	}
+	if len(yjsState) == 0 {
+		return errors.New("yjsState is empty — refusing to overwrite")
+	}
+	now := utils.GetMillis()
+	tjStr := string(derivedTiptapJSON)
+
+	upd := s.getQueryBuilder(s.db).
+		Update(s.tablePrefix + "page_content").
+		Set("yjs_state", yjsState).
+		Set("tiptap_json", tjStr).
+		Set("last_snapshot_at", now).
+		Set("update_at", now).
+		Set("update_by", modifiedBy).
+		Where(sq.Eq{"page_id": pageID})
+	res, err := upd.Exec()
+	if err != nil {
+		return fmt.Errorf("update yjs snapshot: %w", err)
+	}
+	rows, _ := res.RowsAffected()
+	if rows > 0 {
+		return nil
+	}
+
+	ins := s.getQueryBuilder(s.db).
+		Insert(s.tablePrefix+"page_content").
+		Columns(
+			"page_id", "tiptap_json", "yjs_state",
+			"yjs_updates_count", "last_snapshot_at",
+			"create_at", "update_at", "update_by",
+		).
+		Values(
+			pageID, tjStr, yjsState,
+			0, now,
+			now, now, modifiedBy,
+		)
+	if _, err := ins.Exec(); err != nil {
+		return fmt.Errorf("insert yjs snapshot: %w", err)
+	}
+	return nil
+}
+
 // ─── Cross-references (board ↔ page) ───────────────────────────────
 
 // LinkBoardToPage adds a board → page reference.
@@ -381,11 +429,188 @@ func (s *SQLStore) GetPageBoardRefs(pageID string) ([]*model.PageBoardRef, error
 func (s *SQLStore) UpdatePage(id string, patch *model.PagePatch, modifiedBy string) (*model.Page, error) {
 	return nil, errPageNotImplemented
 }
+
+// MovePage reparents a page. newParentID '' moves to top-level.
+// Validates cycle (id cannot be its own ancestor in the new tree).
 func (s *SQLStore) MovePage(id, newParentID string, sortOrder int64, modifiedBy string) error {
-	return errPageNotImplemented
+	page, err := s.GetPage(id)
+	if err != nil {
+		return err
+	}
+
+	// Cycle check: walk new parent's ancestor chain — id must not appear.
+	if newParentID != "" {
+		if newParentID == id {
+			return fmt.Errorf("MovePage: cannot move page under itself")
+		}
+		newParent, err := s.GetPage(newParentID)
+		if err != nil {
+			return fmt.Errorf("MovePage: fetch new parent: %w", err)
+		}
+		if newParent.TeamID != page.TeamID {
+			return fmt.Errorf("MovePage: new parent belongs to a different team")
+		}
+		cur := newParent.ParentID
+		safety := 0
+		for cur != "" && safety < 100 {
+			if cur == id {
+				return fmt.Errorf("MovePage: cycle detected — new parent is a descendant of the page")
+			}
+			anc, err := s.GetPage(cur)
+			if err != nil {
+				break
+			}
+			cur = anc.ParentID
+			safety++
+		}
+	}
+
+	now := utils.GetMillis()
+	upd := s.getQueryBuilder(s.db).
+		Update(s.tablePrefix + "pages").
+		Set("parent_id", newParentID).
+		Set("sort_order", sortOrder).
+		Set("update_at", now).
+		Set("modified_by", modifiedBy).
+		Where(sq.Eq{"id": id})
+	_, err = upd.Exec()
+	return err
 }
+
+// DuplicatePage clones a page (and optionally all descendants) under
+// newParentID. Returns the ID of the root duplicate. Page contents
+// (Tiptap JSON) are copied; Yjs state is not (Phase 2).
+func (s *SQLStore) DuplicatePage(id, newParentID string, cascade bool, modifiedBy string) (string, error) {
+	src, err := s.GetPage(id)
+	if err != nil {
+		return "", err
+	}
+
+	// helper: copy a single page row + content under a given parent
+	copyOne := func(srcPage *model.Page, parentID string) (string, error) {
+		newID := utils.NewID(utils.IDTypeBlock)
+		clone := &model.Page{
+			ID:         newID,
+			TeamID:     srcPage.TeamID,
+			ParentID:   parentID,
+			Title:      srcPage.Title,
+			Icon:       srcPage.Icon,
+			Cover:      srcPage.Cover,
+			SortOrder:  srcPage.SortOrder,
+			CreatedBy:  modifiedBy,
+			ModifiedBy: modifiedBy,
+		}
+		var content []byte
+		if c, err := s.GetPageContent(srcPage.ID); err == nil && c != nil {
+			content = c.TiptapJSON
+		}
+		if _, err := s.CreatePage(clone, content); err != nil {
+			return "", err
+		}
+		return newID, nil
+	}
+
+	rootNewID, err := copyOne(src, newParentID)
+	if err != nil {
+		return "", err
+	}
+	// Append " (copy)" to the duplicate's title to disambiguate.
+	if src.Title != "" {
+		_, _ = s.getQueryBuilder(s.db).
+			Update(s.tablePrefix + "pages").
+			Set("title", src.Title+" (copy)").
+			Where(sq.Eq{"id": rootNewID}).
+			Exec()
+	}
+
+	if !cascade {
+		return rootNewID, nil
+	}
+
+	// BFS-copy descendants. Track old → new ID mapping so children attach
+	// to the right new parent.
+	oldToNew := map[string]string{src.ID: rootNewID}
+	queue := []string{src.ID}
+	for len(queue) > 0 {
+		next := queue
+		queue = nil
+		for _, oldParent := range next {
+			children, err := s.GetChildPages(src.TeamID, oldParent)
+			if err != nil {
+				return rootNewID, err
+			}
+			for _, c := range children {
+				newID, err := copyOne(c, oldToNew[oldParent])
+				if err != nil {
+					return rootNewID, err
+				}
+				oldToNew[c.ID] = newID
+				queue = append(queue, c.ID)
+			}
+		}
+	}
+
+	return rootNewID, nil
+}
+
+// DeletePage soft-deletes a page (sets delete_at).
+// cascade=true also soft-deletes all descendants (recursive).
+// cascade=false reparents direct children to the deleted page's parent.
 func (s *SQLStore) DeletePage(id string, cascade bool, modifiedBy string) error {
-	return errPageNotImplemented
+	page, err := s.GetPage(id)
+	if err != nil {
+		return err
+	}
+	now := utils.GetMillis()
+
+	if cascade {
+		// collect descendant IDs via BFS
+		ids := []string{id}
+		queue := []string{id}
+		for len(queue) > 0 {
+			next := queue
+			queue = nil
+			for _, parentID := range next {
+				children, err := s.GetChildPages(page.TeamID, parentID)
+				if err != nil {
+					return err
+				}
+				for _, c := range children {
+					ids = append(ids, c.ID)
+					queue = append(queue, c.ID)
+				}
+			}
+		}
+		upd := s.getQueryBuilder(s.db).
+			Update(s.tablePrefix + "pages").
+			Set("delete_at", now).
+			Set("update_at", now).
+			Set("modified_by", modifiedBy).
+			Where(sq.Eq{"id": ids})
+		_, err = upd.Exec()
+		return err
+	}
+
+	// promote children: set their parent_id to the deleted page's parent
+	upd := s.getQueryBuilder(s.db).
+		Update(s.tablePrefix + "pages").
+		Set("parent_id", page.ParentID).
+		Set("update_at", now).
+		Set("modified_by", modifiedBy).
+		Where(sq.Eq{"parent_id": id, "team_id": page.TeamID, "delete_at": 0})
+	if _, err := upd.Exec(); err != nil {
+		return fmt.Errorf("DeletePage promote children: %w", err)
+	}
+
+	// soft-delete this page
+	del := s.getQueryBuilder(s.db).
+		Update(s.tablePrefix + "pages").
+		Set("delete_at", now).
+		Set("update_at", now).
+		Set("modified_by", modifiedBy).
+		Where(sq.Eq{"id": id})
+	_, err = del.Exec()
+	return err
 }
 func (s *SQLStore) AppendYjsUpdate(pageID string, updateBlob []byte, clientID string) error {
 	return errPageNotImplemented

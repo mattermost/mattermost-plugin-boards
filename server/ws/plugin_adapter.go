@@ -325,6 +325,19 @@ func commandFromRequest(req *mmModel.WebSocketRequest) (*WebsocketCommand, error
 		c.BlockIDs = blockIDs.([]string)
 	}
 
+	if pageID, ok := req.Data["pageId"]; ok {
+		c.PageID, _ = pageID.(string)
+	}
+	if updateB64, ok := req.Data["updateB64"]; ok {
+		c.UpdateB64, _ = updateB64.(string)
+	}
+	if awarenessB64, ok := req.Data["awarenessB64"]; ok {
+		c.AwarenessB64, _ = awarenessB64.(string)
+	}
+	if clientID, ok := req.Data["clientId"]; ok {
+		c.ClientID, _ = clientID.(string)
+	}
+
 	return c, nil
 }
 
@@ -388,7 +401,66 @@ func (pa *PluginAdapter) WebSocketMessageHasBeenPosted(webConnID, userID string,
 		)
 
 		pa.unsubscribeListenerFromTeam(pac, command.TeamID)
+	case websocketActionSendYjsUpdate:
+		// Pages — relay a Y.Doc update to other team members.
+		// We trust client-provided teamId after validating team access.
+		// Page → team binding is checked at the API layer when snapshotting;
+		// for the live update relay, mis-routed updates only land in the wrong
+		// team's listener set (which will ignore them since they filter by
+		// pageId). No durable state is touched.
+		if command.TeamID == "" || command.PageID == "" || command.UpdateB64 == "" {
+			pa.logger.Debug("SEND_YJS_UPDATE missing fields",
+				mlog.String("webConnID", webConnID),
+				mlog.String("userID", userID),
+			)
+			return
+		}
+		if !pa.auth.DoesUserHaveTeamAccess(userID, command.TeamID) {
+			pa.logger.Debug("SEND_YJS_UPDATE access denied",
+				mlog.String("webConnID", webConnID),
+				mlog.String("userID", userID),
+				mlog.String("teamID", command.TeamID),
+			)
+			return
+		}
+		pa.broadcastYjsUpdate(command.TeamID, command.PageID, command.UpdateB64, command.ClientID, userID)
+	case websocketActionSendYjsAwareness:
+		// Pages — relay a Yjs awareness update (cursor + user metadata).
+		// Same gate as SEND_YJS_UPDATE: validate team access then broadcast.
+		if command.TeamID == "" || command.PageID == "" || command.AwarenessB64 == "" {
+			return
+		}
+		if !pa.auth.DoesUserHaveTeamAccess(userID, command.TeamID) {
+			return
+		}
+		pa.broadcastYjsAwareness(command.TeamID, command.PageID, command.AwarenessB64, command.ClientID, userID)
 	}
+}
+
+// broadcastYjsUpdate relays a Y.Doc update to all team subscribers.
+func (pa *PluginAdapter) broadcastYjsUpdate(teamID, pageID, updateB64, originClientID, originUserID string) {
+	msg := UpdatePageYjsMsg{
+		Action:         websocketActionUpdatePageYjs,
+		TeamID:         teamID,
+		PageID:         pageID,
+		UpdateB64:      updateB64,
+		OriginClientID: originClientID,
+		OriginUserID:   originUserID,
+	}
+	pa.sendTeamMessageSkipCluster(websocketActionUpdatePageYjs, teamID, utils.StructToMap(msg))
+}
+
+// broadcastYjsAwareness relays an Awareness update to all team subscribers.
+func (pa *PluginAdapter) broadcastYjsAwareness(teamID, pageID, awarenessB64, originClientID, originUserID string) {
+	msg := UpdatePageYjsAwarenessMsg{
+		Action:         websocketActionUpdatePageYjsAwareness,
+		TeamID:         teamID,
+		PageID:         pageID,
+		AwarenessB64:   awarenessB64,
+		OriginClientID: originClientID,
+		OriginUserID:   originUserID,
+	}
+	pa.sendTeamMessageSkipCluster(websocketActionUpdatePageYjsAwareness, teamID, utils.StructToMap(msg))
 }
 
 // sendMessageToAll will send a websocket message to all clients on all nodes.

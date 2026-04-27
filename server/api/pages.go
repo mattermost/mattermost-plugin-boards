@@ -4,6 +4,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -34,6 +35,7 @@ func (a *API) registerPagesRoutes(r *mux.Router) {
 	r.HandleFunc("/pages/{pageID}/children", a.sessionRequired(a.handleGetChildPages)).Methods("GET")
 	r.HandleFunc("/pages/{pageID}/content", a.sessionRequired(a.handleGetPageContent)).Methods("GET")
 	r.HandleFunc("/pages/{pageID}/content", a.sessionRequired(a.handleSavePageContent)).Methods("PUT")
+	r.HandleFunc("/pages/{pageID}/yjs-snapshot", a.sessionRequired(a.handleSaveYjsSnapshot)).Methods("PUT")
 
 	// Cross-references
 	r.HandleFunc("/boards/{boardID}/page-refs", a.sessionRequired(a.handleGetBoardPageRefs)).Methods("GET")
@@ -46,6 +48,7 @@ func (a *API) registerPagesRoutes(r *mux.Router) {
 	// Phase 2+ stubs
 	r.HandleFunc("/pages/{pageID}", a.sessionRequired(a.handleUpdatePage)).Methods("PATCH")
 	r.HandleFunc("/pages/{pageID}/move", a.sessionRequired(a.handleMovePage)).Methods("POST")
+	r.HandleFunc("/pages/{pageID}/duplicate", a.sessionRequired(a.handleDuplicatePage)).Methods("POST")
 	r.HandleFunc("/pages/{pageID}", a.sessionRequired(a.handleDeletePage)).Methods("DELETE")
 	r.HandleFunc("/pages/{pageID}/channels", a.sessionRequired(a.handleGetPageChannelLinks)).Methods("GET")
 	r.HandleFunc("/pages/{pageID}/channels/{channelID}", a.sessionRequired(a.handleLinkPageToChannel)).Methods("POST")
@@ -269,6 +272,60 @@ func (a *API) handleSavePageContent(w http.ResponseWriter, r *http.Request) {
 	auditRec.Success()
 }
 
+// handleSaveYjsSnapshot accepts {stateB64, tiptapJson} and writes both columns.
+// Body is JSON: stateB64 is base64-encoded Y.Doc state; tiptapJson is the
+// derived ProseMirror doc (so reading paths and Markdown export keep working).
+func (a *API) handleSaveYjsSnapshot(w http.ResponseWriter, r *http.Request) {
+	userID := getUserID(r)
+	pageID := mux.Vars(r)["pageID"]
+
+	page, err := a.app.GetPage(pageID)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+	if !a.permissions.HasPermissionToTeam(userID, page.TeamID, mmModel.PermissionViewTeam) {
+		a.errorResponse(w, r, model.NewErrPermission("access denied"))
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+	var req struct {
+		StateB64   string          `json:"stateB64"`
+		TiptapJSON json.RawMessage `json:"tiptapJson"`
+	}
+	if err := json.Unmarshal(body, &req); err != nil {
+		a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
+		return
+	}
+	state, err := base64.StdEncoding.DecodeString(req.StateB64)
+	if err != nil {
+		a.errorResponse(w, r, model.NewErrBadRequest("stateB64 not base64: "+err.Error()))
+		return
+	}
+
+	auditRec := a.makeAuditRecord(r, "saveYjsSnapshot", audit.Fail)
+	defer a.audit.LogRecord(audit.LevelModify, auditRec)
+	auditRec.AddMeta("pageID", pageID)
+	auditRec.AddMeta("stateBytes", len(state))
+
+	if err := a.app.SaveYjsSnapshot(pageID, state, []byte(req.TiptapJSON), userID); err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+	a.logger.Debug("SaveYjsSnapshot",
+		mlog.String("pageID", pageID),
+		mlog.String("userID", userID),
+		mlog.Int("stateBytes", len(state)),
+	)
+	jsonBytesResponse(w, http.StatusOK, []byte(`{"status":"ok"}`))
+	auditRec.Success()
+}
+
 // ─── Cross-reference handlers ────────────────────────────────────────
 
 func (a *API) handleGetBoardPageRefs(w http.ResponseWriter, r *http.Request) {
@@ -402,8 +459,119 @@ func (a *API) handleUnlinkPageFromBoard(w http.ResponseWriter, r *http.Request) 
 // ─── Phase 2+ stub handlers ──────────────────────────────────────────
 
 func (a *API) handleUpdatePage(w http.ResponseWriter, r *http.Request) { notImplemented(w) }
-func (a *API) handleMovePage(w http.ResponseWriter, r *http.Request)   { notImplemented(w) }
-func (a *API) handleDeletePage(w http.ResponseWriter, r *http.Request) { notImplemented(w) }
+
+func (a *API) handleMovePage(w http.ResponseWriter, r *http.Request) {
+	userID := getUserID(r)
+	pageID := mux.Vars(r)["pageID"]
+
+	page, err := a.app.GetPage(pageID)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+	if !a.permissions.HasPermissionToTeam(userID, page.TeamID, mmModel.PermissionViewTeam) {
+		a.errorResponse(w, r, model.NewErrPermission("access denied"))
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+	var req struct {
+		ParentID  string `json:"parentId"`
+		SortOrder int64  `json:"sortOrder"`
+	}
+	if err := json.Unmarshal(body, &req); err != nil {
+		a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
+		return
+	}
+
+	auditRec := a.makeAuditRecord(r, "movePage", audit.Fail)
+	defer a.audit.LogRecord(audit.LevelModify, auditRec)
+	auditRec.AddMeta("pageID", pageID)
+	auditRec.AddMeta("newParentID", req.ParentID)
+
+	if err := a.app.MovePage(pageID, req.ParentID, req.SortOrder, userID); err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+	jsonBytesResponse(w, http.StatusOK, []byte(`{"status":"ok"}`))
+	auditRec.Success()
+}
+
+func (a *API) handleDuplicatePage(w http.ResponseWriter, r *http.Request) {
+	userID := getUserID(r)
+	pageID := mux.Vars(r)["pageID"]
+
+	page, err := a.app.GetPage(pageID)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+	if !a.permissions.HasPermissionToTeam(userID, page.TeamID, mmModel.PermissionViewTeam) {
+		a.errorResponse(w, r, model.NewErrPermission("access denied"))
+		return
+	}
+
+	cascade := r.URL.Query().Get("cascade") == "true"
+
+	body, _ := io.ReadAll(r.Body)
+	var req struct {
+		ParentID string `json:"parentId"`
+	}
+	if len(body) > 0 {
+		_ = json.Unmarshal(body, &req)
+	}
+	// default: same parent as source
+	if req.ParentID == "" {
+		req.ParentID = page.ParentID
+	}
+
+	auditRec := a.makeAuditRecord(r, "duplicatePage", audit.Fail)
+	defer a.audit.LogRecord(audit.LevelModify, auditRec)
+	auditRec.AddMeta("sourcePageID", pageID)
+	auditRec.AddMeta("cascade", cascade)
+
+	newID, err := a.app.DuplicatePage(pageID, req.ParentID, cascade, userID)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+	auditRec.AddMeta("newPageID", newID)
+	jsonBytesResponse(w, http.StatusOK, []byte(`{"id":"`+newID+`"}`))
+	auditRec.Success()
+}
+
+func (a *API) handleDeletePage(w http.ResponseWriter, r *http.Request) {
+	userID := getUserID(r)
+	pageID := mux.Vars(r)["pageID"]
+
+	page, err := a.app.GetPage(pageID)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+	if !a.permissions.HasPermissionToTeam(userID, page.TeamID, mmModel.PermissionViewTeam) {
+		a.errorResponse(w, r, model.NewErrPermission("access denied"))
+		return
+	}
+
+	cascade := r.URL.Query().Get("cascade") == "true"
+
+	auditRec := a.makeAuditRecord(r, "deletePage", audit.Fail)
+	defer a.audit.LogRecord(audit.LevelModify, auditRec)
+	auditRec.AddMeta("pageID", pageID)
+	auditRec.AddMeta("cascade", cascade)
+
+	if err := a.app.DeletePage(pageID, cascade, userID); err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+	jsonBytesResponse(w, http.StatusOK, []byte(`{"status":"ok"}`))
+	auditRec.Success()
+}
 
 func (a *API) handleGetPageChannelLinks(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)

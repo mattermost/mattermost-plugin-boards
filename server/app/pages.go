@@ -101,6 +101,30 @@ func (a *App) SavePageContent(pageID string, tiptapJSON []byte, userID string) e
 	return nil
 }
 
+// SaveYjsSnapshot persists a Y.Doc state blob for a page along with the
+// derived Tiptap JSON (so non-collaborative readers and Markdown export keep
+// working). Broadcasts a page-change so peers refetch on snapshot boundaries.
+func (a *App) SaveYjsSnapshot(pageID string, yjsState []byte, derivedTiptapJSON []byte, userID string) error {
+	if pageID == "" {
+		return errors.New("pageID is required")
+	}
+	if len(yjsState) == 0 {
+		return errors.New("yjsState is empty")
+	}
+	if !json.Valid(derivedTiptapJSON) {
+		return errors.New("derivedTiptapJSON is not valid JSON")
+	}
+	page, err := a.store.GetPage(pageID)
+	if err != nil {
+		return fmt.Errorf("SaveYjsSnapshot: fetch page: %w", err)
+	}
+	if err := a.store.SaveYjsSnapshot(pageID, yjsState, derivedTiptapJSON, userID); err != nil {
+		return fmt.Errorf("SaveYjsSnapshot: store: %w", err)
+	}
+	a.broadcastPageChange(page)
+	return nil
+}
+
 // ─── Cross-references (board ↔ page) ───────────────────────────────
 
 // LinkBoardToPage attaches a page reference to a board (board → page).
@@ -167,12 +191,67 @@ func (a *App) UpdatePage(id string, patch *model.PagePatch, userID string) (*mod
 	return nil, errPageSkeleton
 }
 
+// MovePage reparents a page within the same team.
 func (a *App) MovePage(id, newParentID string, sortOrder int64, userID string) error {
-	return errPageSkeleton
+	if id == "" {
+		return errors.New("pageID is required")
+	}
+	page, err := a.store.GetPage(id)
+	if err != nil {
+		return fmt.Errorf("MovePage: fetch page: %w", err)
+	}
+	if err := a.store.MovePage(id, newParentID, sortOrder, userID); err != nil {
+		return fmt.Errorf("MovePage: store: %w", err)
+	}
+	a.broadcastPageChange(page)
+	return nil
 }
 
+// DuplicatePage clones a page (and descendants if cascade=true) under
+// newParentID. Returns the new page's ID.
+func (a *App) DuplicatePage(id, newParentID string, cascade bool, userID string) (string, error) {
+	if id == "" {
+		return "", errors.New("pageID is required")
+	}
+	srcPage, err := a.store.GetPage(id)
+	if err != nil {
+		return "", fmt.Errorf("DuplicatePage: fetch source: %w", err)
+	}
+	// validate new parent (if any) is in same team
+	if newParentID != "" {
+		parent, err := a.store.GetPage(newParentID)
+		if err != nil {
+			return "", fmt.Errorf("DuplicatePage: fetch new parent: %w", err)
+		}
+		if parent.TeamID != srcPage.TeamID {
+			return "", errors.New("DuplicatePage: new parent in a different team")
+		}
+	}
+	newID, err := a.store.DuplicatePage(id, newParentID, cascade, userID)
+	if err != nil {
+		return "", fmt.Errorf("DuplicatePage: store: %w", err)
+	}
+	if newPage, e := a.store.GetPage(newID); e == nil {
+		a.broadcastPageChange(newPage)
+	}
+	return newID, nil
+}
+
+// DeletePage soft-deletes a page. If cascade is false, children are
+// reparented to the deleted page's current parent.
 func (a *App) DeletePage(id string, cascade bool, userID string) error {
-	return errPageSkeleton
+	if id == "" {
+		return errors.New("pageID is required")
+	}
+	page, err := a.store.GetPage(id)
+	if err != nil {
+		return fmt.Errorf("DeletePage: fetch page: %w", err)
+	}
+	if err := a.store.DeletePage(id, cascade, userID); err != nil {
+		return fmt.Errorf("DeletePage: store: %w", err)
+	}
+	a.broadcastPageChange(page)
+	return nil
 }
 
 // LinkPageToChannel pins a page to a channel (page_channels).

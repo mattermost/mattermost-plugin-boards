@@ -1878,6 +1878,43 @@ func (mr *MockStoreMockRecorder) GetPageChannelLinks(pageID interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPageChannelLinks", reflect.TypeOf((*MockStore)(nil).GetPageChannelLinks), pageID)
 }
 
+// DeletePage mocks base method.
+func (m *MockStore) DeletePage(id string, cascade bool, modifiedBy string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeletePage", id, cascade, modifiedBy)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+func (mr *MockStoreMockRecorder) DeletePage(id, cascade, modifiedBy interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePage", reflect.TypeOf((*MockStore)(nil).DeletePage), id, cascade, modifiedBy)
+}
+
+// MovePage mocks base method.
+func (m *MockStore) MovePage(id, newParentID string, sortOrder int64, modifiedBy string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MovePage", id, newParentID, sortOrder, modifiedBy)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+func (mr *MockStoreMockRecorder) MovePage(id, newParentID, sortOrder, modifiedBy interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MovePage", reflect.TypeOf((*MockStore)(nil).MovePage), id, newParentID, sortOrder, modifiedBy)
+}
+
+// DuplicatePage mocks base method.
+func (m *MockStore) DuplicatePage(id, newParentID string, cascade bool, modifiedBy string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DuplicatePage", id, newParentID, cascade, modifiedBy)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+func (mr *MockStoreMockRecorder) DuplicatePage(id, newParentID, cascade, modifiedBy interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DuplicatePage", reflect.TypeOf((*MockStore)(nil).DuplicatePage), id, newParentID, cascade, modifiedBy)
+}
+
 // GetPageContent mocks base method.
 func (m *MockStore) GetPageContent(pageID string) (*model.PageContent, error) {
 	m.ctrl.T.Helper()
@@ -1905,4 +1942,18 @@ func (m *MockStore) UpsertPageContent(pageID string, tiptapJSON []byte, modified
 func (mr *MockStoreMockRecorder) UpsertPageContent(pageID, tiptapJSON, modifiedBy interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertPageContent", reflect.TypeOf((*MockStore)(nil).UpsertPageContent), pageID, tiptapJSON, modifiedBy)
+}
+
+// SaveYjsSnapshot mocks base method.
+func (m *MockStore) SaveYjsSnapshot(pageID string, yjsState []byte, derivedTiptapJSON []byte, modifiedBy string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SaveYjsSnapshot", pageID, yjsState, derivedTiptapJSON, modifiedBy)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SaveYjsSnapshot indicates an expected call of SaveYjsSnapshot.
+func (mr *MockStoreMockRecorder) SaveYjsSnapshot(pageID, yjsState, derivedTiptapJSON, modifiedBy interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveYjsSnapshot", reflect.TypeOf((*MockStore)(nil).SaveYjsSnapshot), pageID, yjsState, derivedTiptapJSON, modifiedBy)
 }
