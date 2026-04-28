@@ -195,6 +195,16 @@ type Store interface {
 	DeletePage(id string, cascade bool, modifiedBy string) error
 	MovePage(id, newParentID string, sortOrder int64, modifiedBy string) error
 	DuplicatePage(id, newParentID string, cascade bool, modifiedBy string) (string, error)
+	// page categories (per-user, per-team)
+	GetPageCategories(userID, teamID string) ([]*model.PageCategory, error)
+	GetPageCategory(id string) (*model.PageCategory, error)
+	CreatePageCategory(c *model.PageCategory) (*model.PageCategory, error)
+	UpdatePageCategory(c *model.PageCategory) (*model.PageCategory, error)
+	DeletePageCategory(id, userID string) error
+	// page→category assignments (per-user)
+	SetPageCategory(userID, pageID, categoryID string, sortOrder int64) error
+	UnsetPageCategory(userID, pageID string) error
+	GetPageCategoryAssignments(userID, teamID string) ([]*model.PageCategoryAssignment, error)
 
 	// For unit testing only
 	DeleteBoardRecord(boardID, modifiedBy string) error

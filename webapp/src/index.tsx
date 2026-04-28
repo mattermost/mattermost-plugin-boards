@@ -46,6 +46,9 @@ import wsClient, {
     ACTION_REORDER_CATEGORIES,
     ACTION_UPDATE_PAGE_YJS,
     ACTION_UPDATE_PAGE_YJS_AWARENESS,
+    ACTION_UPDATE_PAGE_CATEGORY,
+    ACTION_UPDATE_PAGE_CATEGORY_ASSIGN,
+    ACTION_UPDATE_PAGE_CHANNEL_LINK,
 } from './wsclient'
 import manifest from './manifest'
 import ErrorBoundary from './error_boundary'
@@ -207,6 +210,9 @@ export default class Plugin {
         this.registry?.registerWebSocketEventHandler(`custom_${productID}_${ACTION_REORDER_CATEGORIES}`, (e) => wsClient.updateHandler(e.data))
         this.registry?.registerWebSocketEventHandler(`custom_${productID}_${ACTION_UPDATE_PAGE_YJS}`, (e: any) => wsClient.pageYjsHandler(e.data))
         this.registry?.registerWebSocketEventHandler(`custom_${productID}_${ACTION_UPDATE_PAGE_YJS_AWARENESS}`, (e: any) => wsClient.pageYjsAwarenessHandler(e.data))
+        this.registry?.registerWebSocketEventHandler(`custom_${productID}_${ACTION_UPDATE_PAGE_CATEGORY}`, (e: any) => wsClient.pageCategoryHandler(e.data))
+        this.registry?.registerWebSocketEventHandler(`custom_${productID}_${ACTION_UPDATE_PAGE_CATEGORY_ASSIGN}`, (e: any) => wsClient.pageCategoryAssignHandler(e.data))
+        this.registry?.registerWebSocketEventHandler(`custom_${productID}_${ACTION_UPDATE_PAGE_CHANNEL_LINK}`, (e: any) => wsClient.pageChannelLinkHandler(e.data))
 
         this.registry?.registerWebSocketEventHandler('plugin_statuses_changed', (e: any) => wsClient.pluginStatusesChangedHandler(e.data))
         this.registry?.registerPostTypeComponent('custom_cloud_upgrade_nudge', CloudUpgradeNudge)

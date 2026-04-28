@@ -44,6 +44,33 @@ export type PageYjsAwarenessMessage = {
 
 export type PageYjsAwarenessHandler = (msg: PageYjsAwarenessMessage) => void
 
+export type PageCategoryMessage = {
+    teamId?: string
+    userId?: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    category?: any
+}
+
+export type PageCategoryHandler = (msg: PageCategoryMessage) => void
+
+export type PageCategoryAssignMessage = {
+    teamId?: string
+    userId?: string
+    pageId: string
+    categoryId: string
+}
+
+export type PageCategoryAssignHandler = (msg: PageCategoryAssignMessage) => void
+
+export type PageChannelLinkMessage = {
+    teamId?: string
+    channelId: string
+    pageId: string
+    linked: boolean
+}
+
+export type PageChannelLinkHandler = (msg: PageChannelLinkMessage) => void
+
 // These are messages from the server
 export type WSMessage = {
     action?: string
@@ -77,6 +104,9 @@ export const ACTION_SEND_YJS_UPDATE = 'SEND_YJS_UPDATE'
 export const ACTION_UPDATE_PAGE_YJS = 'UPDATE_PAGE_YJS'
 export const ACTION_SEND_YJS_AWARENESS = 'SEND_YJS_AWARENESS'
 export const ACTION_UPDATE_PAGE_YJS_AWARENESS = 'UPDATE_PAGE_YJS_AWARENESS'
+export const ACTION_UPDATE_PAGE_CATEGORY = 'UPDATE_PAGE_CATEGORY'
+export const ACTION_UPDATE_PAGE_CATEGORY_ASSIGN = 'UPDATE_PAGE_CATEGORY_ASSIGN'
+export const ACTION_UPDATE_PAGE_CHANNEL_LINK = 'UPDATE_PAGE_CHANNEL_LINK'
 
 type WSSubscriptionMsg = {
     action?: string
@@ -158,6 +188,9 @@ class WSClient {
     onUnfollowBlock: FollowChangeHandler = () => {}
     pageYjsHandlers: PageYjsHandler[] = []
     pageYjsAwarenessHandlers: PageYjsAwarenessHandler[] = []
+    pageCategoryHandlers: PageCategoryHandler[] = []
+    pageCategoryAssignHandlers: PageCategoryAssignHandler[] = []
+    pageChannelLinkHandlers: PageChannelLinkHandler[] = []
     private notificationDelay = 100
     private reopenDelay = 3000
     private reopenRetryCount = 0
@@ -282,6 +315,51 @@ class WSClient {
             return
         }
         for (const h of this.pageYjsAwarenessHandlers) {
+            h(message)
+        }
+    }
+
+    addPageCategoryHandler(handler: PageCategoryHandler): void {
+        this.pageCategoryHandlers.push(handler)
+    }
+
+    removePageCategoryHandler(handler: PageCategoryHandler): void {
+        this.pageCategoryHandlers = this.pageCategoryHandlers.filter((h) => h !== handler)
+    }
+
+    pageCategoryHandler(message: PageCategoryMessage): void {
+        for (const h of this.pageCategoryHandlers) {
+            h(message)
+        }
+    }
+
+    addPageCategoryAssignHandler(handler: PageCategoryAssignHandler): void {
+        this.pageCategoryAssignHandlers.push(handler)
+    }
+
+    removePageCategoryAssignHandler(handler: PageCategoryAssignHandler): void {
+        this.pageCategoryAssignHandlers = this.pageCategoryAssignHandlers.filter((h) => h !== handler)
+    }
+
+    pageCategoryAssignHandler(message: PageCategoryAssignMessage): void {
+        for (const h of this.pageCategoryAssignHandlers) {
+            h(message)
+        }
+    }
+
+    addPageChannelLinkHandler(handler: PageChannelLinkHandler): void {
+        this.pageChannelLinkHandlers.push(handler)
+    }
+
+    removePageChannelLinkHandler(handler: PageChannelLinkHandler): void {
+        this.pageChannelLinkHandlers = this.pageChannelLinkHandlers.filter((h) => h !== handler)
+    }
+
+    pageChannelLinkHandler(message: PageChannelLinkMessage): void {
+        if (message.teamId && this.teamId && message.teamId !== this.teamId) {
+            return
+        }
+        for (const h of this.pageChannelLinkHandlers) {
             h(message)
         }
     }

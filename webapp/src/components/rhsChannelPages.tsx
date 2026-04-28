@@ -14,6 +14,7 @@ import Button from '../widgets/buttons/button'
 import {getMessages} from '../i18n'
 
 import client from '../octoClient'
+import wsClient, {PageChannelLinkMessage} from '../wsclient'
 import type {Page} from '../blocks/page'
 
 const windowAny = (window as unknown) as {frontendBaseURL?: string}
@@ -55,6 +56,20 @@ const RHSChannelPages = (): JSX.Element | null => {
     }, [channel?.id])
 
     useEffect(() => { reload() }, [reload])
+
+    // Live refresh on link/unlink — server broadcasts UPDATE_PAGE_CHANNEL_LINK
+    // when page_channels changes; we reload if it concerns this channel.
+    useEffect(() => {
+        const handler = (msg: PageChannelLinkMessage) => {
+            if (msg.channelId === channel?.id) {
+                void reload()
+            }
+        }
+        wsClient.addPageChannelLinkHandler(handler)
+        return () => {
+            wsClient.removePageChannelLinkHandler(handler)
+        }
+    }, [channel?.id, reload])
 
     const onSelect = (id: string) => {
         if (!teamId) {

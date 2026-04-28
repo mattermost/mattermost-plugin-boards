@@ -450,6 +450,49 @@ func (pa *PluginAdapter) broadcastYjsUpdate(teamID, pageID, updateB64, originCli
 	pa.sendTeamMessageSkipCluster(websocketActionUpdatePageYjs, teamID, utils.StructToMap(msg))
 }
 
+// BroadcastPageChannelLink notifies team members that a page⇄channel
+// link was added/removed. Broadcast to team scope; recipients filter
+// by channelId in the payload.
+func (pa *PluginAdapter) BroadcastPageChannelLink(teamID, channelID, pageID string, linked bool) {
+	msg := UpdatePageChannelLinkMsg{
+		Action:    websocketActionUpdatePageChannelLink,
+		TeamID:    teamID,
+		ChannelID: channelID,
+		PageID:    pageID,
+		Linked:    linked,
+	}
+	pa.sendTeamMessageSkipCluster(websocketActionUpdatePageChannelLink, teamID, utils.StructToMap(msg))
+}
+
+// BroadcastPageCategoryAssignment notifies the user that a page's
+// category assignment changed (per-user channel — siblings shouldn't see).
+func (pa *PluginAdapter) BroadcastPageCategoryAssignment(userID, teamID, pageID, categoryID string) {
+	msg := UpdatePageCategoryAssignmentMsg{
+		Action:     websocketActionUpdatePageCategoryAssign,
+		TeamID:     teamID,
+		UserID:     userID,
+		PageID:     pageID,
+		CategoryID: categoryID,
+	}
+	pa.sendUserMessageSkipCluster(websocketActionUpdatePageCategoryAssign, utils.StructToMap(msg), userID)
+}
+
+// BroadcastPageCategoryChange notifies the owning user that a page
+// category was created/updated/deleted. Per-user delivery so other team
+// members never see another user's private categories.
+func (pa *PluginAdapter) BroadcastPageCategoryChange(c *model.PageCategory) {
+	if c == nil {
+		return
+	}
+	msg := UpdatePageCategoryMsg{
+		Action:   websocketActionUpdatePageCategory,
+		TeamID:   c.TeamID,
+		UserID:   c.UserID,
+		Category: c,
+	}
+	pa.sendUserMessageSkipCluster(websocketActionUpdatePageCategory, utils.StructToMap(msg), c.UserID)
+}
+
 // broadcastYjsAwareness relays an Awareness update to all team subscribers.
 func (pa *PluginAdapter) broadcastYjsAwareness(teamID, pageID, awarenessB64, originClientID, originUserID string) {
 	msg := UpdatePageYjsAwarenessMsg{

@@ -29,6 +29,9 @@ const (
 	websocketActionUpdatePageYjs            = "UPDATE_PAGE_YJS"            // server → clients: a Y.Doc update for a page
 	websocketActionSendYjsAwareness         = "SEND_YJS_AWARENESS"         // client → server: relay an Awareness update
 	websocketActionUpdatePageYjsAwareness   = "UPDATE_PAGE_YJS_AWARENESS"  // server → clients: an Awareness update for a page
+	websocketActionUpdatePageCategory       = "UPDATE_PAGE_CATEGORY"       // server → user: page category created/updated/deleted
+	websocketActionUpdatePageCategoryAssign = "UPDATE_PAGE_CATEGORY_ASSIGN" // server → user: a page's category assignment changed
+	websocketActionUpdatePageChannelLink    = "UPDATE_PAGE_CHANNEL_LINK"    // server → team: page⇄channel link added or removed
 )
 
 type Store interface {
@@ -37,6 +40,9 @@ type Store interface {
 }
 
 type Adapter interface {
+	BroadcastPageCategoryChange(c *model.PageCategory)
+	BroadcastPageCategoryAssignment(userID, teamID, pageID, categoryID string)
+	BroadcastPageChannelLink(teamID, channelID, pageID string, linked bool)
 	BroadcastBlockChange(teamID string, block *model.Block)
 	BroadcastBlockDelete(teamID, blockID, boardID string)
 	BroadcastBoardChange(teamID string, board *model.Board)

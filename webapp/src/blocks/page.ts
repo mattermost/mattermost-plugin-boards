@@ -76,6 +76,27 @@ export type PageChannelLink = {
     pinnedAt: number
 }
 
+// Per-user page category — sidebar grouping for pages.
+export type PageCategory = {
+    id: string
+    name: string
+    userID: string
+    teamID: string
+    sortOrder: number
+    collapsed: boolean
+    createAt: number
+    updateAt: number
+    deleteAt: number
+}
+
+// Per-user page→category assignment. Absence = uncategorized.
+export type PageCategoryAssignment = {
+    userID: string
+    pageID: string
+    categoryID: string
+    sortOrder: number
+}
+
 export const createEmptyPage = (teamId: string, parentId?: string): Page => ({
     id: '',
     teamId,

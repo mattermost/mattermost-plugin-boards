@@ -92,6 +92,37 @@ type UpdatePageYjsAwarenessMsg struct {
 	OriginUserID   string `json:"originUserId"`
 }
 
+// UpdatePageCategoryMsg notifies the owning user that one of their page
+// categories changed (created, renamed, collapsed, or soft-deleted —
+// signalled by deleteAt > 0).
+type UpdatePageCategoryMsg struct {
+	Action   string              `json:"action"`
+	TeamID   string              `json:"teamId"`
+	UserID   string              `json:"userId"`
+	Category *model.PageCategory `json:"category"`
+}
+
+// UpdatePageCategoryAssignmentMsg notifies the owning user that a page's
+// category assignment changed. categoryID == "" signals removal (page
+// returns to the default uncategorized section).
+type UpdatePageCategoryAssignmentMsg struct {
+	Action     string `json:"action"`
+	TeamID     string `json:"teamId"`
+	UserID     string `json:"userId"`
+	PageID     string `json:"pageId"`
+	CategoryID string `json:"categoryId"`
+}
+
+// UpdatePageChannelLinkMsg notifies team members that a page⇄channel
+// link was added or removed. RHSChannelPages listens and refreshes.
+type UpdatePageChannelLinkMsg struct {
+	Action    string `json:"action"`
+	TeamID    string `json:"teamId"`
+	ChannelID string `json:"channelId"`
+	PageID    string `json:"pageId"`
+	Linked    bool   `json:"linked"`
+}
+
 type CategoryReorderMessage struct {
 	Action        string   `json:"action"`
 	CategoryOrder []string `json:"categoryOrder"`

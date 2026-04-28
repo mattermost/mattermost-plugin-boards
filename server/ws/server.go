@@ -633,6 +633,16 @@ func (ws *Server) BroadcastCategoryBoardChange(teamID, userID string, boardCateg
 	}
 }
 
+// BroadcastPageCategoryChange is a no-op stub on the standalone server.
+// Pages categories are only delivered via the plugin adapter.
+func (ws *Server) BroadcastPageCategoryChange(_ *model.PageCategory) {}
+
+// BroadcastPageCategoryAssignment — no-op stub on standalone server.
+func (ws *Server) BroadcastPageCategoryAssignment(_, _, _, _ string) {}
+
+// BroadcastPageChannelLink — no-op stub on standalone server.
+func (ws *Server) BroadcastPageChannelLink(_, _, _ string, _ bool) {}
+
 // BroadcastConfigChange broadcasts update messages to clients.
 func (ws *Server) BroadcastConfigChange(clientConfig model.ClientConfig) {
 	message := UpdateClientConfig{

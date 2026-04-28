@@ -254,20 +254,33 @@ func (a *App) DeletePage(id string, cascade bool, userID string) error {
 	return nil
 }
 
-// LinkPageToChannel pins a page to a channel (page_channels).
+// LinkPageToChannel pins a page to a channel (page_channels) and
+// broadcasts so any open RHS lists refresh.
 func (a *App) LinkPageToChannel(pageID, channelID, userID string) error {
 	if pageID == "" || channelID == "" {
 		return errors.New("pageID and channelID required")
 	}
-	return a.store.LinkPageToChannel(pageID, channelID, userID)
+	if err := a.store.LinkPageToChannel(pageID, channelID, userID); err != nil {
+		return err
+	}
+	if page, e := a.store.GetPage(pageID); e == nil && a.wsAdapter != nil {
+		a.wsAdapter.BroadcastPageChannelLink(page.TeamID, channelID, pageID, true)
+	}
+	return nil
 }
 
-// UnlinkPageFromChannel removes a (page, channel) pin.
+// UnlinkPageFromChannel removes a (page, channel) pin and broadcasts.
 func (a *App) UnlinkPageFromChannel(pageID, channelID, userID string) error {
 	if pageID == "" || channelID == "" {
 		return errors.New("pageID and channelID required")
 	}
-	return a.store.UnlinkPageFromChannel(pageID, channelID)
+	if err := a.store.UnlinkPageFromChannel(pageID, channelID); err != nil {
+		return err
+	}
+	if page, e := a.store.GetPage(pageID); e == nil && a.wsAdapter != nil {
+		a.wsAdapter.BroadcastPageChannelLink(page.TeamID, channelID, pageID, false)
+	}
+	return nil
 }
 
 // GetPagesForChannel lists pages pinned to a channel.

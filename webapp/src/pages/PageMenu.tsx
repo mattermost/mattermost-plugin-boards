@@ -1,7 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useCallback, useMemo, useState} from 'react'
+import React, {useCallback, useMemo, useRef, useState} from 'react'
 import {useDispatch, useSelector} from 'react-redux'
 
 import Dialog from '../components/dialog'
@@ -168,50 +168,54 @@ export default function PageMenu({page, childCount, onAfterDelete, onAfterHide}:
         }
     }, [dispatch, page])
 
+    const itemRef = useRef<HTMLSpanElement>(null)
+
     return (
         <>
-            <MenuWrapper stopPropagationOnToggle={true}>
-                <IconButton size='small' icon={<OptionsIcon/>}/>
-                <Menu position='auto'>
-                    <Menu.Text
-                        id='movePage'
-                        name={'Move to…'}
-                        icon={<CreateNewFolder/>}
-                        onClick={() => setShowMove(true)}
-                    />
-                    <Menu.Text
-                        id='duplicatePage'
-                        name={duplicateBusy ? 'Duplicating…' : 'Duplicate page'}
-                        icon={<DuplicateIcon/>}
-                        onClick={onDuplicate}
-                    />
-                    <Menu.Text
-                        id='templateFromPage'
-                        name={'New template from page'}
-                        icon={<AddIcon/>}
-                        onClick={comingSoon('New template from page')}
-                    />
-                    <Menu.Text
-                        id='exportPageMd'
-                        name={'Export as Markdown'}
-                        icon={<CompassIcon icon='export-variant'/>}
-                        onClick={onExportMarkdown}
-                    />
-                    <Menu.Text
-                        id='hidePage'
-                        name={'Hide page'}
-                        icon={<CloseIcon/>}
-                        onClick={onHide}
-                    />
-                    <Menu.Text
-                        id='deletePage'
-                        className='text-danger'
-                        name={'Delete page'}
-                        icon={<DeleteIcon/>}
-                        onClick={() => setShowDelete(true)}
-                    />
-                </Menu>
-            </MenuWrapper>
+            <span ref={itemRef}>
+                <MenuWrapper stopPropagationOnToggle={true}>
+                    <IconButton size='small' icon={<OptionsIcon/>}/>
+                    <Menu fixed={true} position='auto' parentRef={itemRef}>
+                        <Menu.Text
+                            id='movePage'
+                            name={'Move to…'}
+                            icon={<CreateNewFolder/>}
+                            onClick={() => setShowMove(true)}
+                        />
+                        <Menu.Text
+                            id='duplicatePage'
+                            name={duplicateBusy ? 'Duplicating…' : 'Duplicate page'}
+                            icon={<DuplicateIcon/>}
+                            onClick={onDuplicate}
+                        />
+                        <Menu.Text
+                            id='templateFromPage'
+                            name={'New template from page'}
+                            icon={<AddIcon/>}
+                            onClick={comingSoon('New template from page')}
+                        />
+                        <Menu.Text
+                            id='exportPageMd'
+                            name={'Export as Markdown'}
+                            icon={<CompassIcon icon='export-variant'/>}
+                            onClick={onExportMarkdown}
+                        />
+                        <Menu.Text
+                            id='hidePage'
+                            name={'Hide page'}
+                            icon={<CloseIcon/>}
+                            onClick={onHide}
+                        />
+                        <Menu.Text
+                            id='deletePage'
+                            className='text-danger'
+                            name={'Delete page'}
+                            icon={<DeleteIcon/>}
+                            onClick={() => setShowDelete(true)}
+                        />
+                    </Menu>
+                </MenuWrapper>
+            </span>
 
             {showMove && (
                 <Dialog

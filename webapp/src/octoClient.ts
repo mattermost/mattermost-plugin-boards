@@ -1143,13 +1143,102 @@ class OctoClient {
         }))
     }
 
-    async saveYjsSnapshot(pageID: string, stateB64: string, tiptapJson: unknown): Promise<Response> {
-        const path = `/api/v2/pages/${encodeURIComponent(pageID)}/yjs-snapshot`
+    // Build a fully-qualified URL for downloading a page-attached file.
+    // Used as the <img src> in the Tiptap editor — same-origin so the
+    // browser sends session cookies automatically.
+    pageFileURL(teamID: string, pageID: string, filename: string): string {
+        return this.getBaseURL() + `/api/v2/files/teams/${encodeURIComponent(teamID)}/pages/${encodeURIComponent(pageID)}/${encodeURIComponent(filename)}`
+    }
+
+    async uploadPageFile(teamID: string, pageID: string, file: File): Promise<string | undefined> {
+        const formData = new FormData()
+        formData.append('file', file)
+        const path = `/api/v2/teams/${encodeURIComponent(teamID)}/pages/${encodeURIComponent(pageID)}/files`
+        const headers = this.headers()
+        delete (headers as Record<string, string>)['Content-Type']
+        try {
+            const response = await fetch(this.getBaseURL() + path, Client4.getOptions({
+                method: 'POST',
+                headers,
+                body: formData,
+            }))
+            if (response.status !== 200) {
+                Utils.logError(`uploadPageFile failed: HTTP ${response.status}`)
+                return undefined
+            }
+            const text = await response.text()
+            try {
+                const json = JSON.parse(text)
+                return json.fileId as string
+            } catch (e) {
+                Utils.logError(`uploadPageFile json ERROR: ${e}`)
+                return undefined
+            }
+        } catch (e) {
+            Utils.logError(`uploadPageFile ERROR: ${e}`)
+            return undefined
+        }
+    }
+
+    // ─── Page categories (per-user sidebar groups) ──────────────────
+    async getPageCategories(teamId: string): Promise<Response> {
+        const path = `/api/v2/teams/${encodeURIComponent(teamId)}/page-categories`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({method: 'GET', headers: this.headers()}))
+    }
+
+    async createPageCategory(teamId: string, name: string): Promise<Response> {
+        const path = `/api/v2/teams/${encodeURIComponent(teamId)}/page-categories`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({
+            method: 'POST',
+            headers: this.headers(),
+            body: JSON.stringify({name, collapsed: false}),
+        }))
+    }
+
+    async updatePageCategory(teamId: string, categoryId: string, patch: {name?: string; sortOrder?: number; collapsed?: boolean}): Promise<Response> {
+        const path = `/api/v2/teams/${encodeURIComponent(teamId)}/page-categories/${encodeURIComponent(categoryId)}`
         return fetch(this.getBaseURL() + path, Client4.getOptions({
             method: 'PUT',
             headers: this.headers(),
-            body: JSON.stringify({stateB64, tiptapJson}),
+            body: JSON.stringify(patch),
         }))
+    }
+
+    async deletePageCategory(teamId: string, categoryId: string): Promise<Response> {
+        const path = `/api/v2/teams/${encodeURIComponent(teamId)}/page-categories/${encodeURIComponent(categoryId)}`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({method: 'DELETE', headers: this.headers()}))
+    }
+
+    async getPageCategoryAssignments(teamId: string): Promise<Response> {
+        const path = `/api/v2/teams/${encodeURIComponent(teamId)}/page-category-assignments`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({method: 'GET', headers: this.headers()}))
+    }
+
+    async setPageCategory(teamId: string, categoryId: string, pageId: string, sortOrder = 0): Promise<Response> {
+        const path = `/api/v2/teams/${encodeURIComponent(teamId)}/page-categories/${encodeURIComponent(categoryId)}/pages/${encodeURIComponent(pageId)}`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({
+            method: 'POST',
+            headers: this.headers(),
+            body: JSON.stringify({sortOrder}),
+        }))
+    }
+
+    async unsetPageCategory(teamId: string, pageId: string): Promise<Response> {
+        const path = `/api/v2/teams/${encodeURIComponent(teamId)}/page-category-assignments/${encodeURIComponent(pageId)}`
+        return fetch(this.getBaseURL() + path, Client4.getOptions({method: 'DELETE', headers: this.headers()}))
+    }
+
+    async saveYjsSnapshot(pageID: string, stateB64: string, tiptapJson: unknown, opts?: {keepalive?: boolean}): Promise<Response> {
+        const path = `/api/v2/pages/${encodeURIComponent(pageID)}/yjs-snapshot`
+        const init: RequestInit = Client4.getOptions({
+            method: 'PUT',
+            headers: this.headers(),
+            body: JSON.stringify({stateB64, tiptapJson}),
+        })
+        if (opts?.keepalive) {
+            init.keepalive = true
+        }
+        return fetch(this.getBaseURL() + path, init)
     }
 
     // Cross-references (board ↔ page)

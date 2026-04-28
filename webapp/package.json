@@ -43,6 +43,7 @@
 		"@tippyjs/react": "4.2.6",
 		"@tiptap/extension-collaboration": "^2.27.2",
 		"@tiptap/extension-collaboration-cursor": "^2.26.2",
+		"@tiptap/extension-image": "^2.27.2",
 		"@tiptap/pm": "^2.27.2",
 		"@tiptap/react": "^2.27.2",
 		"@tiptap/starter-kit": "^2.27.2",

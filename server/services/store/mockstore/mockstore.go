@@ -1944,6 +1944,107 @@ func (mr *MockStoreMockRecorder) UpsertPageContent(pageID, tiptapJSON, modifiedB
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertPageContent", reflect.TypeOf((*MockStore)(nil).UpsertPageContent), pageID, tiptapJSON, modifiedBy)
 }
 
+// GetPageCategories mocks base method.
+func (m *MockStore) GetPageCategories(userID, teamID string) ([]*model.PageCategory, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPageCategories", userID, teamID)
+	ret0, _ := ret[0].([]*model.PageCategory)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+func (mr *MockStoreMockRecorder) GetPageCategories(userID, teamID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPageCategories", reflect.TypeOf((*MockStore)(nil).GetPageCategories), userID, teamID)
+}
+
+// GetPageCategory mocks base method.
+func (m *MockStore) GetPageCategory(id string) (*model.PageCategory, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPageCategory", id)
+	ret0, _ := ret[0].(*model.PageCategory)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+func (mr *MockStoreMockRecorder) GetPageCategory(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPageCategory", reflect.TypeOf((*MockStore)(nil).GetPageCategory), id)
+}
+
+// CreatePageCategory mocks base method.
+func (m *MockStore) CreatePageCategory(c *model.PageCategory) (*model.PageCategory, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreatePageCategory", c)
+	ret0, _ := ret[0].(*model.PageCategory)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+func (mr *MockStoreMockRecorder) CreatePageCategory(c interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePageCategory", reflect.TypeOf((*MockStore)(nil).CreatePageCategory), c)
+}
+
+// UpdatePageCategory mocks base method.
+func (m *MockStore) UpdatePageCategory(c *model.PageCategory) (*model.PageCategory, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePageCategory", c)
+	ret0, _ := ret[0].(*model.PageCategory)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+func (mr *MockStoreMockRecorder) UpdatePageCategory(c interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePageCategory", reflect.TypeOf((*MockStore)(nil).UpdatePageCategory), c)
+}
+
+// DeletePageCategory mocks base method.
+func (m *MockStore) DeletePageCategory(id, userID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeletePageCategory", id, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+func (mr *MockStoreMockRecorder) DeletePageCategory(id, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePageCategory", reflect.TypeOf((*MockStore)(nil).DeletePageCategory), id, userID)
+}
+
+// SetPageCategory mocks base method.
+func (m *MockStore) SetPageCategory(userID, pageID, categoryID string, sortOrder int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetPageCategory", userID, pageID, categoryID, sortOrder)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+func (mr *MockStoreMockRecorder) SetPageCategory(userID, pageID, categoryID, sortOrder interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetPageCategory", reflect.TypeOf((*MockStore)(nil).SetPageCategory), userID, pageID, categoryID, sortOrder)
+}
+
+// UnsetPageCategory mocks base method.
+func (m *MockStore) UnsetPageCategory(userID, pageID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UnsetPageCategory", userID, pageID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+func (mr *MockStoreMockRecorder) UnsetPageCategory(userID, pageID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnsetPageCategory", reflect.TypeOf((*MockStore)(nil).UnsetPageCategory), userID, pageID)
+}
+
+// GetPageCategoryAssignments mocks base method.
+func (m *MockStore) GetPageCategoryAssignments(userID, teamID string) ([]*model.PageCategoryAssignment, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPageCategoryAssignments", userID, teamID)
+	ret0, _ := ret[0].([]*model.PageCategoryAssignment)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+func (mr *MockStoreMockRecorder) GetPageCategoryAssignments(userID, teamID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPageCategoryAssignments", reflect.TypeOf((*MockStore)(nil).GetPageCategoryAssignments), userID, teamID)
+}
+
 // SaveYjsSnapshot mocks base method.
 func (m *MockStore) SaveYjsSnapshot(pageID string, yjsState []byte, derivedTiptapJSON []byte, modifiedBy string) error {
 	m.ctrl.T.Helper()

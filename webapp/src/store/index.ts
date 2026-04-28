@@ -21,6 +21,7 @@ import {reducer as sidebarReducer} from './sidebar'
 import {reducer as limitsReducer} from './limits'
 import {reducer as attachmentsReducer} from './attachments'
 import {reducer as pagesReducer} from './pages'
+import {reducer as pageCategoriesReducer} from './pageCategories'
 
 const store = configureStore({
     reducer: {
@@ -41,6 +42,7 @@ const store = configureStore({
         limits: limitsReducer,
         attachments: attachmentsReducer,
         pages: pagesReducer,
+        pageCategories: pageCategoriesReducer,
     },
 })
 

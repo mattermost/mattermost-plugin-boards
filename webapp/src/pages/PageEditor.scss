@@ -10,6 +10,41 @@
         min-height: 200px;
     }
 
+    .PageEditor__toolbar-btn {
+        padding: 4px 10px;
+        background: rgba(var(--center-channel-color-rgb), 0.04);
+        border: 1px solid rgba(var(--center-channel-color-rgb), 0.12);
+        border-radius: 4px;
+        color: inherit;
+        font-size: 12px;
+        cursor: pointer;
+
+        &:hover {
+            background: rgba(var(--center-channel-color-rgb), 0.08);
+        }
+    }
+
+    .PageEditor__image {
+        max-width: 100%;
+        height: auto;
+        border-radius: 4px;
+        margin: 8px 0;
+    }
+
+    .PageEditor__image-wrap {
+        display: inline-block;
+        max-width: 100%;
+    }
+
+    .PageEditor__image-placeholder {
+        display: inline-block;
+        padding: 8px 12px;
+        background: rgba(var(--center-channel-color-rgb), 0.06);
+        border-radius: 4px;
+        color: rgba(var(--center-channel-color-rgb), 0.6);
+        font-size: 12px;
+    }
+
     .collaboration-cursor__caret {
         position: relative;
         margin-left: -1px;
