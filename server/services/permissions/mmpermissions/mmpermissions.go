@@ -133,3 +133,25 @@ func (s *Service) HasPermissionToBoard(userID, boardID string, permission *mmMod
 		return false
 	}
 }
+
+// HasPermissionToPage is the Pages-feature counterpart of HasPermissionToBoard.
+//
+// Phase 1: delegates entirely to HasPermissionToBoard via the page's doc-board.
+// Phase 2: walks the page tree upward to find the nearest ancestor with an
+// explicit page_acl override; falls back to the doc-board's board_members
+// (which already covers synthetic memberships, MinimumRole, and Team Admin
+// elevation).
+//
+// SKELETON — Phase 1 wires the body. The signature is fixed so that callers
+// (api/pages.go, app/pages.go) can compile against it now.
+func (s *Service) HasPermissionToPage(userID, pageID string, permission *mmModel.Permission) bool {
+	if userID == "" || pageID == "" || permission == nil {
+		return false
+	}
+	// TODO Phase 1: load the page, resolve its boardID, then call HasPermissionToBoard.
+	// TODO Phase 2: before falling back, check page_acl on this page and its ancestors.
+	_ = userID
+	_ = pageID
+	_ = permission
+	return false
+}

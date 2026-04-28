@@ -20,6 +20,23 @@ const (
 	BoardTypePrivate BoardType = "P"
 )
 
+// BoardLayout determines whether a board is displayed as a regular kanban/table
+// board ("board") or as a doc workspace containing pages ("doc"). Added by the
+// Pages feature; defaults to "board" for backward compatibility.
+//
+// NOTE: Phase 1 work — wire Board.Layout field through boardFields(),
+// scanBoardRows(), INSERT/UPDATE statements. Skeleton exposes the constants only.
+type BoardLayout string
+
+const (
+	BoardLayoutBoard BoardLayout = "board"
+	BoardLayoutDoc   BoardLayout = "doc"
+)
+
+func IsBoardLayoutValid(l BoardLayout) bool {
+	return l == BoardLayoutBoard || l == BoardLayoutDoc
+}
+
 const (
 	BoardRoleNone      BoardRole = ""
 	BoardRoleViewer    BoardRole = "viewer"
@@ -108,6 +125,11 @@ type Board struct {
 	// The deleted time in miliseconds since the current epoch. Set to indicate this block is deleted
 	// required: false
 	DeleteAt int64 `json:"deleteAt"`
+
+	// The layout of the board: "board" (default kanban/table) or "doc" (Pages workspace).
+	// Added by the Pages feature. Defaults to "board" for backward compatibility.
+	// required: false
+	Layout BoardLayout `json:"layout"`
 }
 
 // GetPropertyString returns the value of the specified property as a string,
@@ -155,6 +177,10 @@ type BoardPatch struct {
 	// Indicates if the board shows the description on the interface
 	// required: false
 	ChannelID *string `json:"channelId"`
+
+	// Layout transition: "board" or "doc" (Pages feature).
+	// required: false
+	Layout *BoardLayout `json:"layout"`
 
 	// The board updated properties
 	// required: false
@@ -281,6 +307,10 @@ func (p *BoardPatch) Patch(board *Board) *Board {
 		board.MinimumRole = *p.MinimumRole
 	}
 
+	if p.Layout != nil {
+		board.Layout = *p.Layout
+	}
+
 	if p.Description != nil {
 		board.Description = *p.Description
 	}
@@ -371,6 +401,10 @@ func (p *BoardPatch) IsValid() error {
 
 	if p.MinimumRole != nil && !IsBoardMinimumRoleValid(*p.MinimumRole) {
 		return InvalidBoardErr{"invalid-board-minimum-role"}
+	}
+
+	if p.Layout != nil && !IsBoardLayoutValid(*p.Layout) {
+		return InvalidBoardErr{"invalid-board-layout"}
 	}
 
 	if p.ChannelID != nil && *p.ChannelID != "" && !mmModel.IsValidId(*p.ChannelID) {

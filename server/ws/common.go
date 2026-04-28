@@ -61,6 +61,66 @@ type WebsocketCommand struct {
 	Token     string   `json:"token"`
 	ReadToken string   `json:"readToken"`
 	BlockIDs  []string `json:"blockIds"`
+
+	// Pages — Yjs realtime relay (Phase B).
+	PageID       string `json:"pageId"`
+	UpdateB64    string `json:"updateB64"`
+	AwarenessB64 string `json:"awarenessB64"`
+	ClientID     string `json:"clientId"`
+}
+
+// UpdatePageYjsMsg relays a Y.Doc update for a page to other team members.
+// originClientId lets the sender's editor skip its own echo (Y.Doc dedupes by
+// state vector, but skipping echoes early avoids redundant work).
+type UpdatePageYjsMsg struct {
+	Action         string `json:"action"`
+	TeamID         string `json:"teamId"`
+	PageID         string `json:"pageId"`
+	UpdateB64      string `json:"updateB64"`
+	OriginClientID string `json:"originClientId"`
+	OriginUserID   string `json:"originUserId"`
+}
+
+// UpdatePageYjsAwarenessMsg relays an Awareness update (cursor position,
+// user metadata) for a page to other team members.
+type UpdatePageYjsAwarenessMsg struct {
+	Action         string `json:"action"`
+	TeamID         string `json:"teamId"`
+	PageID         string `json:"pageId"`
+	AwarenessB64   string `json:"awarenessB64"`
+	OriginClientID string `json:"originClientId"`
+	OriginUserID   string `json:"originUserId"`
+}
+
+// UpdatePageCategoryMsg notifies the owning user that one of their page
+// categories changed (created, renamed, collapsed, or soft-deleted —
+// signalled by deleteAt > 0).
+type UpdatePageCategoryMsg struct {
+	Action   string              `json:"action"`
+	TeamID   string              `json:"teamId"`
+	UserID   string              `json:"userId"`
+	Category *model.PageCategory `json:"category"`
+}
+
+// UpdatePageCategoryAssignmentMsg notifies the owning user that a page's
+// category assignment changed. categoryID == "" signals removal (page
+// returns to the default uncategorized section).
+type UpdatePageCategoryAssignmentMsg struct {
+	Action     string `json:"action"`
+	TeamID     string `json:"teamId"`
+	UserID     string `json:"userId"`
+	PageID     string `json:"pageId"`
+	CategoryID string `json:"categoryId"`
+}
+
+// UpdatePageChannelLinkMsg notifies team members that a page⇄channel
+// link was added or removed. RHSChannelPages listens and refreshes.
+type UpdatePageChannelLinkMsg struct {
+	Action    string `json:"action"`
+	TeamID    string `json:"teamId"`
+	ChannelID string `json:"channelId"`
+	PageID    string `json:"pageId"`
+	Linked    bool   `json:"linked"`
 }
 
 type CategoryReorderMessage struct {

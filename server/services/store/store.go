@@ -170,6 +170,42 @@ type Store interface {
 	GetBoardsComplianceHistory(opts model.QueryBoardsComplianceHistoryOptions) ([]*model.BoardHistory, bool, error)
 	GetBlocksComplianceHistory(opts model.QueryBlocksComplianceHistoryOptions) ([]*model.BlockHistory, bool, error)
 
+	// Pages feature — Model Y (team-scoped pages + cross-references).
+	// See docs/PAGES_PLAN.md.
+	CreatePage(p *model.Page, content []byte) (*model.Page, error)
+	GetPage(id string) (*model.Page, error)
+	GetPagesForTeam(teamID string) ([]*model.Page, error)
+	GetChildPages(teamID, parentID string) ([]*model.Page, error)
+	GetPageContent(pageID string) (*model.PageContent, error)
+	UpsertPageContent(pageID string, tiptapJSON []byte, modifiedBy string) error
+	SaveYjsSnapshot(pageID string, yjsState []byte, derivedTiptapJSON []byte, modifiedBy string) error
+	// Cross-references — board ↔ page (bidirectional)
+	LinkBoardToPage(boardID, pageID, addedBy, label string, sortOrder int64) error
+	UnlinkBoardFromPage(boardID, pageID string) error
+	GetBoardPageRefs(boardID string) ([]*model.BoardPageRef, error)
+	LinkPageToBoard(pageID, boardID, addedBy, label string) error
+	UnlinkPageFromBoard(pageID, boardID string) error
+	GetPageBoardRefs(pageID string) ([]*model.PageBoardRef, error)
+	// page ↔ channel pinning (used by AppBar RHS "pages in this channel")
+	LinkPageToChannel(pageID, channelID, pinnedBy string) error
+	UnlinkPageFromChannel(pageID, channelID string) error
+	GetPagesForChannel(channelID string) ([]*model.Page, error)
+	GetPageChannelLinks(pageID string) ([]*model.PageChannelLink, error)
+	// page lifecycle
+	DeletePage(id string, cascade bool, modifiedBy string) error
+	MovePage(id, newParentID string, sortOrder int64, modifiedBy string) error
+	DuplicatePage(id, newParentID string, cascade bool, modifiedBy string) (string, error)
+	// page categories (per-user, per-team)
+	GetPageCategories(userID, teamID string) ([]*model.PageCategory, error)
+	GetPageCategory(id string) (*model.PageCategory, error)
+	CreatePageCategory(c *model.PageCategory) (*model.PageCategory, error)
+	UpdatePageCategory(c *model.PageCategory) (*model.PageCategory, error)
+	DeletePageCategory(id, userID string) error
+	// page→category assignments (per-user)
+	SetPageCategory(userID, pageID, categoryID string, sortOrder int64) error
+	UnsetPageCategory(userID, pageID string) error
+	GetPageCategoryAssignments(userID, teamID string) ([]*model.PageCategoryAssignment, error)
+
 	// For unit testing only
 	DeleteBoardRecord(boardID, modifiedBy string) error
 	DeleteBlockRecord(blockID, modifiedBy string) error

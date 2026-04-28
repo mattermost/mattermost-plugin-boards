@@ -47,6 +47,7 @@ files
 *.boardarchive
 .eslintcache
 .vscode/settings.json
+poc/
 # config.json is copied from app-config.json in the Makefile
 server/swagger/clients
 server/vendor

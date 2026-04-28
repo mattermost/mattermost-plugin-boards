@@ -97,6 +97,9 @@ func (a *API) RegisterRoutes(r *mux.Router) {
 	// V3 routes
 	a.registerCardsRoutes(apiv2)
 
+	// Pages feature (see docs/PAGES_PLAN.md)
+	a.registerPagesRoutes(apiv2)
+
 	// System routes are outside the /api/v2 path
 	a.registerSystemRoutes(r)
 }

@@ -16,7 +16,60 @@ type WSCommand = {
     teamId?: string
     readToken?: string
     blockIds?: string[]
+    pageId?: string
+    updateB64?: string
+    awarenessB64?: string
+    clientId?: string
 }
+
+// PageYjsMessage is the payload of an UPDATE_PAGE_YJS event.
+export type PageYjsMessage = {
+    teamId?: string
+    pageId: string
+    updateB64: string
+    originClientId?: string
+    originUserId?: string
+}
+
+export type PageYjsHandler = (msg: PageYjsMessage) => void
+
+// PageYjsAwarenessMessage is the payload of an UPDATE_PAGE_YJS_AWARENESS event.
+export type PageYjsAwarenessMessage = {
+    teamId?: string
+    pageId: string
+    awarenessB64: string
+    originClientId?: string
+    originUserId?: string
+}
+
+export type PageYjsAwarenessHandler = (msg: PageYjsAwarenessMessage) => void
+
+export type PageCategoryMessage = {
+    teamId?: string
+    userId?: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    category?: any
+}
+
+export type PageCategoryHandler = (msg: PageCategoryMessage) => void
+
+export type PageCategoryAssignMessage = {
+    teamId?: string
+    userId?: string
+    pageId: string
+    categoryId: string
+}
+
+export type PageCategoryAssignHandler = (msg: PageCategoryAssignMessage) => void
+
+export type PageChannelLinkMessage = {
+    teamId?: string
+    channelId: string
+    pageId: string
+    linked: boolean
+}
+
+export type PageChannelLinkHandler = (msg: PageChannelLinkMessage) => void
 
 // These are messages from the server
 export type WSMessage = {
@@ -47,6 +100,13 @@ export const ACTION_UPDATE_BOARD_CATEGORY = 'UPDATE_BOARD_CATEGORY'
 export const ACTION_UPDATE_SUBSCRIPTION = 'UPDATE_SUBSCRIPTION'
 export const ACTION_UPDATE_CARD_LIMIT_TIMESTAMP = 'UPDATE_CARD_LIMIT_TIMESTAMP'
 export const ACTION_REORDER_CATEGORIES = 'REORDER_CATEGORIES'
+export const ACTION_SEND_YJS_UPDATE = 'SEND_YJS_UPDATE'
+export const ACTION_UPDATE_PAGE_YJS = 'UPDATE_PAGE_YJS'
+export const ACTION_SEND_YJS_AWARENESS = 'SEND_YJS_AWARENESS'
+export const ACTION_UPDATE_PAGE_YJS_AWARENESS = 'UPDATE_PAGE_YJS_AWARENESS'
+export const ACTION_UPDATE_PAGE_CATEGORY = 'UPDATE_PAGE_CATEGORY'
+export const ACTION_UPDATE_PAGE_CATEGORY_ASSIGN = 'UPDATE_PAGE_CATEGORY_ASSIGN'
+export const ACTION_UPDATE_PAGE_CHANNEL_LINK = 'UPDATE_PAGE_CHANNEL_LINK'
 
 type WSSubscriptionMsg = {
     action?: string
@@ -126,6 +186,11 @@ class WSClient {
     onCardLimitTimestampChange: OnCardLimitTimestampChangeHandler[] = []
     onFollowBlock: FollowChangeHandler = () => {}
     onUnfollowBlock: FollowChangeHandler = () => {}
+    pageYjsHandlers: PageYjsHandler[] = []
+    pageYjsAwarenessHandlers: PageYjsAwarenessHandler[] = []
+    pageCategoryHandlers: PageCategoryHandler[] = []
+    pageCategoryAssignHandlers: PageCategoryAssignHandler[] = []
+    pageChannelLinkHandlers: PageChannelLinkHandler[] = []
     private notificationDelay = 100
     private reopenDelay = 3000
     private reopenRetryCount = 0
@@ -195,6 +260,108 @@ class WSClient {
         const command = {action: ACTION_AUTH, token}
 
         this.sendCommand(command)
+    }
+
+    sendYjsUpdateCommand(teamId: string, pageId: string, updateB64: string, clientId: string): void {
+        const command: WSCommand = {
+            action: ACTION_SEND_YJS_UPDATE,
+            teamId,
+            pageId,
+            updateB64,
+            clientId,
+        }
+        this.sendCommand(command)
+    }
+
+    addPageYjsHandler(handler: PageYjsHandler): void {
+        this.pageYjsHandlers.push(handler)
+    }
+
+    removePageYjsHandler(handler: PageYjsHandler): void {
+        this.pageYjsHandlers = this.pageYjsHandlers.filter((h) => h !== handler)
+    }
+
+    pageYjsHandler(message: PageYjsMessage): void {
+        // Filter to current team to match the rest of the plugin's behavior.
+        if (message.teamId && this.teamId && message.teamId !== this.teamId) {
+            return
+        }
+        for (const h of this.pageYjsHandlers) {
+            h(message)
+        }
+    }
+
+    sendYjsAwarenessCommand(teamId: string, pageId: string, awarenessB64: string, clientId: string): void {
+        const command: WSCommand = {
+            action: ACTION_SEND_YJS_AWARENESS,
+            teamId,
+            pageId,
+            awarenessB64,
+            clientId,
+        }
+        this.sendCommand(command)
+    }
+
+    addPageYjsAwarenessHandler(handler: PageYjsAwarenessHandler): void {
+        this.pageYjsAwarenessHandlers.push(handler)
+    }
+
+    removePageYjsAwarenessHandler(handler: PageYjsAwarenessHandler): void {
+        this.pageYjsAwarenessHandlers = this.pageYjsAwarenessHandlers.filter((h) => h !== handler)
+    }
+
+    pageYjsAwarenessHandler(message: PageYjsAwarenessMessage): void {
+        if (message.teamId && this.teamId && message.teamId !== this.teamId) {
+            return
+        }
+        for (const h of this.pageYjsAwarenessHandlers) {
+            h(message)
+        }
+    }
+
+    addPageCategoryHandler(handler: PageCategoryHandler): void {
+        this.pageCategoryHandlers.push(handler)
+    }
+
+    removePageCategoryHandler(handler: PageCategoryHandler): void {
+        this.pageCategoryHandlers = this.pageCategoryHandlers.filter((h) => h !== handler)
+    }
+
+    pageCategoryHandler(message: PageCategoryMessage): void {
+        for (const h of this.pageCategoryHandlers) {
+            h(message)
+        }
+    }
+
+    addPageCategoryAssignHandler(handler: PageCategoryAssignHandler): void {
+        this.pageCategoryAssignHandlers.push(handler)
+    }
+
+    removePageCategoryAssignHandler(handler: PageCategoryAssignHandler): void {
+        this.pageCategoryAssignHandlers = this.pageCategoryAssignHandlers.filter((h) => h !== handler)
+    }
+
+    pageCategoryAssignHandler(message: PageCategoryAssignMessage): void {
+        for (const h of this.pageCategoryAssignHandlers) {
+            h(message)
+        }
+    }
+
+    addPageChannelLinkHandler(handler: PageChannelLinkHandler): void {
+        this.pageChannelLinkHandlers.push(handler)
+    }
+
+    removePageChannelLinkHandler(handler: PageChannelLinkHandler): void {
+        this.pageChannelLinkHandlers = this.pageChannelLinkHandlers.filter((h) => h !== handler)
+    }
+
+    pageChannelLinkHandler(message: PageChannelLinkMessage): void {
+        if (message.teamId && this.teamId && message.teamId !== this.teamId) {
+            return
+        }
+        for (const h of this.pageChannelLinkHandlers) {
+            h(message)
+        }
     }
 
     sendSubscribeToTeamCommand(teamId: string): void {
@@ -476,6 +643,12 @@ class WSClient {
                     break
                 case ACTION_REORDER_CATEGORIES:
                     this.updateHandler(message)
+                    break
+                case ACTION_UPDATE_PAGE_YJS:
+                    this.pageYjsHandler(message as unknown as PageYjsMessage)
+                    break
+                case ACTION_UPDATE_PAGE_YJS_AWARENESS:
+                    this.pageYjsAwarenessHandler(message as unknown as PageYjsAwarenessMessage)
                     break
                 default:
                     Utils.logError(`Unexpected action: ${message.action}`)

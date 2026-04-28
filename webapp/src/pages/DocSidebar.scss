@@ -1,0 +1,23 @@
+// Pages feature — sidebar styles. Reuses BoardsSwitcher classes
+// (BoardsSwitcherWrapper / BoardsSwitcher / add-board-icon) for visual
+// consistency with Boards.
+
+.DocSidebar {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 0 0;
+
+    // Header search bar — top-padded match for Boards
+    > .BoardsSwitcherWrapper {
+        margin-bottom: 8px;
+    }
+
+    .DocSidebar__tree,
+    .DocSidebar__searchResults {
+        overflow-y: auto;
+    }
+
+    .DocSidebar__item:hover {
+        background: rgba(var(--center-channel-color-rgb), 0.08);
+    }
+}

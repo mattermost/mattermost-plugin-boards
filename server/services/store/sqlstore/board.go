@@ -46,6 +46,7 @@ func boardFields(tableAlias string) []string {
 		tableAlias + "create_at",
 		tableAlias + "update_at",
 		tableAlias + "delete_at",
+		"COALESCE(" + tableAlias + "layout, 'board')",
 	}
 }
 
@@ -69,6 +70,7 @@ func boardHistoryFields() []string {
 		"COALESCE(create_at, 0)",
 		"COALESCE(update_at, 0)",
 		"COALESCE(delete_at, 0)",
+		"COALESCE(layout, 'board')",
 	}
 
 	return fields
@@ -112,6 +114,7 @@ func (s *SQLStore) boardsFromRows(rows *sql.Rows) ([]*model.Board, error) {
 			&board.CreateAt,
 			&board.UpdateAt,
 			&board.DeleteAt,
+			&board.Layout,
 		)
 		if err != nil {
 			s.logger.Error("boardsFromRows scan error", mlog.Err(err))
@@ -310,6 +313,10 @@ func (s *SQLStore) insertBoard(db sq.BaseRunner, board *model.Board, userID stri
 	board.ModifiedBy = userID
 	board.UpdateAt = now
 
+	if board.Layout == "" {
+		board.Layout = model.BoardLayoutBoard
+	}
+
 	insertQueryValues := map[string]interface{}{
 		"id":               board.ID,
 		"team_id":          board.TeamID,
@@ -329,6 +336,7 @@ func (s *SQLStore) insertBoard(db sq.BaseRunner, board *model.Board, userID stri
 		"create_at":        board.CreateAt,
 		"update_at":        board.UpdateAt,
 		"delete_at":        board.DeleteAt,
+		"layout":           board.Layout,
 	}
 
 	if existingBoard != nil {
@@ -347,7 +355,8 @@ func (s *SQLStore) insertBoard(db sq.BaseRunner, board *model.Board, userID stri
 			Set("properties", propertiesBytes).
 			Set("card_properties", cardPropertiesBytes).
 			Set("update_at", board.UpdateAt).
-			Set("delete_at", board.DeleteAt)
+			Set("delete_at", board.DeleteAt).
+			Set("layout", board.Layout)
 
 		if _, err := query.Exec(); err != nil {
 			s.logger.Error(`InsertBoard error occurred while updating existing board`, mlog.String("boardID", board.ID), mlog.Err(err))
@@ -425,6 +434,7 @@ func (s *SQLStore) deleteBoardAndChildren(db sq.BaseRunner, boardID, userID stri
 		"create_at":        board.CreateAt,
 		"update_at":        now,
 		"delete_at":        now,
+		"layout":           board.Layout,
 	}
 
 	// writing board history
@@ -876,6 +886,11 @@ func (s *SQLStore) undeleteBoard(db sq.BaseRunner, boardID string, modifiedBy st
 		"create_at",
 		"update_at",
 		"delete_at",
+		"layout",
+	}
+
+	if board.Layout == "" {
+		board.Layout = model.BoardLayoutBoard
 	}
 
 	values := []interface{}{
@@ -897,6 +912,7 @@ func (s *SQLStore) undeleteBoard(db sq.BaseRunner, boardID string, modifiedBy st
 		board.CreateAt,
 		now,
 		0,
+		board.Layout,
 	}
 	insertHistoryQuery := s.getQueryBuilder(db).Insert(s.tablePrefix + "boards_history").
 		Columns(columns...).
