@@ -59,6 +59,21 @@ See `Makefile` targets and `webapp/package.json` scripts. Key commands:
 | Full plugin build | `MM_DEBUG=true make dist` |
 | E2E tests | `make e2e` (requires Docker + built dist) |
 
+### Browser automation with agent-browser
+
+The `agent-browser` CLI is installed globally and can be used for headless browser automation. The agent-browser skill is at `.cursor/skills/agent-browser/SKILL.md`. Basic workflow:
+
+```sh
+agent-browser open http://localhost:8065/login
+agent-browser snapshot -i          # see interactive elements
+agent-browser fill @e9 "admin"     # fill username
+agent-browser fill @e10 "Admin1234!"
+agent-browser click @e8            # click login
+agent-browser wait --load networkidle
+agent-browser screenshot output.png
+agent-browser close
+```
+
 ### Gotchas
 
 - The Boards API requires an `X-Requested-With: XMLHttpRequest` header for CSRF protection in addition to the `Authorization: Bearer` header.
