@@ -2,6 +2,8 @@
 
 ## Cursor Cloud specific instructions
 
+> **Do NOT commit `AGENTS.md`.** It is generated at startup by the update script from this file (`cursor.md`). If you see `AGENTS.md` in `git status`, leave it unstaged.
+
 ### Overview
 
 This is **Mattermost Boards** (formerly Focalboard) — a self-hosted project management plugin for Mattermost. It has two main build targets:
