@@ -26,6 +26,7 @@ const ViewTitle = (props: Props) => {
     const {board} = props
 
     const [title, setTitle] = useState(board.title)
+    const [cardPrefix, setCardPrefix] = useState(board.cardPrefix || '')
     const onEditTitleSave = useCallback(() => mutator.changeBoardTitle(board.id, board.title, title), [board.id, board.title, title])
     const onEditTitleCancel = useCallback(() => setTitle(board.title), [board.title])
     const onDescriptionBlur = useCallback((text) => mutator.changeBoardDescription(board.id, board.id, board.description, text), [board.id, board.description])
@@ -35,6 +36,12 @@ const ViewTitle = (props: Props) => {
     }, [board.id, board.icon])
     const onShowDescription = useCallback(() => mutator.showBoardDescription(board.id, Boolean(board.showDescription), true), [board.id, board.showDescription])
     const onHideDescription = useCallback(() => mutator.showBoardDescription(board.id, Boolean(board.showDescription), false), [board.id, board.showDescription])
+    const onCardPrefixSave = useCallback(() => {
+        const normalized = cardPrefix.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 10)
+        setCardPrefix(normalized)
+        mutator.changeBoardCardPrefix(board.id, board.cardPrefix || '', normalized)
+    }, [board.id, board.cardPrefix, cardPrefix])
+    const onCardPrefixCancel = useCallback(() => setCardPrefix(board.cardPrefix || ''), [board.cardPrefix])
     const canEditBoardProperties = useHasCurrentBoardPermissions([Permission.ManageBoardProperties])
 
     const readonly = props.readonly || !canEditBoardProperties
@@ -111,6 +118,37 @@ const ViewTitle = (props: Props) => {
                     spellCheck={true}
                 />
             </div>
+
+            {!readonly &&
+                <div className='card-prefix-row'>
+                    <span className='card-prefix-label'>
+                        <CompassIcon icon='ticket-outline'/>
+                        <FormattedMessage
+                            id='ViewTitle.ticket-prefix'
+                            defaultMessage='Ticket prefix'
+                        />
+                    </span>
+                    <Editable
+                        className='card-prefix-input'
+                        value={cardPrefix}
+                        placeholderText={intl.formatMessage({id: 'ViewTitle.ticket-prefix-placeholder', defaultMessage: 'e.g. PROJ'})}
+                        onChange={(newPrefix) => setCardPrefix(newPrefix.toUpperCase())}
+                        saveOnEsc={true}
+                        onSave={onCardPrefixSave}
+                        onCancel={onCardPrefixCancel}
+                        readonly={readonly}
+                    />
+                    {board.cardPrefix &&
+                        <span className='card-prefix-example'>
+                            <FormattedMessage
+                                id='ViewTitle.ticket-prefix-example'
+                                defaultMessage='Cards will be numbered {example}'
+                                values={{example: `${board.cardPrefix}-1, ${board.cardPrefix}-2, ...`}}
+                            />
+                        </span>
+                    }
+                </div>
+            }
 
             {board.showDescription &&
                 <div className='description'>

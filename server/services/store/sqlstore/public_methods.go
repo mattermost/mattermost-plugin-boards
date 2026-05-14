@@ -922,3 +922,13 @@ func (s *SQLStore) UpsertTeamSignupToken(team model.Team) error {
 	return s.upsertTeamSignupToken(s.db, team)
 
 }
+
+func (s *SQLStore) IncrementBoardCardCount(boardID string) (int64, error) {
+	return s.incrementBoardCardCount(s.db, boardID)
+
+}
+
+func (s *SQLStore) GetCardByTicketCode(boardPrefix string, cardNumber int64, teamID string) (*model.Block, error) {
+	return s.getCardByTicketCode(s.db, boardPrefix, cardNumber, teamID)
+
+}
