@@ -4,20 +4,27 @@
 import React from 'react'
 
 import {createMemoryHistory} from 'history'
-import {Router} from 'react-router-dom'
+import {Route, Router} from 'react-router-dom'
 
-import {render} from '@testing-library/react'
+import {act, render, screen, waitFor} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import {Provider as ReduxProvider} from 'react-redux'
 
 import configureStore from 'redux-mock-store'
 
+import {mocked} from 'jest-mock'
+
 import {TestBlockFactory} from '../../test/testBlockFactory'
 
 import {wrapIntl, wrapRBDNDDroppable} from '../../testUtils'
 
+import mutator from '../../mutator'
+
 import SidebarCategory from './sidebarCategory'
+
+jest.mock('../../mutator')
+const mockedMutator = mocked(mutator)
 
 describe('components/sidebarCategory', () => {
     const board = TestBlockFactory.createBoard()
@@ -223,5 +230,168 @@ describe('components/sidebarCategory', () => {
         expect(subItems).toBeDefined()
         userEvent.click(subItems[0] as Element)
         expect(mockTemplateClose).not.toBeCalled()
+    })
+
+    describe('onDeleteBoard navigation', () => {
+        // State that includes board memberships so the Delete option is visible
+        const deleteNavState = {
+            users: {
+                me: {
+                    id: 'user_id_1',
+                    props: {},
+                },
+                myConfig: {},
+            },
+            boards: {
+                current: board1.id,
+                boards: {
+                    [board1.id]: board1,
+                    [board2.id]: board2,
+                },
+                templates: {},
+                myBoardMemberships: {
+                    [board1.id]: {userId: 'user_id_1', schemeAdmin: true},
+                    [board2.id]: {userId: 'user_id_1', schemeAdmin: true},
+                },
+            },
+            cards: {
+                cards: {},
+                current: '',
+            },
+            views: {
+                current: '',
+                views: {},
+            },
+            teams: {
+                current: {
+                    id: 'team-id',
+                },
+            },
+        }
+
+        let portalEl: HTMLElement
+
+        beforeEach(() => {
+            jest.useFakeTimers()
+            portalEl = document.createElement('div')
+            portalEl.id = 'focalboard-root-portal'
+            document.body.appendChild(portalEl)
+        })
+
+        afterEach(() => {
+            jest.useRealTimers()
+            document.body.removeChild(portalEl)
+            mockedMutator.deleteBoard.mockReset()
+        })
+
+        const renderForDelete = (
+            testHistory: ReturnType<typeof createMemoryHistory>,
+            categoryBoarsdProps: typeof categoryBoards1,
+            boardsList: typeof boards,
+            allCats: typeof allCategoryBoards,
+        ) => {
+            const mockStore = configureStore([])
+            const store = mockStore(deleteNavState)
+
+            return render(
+                wrapRBDNDDroppable(wrapIntl(
+                    <ReduxProvider store={store}>
+                        <Router history={testHistory}>
+                            <Route path='/team/:teamId/:boardId'>
+                                <SidebarCategory
+                                    hideSidebar={jest.fn()}
+                                    activeBoardID={board1.id}
+                                    categoryBoards={categoryBoarsdProps}
+                                    boards={boardsList}
+                                    allCategories={allCats}
+                                    index={0}
+                                />
+                            </Route>
+                        </Router>
+                    </ReduxProvider>,
+                )),
+            )
+        }
+
+        const triggerDeleteAndGetAfterRedo = async () => {
+            // Open the first board item's options menu
+            const menuWrappers = document.querySelectorAll('.SidebarBoardItem div.MenuWrapper')
+            act(() => { userEvent.click(menuWrappers[0] as Element) })
+
+            // Click "Delete board"
+            const deleteOption = await screen.findByText('Delete board')
+            act(() => { userEvent.click(deleteOption) })
+
+            // Click "Delete" in the confirmation dialog
+            const deleteButton = await screen.findByText('Delete')
+            await act(async () => { userEvent.click(deleteButton) })
+
+            await waitFor(() => expect(mockedMutator.deleteBoard).toBeCalledTimes(1))
+
+            return mockedMutator.deleteBoard.mock.calls[0][2] as () => Promise<void>
+        }
+
+        test('navigates to adjacent board when multiple boards are in the category', async () => {
+            const testHistory = createMemoryHistory()
+            testHistory.push('/team/team-id/board_1_id')
+            testHistory.push = jest.fn()
+
+            // categoryBoards1 has board1 and board2 in boardMetadata
+            renderForDelete(testHistory, categoryBoards1, [board1, board2], allCategoryBoards)
+
+            const afterRedo = await triggerDeleteAndGetAfterRedo()
+
+            await act(async () => {
+                await afterRedo()
+                jest.advanceTimersByTime(200)
+            })
+
+            // board1 is at index 0 of [board1, board2] → nextIndex = 1 → board2
+            expect(testHistory.push).toHaveBeenCalledWith('/team/team-id/board_2_id')
+        })
+
+        test('falls back to a board in another category when no adjacent board exists', async () => {
+            const testHistory = createMemoryHistory()
+            testHistory.push('/team/team-id/board_1_id')
+            testHistory.push = jest.fn()
+
+            // Only board1 is in the current category
+            const singleBoardCat = {...categoryBoards1, boardMetadata: [{boardID: board1.id, hidden: false}]}
+            // Another category has board2
+            const otherCatWithBoard2 = {...categoryBoards2, boardMetadata: [{boardID: board2.id, hidden: false}]}
+            const allCatsForTest = [singleBoardCat, otherCatWithBoard2, categoryBoards3]
+
+            renderForDelete(testHistory, singleBoardCat, [board1], allCatsForTest)
+
+            const afterRedo = await triggerDeleteAndGetAfterRedo()
+
+            await act(async () => {
+                await afterRedo()
+                jest.advanceTimersByTime(200)
+            })
+
+            expect(testHistory.push).toHaveBeenCalledWith('/team/team-id/board_2_id')
+        })
+
+        test('navigates to team page when no boards remain after deletion', async () => {
+            const testHistory = createMemoryHistory()
+            testHistory.push('/team/team-id/board_1_id')
+            testHistory.push = jest.fn()
+
+            // Only board1 in the only category
+            const singleBoardCat = {...categoryBoards1, boardMetadata: [{boardID: board1.id, hidden: false}]}
+            const allCatsForTest = [singleBoardCat]
+
+            renderForDelete(testHistory, singleBoardCat, [board1], allCatsForTest)
+
+            const afterRedo = await triggerDeleteAndGetAfterRedo()
+
+            await act(async () => {
+                await afterRedo()
+                jest.advanceTimersByTime(200)
+            })
+
+            expect(testHistory.push).toHaveBeenCalledWith('/team/team-id')
+        })
     })
 })
