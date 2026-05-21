@@ -19,7 +19,6 @@ func (a *API) registerTeamsRoutes(r *mux.Router) {
 	r.HandleFunc("/teams/{teamID}", a.sessionRequired(a.handleGetTeam)).Methods("GET")
 	r.HandleFunc("/teams/{teamID}/users", a.sessionRequired(a.handleGetTeamUsers)).Methods("GET")
 	r.HandleFunc("/teams/{teamID}/users", a.sessionRequired(a.handleGetTeamUsersByID)).Methods("POST")
-	r.HandleFunc("/teams/{teamID}/archive/export", a.sessionRequired(a.handleArchiveExportTeam)).Methods("GET")
 }
 
 func (a *API) handleGetTeams(w http.ResponseWriter, r *http.Request) {
@@ -45,10 +44,10 @@ func (a *API) handleGetTeams(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	userID := getUserID(r)
-
 	teams, err := a.app.GetTeamsForUser(userID)
 	if err != nil {
 		a.errorResponse(w, r, err)
+		return
 	}
 
 	auditRec := a.makeAuditRecord(r, "getTeams", audit.Fail)
@@ -106,9 +105,11 @@ func (a *API) handleGetTeam(w http.ResponseWriter, r *http.Request) {
 	team, err = a.app.GetTeam(teamID)
 	if model.IsErrNotFound(err) {
 		a.errorResponse(w, r, model.NewErrUnauthorized("invalid team"))
+		return
 	}
 	if err != nil {
 		a.errorResponse(w, r, err)
+		return
 	}
 
 	auditRec := a.makeAuditRecord(r, "getTeam", audit.Fail)
@@ -166,6 +167,7 @@ func (a *API) handleGetTeamUsers(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	teamID := vars["teamID"]
 	userID := getUserID(r)
+
 	query := r.URL.Query()
 	searchQuery := query.Get("search")
 	excludeBots := r.URL.Query().Get("exclude_bots") == True

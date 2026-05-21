@@ -8,7 +8,13 @@ exports[`components/content/TextElement return a textElement 1`] = `
     <div
       class="octo-editor-preview octo-placeholder"
       data-testid="preview-element"
-    />
+    >
+      <div
+        class="mocked-message-html"
+      >
+        Test Comment
+      </div>
+    </div>
   </div>
 </div>
 `;

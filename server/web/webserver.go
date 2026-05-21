@@ -4,6 +4,7 @@
 package web
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -12,7 +13,9 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 	"text/template"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -36,6 +39,8 @@ type Server struct {
 	port       int
 	ssl        bool
 	logger     mlog.LoggerIFace
+	started    bool
+	startMutex sync.Mutex
 }
 
 // NewServer creates a new instance of the webserver.
@@ -109,6 +114,14 @@ func (ws *Server) registerRoutes() {
 
 // Start runs the web server and start listening for connections.
 func (ws *Server) Start() {
+	ws.startMutex.Lock()
+	defer ws.startMutex.Unlock()
+
+	if ws.started {
+		ws.logger.Debug("server already started, skipping")
+		return
+	}
+
 	ws.registerRoutes()
 	if ws.port == -1 {
 		ws.logger.Debug("server not bind to any port")
@@ -118,6 +131,7 @@ func (ws *Server) Start() {
 	isSSL := ws.ssl && fileExists("./cert/cert.pem") && fileExists("./cert/key.pem")
 	if isSSL {
 		ws.logger.Info("https server started", mlog.Int("port", ws.port))
+		ws.started = true
 		go func() {
 			if err := ws.ListenAndServeTLS("./cert/cert.pem", "./cert/key.pem"); err != nil {
 				ws.logger.Fatal("ListenAndServeTLS", mlog.Err(err))
@@ -128,6 +142,7 @@ func (ws *Server) Start() {
 	}
 
 	ws.logger.Info("http server started", mlog.Int("port", ws.port))
+	ws.started = true
 	go func() {
 		if err := ws.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			ws.logger.Fatal("ListenAndServeTLS", mlog.Err(err))
@@ -137,7 +152,17 @@ func (ws *Server) Start() {
 }
 
 func (ws *Server) Shutdown() error {
-	return ws.Close()
+	ws.startMutex.Lock()
+	defer ws.startMutex.Unlock()
+
+	if !ws.started {
+		return nil
+	}
+
+	ws.started = false
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	return ws.Server.Shutdown(ctx)
 }
 
 // fileExists returns true if a file exists at the path.

@@ -130,7 +130,7 @@ describe('components/cardDetail/CardDetail', () => {
         expect(container).toBeDefined()
 
         // Comments show up
-        const comments = container!.querySelectorAll('.mocked-message-html')
+        const comments = container!.querySelectorAll('.comment-markdown .mocked-message-html')
         expect(comments.length).toBe(2)
 
         // Add comment option visible when readonly mode is off
@@ -194,7 +194,7 @@ describe('components/cardDetail/CardDetail', () => {
         expect(container).toBeDefined()
 
         // comments show up
-        const comments = container!.querySelectorAll('.mocked-message-html')
+        const comments = container!.querySelectorAll('.comment-markdown .mocked-message-html')
         expect(comments.length).toBe(2)
 
         // Add comment option is not shown in readonly mode

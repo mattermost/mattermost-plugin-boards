@@ -11,6 +11,7 @@ import (
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,9 +38,10 @@ func TestGetBoardsForCompliance(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, false)
 		defer th.TearDown()
 
-		_ = th.CreateBoards(testTeamID, model.BoardTypeOpen, 2)
+		teamID := mmModel.NewId()
+		_ = th.CreateBoards(teamID, model.BoardTypeOpen, 2)
 
-		bcr, resp := clients.Admin.GetBoardsForCompliance(testTeamID, 0, 0)
+		bcr, resp := clients.Admin.GetBoardsForCompliance(teamID, 0, 0)
 
 		th.CheckNotImplemented(resp)
 		require.Nil(t, bcr)
@@ -49,9 +51,10 @@ func TestGetBoardsForCompliance(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, true)
 		defer th.TearDown()
 
-		_ = th.CreateBoards(testTeamID, model.BoardTypeOpen, 2)
+		teamID := mmModel.NewId()
+		_ = th.CreateBoards(teamID, model.BoardTypeOpen, 2)
 
-		bcr, resp := clients.Anon.GetBoardsForCompliance(testTeamID, 0, 0)
+		bcr, resp := clients.Anon.GetBoardsForCompliance(teamID, 0, 0)
 
 		th.CheckUnauthorized(resp)
 		require.Nil(t, bcr)
@@ -61,9 +64,10 @@ func TestGetBoardsForCompliance(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, true)
 		defer th.TearDown()
 
-		_ = th.CreateBoards(testTeamID, model.BoardTypeOpen, 2)
+		teamID := mmModel.NewId()
+		_ = th.CreateBoards(teamID, model.BoardTypeOpen, 2)
 
-		bcr, resp := clients.TeamMember.GetBoardsForCompliance(testTeamID, 0, 0)
+		bcr, resp := clients.TeamMember.GetBoardsForCompliance(teamID, 0, 0)
 
 		th.CheckUnauthorized(resp)
 		require.Nil(t, bcr)
@@ -73,10 +77,11 @@ func TestGetBoardsForCompliance(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, true)
 		defer th.TearDown()
 
+		teamID := mmModel.NewId()
 		const count = 10
-		_ = th.CreateBoards(testTeamID, model.BoardTypeOpen, count)
+		_ = th.CreateBoards(teamID, model.BoardTypeOpen, count)
 
-		bcr, resp := clients.Admin.GetBoardsForCompliance(testTeamID, 0, 0)
+		bcr, resp := clients.Admin.GetBoardsForCompliance(teamID, 0, 0)
 		th.CheckOK(resp)
 		require.False(t, bcr.HasNext)
 		require.Len(t, bcr.Results, count)
@@ -86,14 +91,15 @@ func TestGetBoardsForCompliance(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, true)
 		defer th.TearDown()
 
+		teamID := mmModel.NewId()
 		const count = 20
 		const perPage = 3
-		_ = th.CreateBoards(testTeamID, model.BoardTypeOpen, count)
+		_ = th.CreateBoards(teamID, model.BoardTypeOpen, count)
 
 		boards := make([]*model.Board, 0, count)
 		page := 0
 		for {
-			bcr, resp := clients.Admin.GetBoardsForCompliance(testTeamID, page, perPage)
+			bcr, resp := clients.Admin.GetBoardsForCompliance(teamID, page, perPage)
 			page++
 			th.CheckOK(resp)
 			boards = append(boards, bcr.Results...)
@@ -109,9 +115,13 @@ func TestGetBoardsForCompliance(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, true)
 		defer th.TearDown()
 
-		_ = th.CreateBoards(testTeamID, model.BoardTypeOpen, 2)
+		// Create boards with a valid team ID
+		teamID := mmModel.NewId()
+		_ = th.CreateBoards(teamID, model.BoardTypeOpen, 2)
 
-		bcr, resp := clients.Admin.GetBoardsForCompliance(utils.NewID(utils.IDTypeTeam), 0, 0)
+		// Try to get compliance with an invalid team ID format (27 characters instead of 26)
+		invalidTeamID := utils.NewID(utils.IDTypeTeam) // 27 characters - invalid format for Mattermost team ID
+		bcr, resp := clients.Admin.GetBoardsForCompliance(invalidTeamID, 0, 0)
 
 		th.CheckBadRequest(resp)
 		require.Nil(t, bcr)
@@ -123,9 +133,10 @@ func TestGetBoardsComplianceHistory(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, false)
 		defer th.TearDown()
 
-		_ = th.CreateBoards(testTeamID, model.BoardTypeOpen, 2)
+		teamID := mmModel.NewId()
+		_ = th.CreateBoards(teamID, model.BoardTypeOpen, 2)
 
-		bchr, resp := clients.Admin.GetBoardsComplianceHistory(utils.GetMillis()-OneDay, true, testTeamID, 0, 0)
+		bchr, resp := clients.Admin.GetBoardsComplianceHistory(utils.GetMillis()-OneDay, true, teamID, 0, 0)
 
 		th.CheckNotImplemented(resp)
 		require.Nil(t, bchr)
@@ -135,9 +146,10 @@ func TestGetBoardsComplianceHistory(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, true)
 		defer th.TearDown()
 
-		_ = th.CreateBoards(testTeamID, model.BoardTypeOpen, 2)
+		teamID := mmModel.NewId()
+		_ = th.CreateBoards(teamID, model.BoardTypeOpen, 2)
 
-		bchr, resp := clients.Anon.GetBoardsComplianceHistory(utils.GetMillis()-OneDay, true, testTeamID, 0, 0)
+		bchr, resp := clients.Anon.GetBoardsComplianceHistory(utils.GetMillis()-OneDay, true, teamID, 0, 0)
 
 		th.CheckUnauthorized(resp)
 		require.Nil(t, bchr)
@@ -147,9 +159,10 @@ func TestGetBoardsComplianceHistory(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, true)
 		defer th.TearDown()
 
-		_ = th.CreateBoards(testTeamID, model.BoardTypeOpen, 2)
+		teamID := mmModel.NewId()
+		_ = th.CreateBoards(teamID, model.BoardTypeOpen, 2)
 
-		bchr, resp := clients.TeamMember.GetBoardsComplianceHistory(utils.GetMillis()-OneDay, true, testTeamID, 0, 0)
+		bchr, resp := clients.TeamMember.GetBoardsComplianceHistory(utils.GetMillis()-OneDay, true, teamID, 0, 0)
 
 		th.CheckUnauthorized(resp)
 		require.Nil(t, bchr)
@@ -159,8 +172,9 @@ func TestGetBoardsComplianceHistory(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, true)
 		defer th.TearDown()
 
+		teamID := mmModel.NewId()
 		const count = 10
-		boards := th.CreateBoards(testTeamID, model.BoardTypeOpen, count)
+		boards := th.CreateBoards(teamID, model.BoardTypeOpen, count)
 
 		deleted, resp := th.Client.DeleteBoard(boards[0].ID)
 		th.CheckOK(resp)
@@ -170,7 +184,7 @@ func TestGetBoardsComplianceHistory(t *testing.T) {
 		th.CheckOK(resp)
 		require.True(t, deleted)
 
-		bchr, resp := clients.Admin.GetBoardsComplianceHistory(utils.GetMillis()-OneDay, false, testTeamID, 0, 0)
+		bchr, resp := clients.Admin.GetBoardsComplianceHistory(utils.GetMillis()-OneDay, false, teamID, 0, 0)
 		th.CheckOK(resp)
 		require.False(t, bchr.HasNext)
 		require.Len(t, bchr.Results, count-2) // two boards deleted
@@ -180,8 +194,9 @@ func TestGetBoardsComplianceHistory(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, true)
 		defer th.TearDown()
 
+		teamID := mmModel.NewId()
 		const count = 10
-		boards := th.CreateBoards(testTeamID, model.BoardTypeOpen, count)
+		boards := th.CreateBoards(teamID, model.BoardTypeOpen, count)
 
 		deleted, resp := th.Client.DeleteBoard(boards[0].ID)
 		th.CheckOK(resp)
@@ -191,7 +206,7 @@ func TestGetBoardsComplianceHistory(t *testing.T) {
 		th.CheckOK(resp)
 		require.True(t, deleted)
 
-		bchr, resp := clients.Admin.GetBoardsComplianceHistory(utils.GetMillis()-OneDay, true, testTeamID, 0, 0)
+		bchr, resp := clients.Admin.GetBoardsComplianceHistory(utils.GetMillis()-OneDay, true, teamID, 0, 0)
 		th.CheckOK(resp)
 		require.False(t, bchr.HasNext)
 		require.Len(t, bchr.Results, count+2) // both deleted boards have 2 history records each
@@ -201,14 +216,15 @@ func TestGetBoardsComplianceHistory(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, true)
 		defer th.TearDown()
 
+		teamID := mmModel.NewId()
 		const count = 20
 		const perPage = 3
-		_ = th.CreateBoards(testTeamID, model.BoardTypeOpen, count)
+		_ = th.CreateBoards(teamID, model.BoardTypeOpen, count)
 
 		boardHistory := make([]*model.BoardHistory, 0, count)
 		page := 0
 		for {
-			bchr, resp := clients.Admin.GetBoardsComplianceHistory(utils.GetMillis()-OneDay, true, testTeamID, page, perPage)
+			bchr, resp := clients.Admin.GetBoardsComplianceHistory(utils.GetMillis()-OneDay, true, teamID, page, perPage)
 			page++
 			th.CheckOK(resp)
 			boardHistory = append(boardHistory, bchr.Results...)
@@ -224,9 +240,13 @@ func TestGetBoardsComplianceHistory(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, true)
 		defer th.TearDown()
 
-		_ = th.CreateBoards(testTeamID, model.BoardTypeOpen, 2)
+		// Create boards with a valid team ID
+		teamID := mmModel.NewId()
+		_ = th.CreateBoards(teamID, model.BoardTypeOpen, 2)
 
-		bchr, resp := clients.Admin.GetBoardsComplianceHistory(utils.GetMillis()-OneDay, true, utils.NewID(utils.IDTypeTeam), 0, 0)
+		// Try to get compliance history with an invalid team ID format (27 characters instead of 26)
+		invalidTeamID := utils.NewID(utils.IDTypeTeam) // 27 characters - invalid format for Mattermost team ID
+		bchr, resp := clients.Admin.GetBoardsComplianceHistory(utils.GetMillis()-OneDay, true, invalidTeamID, 0, 0)
 
 		th.CheckBadRequest(resp)
 		require.Nil(t, bchr)
@@ -238,9 +258,10 @@ func TestGetBlocksComplianceHistory(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, false)
 		defer th.TearDown()
 
-		board, _ := th.CreateBoardAndCards(testTeamID, model.BoardTypeOpen, 2)
+		teamID := mmModel.NewId()
+		board, _ := th.CreateBoardAndCards(teamID, model.BoardTypeOpen, 2)
 
-		bchr, resp := clients.Admin.GetBlocksComplianceHistory(utils.GetMillis()-OneDay, true, testTeamID, board.ID, 0, 0)
+		bchr, resp := clients.Admin.GetBlocksComplianceHistory(utils.GetMillis()-OneDay, true, teamID, board.ID, 0, 0)
 
 		th.CheckNotImplemented(resp)
 		require.Nil(t, bchr)
@@ -250,9 +271,10 @@ func TestGetBlocksComplianceHistory(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, true)
 		defer th.TearDown()
 
-		board, _ := th.CreateBoardAndCards(testTeamID, model.BoardTypeOpen, 2)
+		teamID := mmModel.NewId()
+		board, _ := th.CreateBoardAndCards(teamID, model.BoardTypeOpen, 2)
 
-		bchr, resp := clients.Anon.GetBlocksComplianceHistory(utils.GetMillis()-OneDay, true, testTeamID, board.ID, 0, 0)
+		bchr, resp := clients.Anon.GetBlocksComplianceHistory(utils.GetMillis()-OneDay, true, teamID, board.ID, 0, 0)
 
 		th.CheckUnauthorized(resp)
 		require.Nil(t, bchr)
@@ -262,9 +284,10 @@ func TestGetBlocksComplianceHistory(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, true)
 		defer th.TearDown()
 
-		board, _ := th.CreateBoardAndCards(testTeamID, model.BoardTypeOpen, 2)
+		teamID := mmModel.NewId()
+		board, _ := th.CreateBoardAndCards(teamID, model.BoardTypeOpen, 2)
 
-		bchr, resp := clients.TeamMember.GetBlocksComplianceHistory(utils.GetMillis()-OneDay, true, testTeamID, board.ID, 0, 0)
+		bchr, resp := clients.TeamMember.GetBlocksComplianceHistory(utils.GetMillis()-OneDay, true, teamID, board.ID, 0, 0)
 
 		th.CheckUnauthorized(resp)
 		require.Nil(t, bchr)
@@ -274,8 +297,9 @@ func TestGetBlocksComplianceHistory(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, true)
 		defer th.TearDown()
 
+		teamID := mmModel.NewId()
 		const count = 10
-		board, cards := th.CreateBoardAndCards(testTeamID, model.BoardTypeOpen, count)
+		board, cards := th.CreateBoardAndCards(teamID, model.BoardTypeOpen, count)
 
 		deleted, resp := th.Client.DeleteBlock(board.ID, cards[0].ID, true)
 		th.CheckOK(resp)
@@ -285,7 +309,7 @@ func TestGetBlocksComplianceHistory(t *testing.T) {
 		th.CheckOK(resp)
 		require.True(t, deleted)
 
-		bchr, resp := clients.Admin.GetBlocksComplianceHistory(utils.GetMillis()-OneDay, false, testTeamID, board.ID, 0, 0)
+		bchr, resp := clients.Admin.GetBlocksComplianceHistory(utils.GetMillis()-OneDay, false, teamID, board.ID, 0, 0)
 		th.CheckOK(resp)
 		require.False(t, bchr.HasNext)
 		require.Len(t, bchr.Results, count-2) // 2 blocks deleted
@@ -295,8 +319,9 @@ func TestGetBlocksComplianceHistory(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, true)
 		defer th.TearDown()
 
+		teamID := mmModel.NewId()
 		const count = 10
-		board, cards := th.CreateBoardAndCards(testTeamID, model.BoardTypeOpen, count)
+		board, cards := th.CreateBoardAndCards(teamID, model.BoardTypeOpen, count)
 
 		deleted, resp := th.Client.DeleteBlock(board.ID, cards[0].ID, true)
 		th.CheckOK(resp)
@@ -306,7 +331,7 @@ func TestGetBlocksComplianceHistory(t *testing.T) {
 		th.CheckOK(resp)
 		require.True(t, deleted)
 
-		bchr, resp := clients.Admin.GetBlocksComplianceHistory(utils.GetMillis()-OneDay, true, testTeamID, board.ID, 0, 0)
+		bchr, resp := clients.Admin.GetBlocksComplianceHistory(utils.GetMillis()-OneDay, true, teamID, board.ID, 0, 0)
 		th.CheckOK(resp)
 		require.False(t, bchr.HasNext)
 		require.Len(t, bchr.Results, count+2) // both deleted boards have 2 history records each
@@ -316,14 +341,15 @@ func TestGetBlocksComplianceHistory(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, true)
 		defer th.TearDown()
 
+		teamID := mmModel.NewId()
 		const count = 20
 		const perPage = 3
-		board, _ := th.CreateBoardAndCards(testTeamID, model.BoardTypeOpen, count)
+		board, _ := th.CreateBoardAndCards(teamID, model.BoardTypeOpen, count)
 
 		blockHistory := make([]*model.BlockHistory, 0, count)
 		page := 0
 		for {
-			bchr, resp := clients.Admin.GetBlocksComplianceHistory(utils.GetMillis()-OneDay, true, testTeamID, board.ID, page, perPage)
+			bchr, resp := clients.Admin.GetBlocksComplianceHistory(utils.GetMillis()-OneDay, true, teamID, board.ID, page, perPage)
 			page++
 			th.CheckOK(resp)
 			blockHistory = append(blockHistory, bchr.Results...)
@@ -339,9 +365,13 @@ func TestGetBlocksComplianceHistory(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, true)
 		defer th.TearDown()
 
-		board, _ := th.CreateBoardAndCards(testTeamID, model.BoardTypeOpen, 2)
+		// Create board with a valid team ID
+		teamID := mmModel.NewId()
+		board, _ := th.CreateBoardAndCards(teamID, model.BoardTypeOpen, 2)
 
-		bchr, resp := clients.Admin.GetBlocksComplianceHistory(utils.GetMillis()-OneDay, true, utils.NewID(utils.IDTypeTeam), board.ID, 0, 0)
+		// Try to get compliance history with an invalid team ID format (27 characters instead of 26)
+		invalidTeamID := utils.NewID(utils.IDTypeTeam) // 27 characters - invalid format for Mattermost team ID
+		bchr, resp := clients.Admin.GetBlocksComplianceHistory(utils.GetMillis()-OneDay, true, invalidTeamID, board.ID, 0, 0)
 
 		th.CheckBadRequest(resp)
 		require.Nil(t, bchr)
@@ -351,9 +381,10 @@ func TestGetBlocksComplianceHistory(t *testing.T) {
 		th, clients := setupTestHelperForCompliance(t, true)
 		defer th.TearDown()
 
-		_, _ = th.CreateBoardAndCards(testTeamID, model.BoardTypeOpen, 2)
+		teamID := mmModel.NewId()
+		_, _ = th.CreateBoardAndCards(teamID, model.BoardTypeOpen, 2)
 
-		bchr, resp := clients.Admin.GetBlocksComplianceHistory(utils.GetMillis()-OneDay, true, testTeamID, utils.NewID(utils.IDTypeBoard), 0, 0)
+		bchr, resp := clients.Admin.GetBlocksComplianceHistory(utils.GetMillis()-OneDay, true, teamID, utils.NewID(utils.IDTypeBoard), 0, 0)
 
 		th.CheckBadRequest(resp)
 		require.Nil(t, bchr)

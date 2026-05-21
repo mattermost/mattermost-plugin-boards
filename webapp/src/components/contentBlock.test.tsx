@@ -88,6 +88,11 @@ describe('components/contentBlock', () => {
         clientConfig: {
             value: {},
         },
+        teams: {
+            current: null,
+            currentId: '',
+            allTeams: [],
+        },
     }
     const store = mockStateStore([], state)
 

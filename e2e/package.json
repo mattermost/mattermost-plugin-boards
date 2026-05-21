@@ -1,0 +1,26 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "e2e-test": "playwright test --headed --project=chromium"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@mattermost/client": "11.4.0",
+    "@mattermost/types": "11.4.0",
+    "@playwright/test": "1.58.2",
+    "@testcontainers/postgresql": "11.13.0",
+    "@types/node": "25.5.0",
+    "pg": "8.20.0",
+    "playwright": "1.58.2",
+    "testcontainers": "11.13.0"
+  }
+}

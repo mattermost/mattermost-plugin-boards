@@ -48,7 +48,13 @@ func (a *App) DuplicateBlock(boardID string, blockID string, userID string, asTe
 
 	err = a.CopyAndUpdateCardFiles(boardID, userID, blocks, asTemplate)
 	if err != nil {
-		return nil, err
+		for _, block := range blocks {
+			if dErr := a.store.DeleteBlock(block.ID, userID); dErr != nil {
+				a.logger.Error("Cannot delete block after duplication error when updating block's file info",
+					mlog.String("blockID", block.ID), mlog.Err(dErr))
+			}
+		}
+		return nil, fmt.Errorf("could not patch file IDs while duplicating block %s: %w", blockID, err)
 	}
 
 	a.blockChangeNotifier.Enqueue(func() error {

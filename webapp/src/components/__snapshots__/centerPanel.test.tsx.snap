@@ -87,7 +87,13 @@ exports[`components/centerPanel Clicking on the Hidden card count should open a 
               <div
                 class="octo-editor-preview"
                 data-testid="preview-element"
-              />
+              >
+                <div
+                  class="mocked-message-html"
+                >
+                  Test Comment
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -795,7 +801,13 @@ exports[`components/centerPanel return centerPanel and click on card to show car
               <div
                 class="octo-editor-preview"
                 data-testid="preview-element"
-              />
+              >
+                <div
+                  class="mocked-message-html"
+                >
+                  Test Comment
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1348,7 +1360,13 @@ exports[`components/centerPanel return centerPanel and click on new card to edit
               <div
                 class="octo-editor-preview"
                 data-testid="preview-element"
-              />
+              >
+                <div
+                  class="mocked-message-html"
+                >
+                  Test Comment
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1989,7 +2007,13 @@ exports[`components/centerPanel return centerPanel and press touch 1 with readon
               <div
                 class="octo-editor-preview"
                 data-testid="preview-element"
-              />
+              >
+                <div
+                  class="mocked-message-html"
+                >
+                  Test Comment
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -2405,7 +2429,13 @@ exports[`components/centerPanel return centerPanel and press touch ctrl+d for on
               <div
                 class="octo-editor-preview"
                 data-testid="preview-element"
-              />
+              >
+                <div
+                  class="mocked-message-html"
+                >
+                  Test Comment
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -3063,7 +3093,13 @@ exports[`components/centerPanel return centerPanel and press touch del for one c
               <div
                 class="octo-editor-preview"
                 data-testid="preview-element"
-              />
+              >
+                <div
+                  class="mocked-message-html"
+                >
+                  Test Comment
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -3721,7 +3757,13 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
               <div
                 class="octo-editor-preview"
                 data-testid="preview-element"
-              />
+              >
+                <div
+                  class="mocked-message-html"
+                >
+                  Test Comment
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -4379,7 +4421,13 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
               <div
                 class="octo-editor-preview"
                 data-testid="preview-element"
-              />
+              >
+                <div
+                  class="mocked-message-html"
+                >
+                  Test Comment
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -5037,7 +5085,13 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
               <div
                 class="octo-editor-preview"
                 data-testid="preview-element"
-              />
+              >
+                <div
+                  class="mocked-message-html"
+                >
+                  Test Comment
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -5695,7 +5749,13 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
               <div
                 class="octo-editor-preview"
                 data-testid="preview-element"
-              />
+              >
+                <div
+                  class="mocked-message-html"
+                >
+                  Test Comment
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -6353,7 +6413,13 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
               <div
                 class="octo-editor-preview"
                 data-testid="preview-element"
-              />
+              >
+                <div
+                  class="mocked-message-html"
+                >
+                  Test Comment
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -7011,7 +7077,13 @@ exports[`components/centerPanel return centerPanel and select one card and click
               <div
                 class="octo-editor-preview"
                 data-testid="preview-element"
-              />
+              >
+                <div
+                  class="mocked-message-html"
+                >
+                  Test Comment
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -7669,7 +7741,13 @@ exports[`components/centerPanel return centerPanel and select one card and click
               <div
                 class="octo-editor-preview"
                 data-testid="preview-element"
-              />
+              >
+                <div
+                  class="mocked-message-html"
+                >
+                  Test Comment
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -8327,7 +8405,13 @@ exports[`components/centerPanel should match snapshot for Gallery 1`] = `
               <div
                 class="octo-editor-preview"
                 data-testid="preview-element"
-              />
+              >
+                <div
+                  class="mocked-message-html"
+                >
+                  Test Comment
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -8602,7 +8686,13 @@ exports[`components/centerPanel should match snapshot for Kanban 1`] = `
               <div
                 class="octo-editor-preview"
                 data-testid="preview-element"
-              />
+              >
+                <div
+                  class="mocked-message-html"
+                >
+                  Test Comment
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -9121,7 +9211,13 @@ exports[`components/centerPanel should match snapshot for Kanban, not shared 1`]
               <div
                 class="octo-editor-preview"
                 data-testid="preview-element"
-              />
+              >
+                <div
+                  class="mocked-message-html"
+                >
+                  Test Comment
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -9640,7 +9736,13 @@ exports[`components/centerPanel should match snapshot for Table 1`] = `
               <div
                 class="octo-editor-preview"
                 data-testid="preview-element"
-              />
+              >
+                <div
+                  class="mocked-message-html"
+                >
+                  Test Comment
+                </div>
+              </div>
             </div>
           </div>
         </div>

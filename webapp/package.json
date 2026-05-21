@@ -92,6 +92,9 @@
 		],
 		"setupFiles": [
 			"./tests/setupFile.ts"
+		],
+		"testPathIgnorePatterns": [
+			"<rootDir>/dist/"
 		]
 	},
 	"devDependencies": {

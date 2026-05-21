@@ -577,10 +577,19 @@ func (s *SQLStore) getMemberForBoard(db sq.BaseRunner, boardID, userID string) (
 		if userID == model.SystemUserID {
 			return nil, model.NewErrNotFound(userID)
 		}
-		var user *model.User
 		// No synthetic memberships for guests
 		user, err := s.GetUserByID(userID)
 		if err != nil {
+			// Normalize both the plugin-API AppError and the local UserNotFoundError
+			// into model.ErrNotFound so callers can use model.IsErrNotFound uniformly.
+			var appErr *mmModel.AppError
+			if errors.As(err, &appErr) && appErr.StatusCode == http.StatusNotFound {
+				return nil, model.NewErrNotFound("user ID=" + userID)
+			}
+			var userNotFound UserNotFoundError
+			if errors.As(err, &userNotFound) {
+				return nil, model.NewErrNotFound("user ID=" + userID)
+			}
 			return nil, err
 		}
 		if user.IsGuest {

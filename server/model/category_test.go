@@ -97,19 +97,19 @@ func TestCategory_IsValid(t *testing.T) {
 				Type:   CategoryTypeCustom,
 			},
 			expectErr: true,
-			errMsg:    "invalid ID",
+			errMsg:    "Invalid Block ID",
 		},
 		{
 			name: "ID contains invalid characters",
 			category: Category{
-				ID:     "%*|@{?%{=).+$.\\_%&}-/#}>)]` ￼",
+				ID:     "%*|@{?%{=).+$.\\_%&}-/#}>)]` ￼",
 				Name:   "Valid Category",
 				UserID: "user-id",
 				TeamID: "team-id",
 				Type:   CategoryTypeCustom,
 			},
 			expectErr: true,
-			errMsg:    "invalid ID",
+			errMsg:    "Invalid Block ID",
 		},
 	}
 

@@ -58,7 +58,7 @@ export const mockMMStore = mockStore({
                 }),
             },
             channelsInTeam: {
-                'team-id': new Set(['asdf']),
+                'team-id': new Set(['current_channel_id']),
             },
             messageCounts: {
                 current_channel_id: {total: 10},

@@ -42,15 +42,10 @@ func (s *SQLStore) upsertTeamSignupToken(db sq.BaseRunner, team model.Team) erro
 			team.ModifiedBy,
 			now,
 		)
-	if s.dbType == model.MysqlDBType {
-		query = query.Suffix("ON DUPLICATE KEY UPDATE signup_token = ?, modified_by = ?, update_at = ?",
-			team.SignupToken, team.ModifiedBy, now)
-	} else {
-		query = query.Suffix(
-			`ON CONFLICT (id)
-			 DO UPDATE SET signup_token = EXCLUDED.signup_token, modified_by = EXCLUDED.modified_by, update_at = EXCLUDED.update_at`,
-		)
-	}
+	query = query.Suffix(
+		`ON CONFLICT (id)
+		 DO UPDATE SET signup_token = EXCLUDED.signup_token, modified_by = EXCLUDED.modified_by, update_at = EXCLUDED.update_at`,
+	)
 
 	_, err := query.Exec()
 	return err
@@ -81,14 +76,10 @@ func (s *SQLStore) upsertTeamSettings(db sq.BaseRunner, team model.Team) error {
 			team.ModifiedBy,
 			now,
 		)
-	if s.dbType == model.MysqlDBType {
-		query = query.Suffix("ON DUPLICATE KEY UPDATE settings = ?, modified_by = ?, update_at = ?", settingsJSON, team.ModifiedBy, now)
-	} else {
-		query = query.Suffix(
-			`ON CONFLICT (id)
-			 DO UPDATE SET settings = EXCLUDED.settings, modified_by = EXCLUDED.modified_by, update_at = EXCLUDED.update_at`,
-		)
-	}
+	query = query.Suffix(
+		`ON CONFLICT (id)
+		 DO UPDATE SET settings = EXCLUDED.settings, modified_by = EXCLUDED.modified_by, update_at = EXCLUDED.update_at`,
+	)
 
 	_, err = query.Exec()
 	return err
@@ -185,7 +176,10 @@ func (s *SQLStore) getTeam(db sq.BaseRunner, id string) (*model.Team, error) {
 	row := query.QueryRow()
 	var displayName string
 	err := row.Scan(&displayName)
-	if err != nil && !model.IsErrNotFound(err) {
+	if err != nil {
+		if model.IsErrNotFound(err) {
+			return nil, model.NewErrNotFound("team")
+		}
 		s.logger.Error("GetTeam scan error",
 			mlog.String("team_id", id),
 			mlog.Err(err),

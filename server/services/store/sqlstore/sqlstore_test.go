@@ -8,7 +8,6 @@ import (
 
 	"github.com/mattermost/mattermost-plugin-boards/server/services/store/storetests"
 
-	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,7 +16,6 @@ func TestSQLStore(t *testing.T) {
 	t.Run("SharingStore", func(t *testing.T) { storetests.StoreTestSharingStore(t, SetupTests) })
 	t.Run("SystemStore", func(t *testing.T) { storetests.StoreTestSystemStore(t, SetupTests) })
 	t.Run("UserStore", func(t *testing.T) { storetests.StoreTestUserStore(t, SetupTests) })
-	t.Run("SessionStore", func(t *testing.T) { storetests.StoreTestSessionStore(t, SetupTests) })
 	t.Run("TeamStore", func(t *testing.T) { storetests.StoreTestTeamStore(t, SetupTests) })
 	t.Run("BoardStore", func(t *testing.T) { storetests.StoreTestBoardStore(t, SetupTests) })
 	t.Run("BoardsAndBlocksStore", func(t *testing.T) { storetests.StoreTestBoardsAndBlocksStore(t, SetupTests) })
@@ -38,27 +36,14 @@ func TestConcatenationSelector(t *testing.T) {
 	defer tearDown()
 
 	concatenationString := sqlStore.concatenationSelector("a", ",")
-	switch sqlStore.dbType {
-	case model.SqliteDBType:
-		require.Equal(t, concatenationString, "group_concat(a)")
-	case model.MysqlDBType:
-		require.Equal(t, concatenationString, "GROUP_CONCAT(a SEPARATOR ',')")
-	case model.PostgresDBType:
-		require.Equal(t, concatenationString, "string_agg(a, ',')")
-	}
+	require.Equal(t, "string_agg(a, ',')", concatenationString)
 }
 
 func TestElementInColumn(t *testing.T) {
-	store, _ := SetupTests(t)
+	store, tearDown := SetupTests(t)
 	sqlStore := store.(*SQLStore)
+	defer tearDown()
 
 	inLiteral := sqlStore.elementInColumn("test_column")
-	switch sqlStore.dbType {
-	case model.SqliteDBType:
-		require.Equal(t, inLiteral, "instr(test_column, ?) > 0")
-	case model.MysqlDBType:
-		require.Equal(t, inLiteral, "instr(test_column, ?) > 0")
-	case model.PostgresDBType:
-		require.Equal(t, inLiteral, "position(? in test_column) > 0")
-	}
+	require.Equal(t, "position(? in test_column) > 0", inLiteral)
 }

@@ -19,9 +19,11 @@ exports[`components/cardDetail/CommentsList comments show up 1`] = `
           class="octo-editor-preview octo-placeholder"
           data-testid="preview-element"
         >
-          <p>
-            Add a comment...
-          </p>
+          <div
+            class="mocked-message-html"
+          >
+            Test Comment
+          </div>
         </div>
       </div>
       

@@ -389,7 +389,12 @@ func (ibe InvalidBoardErr) Error() string {
 }
 
 func (b *Board) IsValid() error {
-	if !mmModel.IsValidId(b.TeamID) {
+	// GlobalTeamID ("0") is only valid for template boards.
+	if b.TeamID == GlobalTeamID {
+		if !b.IsTemplate {
+			return InvalidBoardErr{"invalid-team-id"}
+		}
+	} else if !mmModel.IsValidId(b.TeamID) {
 		return InvalidBoardErr{"invalid-team-id"}
 	}
 

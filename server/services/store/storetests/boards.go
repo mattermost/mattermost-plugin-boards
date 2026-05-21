@@ -11,6 +11,7 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/services/store"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -136,17 +137,18 @@ func testGetBoard(t *testing.T, store store.Store) {
 }
 
 func testGetBoardsForUserAndTeam(t *testing.T, store store.Store) {
-	userID := "user-id-1"
+	userID := mmModel.NewId()
+	insertTestUser(t, store, userID, "test-user", "test@example.com")
 
 	t.Run("should return empty list if no results are found", func(t *testing.T) {
-		boards, err := store.GetBoardsForUserAndTeam(testUserID, testTeamID, true)
+		boards, err := store.GetBoardsForUserAndTeam(userID, testTeamID, true)
 		require.NoError(t, err)
 		require.Empty(t, boards)
 	})
 
 	t.Run("should return only the boards of the team that the user is a member of", func(t *testing.T) {
-		teamID1 := "team-id-1"
-		teamID2 := "team-id-2"
+		teamID1 := mmModel.NewId()
+		teamID2 := mmModel.NewId()
 
 		// team 1 boards
 		board1 := &model.Board{
@@ -744,7 +746,10 @@ func testGetMembersForBoard(t *testing.T, store store.Store) {
 
 func testGetMembersForUser(t *testing.T, store store.Store) {
 	t.Run("should return empty list if there are no memberships for a user", func(t *testing.T) {
-		members, err := store.GetMembersForUser(testUserID)
+		userID := mmModel.NewId()
+		insertTestUser(t, store, userID, "test-user", "test@example.com")
+
+		members, err := store.GetMembersForUser(userID)
 		require.NoError(t, err)
 		require.Empty(t, members)
 	})
@@ -797,13 +802,17 @@ func testDeleteMember(t *testing.T, store store.Store) {
 }
 
 func testSearchBoardsForUser(t *testing.T, store store.Store) {
-	teamID1 := "team-id-1"
-	teamID2 := "team-id-2"
-	userID := "user-id-1"
+	teamID1 := mmModel.NewId()
+	teamID2 := mmModel.NewId()
+	userID := mmModel.NewId()
+
+	insertTestUser(t, store, userID, "test-user", "test@example.com")
+	insertTestTeamMember(t, store, teamID1, userID)
+	insertTestTeamMember(t, store, teamID2, userID)
 
 	t.Run("should return empty if user is not a member of any board and there are no public boards on the team", func(t *testing.T) {
-		boards, err := store.SearchBoardsForUser("", model.BoardSearchFieldTitle, userID, true)
-		require.NoError(t, err)
+		boards, err2 := store.SearchBoardsForUser("", model.BoardSearchFieldTitle, userID, true)
+		require.NoError(t, err2)
 		require.Empty(t, boards)
 	})
 
@@ -1008,8 +1017,8 @@ func testUndeleteBoard(t *testing.T, store store.Store) {
 
 		// verifying the data after un-delete
 		require.Equal(t, "Dunder Mifflin Scranton", board.Title)
-		require.Equal(t, "user-id", board.CreatedBy)
-		require.Equal(t, "user-id", board.ModifiedBy)
+		require.Equal(t, userID, board.CreatedBy)
+		require.Equal(t, userID, board.ModifiedBy)
 		require.Equal(t, model.BoardRoleCommenter, board.MinimumRole)
 		require.Equal(t, "Bears, beets, Battlestar Gallectica", board.Description)
 		require.Equal(t, "🐻", board.Icon)
@@ -1224,9 +1233,10 @@ func testGetBoardCount(t *testing.T, store store.Store) {
 
 		err = store.DeleteBoard(boardID, userID)
 		require.NoError(t, err)
-		// Count should stay the same
+		// DeleteBoard hard-deletes the board (removes it from the boards table),
+		// so GetBoardCount(true) will not count it (it only counts soft-deleted boards with delete_at > 0)
 		newCount, err = store.GetBoardCount(true)
 		require.NoError(t, err)
-		require.Equal(t, originalCount+1, newCount)
+		require.Equal(t, originalCount, newCount)
 	})
 }

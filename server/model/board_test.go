@@ -27,15 +27,33 @@ func TestBoardIsValid(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Should return error for using global team ID for valid board", func(t *testing.T) {
+	t.Run("Should allow global team ID for template boards", func(t *testing.T) {
 		board := &Board{
 			ID:          model.NewId(),
 			TeamID:      GlobalTeamID,
+			IsTemplate:  true,
 			CreatedBy:   model.NewId(),
 			ModifiedBy:  model.NewId(),
 			Type:        BoardTypeOpen,
 			MinimumRole: BoardRoleViewer,
-			Title:       "Valid Board",
+			Title:       "Valid Template",
+			CreateAt:    1234567890,
+			UpdateAt:    1234567890,
+		}
+		err := board.IsValid()
+		require.NoError(t, err)
+	})
+
+	t.Run("Should return error for global team ID on non-template board", func(t *testing.T) {
+		board := &Board{
+			ID:          model.NewId(),
+			TeamID:      GlobalTeamID,
+			IsTemplate:  false,
+			CreatedBy:   model.NewId(),
+			ModifiedBy:  model.NewId(),
+			Type:        BoardTypeOpen,
+			MinimumRole: BoardRoleViewer,
+			Title:       "Non-template Board",
 			CreateAt:    1234567890,
 			UpdateAt:    1234567890,
 		}

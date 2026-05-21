@@ -76,6 +76,11 @@ describe('components/cardDetail/cardDetailContents', () => {
         clientConfig: {
             value: {},
         },
+        teams: {
+            current: null,
+            currentId: '',
+            allTeams: [],
+        },
     }
     const store = mockStateStore([], state)
     const wrap = (child: ReactNode): ReactElement => (
