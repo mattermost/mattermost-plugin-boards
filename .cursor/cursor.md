@@ -72,6 +72,7 @@ docker run -d \
   -e MM_SERVICESETTINGS_ENABLELOCALMODE=true \
   -e MM_PLUGINSETTINGS_ENABLEUPLOADS=true \
   -e MM_PLUGINSETTINGS_ENABLEMARKETPLACE=false \
+  -e MM_FILESETTINGS_MAXFILESIZE=256000000 \
   -v /tmp/mattermost/config:/mattermost/config \
   -v /tmp/mattermost/data:/mattermost/data \
   -v /tmp/mattermost/logs:/mattermost/logs \
@@ -97,6 +98,8 @@ docker exec mattermost mmctl --local user search "$MM_ADMIN_USERNAME" | grep -q 
 ```
 
 Mattermost will be available on port `8065`.
+
+`MM_FILESETTINGS_MAXFILESIZE=256000000` sets `FileSettings.MaxFileSize` to 256 MB so `make dist` bundles (~140 MB) can be uploaded via `pluginctl deploy`. The default limit is 100 MB and fails with `Uploaded plugin size exceeds limit`.
 
 ## Deploy The Plugin
 
@@ -189,6 +192,7 @@ Do not print AWS credentials or secret environment variables. If `aws sts get-ca
 - Three server test packages (`server/boards`, `server/integrationtests`, `server/services/store/sqlstore`) require a live PostgreSQL instance. They will fail in environments without one — this is expected. The remaining packages are pure unit tests and pass without a database.
 - The `build/sync/` directory has its own `go.mod` and its tests may not compile with current Go versions — this is a pre-existing repo issue.
 - Templates archive must be built before server compilation: `make templates-archive`. The `make dist` / `make server` targets handle this automatically.
+- Plugin deploy needs `MM_PLUGINSETTINGS_ENABLEUPLOADS=true` and `FileSettings.MaxFileSize` large enough for the bundle (see **Start Mattermost**). If Mattermost was started without `MM_FILESETTINGS_MAXFILESIZE`, raise it before deploy: `docker exec mattermost mmctl --local config set FileSettings.MaxFileSize 256000000 && docker exec mattermost mmctl --local config reload`.
 
 ## Troubleshooting
 
@@ -196,6 +200,7 @@ Do not print AWS credentials or secret environment variables. If `aws sts get-ca
 - If Docker is unavailable, inspect `/tmp/docker-service-start.log` and `/tmp/dockerd.log`.
 - If browser automation fails, run `agent-browser install` to refresh browser assets.
 - If artifact uploads fail, run `aws sts get-caller-identity` and verify the target S3 URI before retrying.
-- If the plugin upload fails, confirm `MM_PLUGINSETTINGS_ENABLEUPLOADS=true` and the admin credentials are exported.
+- If the plugin upload fails with `Uploaded plugin size exceeds limit`, confirm `MM_FILESETTINGS_MAXFILESIZE=256000000` was set when starting Mattermost (or use the `mmctl` command in **Gotchas**).
+- If the plugin upload fails for other reasons, confirm `MM_PLUGINSETTINGS_ENABLEUPLOADS=true` and the admin credentials are exported.
 - If Mattermost is unhealthy, run `docker logs mattermost` and `docker logs mm-postgres`.
 - To reset the local Mattermost stack, run `docker rm -f mattermost mm-postgres` and remove `/tmp/mattermost` or `mm-postgres-data` if persisted data is not needed.
