@@ -20,6 +20,21 @@ apply_docker_socket_acl() {
     fi
 }
 
+docker_login_if_configured() {
+    if [[ -z "${DOCKERHUB_USERNAME:-}" || -z "${DOCKERHUB_TOKEN:-}" ]]; then
+        echo "Docker Hub credentials not configured; anonymous pulls may hit rate limits." >&2
+        return 0
+    fi
+
+    echo "Logging in to Docker Hub as ${DOCKERHUB_USERNAME}."
+    if echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin >/tmp/docker-login.log 2>&1; then
+        echo "Docker Hub login succeeded."
+    else
+        echo "Docker Hub login failed; see /tmp/docker-login.log." >&2
+        tail -n 20 /tmp/docker-login.log >&2 || true
+    fi
+}
+
 if ! docker info >/dev/null 2>&1; then
     if command -v service >/dev/null 2>&1; then
         sudo sh -c 'service docker start >/tmp/docker-service-start.log 2>&1' || true
@@ -47,6 +62,8 @@ if ! docker info >/dev/null 2>&1; then
     tail -200 /tmp/dockerd.log 2>/dev/null || true
     exit 1
 fi
+
+docker_login_if_configured
 
 load_image_archive() {
     local image_ref="$1"

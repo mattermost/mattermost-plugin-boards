@@ -11,6 +11,8 @@ Set these environment variables to shorten boot when you already have dependenci
 - `CLOUD_AGENT_SKIP_WEBAPP_DEPS=1` — skip `npm ci --prefix webapp`
 - `CLOUD_AGENT_SKIP_IMAGE_LOAD=1` — skip loading preloaded Docker image archives
 
+When `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` are configured as Cloud Agent secrets, `cloud-agent-start.sh` logs in to Docker Hub so fallback `docker pull` operations avoid anonymous rate limits. Mark `DOCKERHUB_TOKEN` as **redacted** in the dashboard.
+
 ## Overview
 
 **Mattermost Boards** (formerly Focalboard) is a project management plugin for Mattermost with:
@@ -190,6 +192,7 @@ Do not print AWS credentials or secret environment variables. If `aws sts get-ca
 
 ## Troubleshooting
 
+- If Docker Hub rate limits block fallback pulls, configure `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` as Cloud Agent secrets and restart the agent.
 - If Docker is unavailable, inspect `/tmp/docker-service-start.log` and `/tmp/dockerd.log`.
 - If browser automation fails, run `agent-browser install` to refresh browser assets.
 - If artifact uploads fail, run `aws sts get-caller-identity` and verify the target S3 URI before retrying.
