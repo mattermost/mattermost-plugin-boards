@@ -26,6 +26,12 @@ func (a *App) CreateBoardsAndBlocks(bab *model.BoardsAndBlocks, userID string, a
 		}
 	}
 
+	for _, board := range bab.Boards {
+		if err := a.validateBoardChannelAccess(userID, board.ChannelID); err != nil {
+			return nil, err
+		}
+	}
+
 	var newBab *model.BoardsAndBlocks
 	var members []*model.BoardMember
 	var err error

@@ -24,6 +24,16 @@ const unlinkBoardMessage = "@%s unlinked the board [%s](%s) with this channel"
 
 var errNoDefaultCategoryFound = errors.New("no default category found for user")
 
+func (a *App) validateBoardChannelAccess(userID, channelID string) error {
+	if channelID == "" {
+		return nil
+	}
+	if !a.permissions.HasPermissionToChannel(userID, channelID, model.PermissionReadChannel) {
+		return model.NewErrPermission("access denied to channel")
+	}
+	return nil
+}
+
 func (a *App) GetBoard(boardID string) (*model.Board, error) {
 	board, err := a.store.GetBoard(boardID)
 	if err != nil {
@@ -237,6 +247,10 @@ func (a *App) CreateBoard(board *model.Board, userID string, addMember bool) (*m
 	}
 	board.ID = utils.NewID(utils.IDTypeBoard)
 
+	if err := a.validateBoardChannelAccess(userID, board.ChannelID); err != nil {
+		return nil, err
+	}
+
 	var newBoard *model.Board
 	var member *model.BoardMember
 	var err error
@@ -337,8 +351,8 @@ func (a *App) PatchBoard(patch *model.BoardPatch, boardID, userID string) (*mode
 		}
 
 		if testChannel != "" {
-			if !a.permissions.HasPermissionToChannel(userID, testChannel, model.PermissionCreatePost) {
-				return nil, model.NewErrPermission("access denied to channel")
+			if err := a.validateBoardChannelAccess(userID, testChannel); err != nil {
+				return nil, err
 			}
 		}
 	}
