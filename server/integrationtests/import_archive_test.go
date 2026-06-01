@@ -93,6 +93,8 @@ func TestImportArchiveStripsGuestSchemeAdmin(t *testing.T) {
 		require.NotNil(t, guestMember)
 		require.False(t, guestMember.SchemeAdmin)
 		require.True(t, guestMember.SchemeViewer)
+		require.True(t, guestMember.SchemeCommenter)
+		require.True(t, guestMember.SchemeEditor)
 	})
 }
 
@@ -111,9 +113,12 @@ func setGuestSchemeAdminInArchive(archive []byte, guestUserID string) ([]byte, e
 			return nil, err
 		}
 		content, err := io.ReadAll(rc)
-		rc.Close()
+		closeErr := rc.Close()
 		if err != nil {
 			return nil, err
+		}
+		if closeErr != nil {
+			return nil, closeErr
 		}
 
 		if strings.HasSuffix(f.Name, "board.jsonl") {
@@ -174,8 +179,12 @@ func patchBoardJSONLGuestSchemeAdmin(jsonl []byte, guestUserID string) ([]byte, 
 		if err != nil {
 			return nil, err
 		}
-		out.Write(patched)
-		out.WriteByte('\n')
+		if _, err := out.Write(patched); err != nil {
+			return nil, err
+		}
+		if err := out.WriteByte('\n'); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
