@@ -6,6 +6,12 @@ logs
 *.log
 npm-debug.log*
 
+e2e/node_modules
+e2e/test-results
+e2e/logs
+e2e/README.md
+e2e/playwright-report
+
 # Runtime data
 pids
 *.pid
