@@ -24,12 +24,47 @@ const unlinkBoardMessage = "@%s unlinked the board [%s](%s) with this channel"
 
 var errNoDefaultCategoryFound = errors.New("no default category found for user")
 
-func (a *App) validateBoardChannelAccess(userID, channelID string) error {
+func (a *App) validateBoardChannelReadAccess(userID, channelID string) error {
 	if channelID == "" {
 		return nil
 	}
 	if !a.permissions.HasPermissionToChannel(userID, channelID, model.PermissionReadChannel) {
 		return model.NewErrPermission("access denied to channel")
+	}
+	return nil
+}
+
+func (a *App) validateBoardChannelWriteAccess(userID, channelID string) error {
+	if channelID == "" {
+		return nil
+	}
+	if !a.permissions.HasPermissionToChannel(userID, channelID, model.PermissionCreatePost) {
+		return model.NewErrPermission("access denied to channel")
+	}
+	return nil
+}
+
+func (a *App) validateBoardChannelLinkAccess(userID, channelID string) error {
+	if err := a.validateBoardChannelReadAccess(userID, channelID); err != nil {
+		return err
+	}
+	return a.validateBoardChannelWriteAccess(userID, channelID)
+}
+
+func (a *App) validateBoardChannelPatchAccess(userID string, board *model.Board, patch *model.BoardPatch) error {
+	if patch.Type == nil && patch.ChannelID == nil {
+		return nil
+	}
+
+	testChannel := ""
+	if patch.ChannelID != nil && *patch.ChannelID != "" {
+		testChannel = *patch.ChannelID
+	} else if board.ChannelID != "" {
+		testChannel = board.ChannelID
+	}
+
+	if testChannel != "" {
+		return a.validateBoardChannelLinkAccess(userID, testChannel)
 	}
 	return nil
 }
@@ -247,7 +282,7 @@ func (a *App) CreateBoard(board *model.Board, userID string, addMember bool) (*m
 	}
 	board.ID = utils.NewID(utils.IDTypeBoard)
 
-	if err := a.validateBoardChannelAccess(userID, board.ChannelID); err != nil {
+	if err := a.validateBoardChannelReadAccess(userID, board.ChannelID); err != nil {
 		return nil, err
 	}
 
@@ -326,15 +361,12 @@ func (a *App) PatchBoard(patch *model.BoardPatch, boardID, userID string) (*mode
 	var oldMembers []*model.BoardMember
 
 	if patch.Type != nil || patch.ChannelID != nil {
-		testChannel := ""
 		if patch.ChannelID != nil && *patch.ChannelID == "" {
 			var err error
 			oldMembers, err = a.GetMembersForBoard(boardID)
 			if err != nil {
 				a.logger.Error("Unable to get the board members", mlog.Err(err))
 			}
-		} else if patch.ChannelID != nil && *patch.ChannelID != "" {
-			testChannel = *patch.ChannelID
 		}
 
 		board, err := a.store.GetBoard(boardID)
@@ -346,14 +378,9 @@ func (a *App) PatchBoard(patch *model.BoardPatch, boardID, userID string) (*mode
 		}
 		oldChannelID = board.ChannelID
 		isTemplate = board.IsTemplate
-		if testChannel == "" {
-			testChannel = oldChannelID
-		}
 
-		if testChannel != "" {
-			if err := a.validateBoardChannelAccess(userID, testChannel); err != nil {
-				return nil, err
-			}
+		if err := a.validateBoardChannelPatchAccess(userID, board, patch); err != nil {
+			return nil, err
 		}
 	}
 

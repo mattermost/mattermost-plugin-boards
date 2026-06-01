@@ -27,7 +27,7 @@ func (a *App) CreateBoardsAndBlocks(bab *model.BoardsAndBlocks, userID string, a
 	}
 
 	for _, board := range bab.Boards {
-		if err := a.validateBoardChannelAccess(userID, board.ChannelID); err != nil {
+		if err := a.validateBoardChannelReadAccess(userID, board.ChannelID); err != nil {
 			return nil, err
 		}
 	}
@@ -109,6 +109,21 @@ func (a *App) PatchBoardsAndBlocks(pbab *model.PatchBoardsAndBlocks, userID stri
 			boardCache[block.BoardID] = board
 		}
 		if err = a.validateFileRefsInFields(board.TeamID, block.BoardID, blockID, patch.UpdatedFields); err != nil {
+			return nil, err
+		}
+	}
+
+	for i, boardID := range pbab.BoardIDs {
+		patch := pbab.BoardPatches[i]
+		if patch == nil {
+			continue
+		}
+		var board *model.Board
+		board, err = a.store.GetBoard(boardID)
+		if err != nil {
+			return nil, err
+		}
+		if err = a.validateBoardChannelPatchAccess(userID, board, patch); err != nil {
 			return nil, err
 		}
 	}
