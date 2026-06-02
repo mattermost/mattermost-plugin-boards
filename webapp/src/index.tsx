@@ -124,7 +124,8 @@ let browserHistory: History<unknown>
 
 const MainApp = (props: Props) => {
     useEffect(() => {
-        // Note: the host webapp owns the `app__body` class on `document.body` across product navigation.
+        // Mattermost 11.8+ owns `app__body`; Boards adds it for older hosts.
+        document.body.classList.add('app__body')
         document.body.classList.add('focalboard-body')
         const root = document.getElementById('root')
         if (root) {

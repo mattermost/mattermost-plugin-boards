@@ -5,7 +5,7 @@
     "homepage_url": "https://github.com/mattermost/mattermost-plugin-boards",
     "support_url": "https://github.com/mattermost/mattermost-plugin-boards/issues",
     "icon_path": "assets/starter-template-icon.svg",
-    "min_server_version": "11.8.0",
+    "min_server_version": "10.7.0",
     "server": {
         "executables": {
             "linux-amd64": "server/dist/plugin-linux-amd64",
