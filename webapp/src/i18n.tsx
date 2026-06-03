@@ -20,10 +20,11 @@ import messages_tr from '../i18n/tr.json'
 import messages_zhHans from '../i18n/zh_Hans.json'
 import messages_zhHant from '../i18n/zh_Hant.json'
 import messages_ko from '../i18n/ko.json'
+import messages_fa from '../i18n/fa.json'
 
 import {UserSettings} from './userSettings'
 
-const supportedLanguages = ['ca', 'de', 'el', 'en', 'es', 'fr', 'id', 'it', 'ja', 'nl', 'oc', 'pt-br', 'ru', 'sv', 'tr', 'zh-cn', 'zh-tw', 'ko']
+const supportedLanguages = ['ca', 'de', 'el', 'en', 'es', 'fr', 'id', 'it', 'ja', 'nl', 'oc', 'pt-br', 'ru', 'sv', 'tr', 'zh-cn', 'zh-tw', 'ko', 'fa']
 
 export function getMessages(lang: string): {[key: string]: string} {
     switch (lang) {
@@ -61,6 +62,8 @@ export function getMessages(lang: string): {[key: string]: string} {
         return messages_zhHant
     case 'ko':
         return messages_ko
+    case 'fa':
+        return messages_fa
     }
     return messages_en
 }
