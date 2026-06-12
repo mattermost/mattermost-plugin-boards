@@ -531,6 +531,12 @@ func (a *App) AddMemberToBoard(member *model.BoardMember) (*model.BoardMember, e
 		return existingMembership, nil
 	}
 
+	if member.SchemeAdmin {
+		if isGuest, guestErr := a.UserIsGuest(member.UserID); guestErr == nil && isGuest {
+			member.SchemeAdmin = false
+		}
+	}
+
 	newMember, err := a.store.SaveMember(member)
 	if err != nil {
 		return nil, err

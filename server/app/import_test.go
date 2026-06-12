@@ -11,6 +11,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -141,6 +142,53 @@ func TestApp_ImportArchive(t *testing.T) {
 		newBoard, err := th.App.ImportBoardJSONL(r, opts)
 		require.NoError(t, err, "import archive should not fail")
 		require.Equal(t, board.ID, newBoard.ID, "Board ID should be same")
+	})
+
+	t.Run("archive boardMember scheme bits are ignored", func(t *testing.T) {
+		const importerID = "f1tydgc697fcbp8ampr6881jea"
+		const attackerTargetID = "nto73edn5ir6ifimo5a53y1dwa"
+
+		r := bytes.NewReader([]byte(boardArchive))
+		opts := model.ImportArchiveOptions{
+			TeamID:     "test-team",
+			ModifiedBy: importerID,
+		}
+
+		th.Store.EXPECT().CreateBoardsAndBlocks(gomock.AssignableToTypeOf(&model.BoardsAndBlocks{}), importerID).Return(babs, nil)
+		th.Store.EXPECT().GetMembersForBoard(board.ID).AnyTimes().Return([]*model.BoardMember{}, nil)
+		th.Store.EXPECT().GetUserCategoryBoards(importerID, "test-team").AnyTimes().Return([]model.CategoryBoards{
+			{
+				Category: model.Category{
+					ID:   "boards_category_id",
+					Name: "Boards",
+					Type: model.CategoryTypeSystem,
+				},
+			},
+		}, nil)
+		th.Store.EXPECT().GetMembersForUser(importerID).AnyTimes().Return([]*model.BoardMember{}, nil)
+		th.Store.EXPECT().GetBoardsForUserAndTeam(importerID, "test-team", false).AnyTimes().Return([]*model.Board{}, nil)
+		th.Store.EXPECT().AddUpdateCategoryBoard(importerID, utils.Anything, utils.Anything).AnyTimes().Return(nil)
+		th.Store.EXPECT().GetBoard(board.ID).AnyTimes().Return(board, nil)
+		th.Store.EXPECT().GetMemberForBoard(board.ID, gomock.Any()).AnyTimes().Return(nil, nil)
+		th.Store.EXPECT().GetUserByID(gomock.Any()).AnyTimes().DoAndReturn(func(id string) (*model.User, error) {
+			return &model.User{ID: id, IsGuest: false}, nil
+		})
+
+		th.Store.EXPECT().SaveMember(mock.MatchedBy(func(i interface{}) bool {
+			m := i.(*model.BoardMember)
+			if m.UserID == importerID {
+				return m.SchemeAdmin
+			}
+			return !m.SchemeAdmin && m.SchemeEditor
+		})).AnyTimes().DoAndReturn(func(i interface{}) (*model.BoardMember, error) {
+			m := i.(*model.BoardMember)
+			require.False(t, m.UserID == attackerTargetID && m.SchemeAdmin)
+			return m, nil
+		})
+
+		newBoard, err := th.App.ImportBoardJSONL(r, opts)
+		require.NoError(t, err)
+		require.Equal(t, board.ID, newBoard.ID)
 	})
 
 	t.Run("fix image and attachment", func(t *testing.T) {

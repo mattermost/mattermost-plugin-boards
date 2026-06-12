@@ -304,10 +304,10 @@ func (a *App) addUserToNewBoard(boardsAndBlocks *model.BoardsAndBlocks, opt mode
 				UserID:          boardMember.UserID,
 				Roles:           boardMember.Roles,
 				MinimumRole:     boardMember.MinimumRole,
-				SchemeAdmin:     boardMember.SchemeAdmin,
-				SchemeEditor:    boardMember.SchemeEditor,
-				SchemeCommenter: boardMember.SchemeCommenter,
-				SchemeViewer:    boardMember.SchemeViewer,
+				SchemeAdmin:     board.MinimumRole == model.BoardRoleAdmin,
+				SchemeEditor:    board.MinimumRole == model.BoardRoleNone || board.MinimumRole == model.BoardRoleEditor,
+				SchemeCommenter: board.MinimumRole == model.BoardRoleCommenter,
+				SchemeViewer:    board.MinimumRole == model.BoardRoleViewer,
 				Synthetic:       boardMember.Synthetic,
 			}
 			if _, err2 := a.AddMemberToBoard(bm); err2 != nil {

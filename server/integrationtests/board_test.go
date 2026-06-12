@@ -1659,6 +1659,84 @@ func TestAddMember(t *testing.T) {
 		require.True(t, members[0].SchemeAdmin)
 		require.True(t, members[0].SchemeEditor)
 	})
+
+	t.Run("an editor on an open board cannot promote a new member to SchemeAdmin", func(t *testing.T) {
+		th := SetupTestHelperPluginMode(t)
+		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.Admin
+
+		teamID := mmModel.NewId()
+		newBoard := &model.Board{
+			Title:       "open board",
+			Type:        model.BoardTypeOpen,
+			TeamID:      teamID,
+			MinimumRole: model.BoardRoleEditor,
+		}
+		board, err := th.Server.App().CreateBoard(newBoard, userAdmin, true)
+		require.NoError(t, err)
+
+		_, err = th.Server.App().AddMemberToBoard(&model.BoardMember{
+			BoardID:      board.ID,
+			UserID:       userEditorID,
+			SchemeEditor: true,
+		})
+		require.NoError(t, err)
+
+		attack := &model.BoardMember{
+			UserID:       userViewerID,
+			BoardID:      board.ID,
+			SchemeAdmin:  true,
+			SchemeEditor: false,
+		}
+
+		member, resp := clients.Editor.AddMemberToBoard(attack)
+		th.CheckOK(resp)
+		require.NotNil(t, member)
+		require.False(t, member.SchemeAdmin)
+		require.True(t, member.SchemeEditor)
+
+		stored, err := th.Server.App().GetMemberForBoard(board.ID, userViewerID)
+		require.NoError(t, err)
+		require.False(t, stored.SchemeAdmin)
+		require.True(t, stored.SchemeEditor)
+	})
+
+	t.Run("inserting a guest never grants SchemeAdmin even when the caller is a board admin", func(t *testing.T) {
+		th := SetupTestHelperPluginMode(t)
+		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.Admin
+
+		teamID := mmModel.NewId()
+		newBoard := &model.Board{
+			Title:  "title",
+			Type:   model.BoardTypeOpen,
+			TeamID: teamID,
+		}
+		board, err := th.Server.App().CreateBoard(newBoard, userAdmin, true)
+		require.NoError(t, err)
+
+		attack := &model.BoardMember{
+			UserID:          userGuestID,
+			BoardID:         board.ID,
+			SchemeAdmin:     true,
+			SchemeEditor:    true,
+			SchemeCommenter: false,
+			SchemeViewer:    false,
+		}
+
+		member, resp := clients.Admin.AddMemberToBoard(attack)
+		th.CheckOK(resp)
+		require.NotNil(t, member)
+		require.False(t, member.SchemeAdmin)
+
+		stored, err := th.Server.App().GetMemberForBoard(board.ID, userGuestID)
+		require.NoError(t, err)
+		require.False(t, stored.SchemeAdmin)
+	})
 }
 
 func TestUpdateMember(t *testing.T) {

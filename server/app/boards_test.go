@@ -136,6 +136,51 @@ func TestAddMemberToBoard(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, boardID, addedBoardMember.BoardID)
 	})
+
+	t.Run("should never persist SchemeAdmin for a guest target", func(t *testing.T) {
+		const boardID = "board_id_1"
+		const userID = "guest_user_id"
+
+		boardMember := &model.BoardMember{
+			BoardID:     boardID,
+			UserID:      userID,
+			SchemeAdmin: true,
+		}
+
+		th.Store.EXPECT().GetBoard(boardID).Return(&model.Board{
+			ID:     boardID,
+			TeamID: "team_id_1",
+		}, nil)
+
+		th.Store.EXPECT().GetMemberForBoard(boardID, userID).Return(nil, nil)
+		th.Store.EXPECT().GetUserByID(userID).Return(&model.User{ID: userID, IsGuest: true}, nil)
+
+		th.Store.EXPECT().SaveMember(mock.MatchedBy(func(i interface{}) bool {
+			p := i.(*model.BoardMember)
+			return p.BoardID == boardID && p.UserID == userID && !p.SchemeAdmin
+		})).Return(&model.BoardMember{
+			BoardID:     boardID,
+			UserID:      userID,
+			SchemeAdmin: false,
+		}, nil)
+
+		th.Store.EXPECT().GetMembersForBoard(boardID).Return([]*model.BoardMember{}, nil)
+		th.Store.EXPECT().GetUserCategoryBoards(userID, "team_id_1").Return([]model.CategoryBoards{
+			{
+				Category: model.Category{
+					ID:   "default_category_id",
+					Name: "Boards",
+					Type: "system",
+				},
+			},
+		}, nil).Times(2)
+		th.Store.EXPECT().AddUpdateCategoryBoard(userID, "default_category_id", []string{boardID}).Return(nil)
+		th.API.EXPECT().HasPermissionToTeam(userID, "team_id_1", model.PermissionManageTeam).Return(false).Times(1)
+
+		addedBoardMember, err := th.App.AddMemberToBoard(boardMember)
+		require.NoError(t, err)
+		require.False(t, addedBoardMember.SchemeAdmin)
+	})
 }
 
 func TestPatchBoard(t *testing.T) {
