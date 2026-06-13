@@ -765,7 +765,7 @@ func (c *Client) TeamUploadFile(teamID, boardID string, data io.Reader) (*api.Fi
 	if _, err = io.Copy(part, data); err != nil {
 		return nil, &Response{Error: err}
 	}
-	writer.Close()
+	_ = writer.Close()
 
 	opt := func(r *http.Request) {
 		r.Header.Add("Content-Type", writer.FormDataContentType())
@@ -880,7 +880,7 @@ func (c *Client) ImportArchive(teamID string, data io.Reader) *Response {
 	if _, err = io.Copy(part, data); err != nil {
 		return &Response{Error: err}
 	}
-	writer.Close()
+	_ = writer.Close()
 
 	opt := func(r *http.Request) {
 		r.Header.Add("Content-Type", writer.FormDataContentType())

@@ -526,7 +526,7 @@ func SetupTestHelper(t *testing.T) *TestHelper {
 
 func SetupTestHelperPluginMode(t *testing.T) *TestHelper {
 	origUnitTesting := os.Getenv("FOCALBOARD_UNIT_TESTING")
-	os.Setenv("FOCALBOARD_UNIT_TESTING", "1")
+	_ = os.Setenv("FOCALBOARD_UNIT_TESTING", "1")
 
 	// Create sqlSettings for test database
 	driverName := getEnvWithDefault("TEST_DATABASE_DRIVERNAME", "postgres")
@@ -578,7 +578,7 @@ func (th *TestHelper) Start() *TestHelper {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		// Currently returns 404
 		// if resp.StatusCode != http.StatusOK {
@@ -615,7 +615,7 @@ var (
 )
 
 func (th *TestHelper) TearDown() {
-	os.Setenv("FOCALBOARD_UNIT_TESTING", th.origEnvUnitTesting)
+	_ = os.Setenv("FOCALBOARD_UNIT_TESTING", th.origEnvUnitTesting)
 
 	logger := th.Server.Logger()
 
@@ -628,7 +628,7 @@ func (th *TestHelper) TearDown() {
 		panic(err)
 	}
 
-	os.RemoveAll(th.Server.Config().FilesPath)
+	_ = os.RemoveAll(th.Server.Config().FilesPath)
 
 	// Cleanup database using storetest.CleanupSqlSettings
 	// Note: t.Cleanup() will also try to clean up, so we mark it as done to prevent double cleanup

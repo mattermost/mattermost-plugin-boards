@@ -54,7 +54,6 @@ func TeamsFromJSON(data io.Reader) []*Team {
 func ValidateTeamID(teamID string, isTemplate bool) error {
 	// Validate inputs to ensure proper file path handling
 	// Only allow GlobalTeamID for template operations to prevent path traversal attacks
-
 	// Security: GlobalTeamID ("0") is ONLY allowed for template operations
 	// Even in test environments, we reject GlobalTeamID for non-template file operations
 	// to prevent path traversal attacks. Integration tests should use valid Mattermost team IDs.

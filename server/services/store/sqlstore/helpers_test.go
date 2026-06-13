@@ -270,7 +270,7 @@ func (t *testServicesAPIForUnitTests) UpdatePreferencesForUser(userID string, pr
 
 func SetupTests(t *testing.T) (store.Store, func()) {
 	origUnitTesting := os.Getenv("FOCALBOARD_UNIT_TESTING")
-	os.Setenv("FOCALBOARD_UNIT_TESTING", "1")
+	_ = os.Setenv("FOCALBOARD_UNIT_TESTING", "1")
 
 	// Skip SQLite in plugin mode (not supported)
 	driverName := strings.TrimSpace(os.Getenv("TEST_DATABASE_DRIVERNAME"))
@@ -348,7 +348,7 @@ func SetupTests(t *testing.T) (store.Store, func()) {
 		if err = os.Remove(connectionString); err == nil {
 			logger.Debug("Removed test database", mlog.String("file", connectionString))
 		}
-		os.Setenv("FOCALBOARD_UNIT_TESTING", origUnitTesting)
+		_ = os.Setenv("FOCALBOARD_UNIT_TESTING", origUnitTesting)
 	}
 
 	return store, tearDown

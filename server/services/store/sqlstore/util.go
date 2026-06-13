@@ -80,7 +80,7 @@ func PrepareNewTestDatabase() (dbType string, connectionString string, err error
 		if err != nil {
 			return "", "", fmt.Errorf("cannot connect to %s database: %w", dbType, err)
 		}
-		defer sqlDB.Close()
+		defer func() { _ = sqlDB.Close() }()
 
 		err = sqlDB.Ping()
 		if err != nil {

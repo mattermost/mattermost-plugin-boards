@@ -131,7 +131,7 @@ func extractStoreMetadata() (*storeMetadata, error) {
 	if err != nil {
 		return nil, err
 	}
-	file.Close()
+	_ = file.Close()
 	f, err := parser.ParseFile(fset, "", src, parser.AllErrors|parser.ParseComments)
 	if err != nil {
 		return nil, err

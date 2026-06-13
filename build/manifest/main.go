@@ -93,6 +93,16 @@ func main() {
 			panic("failed to apply manifest: " + err.Error())
 		}
 
+	case "dist":
+		if err := distManifest(manifest, "dist"); err != nil {
+			panic("failed to write manifest to dist directory: " + err.Error())
+		}
+
+	case "dist-fips":
+		if err := distManifest(manifest, "dist-fips"); err != nil {
+			panic("failed to write manifest to dist-fips directory: " + err.Error())
+		}
+
 	default:
 		panic("unrecognized command: " + cmd)
 	}
@@ -149,12 +159,12 @@ func findManifest() (*model.Manifest, error) {
 
 // dumpPluginId writes the plugin id from the given manifest to standard out
 func dumpPluginID(manifest *model.Manifest) {
-	fmt.Printf("%s", manifest.Id)
+	fmt.Printf("%s\n", manifest.Id)
 }
 
 // dumpPluginVersion writes the plugin version from the given manifest to standard out
 func dumpPluginVersion(manifest *model.Manifest) {
-	fmt.Printf("%s", manifest.Version)
+	fmt.Printf("%s\n", manifest.Version)
 }
 
 // applyManifest propagates the plugin_id into the server and webapp folders, as necessary
@@ -198,6 +208,20 @@ func applyManifest(manifest *model.Manifest) error {
 		); err != nil {
 			return errors.Wrap(err, "failed to write webapp/src/manifest.ts")
 		}
+	}
+
+	return nil
+}
+
+// distManifest writes the manifest file to the specified directory
+func distManifest(manifest *model.Manifest, outputDir string) error {
+	manifestBytes, err := json.MarshalIndent(manifest, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(fmt.Sprintf("%s/%s/plugin.json", outputDir, manifest.Id), manifestBytes, 0600); err != nil {
+		return errors.Wrap(err, "failed to write plugin.json")
 	}
 
 	return nil

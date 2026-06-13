@@ -275,7 +275,7 @@ func runTestCases(t *testing.T, ttCases []TestCase, testData TestData, clients C
 			switch tc.method {
 			case methodGet:
 				response, err = reqClient.DoAPIGet(url, "")
-				defer response.Body.Close()
+				defer func() { _ = response.Body.Close() }()
 			case methodPost:
 				response, err = reqClient.DoAPIPost(url, body)
 				defer response.Body.Close()

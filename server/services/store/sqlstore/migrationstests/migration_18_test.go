@@ -97,7 +97,7 @@ func Test18AddTeamsAndBoardsSQLMigration(t *testing.T) {
 		var fields map[string]interface{}
 
 		// Make sure a valid JSON object
-		json.Unmarshal([]byte(view.Fields), &fields)
+		_ = json.Unmarshal([]byte(view.Fields), &fields)
 		require.NotNil(t, fields["columnCalculations"])
 		require.NotEmpty(t, fields["columnCalculations"])
 

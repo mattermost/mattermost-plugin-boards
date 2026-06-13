@@ -247,7 +247,6 @@ func (a *App) writeArchiveFile(zw *zip.Writer, filename string, boardID string, 
 		return nil
 	}
 	if fileReader == nil {
-		// fileReader is nil even though there's no error, this shouldn't happen but handle it gracefully
 		a.logger.Error("file reader is nil for export",
 			mlog.String("filename", filename),
 			mlog.String("team_id", opt.TeamID),

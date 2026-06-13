@@ -28,7 +28,7 @@ func (wh *Client) NotifyUpdate(block *model.Block) {
 	for _, url := range wh.config.WebhookUpdate {
 		resp, _ := http.Post(url, "application/json", bytes.NewBuffer(json)) //nolint:gosec
 		_, _ = io.ReadAll(resp.Body)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		wh.logger.Debug("webhook.NotifyUpdate", mlog.String("url", url))
 	}

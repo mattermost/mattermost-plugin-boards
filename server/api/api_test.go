@@ -75,7 +75,7 @@ func TestErrorResponse(t *testing.T) {
 			require.Equal(t, "application/json", res.Header.Get("Content-Type"))
 			b, rErr := io.ReadAll(res.Body)
 			require.NoError(t, rErr)
-			res.Body.Close()
+			_ = res.Body.Close()
 			require.Contains(t, string(b), tc.ResponseBody)
 		})
 	}

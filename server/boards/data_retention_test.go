@@ -28,14 +28,14 @@ func SetupTestHelperMockStore(t *testing.T) (*TestHelperMockStore, func()) {
 	th := &TestHelperMockStore{}
 
 	origUnitTesting := os.Getenv("FOCALBOARD_UNIT_TESTING")
-	os.Setenv("FOCALBOARD_UNIT_TESTING", "1")
+	_ = os.Setenv("FOCALBOARD_UNIT_TESTING", "1")
 
 	ctrl := gomock.NewController(t)
 	mockStore := mockstore.NewMockStore(ctrl)
 
 	tearDown := func() {
 		defer ctrl.Finish()
-		os.Setenv("FOCALBOARD_UNIT_TESTING", origUnitTesting)
+		_ = os.Setenv("FOCALBOARD_UNIT_TESTING", origUnitTesting)
 	}
 
 	th.Server = newTestServerMock(mockStore)

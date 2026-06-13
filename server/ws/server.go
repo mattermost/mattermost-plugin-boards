@@ -121,7 +121,7 @@ func (ws *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 		// Remove session from listeners
 		ws.removeListener(wsSession)
-		wsSession.conn.Close()
+		_ = wsSession.conn.Close()
 	}()
 
 	// Simple message handling loop
@@ -426,7 +426,7 @@ func (ws *Server) authenticateListener(wsSession *websocketSession, token string
 	// Authenticate session
 	userID := ws.getUserIDForToken(token)
 	if userID == "" {
-		wsSession.conn.Close()
+		_ = wsSession.conn.Close()
 		return
 	}
 
@@ -536,7 +536,7 @@ func (ws *Server) BroadcastBlockChange(teamID string, block *model.Block) {
 		err := listener.WriteJSON(message)
 		if err != nil {
 			ws.logger.Error("broadcast error", mlog.Err(err))
-			listener.conn.Close()
+			_ = listener.conn.Close()
 		}
 	}
 }
@@ -559,7 +559,7 @@ func (ws *Server) BroadcastCategoryChange(category model.Category) {
 
 		if err := listener.WriteJSON(message); err != nil {
 			ws.logger.Error("broadcast category change error", mlog.Err(err))
-			listener.conn.Close()
+			_ = listener.conn.Close()
 		}
 	}
 }
@@ -581,7 +581,7 @@ func (ws *Server) BroadcastCategoryReorder(teamID, userID string, categoryOrder 
 
 		if err := listener.WriteJSON(message); err != nil {
 			ws.logger.Error("broadcast category order change error", mlog.Err(err))
-			listener.conn.Close()
+			_ = listener.conn.Close()
 		}
 	}
 }
@@ -605,7 +605,7 @@ func (ws *Server) BroadcastCategoryBoardsReorder(teamID, userID, categoryID stri
 
 		if err := listener.WriteJSON(message); err != nil {
 			ws.logger.Error("broadcast category boards order change error", mlog.Err(err))
-			listener.conn.Close()
+			_ = listener.conn.Close()
 		}
 	}
 }
@@ -628,7 +628,7 @@ func (ws *Server) BroadcastCategoryBoardChange(teamID, userID string, boardCateg
 
 		if err := listener.WriteJSON(message); err != nil {
 			ws.logger.Error("broadcast category change error", mlog.Err(err))
-			listener.conn.Close()
+			_ = listener.conn.Close()
 		}
 	}
 }
@@ -652,7 +652,7 @@ func (ws *Server) BroadcastConfigChange(clientConfig model.ClientConfig) {
 		err := listener.WriteJSON(message)
 		if err != nil {
 			ws.logger.Error("broadcast error", mlog.Err(err))
-			listener.conn.Close()
+			_ = listener.conn.Close()
 		}
 	}
 }
@@ -681,7 +681,7 @@ func (ws *Server) BroadcastBoardChange(teamID string, board *model.Board) {
 		err := listener.WriteJSON(message)
 		if err != nil {
 			ws.logger.Error("broadcast error", mlog.Err(err))
-			listener.conn.Close()
+			_ = listener.conn.Close()
 		}
 	}
 }
@@ -721,7 +721,7 @@ func (ws *Server) BroadcastMemberChange(teamID, boardID string, member *model.Bo
 		err := listener.WriteJSON(message)
 		if err != nil {
 			ws.logger.Error("broadcast error", mlog.Err(err))
-			listener.conn.Close()
+			_ = listener.conn.Close()
 		}
 	}
 }
@@ -753,7 +753,7 @@ func (ws *Server) BroadcastMemberDelete(teamID, boardID, userID string) {
 		err := listener.WriteJSON(message)
 		if err != nil {
 			ws.logger.Error("broadcast error", mlog.Err(err))
-			listener.conn.Close()
+			_ = listener.conn.Close()
 		}
 	}
 }
