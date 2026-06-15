@@ -1933,6 +1933,42 @@ func TestUpdateMember(t *testing.T) {
 		require.True(t, updatedGuestMember.SchemeEditor)
 		require.False(t, updatedGuestMember.SchemeAdmin)
 	})
+
+	t.Run("should strip admin role when adding a guest member with SchemeAdmin true", func(t *testing.T) {
+		th := SetupTestHelperPluginMode(t)
+		defer th.TearDown()
+		clients := setupClients(th)
+		th.Client = clients.Admin
+
+		teamID := mmModel.NewId()
+		newBoard := &model.Board{
+			Title:  "title",
+			Type:   model.BoardTypeOpen,
+			TeamID: teamID,
+		}
+		board, err := th.Server.App().CreateBoard(newBoard, userAdmin, true)
+		require.NoError(t, err)
+
+		newGuestMember := &model.BoardMember{
+			UserID:          userGuest,
+			BoardID:         board.ID,
+			SchemeAdmin:     true,
+			SchemeViewer:    true,
+			SchemeCommenter: true,
+			SchemeEditor:    true,
+		}
+		guestMember, err := th.Server.App().AddMemberToBoard(newGuestMember)
+		require.NoError(t, err)
+		require.NotNil(t, guestMember)
+		require.True(t, guestMember.SchemeViewer)
+		require.True(t, guestMember.SchemeCommenter)
+		require.True(t, guestMember.SchemeEditor)
+		require.False(t, guestMember.SchemeAdmin)
+
+		storedMember, err := th.Server.App().GetMemberForBoard(board.ID, userGuest)
+		require.NoError(t, err)
+		require.False(t, storedMember.SchemeAdmin)
+	})
 }
 
 func TestDeleteMember(t *testing.T) {

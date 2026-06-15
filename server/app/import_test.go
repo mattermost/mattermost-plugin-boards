@@ -11,7 +11,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -144,7 +143,7 @@ func TestApp_ImportArchive(t *testing.T) {
 		require.Equal(t, board.ID, newBoard.ID, "Board ID should be same")
 	})
 
-	t.Run("archive boardMember scheme bits are ignored", func(t *testing.T) {
+	t.Run("archive boardMember SchemeAdmin is stripped", func(t *testing.T) {
 		const importerID = "f1tydgc697fcbp8ampr6881jea"
 		const attackerTargetID = "nto73edn5ir6ifimo5a53y1dwa"
 
@@ -174,13 +173,7 @@ func TestApp_ImportArchive(t *testing.T) {
 			return &model.User{ID: id, IsGuest: false}, nil
 		})
 
-		th.Store.EXPECT().SaveMember(mock.MatchedBy(func(i interface{}) bool {
-			m := i.(*model.BoardMember)
-			if m.UserID == importerID {
-				return m.SchemeAdmin
-			}
-			return !m.SchemeAdmin && m.SchemeEditor
-		})).AnyTimes().DoAndReturn(func(i interface{}) (*model.BoardMember, error) {
+		th.Store.EXPECT().SaveMember(gomock.Any()).AnyTimes().DoAndReturn(func(i interface{}) (*model.BoardMember, error) {
 			m := i.(*model.BoardMember)
 			require.False(t, m.UserID == attackerTargetID && m.SchemeAdmin)
 			return m, nil

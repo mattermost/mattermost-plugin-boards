@@ -36,6 +36,8 @@ func TestAddMemberToBoard(t *testing.T) {
 
 		th.Store.EXPECT().GetMemberForBoard(boardID, userID).Return(nil, nil)
 
+		th.Store.EXPECT().GetUserByID(userID).Return(&model.User{ID: userID, IsGuest: false}, nil)
+
 		th.Store.EXPECT().SaveMember(mock.MatchedBy(func(i interface{}) bool {
 			p := i.(*model.BoardMember)
 			return p.BoardID == boardID && p.UserID == userID
@@ -108,6 +110,8 @@ func TestAddMemberToBoard(t *testing.T) {
 			Synthetic: true,
 		}, nil)
 
+		th.Store.EXPECT().GetUserByID(userID).Return(&model.User{ID: userID, IsGuest: false}, nil)
+
 		th.Store.EXPECT().SaveMember(mock.MatchedBy(func(i interface{}) bool {
 			p := i.(*model.BoardMember)
 			return p.BoardID == boardID && p.UserID == userID
@@ -137,14 +141,17 @@ func TestAddMemberToBoard(t *testing.T) {
 		require.Equal(t, boardID, addedBoardMember.BoardID)
 	})
 
-	t.Run("should never persist SchemeAdmin for a guest target", func(t *testing.T) {
+	t.Run("should strip SchemeAdmin for guest users", func(t *testing.T) {
 		const boardID = "board_id_1"
 		const userID = "guest_user_id"
 
 		boardMember := &model.BoardMember{
-			BoardID:     boardID,
-			UserID:      userID,
-			SchemeAdmin: true,
+			BoardID:         boardID,
+			UserID:          userID,
+			SchemeAdmin:     true,
+			SchemeViewer:    true,
+			SchemeCommenter: true,
+			SchemeEditor:    true,
 		}
 
 		th.Store.EXPECT().GetBoard(boardID).Return(&model.Board{
@@ -153,18 +160,23 @@ func TestAddMemberToBoard(t *testing.T) {
 		}, nil)
 
 		th.Store.EXPECT().GetMemberForBoard(boardID, userID).Return(nil, nil)
+
 		th.Store.EXPECT().GetUserByID(userID).Return(&model.User{ID: userID, IsGuest: true}, nil)
 
 		th.Store.EXPECT().SaveMember(mock.MatchedBy(func(i interface{}) bool {
 			p := i.(*model.BoardMember)
 			return p.BoardID == boardID && p.UserID == userID && !p.SchemeAdmin
 		})).Return(&model.BoardMember{
-			BoardID:     boardID,
-			UserID:      userID,
-			SchemeAdmin: false,
+			BoardID:         boardID,
+			UserID:          userID,
+			SchemeAdmin:     false,
+			SchemeViewer:    true,
+			SchemeCommenter: true,
+			SchemeEditor:    true,
 		}, nil)
 
 		th.Store.EXPECT().GetMembersForBoard(boardID).Return([]*model.BoardMember{}, nil)
+
 		th.Store.EXPECT().GetUserCategoryBoards(userID, "team_id_1").Return([]model.CategoryBoards{
 			{
 				Category: model.Category{
@@ -180,6 +192,9 @@ func TestAddMemberToBoard(t *testing.T) {
 		addedBoardMember, err := th.App.AddMemberToBoard(boardMember)
 		require.NoError(t, err)
 		require.False(t, addedBoardMember.SchemeAdmin)
+		require.True(t, addedBoardMember.SchemeViewer)
+		require.True(t, addedBoardMember.SchemeCommenter)
+		require.True(t, addedBoardMember.SchemeEditor)
 	})
 }
 
@@ -449,7 +464,7 @@ func TestPatchBoard(t *testing.T) {
 		require.Equal(t, boardID, patchedBoard.ID)
 	})
 
-	t.Run("patch type channel, user without post permissions", func(t *testing.T) {
+	t.Run("patch type channel, user without read permissions", func(t *testing.T) {
 		const boardID = "board_id_1"
 		const userID = "user_id_2"
 		const teamID = "team_id_1"
@@ -469,12 +484,36 @@ func TestPatchBoard(t *testing.T) {
 			IsTemplate: true,
 		}, nil).Times(1)
 
+		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionReadChannel).Return(false).Times(1)
+		_, err := th.App.PatchBoard(patch, boardID, userID)
+		require.Error(t, err)
+	})
+
+	t.Run("patch type channel, user without post permissions", func(t *testing.T) {
+		const boardID = "board_id_1"
+		const userID = "user_id_2"
+		const teamID = "team_id_1"
+
+		channelID := "myChannel"
+		patchType := model.BoardTypeOpen
+		patch := &model.BoardPatch{
+			Type:      &patchType,
+			ChannelID: &channelID,
+		}
+
+		th.Store.EXPECT().GetBoard(boardID).Return(&model.Board{
+			ID:         boardID,
+			TeamID:     teamID,
+			IsTemplate: true,
+		}, nil).Times(1)
+
+		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionReadChannel).Return(true).Times(1)
 		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionCreatePost).Return(false).Times(1)
 		_, err := th.App.PatchBoard(patch, boardID, userID)
 		require.Error(t, err)
 	})
 
-	t.Run("patch type channel, user with post permissions", func(t *testing.T) {
+	t.Run("patch type channel, user with link permissions", func(t *testing.T) {
 		const boardID = "board_id_1"
 		const userID = "user_id_2"
 		const teamID = "team_id_1"
@@ -491,6 +530,7 @@ func TestPatchBoard(t *testing.T) {
 			TeamID: teamID,
 		}, nil).Times(2)
 
+		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionReadChannel).Return(true).Times(1)
 		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionCreatePost).Return(true).Times(1)
 
 		th.Store.EXPECT().PatchBoard(boardID, patch, userID).Return(
@@ -512,7 +552,7 @@ func TestPatchBoard(t *testing.T) {
 		require.Equal(t, boardID, patchedBoard.ID)
 	})
 
-	t.Run("patch type remove channel, user without post permissions", func(t *testing.T) {
+	t.Run("patch type remove channel, user without read permissions", func(t *testing.T) {
 		const boardID = "board_id_1"
 		const userID = "user_id_2"
 		const teamID = "team_id_1"
@@ -534,7 +574,7 @@ func TestPatchBoard(t *testing.T) {
 			ChannelID:  channelID,
 		}, nil).Times(2)
 
-		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionCreatePost).Return(false).Times(1)
+		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionReadChannel).Return(false).Times(1)
 
 		th.API.EXPECT().HasPermissionToTeam(userID, teamID, model.PermissionManageTeam).Return(false).Times(1)
 		// Should call GetMembersForBoard 2 times
@@ -545,6 +585,236 @@ func TestPatchBoard(t *testing.T) {
 
 		_, err := th.App.PatchBoard(patch, boardID, userID)
 		require.Error(t, err)
+	})
+}
+
+func TestCreateBoardChannelAccess(t *testing.T) {
+	th, tearDown := SetupTestHelper(t)
+	defer tearDown()
+
+	t.Run("create board with channel user cannot read fails", func(t *testing.T) {
+		const userID = "user_id_1"
+		const teamID = "team_id_1"
+		const channelID = "private_channel"
+
+		board := &model.Board{
+			TeamID:    teamID,
+			Type:      model.BoardTypeOpen,
+			Title:     "Test Board",
+			ChannelID: channelID,
+		}
+
+		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionReadChannel).Return(false).Times(1)
+
+		_, err := th.App.CreateBoard(board, userID, false)
+		require.Error(t, err)
+		require.True(t, model.IsErrForbidden(err))
+	})
+
+	t.Run("create board with channel user can read succeeds", func(t *testing.T) {
+		const userID = "user_id_1"
+		const teamID = "team_id_1"
+		const channelID = "public_channel"
+
+		board := &model.Board{
+			TeamID:    teamID,
+			Type:      model.BoardTypeOpen,
+			Title:     "Test Board",
+			ChannelID: channelID,
+		}
+
+		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionReadChannel).Return(true).Times(1)
+
+		th.Store.EXPECT().InsertBoard(mock.MatchedBy(func(b *model.Board) bool {
+			return b.TeamID == teamID && b.ChannelID == channelID
+		}), userID).Return(board, nil)
+
+		th.Store.EXPECT().GetMembersForBoard(utils.Anything).Return([]*model.BoardMember{}, nil).AnyTimes()
+		th.Store.EXPECT().GetBoard(utils.Anything).Return(&model.Board{TeamID: teamID}, nil).AnyTimes()
+
+		th.Store.EXPECT().GetUserCategoryBoards(userID, teamID).Return([]model.CategoryBoards{
+			{
+				Category: model.Category{
+					ID:   "default_category_id",
+					Name: "Boards",
+					Type: "system",
+				},
+			},
+		}, nil).AnyTimes()
+		th.Store.EXPECT().AddUpdateCategoryBoard(userID, "default_category_id", utils.Anything).Return(nil)
+
+		createdBoard, err := th.App.CreateBoard(board, userID, false)
+		require.NoError(t, err)
+		require.Equal(t, channelID, createdBoard.ChannelID)
+	})
+}
+
+func TestCreateBoardsAndBlocksChannelAccess(t *testing.T) {
+	th, tearDown := SetupTestHelper(t)
+	defer tearDown()
+
+	t.Run("create boards and blocks with inaccessible channel fails", func(t *testing.T) {
+		const userID = "user_id_1"
+		const teamID = "team_id_1"
+		const channelID = "private_channel"
+
+		bab := &model.BoardsAndBlocks{
+			Boards: []*model.Board{{
+				TeamID:    teamID,
+				Type:      model.BoardTypeOpen,
+				Title:     "Test Board",
+				ChannelID: channelID,
+			}},
+			Blocks: []*model.Block{},
+		}
+
+		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionReadChannel).Return(false).Times(1)
+
+		_, err := th.App.CreateBoardsAndBlocks(bab, userID, false)
+		require.Error(t, err)
+		require.True(t, model.IsErrForbidden(err))
+	})
+
+	t.Run("create boards and blocks with accessible channel succeeds", func(t *testing.T) {
+		const userID = "user_id_1"
+		const teamID = "team_id_1"
+		const channelID = "public_channel"
+
+		bab := &model.BoardsAndBlocks{
+			Boards: []*model.Board{{
+				TeamID:    teamID,
+				Type:      model.BoardTypeOpen,
+				Title:     "Test Board",
+				ChannelID: channelID,
+			}},
+			Blocks: []*model.Block{},
+		}
+
+		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionReadChannel).Return(true).Times(1)
+
+		th.Store.EXPECT().CreateBoardsAndBlocks(utils.Anything, userID).Return(bab, nil)
+
+		th.Store.EXPECT().GetMembersForBoard(utils.Anything).Return([]*model.BoardMember{}, nil).AnyTimes()
+
+		th.Store.EXPECT().GetUserCategoryBoards(userID, teamID).Return([]model.CategoryBoards{
+			{
+				Category: model.Category{
+					ID:   "default_category_id",
+					Name: "Boards",
+					Type: "system",
+				},
+			},
+		}, nil).AnyTimes()
+		th.Store.EXPECT().AddUpdateCategoryBoard(userID, "default_category_id", utils.Anything).Return(nil)
+
+		createdBab, err := th.App.CreateBoardsAndBlocks(bab, userID, false)
+		require.NoError(t, err)
+		require.Equal(t, channelID, createdBab.Boards[0].ChannelID)
+	})
+}
+
+func TestPatchBoardsAndBlocksChannelAccess(t *testing.T) {
+	th, tearDown := SetupTestHelper(t)
+	defer tearDown()
+
+	expectPatchBoardsAndBlocksSetup := func() {
+		th.Store.EXPECT().GetBlocksByIDs(utils.Anything).Return([]*model.Block{}, nil).Times(1)
+	}
+
+	t.Run("patch channel user cannot read fails", func(t *testing.T) {
+		const boardID = "board_id_1"
+		const userID = "user_id_1"
+		const teamID = "team_id_1"
+		channelID := "private_channel"
+
+		patch := &model.BoardPatch{
+			ChannelID: &channelID,
+		}
+		pbab := &model.PatchBoardsAndBlocks{
+			BoardIDs:     []string{boardID},
+			BoardPatches: []*model.BoardPatch{patch},
+		}
+
+		expectPatchBoardsAndBlocksSetup()
+
+		th.Store.EXPECT().GetBoard(boardID).Return(&model.Board{
+			ID:     boardID,
+			TeamID: teamID,
+		}, nil).Times(1)
+
+		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionReadChannel).Return(false).Times(1)
+
+		_, err := th.App.PatchBoardsAndBlocks(pbab, userID)
+		require.Error(t, err)
+		require.True(t, model.IsErrForbidden(err))
+	})
+
+	t.Run("patch channel user without post permissions fails", func(t *testing.T) {
+		const boardID = "board_id_1"
+		const userID = "user_id_1"
+		const teamID = "team_id_1"
+		channelID := "private_channel"
+
+		patch := &model.BoardPatch{
+			ChannelID: &channelID,
+		}
+		pbab := &model.PatchBoardsAndBlocks{
+			BoardIDs:     []string{boardID},
+			BoardPatches: []*model.BoardPatch{patch},
+		}
+
+		expectPatchBoardsAndBlocksSetup()
+
+		th.Store.EXPECT().GetBoard(boardID).Return(&model.Board{
+			ID:     boardID,
+			TeamID: teamID,
+		}, nil).Times(1)
+
+		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionReadChannel).Return(true).Times(1)
+		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionCreatePost).Return(false).Times(1)
+
+		_, err := th.App.PatchBoardsAndBlocks(pbab, userID)
+		require.Error(t, err)
+		require.True(t, model.IsErrForbidden(err))
+	})
+
+	t.Run("patch channel user with link permissions succeeds", func(t *testing.T) {
+		const boardID = "board_id_1"
+		const userID = "user_id_1"
+		const teamID = "team_id_1"
+		channelID := "public_channel"
+
+		patch := &model.BoardPatch{
+			ChannelID: &channelID,
+		}
+		pbab := &model.PatchBoardsAndBlocks{
+			BoardIDs:     []string{boardID},
+			BoardPatches: []*model.BoardPatch{patch},
+		}
+		bab := &model.BoardsAndBlocks{
+			Boards: []*model.Board{{
+				ID:        boardID,
+				TeamID:    teamID,
+				ChannelID: channelID,
+			}},
+		}
+
+		expectPatchBoardsAndBlocksSetup()
+
+		th.Store.EXPECT().GetBoard(boardID).Return(&model.Board{
+			ID:     boardID,
+			TeamID: teamID,
+		}, nil).Times(1)
+
+		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionReadChannel).Return(true).Times(1)
+		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionCreatePost).Return(true).Times(1)
+
+		th.Store.EXPECT().GetMembersForBoard(utils.Anything).Return([]*model.BoardMember{}, nil).AnyTimes()
+		th.Store.EXPECT().PatchBoardsAndBlocks(pbab, userID).Return(bab, nil)
+
+		patchedBab, err := th.App.PatchBoardsAndBlocks(pbab, userID)
+		require.NoError(t, err)
+		require.Equal(t, channelID, patchedBab.Boards[0].ChannelID)
 	})
 }
 
