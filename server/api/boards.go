@@ -26,6 +26,26 @@ func (a *API) registerBoardsRoutes(r *mux.Router) {
 	r.HandleFunc("/boards/{boardID}/metadata", a.sessionRequired(a.handleGetBoardMetadata)).Methods("GET")
 }
 
+func (a *API) authorizeBoardPatch(userID, boardID string, patch *model.BoardPatch) error {
+	if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardProperties) {
+		return model.NewErrPermission("access denied to modifying board properties")
+	}
+
+	if patch.Type != nil || patch.MinimumRole != nil {
+		if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardType) {
+			return model.NewErrPermission("access denied to modifying board type")
+		}
+	}
+
+	if patch.ChannelID != nil {
+		if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardRoles) {
+			return model.NewErrPermission("access denied to modifying board access")
+		}
+	}
+
+	return nil
+}
+
 func (a *API) handleGetBoards(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation GET /teams/{teamID}/boards getBoards
 	//
@@ -353,22 +373,9 @@ func (a *API) handlePatchBoard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardProperties) {
-		a.errorResponse(w, r, model.NewErrPermission("access denied to modifying board properties"))
+	if err = a.authorizeBoardPatch(userID, boardID, patch); err != nil {
+		a.errorResponse(w, r, err)
 		return
-	}
-
-	if patch.Type != nil || patch.MinimumRole != nil {
-		if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardType) {
-			a.errorResponse(w, r, model.NewErrPermission("access denied to modifying board type"))
-			return
-		}
-	}
-	if patch.ChannelID != nil {
-		if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardRoles) {
-			a.errorResponse(w, r, model.NewErrPermission("access denied to modifying board access"))
-			return
-		}
 	}
 
 	auditRec := a.makeAuditRecord(r, "patchBoard", audit.Fail)
