@@ -148,7 +148,8 @@ func (a *API) handleAddMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardRoles) &&
+	canManageRoles := a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardRoles)
+	if !canManageRoles &&
 		!(board.Type == model.BoardTypeOpen && a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardProperties)) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to modify board members"))
 		return
@@ -177,12 +178,20 @@ func (a *API) handleAddMember(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newBoardMember := &model.BoardMember{
-		UserID:          reqBoardMember.UserID,
-		BoardID:         boardID,
-		SchemeEditor:    reqBoardMember.SchemeEditor,
-		SchemeAdmin:     reqBoardMember.SchemeAdmin,
-		SchemeViewer:    reqBoardMember.SchemeViewer,
-		SchemeCommenter: reqBoardMember.SchemeCommenter,
+		UserID:  reqBoardMember.UserID,
+		BoardID: boardID,
+	}
+
+	if canManageRoles {
+		newBoardMember.SchemeEditor = reqBoardMember.SchemeEditor
+		newBoardMember.SchemeAdmin = reqBoardMember.SchemeAdmin
+		newBoardMember.SchemeViewer = reqBoardMember.SchemeViewer
+		newBoardMember.SchemeCommenter = reqBoardMember.SchemeCommenter
+	} else {
+		newBoardMember.SchemeAdmin = board.MinimumRole == model.BoardRoleAdmin
+		newBoardMember.SchemeEditor = board.MinimumRole == model.BoardRoleNone || board.MinimumRole == model.BoardRoleEditor
+		newBoardMember.SchemeCommenter = board.MinimumRole == model.BoardRoleCommenter
+		newBoardMember.SchemeViewer = board.MinimumRole == model.BoardRoleViewer
 	}
 
 	auditRec := a.makeAuditRecord(r, "addMember", audit.Fail)
