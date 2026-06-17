@@ -18,9 +18,9 @@ const manifestStr = `
   "description": "The Mattermost Boards plugin",
   "homepage_url": "https://github.com/mattermost/mattermost-plugin-boards",
   "support_url": "https://github.com/mattermost/mattermost-plugin-boards/issues",
-  "release_notes_url": "https://github.com/mattermost/mattermost-plugin-boards/releases/tag/v9.2.5",
+  "release_notes_url": "https://github.com/mattermost/mattermost-plugin-boards/releases",
   "icon_path": "assets/starter-template-icon.svg",
-  "version": "9.2.5",
+  "version": "9.2.2",
   "min_server_version": "11.8.0",
   "server": {
     "executables": {
