@@ -75,7 +75,7 @@ func SetupTestHelper(t *testing.T) (*TestHelper, func()) {
 	}, tearDown
 }
 
-func (th *TestHelper) expectBoardAdmin(userID, boardID, teamID string) {
+func (th *TestHelper) expectBoardAdmin(userID, boardID, teamID string) { //nolint:unparam
 	th.PermStore.EXPECT().GetBoard(boardID).Return(&model.Board{
 		ID:     boardID,
 		TeamID: teamID,
