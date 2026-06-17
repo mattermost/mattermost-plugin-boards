@@ -17,6 +17,9 @@ FIPS_GO_BUILD_LDFLAGS ?=
 # GO_BUILD_* are Make-substituted into the single-quoted inner script.
 # Env-var passing (`-e VAR=...`) doesn't survive a second pass of word
 # splitting on values with embedded quotes like `-gcflags "all=-N -l"`.
+# Boards sets GO_BUILD_FLAGS with single-quoted -ldflags, which breaks the
+# single-quoted docker inner script and drops -o (go then tries to write "server").
+# Pass build metadata via env vars and use double-quoted -ldflags instead.
 .PHONY: server-fips
 server-fips: templates-archive
 	mkdir -p server/dist-fips
@@ -24,10 +27,14 @@ server-fips: templates-archive
 	  --entrypoint="" \
 	  -v $(PWD):/plugin \
 	  -w /plugin/server \
+	  -e BUILD_NUMBER=$(BUILD_NUMBER) \
+	  -e BUILD_DATE="$(BUILD_DATE)" \
+	  -e BUILD_HASH=$(BUILD_HASH) \
 	  $(FIPS_IMAGE) \
 	  /bin/sh -c 'CGO_ENABLED=1 GOOS=linux GOARCH=amd64 \
 	    go build -trimpath -buildvcs=false \
-	    $(GO_BUILD_FLAGS) $(GO_BUILD_GCFLAGS) $(FIPS_GO_BUILD_LDFLAGS) \
+	    -ldflags "-X github.com/mattermost/focalboard/server/model.BuildNumber=$${BUILD_NUMBER} -X github.com/mattermost/focalboard/server/model.BuildDate=$${BUILD_DATE} -X github.com/mattermost/focalboard/server/model.BuildHash=$${BUILD_HASH} -X github.com/mattermost/focalboard/server/model.Edition=plugin" \
+	    $(GO_BUILD_GCFLAGS) $(FIPS_GO_BUILD_LDFLAGS) \
 	    -tags requirefips \
 	    -o dist-fips/plugin-linux-amd64-fips'
 
