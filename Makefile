@@ -52,10 +52,17 @@ default: all
 include build/setup.mk
 
 BUNDLE_NAME ?= $(PLUGIN_NAME)-$(PLUGIN_VERSION).tar.gz
+BUNDLE_DIR ?= dist
+SERVER_DIST_SRC ?= server/dist
 
 # Include custom makefile, if present
 ifneq ($(wildcard build/custom.mk),)
 	include build/custom.mk
+endif
+
+# Presence of build/fips.mk is the per-plugin FIPS opt-in marker.
+ifneq ($(wildcard build/fips.mk),)
+	include build/fips.mk
 endif
 
 ## Checks the code style, tests, builds and bundles the plugin.
@@ -155,28 +162,28 @@ bundle:
 	./build/bin/manifest dist $(BUNDLE_DIR)/$(PLUGIN_NAME)
 	cp -r webapp/pack $(BUNDLE_DIR)/$(PLUGIN_NAME)/
 ifneq ($(wildcard LICENSE.txt),)
-	cp -r LICENSE.txt dist/$(PLUGIN_NAME)/
+	cp -r LICENSE.txt $(BUNDLE_DIR)/$(PLUGIN_NAME)/
 endif
 ifneq ($(wildcard NOTICE.txt),)
-	cp -r NOTICE.txt dist/$(PLUGIN_NAME)/
+	cp -r NOTICE.txt $(BUNDLE_DIR)/$(PLUGIN_NAME)/
 endif
 ifneq ($(wildcard $(ASSETS_DIR)/.),)
-	cp -r $(ASSETS_DIR) dist/$(PLUGIN_NAME)/
+	cp -r $(ASSETS_DIR) $(BUNDLE_DIR)/$(PLUGIN_NAME)/
 endif
 ifneq ($(HAS_PUBLIC),)
-	cp -r public dist/$(PLUGIN_NAME)/public/
+	cp -r public $(BUNDLE_DIR)/$(PLUGIN_NAME)/public/
 endif
 ifneq ($(HAS_SERVER),)
-	mkdir -p dist/$(PLUGIN_NAME)/server
-	cp -r server/dist dist/$(PLUGIN_NAME)/server/
+	mkdir -p $(BUNDLE_DIR)/$(PLUGIN_NAME)/server/dist
+	cp -r $(SERVER_DIST_SRC)/. $(BUNDLE_DIR)/$(PLUGIN_NAME)/server/dist/
 endif
 ifneq ($(HAS_WEBAPP),)
-	mkdir -p dist/$(PLUGIN_NAME)/webapp
-	cp -r webapp/dist dist/$(PLUGIN_NAME)/webapp/
+	mkdir -p $(BUNDLE_DIR)/$(PLUGIN_NAME)/webapp
+	cp -r webapp/dist $(BUNDLE_DIR)/$(PLUGIN_NAME)/webapp/
 endif
-	cd dist && tar -cvzf $(BUNDLE_NAME) $(PLUGIN_NAME)
+	cd $(BUNDLE_DIR) && tar -cvzf $(BUNDLE_NAME) $(PLUGIN_NAME)
 
-	@echo plugin built at: dist/$(BUNDLE_NAME)
+	@echo plugin built at: $(BUNDLE_DIR)/$(BUNDLE_NAME)
 
 info: ## Display build information
 	@echo "Build Number: $(BUILD_NUMBER)"
@@ -340,10 +347,13 @@ kill: detach
 clean:
 	rm -rf bin
 	rm -rf dist
+	rm -rf dist-fips
 	rm -rf webapp/pack
 ifneq ($(HAS_SERVER),)
 	rm -fr server/coverage.txt
 	rm -fr server/dist
+	rm -fr server/dist-fips
+	rm -fr server/dist-fips-staged
 endif
 ifneq ($(HAS_WEBAPP),)
 	rm -fr webapp/junit.xml
