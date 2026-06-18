@@ -81,6 +81,9 @@ jobs:
     # Skip FIPS testing for forks, which won't have the chainguard identity.
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-22.04
+    needs:
+      - server-test
+      - webapp-test
     permissions:
       contents: read
       id-token: write
@@ -99,6 +102,9 @@ jobs:
           node-version-file: .nvmrc
       - name: npm ci
         run: cd webapp && npm ci
+      - name: Get short SHA
+        id: short-sha
+        run: echo "sha=$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
       - name: Build FIPS
         uses: mattermost/actions/plugin-ci/build-fips@c7a06bc642f72fc227deb2cae3af03cff72c0f0d
         with:
@@ -106,7 +112,7 @@ jobs:
       - name: Upload FIPS build artifact
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
-          name: boards-bundle-fips
+          name: boards-bundle-fips-${{ steps.short-sha.outputs.sha }}
           path: dist-fips/boards-*.tar.gz
           retention-days: 7
 
