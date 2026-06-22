@@ -22,4 +22,5 @@ type Store interface {
 	GetBoard(boardID string) (*model.Board, error)
 	GetMemberForBoard(boardID, userID string) (*model.BoardMember, error)
 	GetBoardHistory(boardID string, opts model.QueryBoardHistoryOptions) ([]*model.Board, error)
+	GetUserByID(userID string) (*model.User, error)
 }

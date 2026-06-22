@@ -6,6 +6,7 @@ package app
 import (
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	mmModel "github.com/mattermost/mattermost/server/public/model"
+	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )
 
 func (a *App) GetTeamUsers(teamID string, asGuestID string) ([]*model.User, error) {
@@ -51,6 +52,41 @@ func (a *App) UserIsGuest(userID string) (bool, error) {
 		return false, err
 	}
 	return user.IsGuest, nil
+}
+
+func (a *App) RevokeBoardAdminForGuest(userID string) error {
+	if userID == "" || userID == model.SystemUserID {
+		return nil
+	}
+
+	isGuest, err := a.UserIsGuest(userID)
+	if err != nil {
+		return err
+	}
+	if !isGuest {
+		return nil
+	}
+
+	members, err := a.store.GetMembersForUser(userID)
+	if err != nil {
+		return err
+	}
+
+	for _, member := range members {
+		if !member.SchemeAdmin {
+			continue
+		}
+		updated := *member
+		updated.SchemeAdmin = false
+		if _, err := a.store.SaveMember(&updated); err != nil {
+			return err
+		}
+		a.logger.Info("revoked board admin from demoted guest",
+			mlog.String("userID", userID),
+			mlog.String("boardID", member.BoardID),
+		)
+	}
+	return nil
 }
 
 func (a *App) CanSeeUser(seerUser string, seenUser string) (bool, error) {
