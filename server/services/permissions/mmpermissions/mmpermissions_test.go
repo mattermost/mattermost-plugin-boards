@@ -128,8 +128,83 @@ func TestHasPermissionToBoard(t *testing.T) {
 			Return(member, nil).
 			Times(1)
 
+		th.store.EXPECT().
+			GetUserByID(userID).
+			Return(&model.User{ID: userID, IsGuest: false}, nil).
+			Times(1)
+
 		hasPermission := th.permissions.HasPermissionToBoard(member.UserID, member.BoardID, model.PermissionViewBoard)
 		assert.True(t, hasPermission)
+	})
+
+	t.Run("transient GetUserByID failure fails closed (drops stale SchemeAdmin)", func(t *testing.T) {
+		member := &model.BoardMember{
+			UserID:      userID,
+			BoardID:     boardID,
+			SchemeAdmin: true,
+		}
+
+		th.store.EXPECT().
+			GetBoard(boardID).
+			Return(&model.Board{ID: boardID, TeamID: teamID}, nil).
+			Times(1)
+		th.api.EXPECT().
+			HasPermissionToTeam(userID, teamID, model.PermissionViewTeam).
+			Return(true).
+			Times(1)
+		th.store.EXPECT().
+			GetMemberForBoard(boardID, userID).
+			Return(member, nil).
+			Times(1)
+		th.store.EXPECT().
+			GetUserByID(userID).
+			Return(nil, sql.ErrConnDone).
+			Times(1)
+		th.api.EXPECT().
+			HasPermissionToTeam(userID, teamID, model.PermissionManageTeam).
+			Return(false).
+			Times(1)
+
+		assert.False(t, th.permissions.HasPermissionToBoard(userID, boardID, model.PermissionDeleteBoard))
+	})
+
+	t.Run("guest with stale SchemeAdmin is not treated as board admin", func(t *testing.T) {
+		adminOnlyPermissions := []*mmModel.Permission{
+			model.PermissionManageBoardType,
+			model.PermissionDeleteBoard,
+			model.PermissionManageBoardRoles,
+			model.PermissionShareBoard,
+		}
+
+		for _, p := range adminOnlyPermissions {
+			member := &model.BoardMember{
+				UserID:      userID,
+				BoardID:     boardID,
+				SchemeAdmin: true,
+			}
+			th.store.EXPECT().
+				GetBoard(boardID).
+				Return(&model.Board{ID: boardID, TeamID: teamID}, nil).
+				Times(1)
+			th.api.EXPECT().
+				HasPermissionToTeam(userID, teamID, model.PermissionViewTeam).
+				Return(true).
+				Times(1)
+			th.store.EXPECT().
+				GetMemberForBoard(boardID, userID).
+				Return(member, nil).
+				Times(1)
+			th.store.EXPECT().
+				GetUserByID(userID).
+				Return(&model.User{ID: userID, IsGuest: true}, nil).
+				Times(1)
+			th.api.EXPECT().
+				HasPermissionToTeam(userID, teamID, model.PermissionManageTeam).
+				Return(false).
+				Times(1)
+
+			assert.False(t, th.permissions.HasPermissionToBoard(userID, boardID, p), p.Id)
+		}
 	})
 
 	t.Run("board admin", func(t *testing.T) {
