@@ -235,16 +235,9 @@ func (a *API) handlePatchBoardsAndBlocks(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardProperties) {
-			a.errorResponse(w, r, model.NewErrPermission("access denied to modifying board properties"))
+		if err = a.authorizeBoardPatch(userID, boardID, patch); err != nil {
+			a.errorResponse(w, r, err)
 			return
-		}
-
-		if patch.Type != nil || patch.MinimumRole != nil {
-			if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardType) {
-				a.errorResponse(w, r, model.NewErrPermission("access denied to modifying board type"))
-				return
-			}
 		}
 
 		board, err2 := a.app.GetBoard(boardID)

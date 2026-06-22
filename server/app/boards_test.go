@@ -484,6 +484,7 @@ func TestPatchBoard(t *testing.T) {
 			IsTemplate: true,
 		}, nil).Times(1)
 
+		th.expectBoardAdmin(userID, boardID, teamID)
 		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionReadChannel).Return(false).Times(1)
 		_, err := th.App.PatchBoard(patch, boardID, userID)
 		require.Error(t, err)
@@ -507,6 +508,7 @@ func TestPatchBoard(t *testing.T) {
 			IsTemplate: true,
 		}, nil).Times(1)
 
+		th.expectBoardAdmin(userID, boardID, teamID)
 		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionReadChannel).Return(true).Times(1)
 		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionCreatePost).Return(false).Times(1)
 		_, err := th.App.PatchBoard(patch, boardID, userID)
@@ -530,6 +532,7 @@ func TestPatchBoard(t *testing.T) {
 			TeamID: teamID,
 		}, nil).Times(2)
 
+		th.expectBoardAdmin(userID, boardID, teamID)
 		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionReadChannel).Return(true).Times(1)
 		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionCreatePost).Return(true).Times(1)
 
@@ -574,6 +577,7 @@ func TestPatchBoard(t *testing.T) {
 			ChannelID:  channelID,
 		}, nil).Times(2)
 
+		th.expectBoardAdmin(userID, boardID, teamID)
 		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionReadChannel).Return(false).Times(1)
 
 		th.API.EXPECT().HasPermissionToTeam(userID, teamID, model.PermissionManageTeam).Return(false).Times(1)
@@ -742,6 +746,7 @@ func TestPatchBoardsAndBlocksChannelAccess(t *testing.T) {
 			TeamID: teamID,
 		}, nil).Times(1)
 
+		th.expectBoardAdmin(userID, boardID, teamID)
 		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionReadChannel).Return(false).Times(1)
 
 		_, err := th.App.PatchBoardsAndBlocks(pbab, userID)
@@ -770,6 +775,7 @@ func TestPatchBoardsAndBlocksChannelAccess(t *testing.T) {
 			TeamID: teamID,
 		}, nil).Times(1)
 
+		th.expectBoardAdmin(userID, boardID, teamID)
 		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionReadChannel).Return(true).Times(1)
 		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionCreatePost).Return(false).Times(1)
 
@@ -806,6 +812,7 @@ func TestPatchBoardsAndBlocksChannelAccess(t *testing.T) {
 			TeamID: teamID,
 		}, nil).Times(1)
 
+		th.expectBoardAdmin(userID, boardID, teamID)
 		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionReadChannel).Return(true).Times(1)
 		th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionCreatePost).Return(true).Times(1)
 
@@ -815,6 +822,34 @@ func TestPatchBoardsAndBlocksChannelAccess(t *testing.T) {
 		patchedBab, err := th.App.PatchBoardsAndBlocks(pbab, userID)
 		require.NoError(t, err)
 		require.Equal(t, channelID, patchedBab.Boards[0].ChannelID)
+	})
+
+	t.Run("patch channel by board editor is rejected", func(t *testing.T) {
+		const boardID = "board_id_1"
+		const userID = "user_id_1"
+		const teamID = "team_id_1"
+		channelID := "any_channel"
+
+		patch := &model.BoardPatch{
+			ChannelID: &channelID,
+		}
+		pbab := &model.PatchBoardsAndBlocks{
+			BoardIDs:     []string{boardID},
+			BoardPatches: []*model.BoardPatch{patch},
+		}
+
+		expectPatchBoardsAndBlocksSetup()
+
+		th.Store.EXPECT().GetBoard(boardID).Return(&model.Board{
+			ID:     boardID,
+			TeamID: teamID,
+		}, nil).Times(1)
+
+		th.expectBoardEditor(userID, boardID, teamID)
+
+		_, err := th.App.PatchBoardsAndBlocks(pbab, userID)
+		require.Error(t, err)
+		require.True(t, model.IsErrForbidden(err))
 	})
 }
 

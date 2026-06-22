@@ -2275,6 +2275,37 @@ func TestPermissionsUpdateBoardsAndBlocks(t *testing.T) {
 	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
 
+func TestPermissionsPatchBoardsAndBlocksChannelId(t *testing.T) {
+	ttCasesF := func(t *testing.T, testData TestData) []TestCase {
+		validChannelID := mmModel.NewId()
+		bab := toJSON(t, model.PatchBoardsAndBlocks{
+			BoardIDs:     []string{testData.publicBoard.ID},
+			BoardPatches: []*model.BoardPatch{{ChannelID: &validChannelID}},
+			BlockIDs:     []string{},
+			BlockPatches: []*model.BlockPatch{},
+		})
+
+		return []TestCase{
+			{"/boards-and-blocks", methodPatch, bab, userAnon, http.StatusUnauthorized, 0},
+			{"/boards-and-blocks", methodPatch, bab, userNoTeamMember, http.StatusForbidden, 0},
+			{"/boards-and-blocks", methodPatch, bab, userTeamMember, http.StatusForbidden, 0},
+			{"/boards-and-blocks", methodPatch, bab, userViewer, http.StatusForbidden, 0},
+			{"/boards-and-blocks", methodPatch, bab, userCommenter, http.StatusForbidden, 0},
+			{"/boards-and-blocks", methodPatch, bab, userEditor, http.StatusForbidden, 0},
+			{"/boards-and-blocks", methodPatch, bab, userGuest, http.StatusForbidden, 0},
+			{"/boards-and-blocks", methodPatch, bab, userAdmin, http.StatusOK, 1},
+		}
+	}
+
+	th := SetupTestHelperPluginMode(t)
+	defer th.TearDown()
+	clients := setupClients(th)
+	testData := setupData(t, th)
+	ttCases := ttCasesF(t, testData)
+	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
+	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
+}
+
 func TestPermissionsDeleteBoardsAndBlocks(t *testing.T) {
 	ttCasesF := func(t *testing.T, testData TestData) []TestCase {
 		bab := toJSON(t, model.DeleteBoardsAndBlocks{
