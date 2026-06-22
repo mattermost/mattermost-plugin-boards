@@ -14,6 +14,96 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestCommandFromRequest(t *testing.T) {
+	t.Run("rejects missing teamId", func(t *testing.T) {
+		req := &mmModel.WebSocketRequest{
+			Action: websocketMessagePrefix + websocketActionSubscribeTeam,
+			Data:   map[string]interface{}{},
+		}
+		_, err := commandFromRequest(req)
+		require.ErrorIs(t, err, errMissingTeamInCommand)
+	})
+
+	t.Run("rejects non-string teamId without panicking", func(t *testing.T) {
+		req := &mmModel.WebSocketRequest{
+			Action: websocketMessagePrefix + websocketActionSubscribeTeam,
+			Data:   map[string]interface{}{"teamId": 1.0},
+		}
+		require.NotPanics(t, func() {
+			_, err := commandFromRequest(req)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "teamId")
+		})
+	})
+
+	t.Run("rejects non-string readToken", func(t *testing.T) {
+		req := &mmModel.WebSocketRequest{
+			Action: websocketMessagePrefix + websocketActionSubscribeTeam,
+			Data:   map[string]interface{}{"teamId": "team1", "readToken": 42.0},
+		}
+		require.NotPanics(t, func() {
+			_, err := commandFromRequest(req)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "readToken")
+		})
+	})
+
+	t.Run("accepts blockIds as a JSON array of strings", func(t *testing.T) {
+		req := &mmModel.WebSocketRequest{
+			Action: websocketMessagePrefix + websocketActionSubscribeBlocks,
+			Data: map[string]interface{}{
+				"teamId":   "team1",
+				"blockIds": []interface{}{"b1", "b2"},
+			},
+		}
+		c, err := commandFromRequest(req)
+		require.NoError(t, err)
+		require.Equal(t, []string{"b1", "b2"}, c.BlockIDs)
+	})
+
+	t.Run("rejects blockIds with non-string elements", func(t *testing.T) {
+		req := &mmModel.WebSocketRequest{
+			Action: websocketMessagePrefix + websocketActionSubscribeBlocks,
+			Data: map[string]interface{}{
+				"teamId":   "team1",
+				"blockIds": []interface{}{"b1", 2.0},
+			},
+		}
+		require.NotPanics(t, func() {
+			_, err := commandFromRequest(req)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "blockIds")
+		})
+	})
+
+	t.Run("rejects blockIds that are not a JSON array", func(t *testing.T) {
+		req := &mmModel.WebSocketRequest{
+			Action: websocketMessagePrefix + websocketActionSubscribeBlocks,
+			Data: map[string]interface{}{
+				"teamId":   "team1",
+				"blockIds": "not-an-array",
+			},
+		}
+		require.NotPanics(t, func() {
+			_, err := commandFromRequest(req)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "blockIds")
+		})
+	})
+}
+
+func TestWebSocketMessageHasBeenPostedDoesNotPanicOnMalformedTeamID(t *testing.T) {
+	th := SetupTestHelper(t)
+
+	webConnID := mmModel.NewId()
+	userID := mmModel.NewId()
+	th.pa.OnWebSocketConnect(webConnID, userID)
+
+	require.NotPanics(t, func() {
+		th.ReceiveWebSocketMessage(webConnID, userID, websocketActionSubscribeTeam, map[string]interface{}{"teamId": 1.0})
+	})
+}
+
 func TestPluginAdapterTeamSubscription(t *testing.T) {
 	th := SetupTestHelper(t)
 
