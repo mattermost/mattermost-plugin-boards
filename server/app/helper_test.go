@@ -86,6 +86,8 @@ func (th *TestHelper) expectBoardAdmin(userID, boardID, teamID string) { //nolin
 		UserID:      userID,
 		SchemeAdmin: true,
 	}, nil)
+	// SchemeAdmin path triggers isGuest() in mmpermissions which loads the user
+	th.PermStore.EXPECT().GetUserByID(userID).Return(&model.User{ID: userID}, nil)
 }
 
 func (th *TestHelper) expectBoardEditor(userID, boardID, teamID string) {
