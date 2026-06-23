@@ -14,6 +14,13 @@ describe('properties/latestUpdatedBlock', () => {
         expect(definedBlocksForLatestUpdate(card, undefined, undefined)).toEqual([card])
     })
 
+    test('returns the card when content and comment are undefined', () => {
+        const card = createCard()
+        card.updateAt = Date.parse('10 Jun 2021 16:22:00')
+
+        expect(getLatestUpdatedBlock(card, undefined, undefined)).toBe(card)
+    })
+
     test('returns the block with the most recent updateAt', () => {
         const card = createCard()
         card.updateAt = Date.parse('10 Jun 2021 16:22:00')
