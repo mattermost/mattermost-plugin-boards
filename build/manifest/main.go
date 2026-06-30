@@ -95,7 +95,10 @@ func main() {
 		}
 
 	case "dist":
-		if err := distManifest(manifest); err != nil {
+		if len(os.Args) <= 2 {
+			panic("failed to write manifest to dist directory: expected a destination directory as the first argument")
+		}
+		if err := distManifest(manifest, os.Args[2]); err != nil {
 			panic("failed to write manifest to dist directory: " + err.Error())
 		}
 
@@ -210,14 +213,9 @@ func applyManifest(manifest *model.Manifest) error {
 }
 
 // distManifest writes the resolved manifest (including the build-time version) as plugin.json
-// into the bundle directory passed as the first argument. This ensures the released bundle
-// ships a plugin.json with a version field, rather than the source plugin.json which has none.
-func distManifest(manifest *model.Manifest) error {
-	if len(os.Args) <= 2 {
-		return errors.New("expected a destination directory as the first argument")
-	}
-	destDir := os.Args[2]
-
+// into the given bundle directory. This ensures the released bundle ships a plugin.json with a
+// version field, rather than the source plugin.json which has none.
+func distManifest(manifest *model.Manifest, destDir string) error {
 	manifestBytes, err := json.MarshalIndent(manifest, "", "  ")
 	if err != nil {
 		return err
