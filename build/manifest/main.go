@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/mattermost/mattermost/server/public/model"
@@ -91,6 +92,11 @@ func main() {
 	case "apply":
 		if err := applyManifest(manifest); err != nil {
 			panic("failed to apply manifest: " + err.Error())
+		}
+
+	case "dist":
+		if err := distManifest(manifest); err != nil {
+			panic("failed to write manifest to dist directory: " + err.Error())
 		}
 
 	default:
@@ -198,6 +204,28 @@ func applyManifest(manifest *model.Manifest) error {
 		); err != nil {
 			return errors.Wrap(err, "failed to write webapp/src/manifest.ts")
 		}
+	}
+
+	return nil
+}
+
+// distManifest writes the resolved manifest (including the build-time version) as plugin.json
+// into the bundle directory passed as the first argument. This ensures the released bundle
+// ships a plugin.json with a version field, rather than the source plugin.json which has none.
+func distManifest(manifest *model.Manifest) error {
+	if len(os.Args) <= 2 {
+		return errors.New("expected a destination directory as the first argument")
+	}
+	destDir := os.Args[2]
+
+	manifestBytes, err := json.MarshalIndent(manifest, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	destPath := filepath.Join(destDir, "plugin.json")
+	if err := os.WriteFile(destPath, manifestBytes, 0600); err != nil {
+		return errors.Wrapf(err, "failed to write %s", destPath)
 	}
 
 	return nil
