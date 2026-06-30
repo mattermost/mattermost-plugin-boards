@@ -69,7 +69,7 @@ func (n *notifier) start() {
 
 func (n *notifier) safeLoop(done chan struct{}) {
 	for {
-		if n.runLoopOnce() {
+		if n.runLoopOnce(n.loop) {
 			return
 		}
 		select {
@@ -80,7 +80,7 @@ func (n *notifier) safeLoop(done chan struct{}) {
 	}
 }
 
-func (n *notifier) runLoopOnce() (finished bool) {
+func (n *notifier) runLoopOnce(fn func()) (finished bool) {
 	defer func() {
 		if r := recover(); r != nil {
 			n.logger.Error("panic recovered in notification loop",
@@ -90,7 +90,7 @@ func (n *notifier) runLoopOnce() (finished bool) {
 			finished = false
 		}
 	}()
-	n.loop()
+	fn()
 	return true
 }
 
