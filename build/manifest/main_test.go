@@ -47,6 +47,10 @@ func TestDistManifest(t *testing.T) {
 
 // writeTempManifest writes a plugin.json into a temp dir, chdirs into it for the duration of the
 // test, and resets the build-time vars afterwards.
+//
+// Tests that call this helper (or otherwise mutate os.Getwd / BuildTagCurrent / BuildTagLatest /
+// BuildHashShort) must not use t.Parallel(); they rely on sequential execution and process-wide
+// cwd/global state.
 func writeTempManifest(t *testing.T, contents string) {
 	t.Helper()
 
@@ -63,6 +67,7 @@ func writeTempManifest(t *testing.T, contents string) {
 	})
 }
 
+// Do not call t.Parallel(); subtests use writeTempManifest and shared build vars.
 func TestFindManifestResolvesVersion(t *testing.T) {
 	const versionlessManifest = `{
 		"id": "focalboard",
@@ -118,6 +123,7 @@ func TestFindManifestResolvesVersion(t *testing.T) {
 	})
 }
 
+// Do not call t.Parallel(); subtests use writeTempManifest and shared build vars.
 func TestFindManifestReleaseNotesURL(t *testing.T) {
 	t.Run("generates a release notes URL from the latest tag when absent", func(t *testing.T) {
 		writeTempManifest(t, `{
@@ -148,6 +154,8 @@ func TestFindManifestReleaseNotesURL(t *testing.T) {
 // TestBundledManifestFromSourceHasVersion is the regression test most coupled to MM-69594: the
 // source plugin.json ships without a version, but the resolved manifest written into the bundle
 // must carry one.
+//
+// Do not call t.Parallel(); this test mutates process cwd and BuildTagCurrent.
 func TestBundledManifestFromSourceHasVersion(t *testing.T) {
 	cwd, err := os.Getwd()
 	require.NoError(t, err)
