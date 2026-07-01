@@ -159,7 +159,7 @@ endif
 bundle:
 	rm -rf $(BUNDLE_DIR)/
 	mkdir -p $(BUNDLE_DIR)/$(PLUGIN_NAME)
-	cp $(MANIFEST_FILE) $(BUNDLE_DIR)/$(PLUGIN_NAME)/
+	./build/bin/manifest dist $(BUNDLE_DIR)/$(PLUGIN_NAME)
 	cp -r webapp/pack $(BUNDLE_DIR)/$(PLUGIN_NAME)/
 ifneq ($(wildcard LICENSE.txt),)
 	cp -r LICENSE.txt $(BUNDLE_DIR)/$(PLUGIN_NAME)/
