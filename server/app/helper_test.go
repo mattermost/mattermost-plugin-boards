@@ -103,3 +103,11 @@ func (th *TestHelper) expectBoardEditor(userID, boardID, teamID string) {
 	}, nil)
 	th.API.EXPECT().HasPermissionToTeam(userID, teamID, model.PermissionManageTeam).Return(false)
 }
+
+func (th *TestHelper) expectBoardImportPermissions(userID, teamID string, boardType model.BoardType) {
+	if boardType == model.BoardTypeOpen {
+		th.API.EXPECT().HasPermissionToTeam(userID, teamID, model.PermissionCreatePublicChannel).Return(true)
+		return
+	}
+	th.API.EXPECT().HasPermissionToTeam(userID, teamID, model.PermissionCreatePrivateChannel).Return(true)
+}

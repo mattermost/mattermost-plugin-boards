@@ -206,6 +206,12 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 					board.ModifiedBy = userID
 					board.UpdateAt = now
 					board.TeamID = opt.TeamID
+					if err := board.IsValidForImport(); err != nil {
+						return nil, err
+					}
+					if err := a.checkBoardCreationPermission(userID, opt.TeamID, board.Type); err != nil {
+						return nil, err
+					}
 					boardsAndBlocks.Boards = append(boardsAndBlocks.Boards, &board)
 					boardID = board.ID
 				case "board_block":
@@ -221,6 +227,9 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 						return nil, fmt.Errorf("cannot convert archive line %d to block: %w", lineNum, err)
 					}
 					if err := board.IsValidForImport(); err != nil {
+						return nil, err
+					}
+					if err := a.checkBoardCreationPermission(userID, opt.TeamID, board.Type); err != nil {
 						return nil, err
 					}
 					boardsAndBlocks.Boards = append(boardsAndBlocks.Boards, board)
