@@ -4,7 +4,9 @@
 package app
 
 import (
+	"archive/zip"
 	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
@@ -244,6 +246,63 @@ func TestApp_ImportArchive(t *testing.T) {
 
 		th.Store.EXPECT().PatchBlocks(gomock.Any(), "my-userid").Return(nil)
 		th.App.fixImagesAttachments(boardMap, fileMap, "test-team", "my-userid")
+	})
+}
+
+func TestParseVersionFile(t *testing.T) {
+	t.Run("valid version", func(t *testing.T) {
+		ver, err := parseVersionFile(strings.NewReader(`{"version":2}`))
+		require.NoError(t, err)
+		require.Equal(t, 2, ver)
+	})
+
+	t.Run("size limit exceeded", func(t *testing.T) {
+		payload := []byte(`{"version":2,"padding":"` + strings.Repeat("x", int(importMaxFileSize)) + `"}`)
+		_, err := parseVersionFile(bytes.NewReader(payload))
+		require.Error(t, err)
+		require.ErrorIs(t, err, errSizeLimitExceeded)
+	})
+}
+
+func TestImportArchiveVersionFileSizeLimit(t *testing.T) {
+	t.Run("valid archive with version.json only", func(t *testing.T) {
+		var buf bytes.Buffer
+		zw := zip.NewWriter(&buf)
+		w, err := zw.Create("version.json")
+		require.NoError(t, err)
+		_, err = w.Write([]byte(`{"version":2}`))
+		require.NoError(t, err)
+		require.NoError(t, zw.Close())
+
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
+		err = th.App.ImportArchive(bytes.NewReader(buf.Bytes()), model.ImportArchiveOptions{
+			TeamID:     "test-team",
+			ModifiedBy: "user",
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("rejects oversized version.json", func(t *testing.T) {
+		var buf bytes.Buffer
+		zw := zip.NewWriter(&buf)
+		w, err := zw.Create("version.json")
+		require.NoError(t, err)
+		payload := []byte(`{"version":2,"padding":"` + strings.Repeat("x", int(importMaxFileSize)) + `"}`)
+		_, err = w.Write(payload)
+		require.NoError(t, err)
+		require.NoError(t, zw.Close())
+
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
+		err = th.App.ImportArchive(bytes.NewReader(buf.Bytes()), model.ImportArchiveOptions{
+			TeamID:     "test-team",
+			ModifiedBy: "user",
+		})
+		require.Error(t, err)
+		require.ErrorIs(t, err, errSizeLimitExceeded)
 	})
 }
 
