@@ -269,6 +269,7 @@ func TestSaveFile(t *testing.T) {
 		}
 
 		mockedFileBackend.On("WriteFile", mockedReadCloseSeek, mock.Anything).Return(writeFileFunc, writeFileErrorFunc)
+		mockedFileBackend.On("RemoveFile", mock.Anything).Return(nil)
 		actual, err := th.App.SaveFile(mockedReadCloseSeek, validTeamID, validBoardID, fileName, false)
 		assert.Equal(t, "", actual)
 		assert.Equal(t, "unable to store the file in the files storage: Mocked File backend error", err.Error())

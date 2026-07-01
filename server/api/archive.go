@@ -6,6 +6,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -156,9 +157,19 @@ func (a *API) handleArchiveImport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Cap the request body to MaxFileSize so an archive import cannot be used
+	// to bypass the configured upload limit
+	if maxSize := a.app.GetConfig().MaxFileSize; maxSize > 0 {
+		r.Body = http.MaxBytesReader(w, r.Body, maxSize)
+	}
+
 	file, handle, err := r.FormFile(UploadFormFileKey)
 	if err != nil {
-		fmt.Fprintf(w, "%v", err)
+		if strings.HasSuffix(err.Error(), "http: request body too large") {
+			a.errorResponse(w, r, model.ErrRequestEntityTooLarge)
+			return
+		}
+		a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
 		return
 	}
 	defer file.Close()

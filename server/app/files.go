@@ -46,9 +46,32 @@ func (a *App) SaveFile(reader io.Reader, teamID, boardID, filename string, asTem
 		return "", fmt.Errorf("invalid file path parameters: %w", pathErr)
 	}
 
-	fileSize, appErr := a.filesBackend.WriteFile(reader, filePath)
+	// Enforce MaxFileSize on every write path so a
+	// crafted archive cannot bypass the configured limit.
+	var writeReader io.Reader = reader
+	var maxSize int64
+	if a.config != nil {
+		maxSize = a.config.MaxFileSize
+	}
+	if maxSize > 0 {
+		writeReader = io.LimitReader(reader, maxSize+1)
+	}
+
+	fileSize, appErr := a.filesBackend.WriteFile(writeReader, filePath)
 	if appErr != nil {
+		if rmErr := a.filesBackend.RemoveFile(filePath); rmErr != nil {
+			a.logger.Error("SaveFile: failed to remove partial file after write error",
+				mlog.String("path", filePath), mlog.Err(rmErr))
+		}
 		return "", fmt.Errorf("unable to store the file in the files storage: %w", appErr)
+	}
+
+	if maxSize > 0 && fileSize > maxSize {
+		if rmErr := a.filesBackend.RemoveFile(filePath); rmErr != nil {
+			a.logger.Error("SaveFile: failed to remove oversized file",
+				mlog.String("path", filePath), mlog.Err(rmErr))
+		}
+		return "", model.ErrRequestEntityTooLarge
 	}
 
 	fileInfo := model.NewFileInfo(filename)
