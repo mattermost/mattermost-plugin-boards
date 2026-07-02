@@ -574,6 +574,57 @@ func TestBlockIsValid(t *testing.T) {
 		require.Error(t, err)
 		require.EqualError(t, err, "Invalid Block ID")
 	})
+
+	t.Run("Should return error when fields.properties is JSON null", func(t *testing.T) {
+		block := &Block{
+			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
+			BoardID:    string(utils.IDTypeNone) + mmModel.NewId(),
+			CreatedBy:  string(utils.IDTypeNone) + mmModel.NewId(),
+			ModifiedBy: string(utils.IDTypeNone) + mmModel.NewId(),
+			Schema:     1,
+			Type:       TypeCard,
+			Title:      "Block with null properties",
+			Fields:     map[string]interface{}{"properties": nil},
+			CreateAt:   1234567890,
+			UpdateAt:   1234567890,
+		}
+		err := block.IsValid()
+		require.ErrorIs(t, err, ErrBlockPropertiesInvalidType)
+	})
+
+	t.Run("Should return error when fields.properties is not a JSON object", func(t *testing.T) {
+		block := &Block{
+			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
+			BoardID:    string(utils.IDTypeNone) + mmModel.NewId(),
+			CreatedBy:  string(utils.IDTypeNone) + mmModel.NewId(),
+			ModifiedBy: string(utils.IDTypeNone) + mmModel.NewId(),
+			Schema:     1,
+			Type:       TypeCard,
+			Title:      "Block with malformed properties",
+			Fields:     map[string]interface{}{"properties": "not-a-property-map"},
+			CreateAt:   1234567890,
+			UpdateAt:   1234567890,
+		}
+		err := block.IsValid()
+		require.ErrorIs(t, err, ErrBlockPropertiesInvalidType)
+	})
+
+	t.Run("Should accept block with properties as map", func(t *testing.T) {
+		block := &Block{
+			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
+			BoardID:    string(utils.IDTypeNone) + mmModel.NewId(),
+			CreatedBy:  string(utils.IDTypeNone) + mmModel.NewId(),
+			ModifiedBy: string(utils.IDTypeNone) + mmModel.NewId(),
+			Schema:     1,
+			Type:       TypeCard,
+			Title:      "Block with properties map",
+			Fields:     map[string]interface{}{"properties": map[string]interface{}{"a": "b"}},
+			CreateAt:   1234567890,
+			UpdateAt:   1234567890,
+		}
+		err := block.IsValid()
+		require.NoError(t, err)
+	})
 }
 
 func TestBlock_IsValidForImport(t *testing.T) {
