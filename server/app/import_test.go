@@ -14,13 +14,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const importTestTeamID = "y5tuzz9yb3y99gmobyc4hg5wnr"
+
 func TestApp_ImportArchive(t *testing.T) {
 	th, tearDown := SetupTestHelper(t)
 	defer tearDown()
 
 	board := &model.Board{
 		ID:         "d14b9df9-1f31-4732-8a64-92bc7162cd28",
-		TeamID:     "test-team",
+		TeamID:     importTestTeamID,
 		Title:      "Cross-Functional Project Plan",
 		IsTemplate: false,
 	}
@@ -49,11 +51,13 @@ func TestApp_ImportArchive(t *testing.T) {
 			ModifiedBy: "user",
 		}
 
+		th.expectBoardImportPermissions("user", opts.TeamID, model.BoardTypePrivate)
+
 		th.Store.EXPECT().CreateBoardsAndBlocks(gomock.AssignableToTypeOf(&model.BoardsAndBlocks{}), "user").Return(babs, nil)
 		th.Store.EXPECT().GetMembersForBoard(board.ID).AnyTimes().Return([]*model.BoardMember{boardMember}, nil)
 		th.Store.EXPECT().GetBoard(board.ID).Return(board, nil)
 		th.Store.EXPECT().GetMemberForBoard(board.ID, "user").Return(boardMember, nil)
-		th.Store.EXPECT().GetUserCategoryBoards("user", "test-team").Return([]model.CategoryBoards{
+		th.Store.EXPECT().GetUserCategoryBoards("user", opts.TeamID).Return([]model.CategoryBoards{
 			{
 				Category: model.Category{
 					Type: "default",
@@ -62,13 +66,13 @@ func TestApp_ImportArchive(t *testing.T) {
 				},
 			},
 		}, nil)
-		th.Store.EXPECT().GetUserCategoryBoards("user", "test-team")
+		th.Store.EXPECT().GetUserCategoryBoards("user", opts.TeamID)
 		th.Store.EXPECT().CreateCategory(utils.Anything).Return(nil)
 		th.Store.EXPECT().GetCategory(utils.Anything).Return(&model.Category{
 			ID:   "boards_category_id",
 			Name: "Boards",
 		}, nil)
-		th.Store.EXPECT().GetBoardsForUserAndTeam("user", "test-team", false).Return([]*model.Board{}, nil)
+		th.Store.EXPECT().GetBoardsForUserAndTeam("user", opts.TeamID, false).Return([]*model.Board{}, nil)
 		th.Store.EXPECT().GetMembersForUser("user").Return([]*model.BoardMember{}, nil)
 		th.Store.EXPECT().AddUpdateCategoryBoard("user", utils.Anything, utils.Anything).Return(nil)
 
@@ -79,9 +83,11 @@ func TestApp_ImportArchive(t *testing.T) {
 	t.Run("import board archive", func(t *testing.T) {
 		r := bytes.NewReader([]byte(boardArchive))
 		opts := model.ImportArchiveOptions{
-			TeamID:     "test-team",
+			TeamID:     importTestTeamID,
 			ModifiedBy: "f1tydgc697fcbp8ampr6881jea",
 		}
+
+		th.expectBoardImportPermissions(opts.ModifiedBy, opts.TeamID, model.BoardTypePrivate)
 
 		bm1 := &model.BoardMember{
 			BoardID: board.ID,
@@ -112,8 +118,8 @@ func TestApp_ImportArchive(t *testing.T) {
 
 		th.Store.EXPECT().CreateBoardsAndBlocks(gomock.AssignableToTypeOf(&model.BoardsAndBlocks{}), "f1tydgc697fcbp8ampr6881jea").Return(babs, nil)
 		th.Store.EXPECT().GetMembersForBoard(board.ID).AnyTimes().Return([]*model.BoardMember{bm1, bm2, bm3}, nil)
-		th.Store.EXPECT().GetUserCategoryBoards("f1tydgc697fcbp8ampr6881jea", "test-team").Return([]model.CategoryBoards{}, nil)
-		th.Store.EXPECT().GetUserCategoryBoards("f1tydgc697fcbp8ampr6881jea", "test-team").Return([]model.CategoryBoards{
+		th.Store.EXPECT().GetUserCategoryBoards("f1tydgc697fcbp8ampr6881jea", importTestTeamID).Return([]model.CategoryBoards{}, nil)
+		th.Store.EXPECT().GetUserCategoryBoards("f1tydgc697fcbp8ampr6881jea", importTestTeamID).Return([]model.CategoryBoards{
 			{
 				Category: model.Category{
 					ID:   "boards_category_id",
@@ -128,7 +134,7 @@ func TestApp_ImportArchive(t *testing.T) {
 			Name: "Boards",
 		}, nil)
 		th.Store.EXPECT().GetMembersForUser("f1tydgc697fcbp8ampr6881jea").Return([]*model.BoardMember{}, nil)
-		th.Store.EXPECT().GetBoardsForUserAndTeam("f1tydgc697fcbp8ampr6881jea", "test-team", false).Return([]*model.Board{}, nil)
+		th.Store.EXPECT().GetBoardsForUserAndTeam("f1tydgc697fcbp8ampr6881jea", importTestTeamID, false).Return([]*model.Board{}, nil)
 		th.Store.EXPECT().AddUpdateCategoryBoard("f1tydgc697fcbp8ampr6881jea", utils.Anything, utils.Anything).Return(nil)
 		th.Store.EXPECT().GetBoard(board.ID).AnyTimes().Return(board, nil)
 		th.Store.EXPECT().GetMemberForBoard(board.ID, "f1tydgc697fcbp8ampr6881jea").AnyTimes().Return(bm1, nil)
@@ -149,13 +155,15 @@ func TestApp_ImportArchive(t *testing.T) {
 
 		r := bytes.NewReader([]byte(boardArchive))
 		opts := model.ImportArchiveOptions{
-			TeamID:     "test-team",
+			TeamID:     importTestTeamID,
 			ModifiedBy: importerID,
 		}
 
+		th.expectBoardImportPermissions(importerID, opts.TeamID, model.BoardTypePrivate)
+
 		th.Store.EXPECT().CreateBoardsAndBlocks(gomock.AssignableToTypeOf(&model.BoardsAndBlocks{}), importerID).Return(babs, nil)
 		th.Store.EXPECT().GetMembersForBoard(board.ID).AnyTimes().Return([]*model.BoardMember{}, nil)
-		th.Store.EXPECT().GetUserCategoryBoards(importerID, "test-team").AnyTimes().Return([]model.CategoryBoards{
+		th.Store.EXPECT().GetUserCategoryBoards(importerID, importTestTeamID).AnyTimes().Return([]model.CategoryBoards{
 			{
 				Category: model.Category{
 					ID:   "boards_category_id",
@@ -165,7 +173,7 @@ func TestApp_ImportArchive(t *testing.T) {
 			},
 		}, nil)
 		th.Store.EXPECT().GetMembersForUser(importerID).AnyTimes().Return([]*model.BoardMember{}, nil)
-		th.Store.EXPECT().GetBoardsForUserAndTeam(importerID, "test-team", false).AnyTimes().Return([]*model.Board{}, nil)
+		th.Store.EXPECT().GetBoardsForUserAndTeam(importerID, importTestTeamID, false).AnyTimes().Return([]*model.Board{}, nil)
 		th.Store.EXPECT().AddUpdateCategoryBoard(importerID, utils.Anything, utils.Anything).AnyTimes().Return(nil)
 		th.Store.EXPECT().GetBoard(board.ID).AnyTimes().Return(board, nil)
 		th.Store.EXPECT().GetMemberForBoard(board.ID, gomock.Any()).AnyTimes().Return(nil, nil)
@@ -245,7 +253,81 @@ func TestApp_ImportArchive(t *testing.T) {
 		th.Store.EXPECT().PatchBlocks(gomock.Any(), "my-userid").Return(nil)
 		th.App.fixImagesAttachments(boardMap, fileMap, "test-team", "my-userid")
 	})
+
+	t.Run("import private board archive requires create private channel permission", func(t *testing.T) {
+		const importerID = "f1tydgc697fcbp8ampr6881jea"
+
+		r := bytes.NewReader([]byte(boardArchive))
+		opts := model.ImportArchiveOptions{
+			TeamID:     importTestTeamID,
+			ModifiedBy: importerID,
+		}
+
+		th.API.EXPECT().HasPermissionToTeam(importerID, opts.TeamID, model.PermissionCreatePrivateChannel).Return(false)
+
+		_, err := th.App.ImportBoardJSONL(r, opts)
+		require.Error(t, err)
+		var permErr *model.ErrPermission
+		require.ErrorAs(t, err, &permErr)
+	})
+
+	t.Run("import open board archive requires create public channel permission", func(t *testing.T) {
+		const importerID = "f1tydgc697fcbp8ampr6881jea"
+
+		r := bytes.NewReader([]byte(openBoardArchive))
+		opts := model.ImportArchiveOptions{
+			TeamID:     importTestTeamID,
+			ModifiedBy: importerID,
+		}
+
+		th.API.EXPECT().HasPermissionToTeam(importerID, opts.TeamID, model.PermissionCreatePublicChannel).Return(false)
+
+		_, err := th.App.ImportBoardJSONL(r, opts)
+		require.Error(t, err)
+		var permErr *model.ErrPermission
+		require.ErrorAs(t, err, &permErr)
+	})
+
+	t.Run("import open board archive succeeds with create public channel permission", func(t *testing.T) {
+		const importerID = "f1tydgc697fcbp8ampr6881jea"
+
+		r := bytes.NewReader([]byte(openBoardArchive))
+		opts := model.ImportArchiveOptions{
+			TeamID:     importTestTeamID,
+			ModifiedBy: importerID,
+		}
+
+		th.expectBoardImportPermissions(importerID, opts.TeamID, model.BoardTypeOpen)
+		th.Store.EXPECT().CreateBoardsAndBlocks(gomock.AssignableToTypeOf(&model.BoardsAndBlocks{}), importerID).Return(babs, nil)
+		th.Store.EXPECT().GetMembersForBoard(board.ID).AnyTimes().Return([]*model.BoardMember{}, nil)
+		th.Store.EXPECT().GetUserCategoryBoards(importerID, importTestTeamID).AnyTimes().Return([]model.CategoryBoards{
+			{
+				Category: model.Category{
+					ID:   "boards_category_id",
+					Name: "Boards",
+					Type: model.CategoryTypeSystem,
+				},
+			},
+		}, nil)
+		th.Store.EXPECT().GetMembersForUser(importerID).AnyTimes().Return([]*model.BoardMember{}, nil)
+		th.Store.EXPECT().GetBoardsForUserAndTeam(importerID, importTestTeamID, false).AnyTimes().Return([]*model.Board{}, nil)
+		th.Store.EXPECT().AddUpdateCategoryBoard(importerID, utils.Anything, utils.Anything).AnyTimes().Return(nil)
+		th.Store.EXPECT().GetBoard(board.ID).AnyTimes().Return(board, nil)
+		th.Store.EXPECT().GetMemberForBoard(board.ID, gomock.Any()).AnyTimes().Return(nil, nil)
+		th.Store.EXPECT().GetUserByID(gomock.Any()).AnyTimes().DoAndReturn(func(id string) (*model.User, error) {
+			return &model.User{ID: id, IsGuest: false}, nil
+		})
+
+		newBoard, err := th.App.ImportBoardJSONL(r, opts)
+		require.NoError(t, err)
+		require.Equal(t, board.ID, newBoard.ID)
+	})
 }
+
+//nolint:lll
+const openBoardArchive = `{"type":"board","data":{"id":"bfoi6yy6pa3yzika53spj7pq9ee","teamId":"wsmqbtwb5jb35jb3mtp85c8a9h","createdBy":"f1tydgc697fcbp8ampr6881jea","modifiedBy":"f1tydgc697fcbp8ampr6881jea","type":"O","minimumRole":"","title":"Open Import Test","createAt":1672750481591,"updateAt":1672750481591}}
+{"type":"block","data":{"id":"ckpc3b1dp3pbw7bqntfryy9jbzo","parentId":"bjaqxtbyqz3bu7pgyddpgpms74a","createdBy":"f1tydgc697fcbp8ampr6881jea","modifiedBy":"f1tydgc697fcbp8ampr6881jea","schema":1,"type":"card","title":"Test","fields":{"contentOrder":[],"icon":"","isTemplate":false,"properties":{}},"createAt":1672750481612,"updateAt":1672845003530,"deleteAt":0,"boardId":"bfoi6yy6pa3yzika53spj7pq9ee"}}
+`
 
 //nolint:lll
 const asana = `{"version":1,"date":1614714686842}
