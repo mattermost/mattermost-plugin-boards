@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/services/config"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 	mm_model "github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin/plugintest/mock"
@@ -273,6 +274,66 @@ func TestSaveFile(t *testing.T) {
 		actual, err := th.App.SaveFile(mockedReadCloseSeek, validTeamID, validBoardID, fileName, false)
 		assert.Equal(t, "", actual)
 		assert.Equal(t, "unable to store the file in the files storage: Mocked File backend error", err.Error())
+	})
+
+	t.Run("should reject file that exceeds configured MaxFileSize", func(t *testing.T) {
+		fileName := "oversize.txt"
+		validTeamID := mm_model.NewId()
+		validBoardID := utils.NewID(utils.IDTypeBoard)
+		mockedFileBackend := &mocks.FileBackend{}
+		th.App.filesBackend = mockedFileBackend
+		th.App.SetConfig(&config.Configuration{MaxFileSize: 10})
+
+		writeFileFunc := func(reader io.Reader, path string) int64 { return int64(11) }
+		writeFileErrorFunc := func(reader io.Reader, filePath string) error { return nil }
+		mockedFileBackend.On("WriteFile", mock.Anything, mock.Anything).Return(writeFileFunc, writeFileErrorFunc)
+		mockedFileBackend.On("RemoveFile", mock.Anything).Return(nil)
+
+		actual, err := th.App.SaveFile(mockedReadCloseSeek, validTeamID, validBoardID, fileName, false)
+		assert.Equal(t, "", actual)
+		assert.Error(t, err)
+		assert.True(t, model.IsErrRequestEntityTooLarge(err), "expected ErrRequestEntityTooLarge, got: %v", err)
+		mockedFileBackend.AssertCalled(t, "RemoveFile", mock.Anything)
+	})
+
+	t.Run("should accept file within configured MaxFileSize", func(t *testing.T) {
+		fileName := "within-limit.txt"
+		validTeamID := mm_model.NewId()
+		validBoardID := utils.NewID(utils.IDTypeBoard)
+		mockedFileBackend := &mocks.FileBackend{}
+		th.App.filesBackend = mockedFileBackend
+		th.App.SetConfig(&config.Configuration{MaxFileSize: 100})
+
+		th.Store.EXPECT().SaveFileInfo(gomock.Any()).Return(nil)
+
+		writeFileFunc := func(reader io.Reader, path string) int64 { return int64(50) }
+		writeFileErrorFunc := func(reader io.Reader, filePath string) error { return nil }
+		mockedFileBackend.On("WriteFile", mock.Anything, mock.Anything).Return(writeFileFunc, writeFileErrorFunc)
+
+		actual, err := th.App.SaveFile(mockedReadCloseSeek, validTeamID, validBoardID, fileName, false)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, actual)
+		mockedFileBackend.AssertNotCalled(t, "RemoveFile", mock.Anything)
+	})
+
+	t.Run("should accept any file size when MaxFileSize is zero (no limit)", func(t *testing.T) {
+		fileName := "no-limit.txt"
+		validTeamID := mm_model.NewId()
+		validBoardID := utils.NewID(utils.IDTypeBoard)
+		mockedFileBackend := &mocks.FileBackend{}
+		th.App.filesBackend = mockedFileBackend
+		th.App.SetConfig(&config.Configuration{MaxFileSize: 0})
+
+		th.Store.EXPECT().SaveFileInfo(gomock.Any()).Return(nil)
+
+		writeFileFunc := func(reader io.Reader, path string) int64 { return int64(1024 * 1024 * 500) }
+		writeFileErrorFunc := func(reader io.Reader, filePath string) error { return nil }
+		mockedFileBackend.On("WriteFile", mockedReadCloseSeek, mock.Anything).Return(writeFileFunc, writeFileErrorFunc)
+
+		actual, err := th.App.SaveFile(mockedReadCloseSeek, validTeamID, validBoardID, fileName, false)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, actual)
+		mockedFileBackend.AssertNotCalled(t, "RemoveFile", mock.Anything)
 	})
 }
 
