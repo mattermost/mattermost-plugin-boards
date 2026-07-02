@@ -575,6 +575,23 @@ func TestBlockIsValid(t *testing.T) {
 		require.EqualError(t, err, "Invalid Block ID")
 	})
 
+	t.Run("Should return error when fields.properties is JSON null", func(t *testing.T) {
+		block := &Block{
+			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
+			BoardID:    string(utils.IDTypeNone) + mmModel.NewId(),
+			CreatedBy:  string(utils.IDTypeNone) + mmModel.NewId(),
+			ModifiedBy: string(utils.IDTypeNone) + mmModel.NewId(),
+			Schema:     1,
+			Type:       TypeCard,
+			Title:      "Block with null properties",
+			Fields:     map[string]interface{}{"properties": nil},
+			CreateAt:   1234567890,
+			UpdateAt:   1234567890,
+		}
+		err := block.IsValid()
+		require.ErrorIs(t, err, ErrBlockPropertiesInvalidType)
+	})
+
 	t.Run("Should return error when fields.properties is not a JSON object", func(t *testing.T) {
 		block := &Block{
 			ID:         string(utils.IDTypeNone) + mmModel.NewId(),

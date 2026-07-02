@@ -194,7 +194,7 @@ func (b *Block) baseValidations() error {
 		}
 	}
 
-	if propsIface, ok := b.Fields["properties"]; ok && propsIface != nil {
+	if propsIface, present := b.Fields["properties"]; present {
 		if _, ok := propsIface.(map[string]interface{}); !ok {
 			return ErrBlockPropertiesInvalidType
 		}
