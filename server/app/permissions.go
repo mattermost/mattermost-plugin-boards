@@ -27,3 +27,10 @@ func (a *App) checkBoardCreationPermission(userID, teamID string, boardType mode
 	}
 	return nil
 }
+
+func (a *App) validateBoardForImport(userID, teamID string, board *model.Board) error {
+	if err := board.IsValidForImport(); err != nil {
+		return err
+	}
+	return a.checkBoardCreationPermission(userID, teamID, board.Type)
+}
