@@ -1,6 +1,25 @@
 @import '../../styles/z-index';
 
 .CardDetail {
+    .ticket-code {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        font-family: monospace;
+        color: rgba(var(--center-channel-color-rgb), 0.56);
+        background: rgba(var(--center-channel-color-rgb), 0.08);
+        border-radius: 4px;
+        padding: 2px 8px;
+        margin-bottom: 4px;
+        cursor: pointer;
+        user-select: all;
+        letter-spacing: 0.5px;
+
+        &:hover {
+            background: rgba(var(--center-channel-color-rgb), 0.16);
+        }
+    }
+
     .title {
         width: 100%;
         font-size: 32px;

@@ -169,6 +169,11 @@ const TableRow = (props: Props) => {
             >
                 <div className='octo-icontitle'>
                     <div className='octo-icon'>{card.fields.icon}</div>
+                    {props.board.cardPrefix && card.fields.cardNumber ? (
+                        <span className='octo-ticket-code'>
+                            {`${props.board.cardPrefix}-${card.fields.cardNumber}`}
+                        </span>
+                    ) : null}
                     <Editable
                         ref={titleRef}
                         value={title}

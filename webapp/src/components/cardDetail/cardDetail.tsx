@@ -221,6 +221,19 @@ const CardDetail = (props: Props): JSX.Element|null => {
                         </Button>
                     </div>}
 
+                {props.board.cardPrefix && card.fields.cardNumber ? (
+                    <div
+                        className='ticket-code'
+                        title={intl.formatMessage({id: 'CardDetail.ticket-code-copy', defaultMessage: 'Click to copy ticket code'})}
+                        onClick={() => {
+                            const code = `${props.board.cardPrefix}-${card.fields.cardNumber}`
+                            Utils.copyTextToClipboard(code)
+                        }}
+                    >
+                        {`${props.board.cardPrefix}-${card.fields.cardNumber}`}
+                    </div>
+                ) : null}
+
                 <EditableArea
                     ref={titleRef}
                     className='title'

@@ -68,4 +68,19 @@
         flex-wrap: nowrap;
         overflow: hidden !important;
     }
+
+    .octo-ticket-code {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 600;
+        font-family: monospace;
+        color: rgba(var(--center-channel-color-rgb), 0.56);
+        background: rgba(var(--center-channel-color-rgb), 0.08);
+        border-radius: 3px;
+        padding: 1px 6px;
+        margin-right: 4px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        user-select: all;
+    }
 }
