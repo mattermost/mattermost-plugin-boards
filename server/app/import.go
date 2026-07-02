@@ -97,12 +97,21 @@ func (a *App) ImportArchive(r io.Reader, opt model.ImportArchiveOptions) error {
 				}
 				continue
 			}
-			fileReader := &io.LimitedReader{R: zr, N: importMaxFileSize + 1}
+			fileReader := newLimitedReader(zr, importMaxFileSize)
 			newFileName, err := a.SaveFile(fileReader, opt.TeamID, board.ID, filename, board.IsTemplate)
 			if err != nil {
 				return fmt.Errorf("cannot import file %s for board %s: %w", filename, dir, err)
 			}
-			if fileReader.N <= 0 {
+			if limitedReaderExceeded(fileReader) {
+				filePath, pathErr := getDestinationFilePath(board.IsTemplate, opt.TeamID, board.ID, newFileName)
+				if pathErr == nil {
+					if removeErr := a.filesBackend.RemoveFile(filePath); removeErr != nil {
+						a.logger.Warn("failed to remove oversized import file",
+							mlog.String("path", filePath),
+							mlog.Err(removeErr),
+						)
+					}
+				}
 				return fmt.Errorf("cannot import file %s for board %s: %w", filename, dir, errSizeLimitExceeded)
 			}
 			fileMap[filename] = newFileName
@@ -476,13 +485,21 @@ func arrayMapsValue(m map[string]interface{}, key string) ([]map[string]interfac
 	return arr, true
 }
 
+func newLimitedReader(r io.Reader, limit int64) *io.LimitedReader {
+	return &io.LimitedReader{R: r, N: limit + 1}
+}
+
+func limitedReaderExceeded(lr *io.LimitedReader) bool {
+	return lr.N <= 0
+}
+
 func parseVersionFile(r io.Reader) (int, error) {
-	lr := &io.LimitedReader{R: r, N: importMaxFileSize + 1}
+	lr := newLimitedReader(r, importMaxFileSize)
 	file, err := io.ReadAll(lr)
 	if err != nil {
 		return 0, fmt.Errorf("cannot read version.json: %w", err)
 	}
-	if lr.N <= 0 {
+	if limitedReaderExceeded(lr) {
 		return 0, fmt.Errorf("cannot read version.json: %w", errSizeLimitExceeded)
 	}
 
@@ -494,11 +511,11 @@ func parseVersionFile(r io.Reader) (int, error) {
 }
 
 func discardLimited(r io.Reader, limit int64) error {
-	lr := &io.LimitedReader{R: r, N: limit + 1}
+	lr := newLimitedReader(r, limit)
 	if _, err := io.Copy(io.Discard, lr); err != nil {
 		return err
 	}
-	if lr.N <= 0 {
+	if limitedReaderExceeded(lr) {
 		return errSizeLimitExceeded
 	}
 	return nil

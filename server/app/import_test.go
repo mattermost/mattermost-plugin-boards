@@ -6,13 +6,15 @@ package app
 import (
 	"archive/zip"
 	"bytes"
+	"io"
 	"strings"
 	"testing"
 
-	"github.com/mattermost/mattermost-plugin-boards/server/utils"
-
 	"github.com/golang/mock/gomock"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/utils"
+	"github.com/mattermost/mattermost/server/public/plugin/plugintest/mock"
+	"github.com/mattermost/mattermost/server/v8/platform/shared/filestore/mocks"
 	"github.com/stretchr/testify/require"
 )
 
@@ -304,6 +306,117 @@ func TestImportArchiveVersionFileSizeLimit(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, errSizeLimitExceeded)
 	})
+}
+
+func TestImportArchiveImageFileSizeLimit(t *testing.T) {
+	const (
+		boardDir = "testboard"
+		teamID   = "abcdefghijklmnopqrstuvwxyz"
+	)
+	minimalBoardJSONL := `{"type":"board","data":{"id":"bfoi6yy6pa3yzika53spj7pq9ee","teamId":"` + teamID + `","createdBy":"user","modifiedBy":"user","type":"P","title":"Test","createAt":1,"updateAt":1}}
+{"type":"block","data":{"id":"ckpc3b1dp3pbw7bqntfryy9jbzo","parentId":"bfoi6yy6pa3yzika53spj7pq9ee","createdBy":"user","modifiedBy":"user","schema":1,"type":"card","title":"Test","fields":{},"createAt":1,"updateAt":1,"boardId":"bfoi6yy6pa3yzika53spj7pq9ee"}}
+`
+
+	t.Run("rejects oversized image file and removes partial save", func(t *testing.T) {
+		var buf bytes.Buffer
+		zw := zip.NewWriter(&buf)
+		writeZipEntry(t, zw, "version.json", []byte(`{"version":2}`))
+		writeZipEntry(t, zw, boardDir+"/board.jsonl", []byte(minimalBoardJSONL))
+		writeZipEntry(t, zw, boardDir+"/image.jpg", bytes.Repeat([]byte("x"), int(importMaxFileSize)+1))
+		require.NoError(t, zw.Close())
+
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
+		board := &model.Board{
+			ID:     "bfoi6yy6pa3yzika53spj7pq9ee",
+			TeamID: teamID,
+			Title:  "Test",
+		}
+		block := &model.Block{
+			ID:       "ckpc3b1dp3pbw7bqntfryy9jbzo",
+			ParentID: board.ID,
+			Type:     model.TypeCard,
+			BoardID:  board.ID,
+		}
+		babs := &model.BoardsAndBlocks{
+			Boards: []*model.Board{board},
+			Blocks: []*model.Block{block},
+		}
+
+		th.Store.EXPECT().CreateBoardsAndBlocks(gomock.AssignableToTypeOf(&model.BoardsAndBlocks{}), "user").Return(babs, nil)
+		th.Store.EXPECT().GetMembersForBoard(board.ID).AnyTimes().Return([]*model.BoardMember{}, nil)
+		th.Store.EXPECT().GetBoard(board.ID).AnyTimes().Return(board, nil)
+		th.Store.EXPECT().GetMemberForBoard(board.ID, "user").AnyTimes().Return(&model.BoardMember{
+			BoardID: board.ID,
+			UserID:  "user",
+		}, nil)
+		th.Store.EXPECT().GetUserCategoryBoards("user", teamID).Return([]model.CategoryBoards{
+			{
+				Category: model.Category{
+					Type: "default",
+					Name: "Boards",
+					ID:   "boards_category_id",
+				},
+			},
+		}, nil)
+		th.Store.EXPECT().GetUserCategoryBoards("user", teamID)
+		th.Store.EXPECT().CreateCategory(utils.Anything).Return(nil)
+		th.Store.EXPECT().GetCategory(utils.Anything).Return(&model.Category{
+			ID:   "boards_category_id",
+			Name: "Boards",
+		}, nil)
+		th.Store.EXPECT().GetBoardsForUserAndTeam("user", teamID, false).Return([]*model.Board{}, nil)
+		th.Store.EXPECT().GetMembersForUser("user").Return([]*model.BoardMember{}, nil)
+		th.Store.EXPECT().AddUpdateCategoryBoard("user", utils.Anything, utils.Anything).Return(nil)
+		th.Store.EXPECT().SaveFileInfo(gomock.Any()).Return(nil)
+
+		mockedFileBackend := &mocks.FileBackend{}
+		th.App.filesBackend = mockedFileBackend
+		writeFileFunc := func(reader io.Reader, path string) int64 {
+			n, _ := io.Copy(io.Discard, reader)
+			return n
+		}
+		writeFileErrorFunc := func(reader io.Reader, filePath string) error { return nil }
+		mockedFileBackend.On("WriteFile", mock.Anything, mock.Anything).Return(writeFileFunc, writeFileErrorFunc)
+		mockedFileBackend.On("RemoveFile", mock.Anything).Return(nil)
+
+		err := th.App.ImportArchive(bytes.NewReader(buf.Bytes()), model.ImportArchiveOptions{
+			TeamID:     teamID,
+			ModifiedBy: "user",
+		})
+		require.Error(t, err)
+		require.ErrorIs(t, err, errSizeLimitExceeded)
+		mockedFileBackend.AssertCalled(t, "RemoveFile", mock.Anything)
+	})
+}
+
+func TestImportArchiveOrphanFileSizeLimit(t *testing.T) {
+	t.Run("rejects oversized orphan file", func(t *testing.T) {
+		var buf bytes.Buffer
+		zw := zip.NewWriter(&buf)
+		writeZipEntry(t, zw, "version.json", []byte(`{"version":2}`))
+		writeZipEntry(t, zw, "orphan/image.jpg", bytes.Repeat([]byte("x"), int(importMaxFileSize)+1))
+		require.NoError(t, zw.Close())
+
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
+		err := th.App.ImportArchive(bytes.NewReader(buf.Bytes()), model.ImportArchiveOptions{
+			TeamID:     "test-team",
+			ModifiedBy: "user",
+		})
+		require.Error(t, err)
+		require.ErrorIs(t, err, errSizeLimitExceeded)
+	})
+}
+
+func writeZipEntry(t *testing.T, zw *zip.Writer, name string, content []byte) {
+	t.Helper()
+	w, err := zw.Create(name)
+	require.NoError(t, err)
+	_, err = w.Write(content)
+	require.NoError(t, err)
 }
 
 //nolint:lll
