@@ -2831,11 +2831,11 @@ func TestPermissionsBoardArchiveImport(t *testing.T) {
 	ttCases := []TestCase{
 		{"/teams/test-team/archive/import", methodPost, "", userAnon, http.StatusUnauthorized, 0},
 		{"/teams/test-team/archive/import", methodPost, "", userNoTeamMember, http.StatusForbidden, 1},
-		{"/teams/test-team/archive/import", methodPost, "", userTeamMember, http.StatusOK, 1},
-		{"/teams/test-team/archive/import", methodPost, "", userViewer, http.StatusOK, 1},
-		{"/teams/test-team/archive/import", methodPost, "", userCommenter, http.StatusOK, 1},
-		{"/teams/test-team/archive/import", methodPost, "", userEditor, http.StatusOK, 1},
-		{"/teams/test-team/archive/import", methodPost, "", userAdmin, http.StatusOK, 1},
+		{"/teams/test-team/archive/import", methodPost, "", userTeamMember, http.StatusBadRequest, 1},
+		{"/teams/test-team/archive/import", methodPost, "", userViewer, http.StatusBadRequest, 1},
+		{"/teams/test-team/archive/import", methodPost, "", userCommenter, http.StatusBadRequest, 1},
+		{"/teams/test-team/archive/import", methodPost, "", userEditor, http.StatusBadRequest, 1},
+		{"/teams/test-team/archive/import", methodPost, "", userAdmin, http.StatusBadRequest, 1},
 		{"/teams/test-team/archive/import", methodPost, "", userGuest, http.StatusForbidden, 0},
 	}
 
