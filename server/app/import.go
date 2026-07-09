@@ -110,6 +110,20 @@ func (a *App) ImportArchive(r io.Reader, opt model.ImportArchiveOptions) error {
 	}
 }
 
+// validateImportedBoards runs the optional authorization callback against every
+// board parsed from an archive, aborting the import if any board is rejected.
+func validateImportedBoards(boards []*model.Board, validator model.BoardValidator) error {
+	if validator == nil {
+		return nil
+	}
+	for _, board := range boards {
+		if err := validator(board); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Update image and attachment blocks.
 func (a *App) fixImagesAttachments(boardMap map[string]*model.Board, fileMap map[string]string, teamID string, userID string) {
 	for _, board := range boardMap {
@@ -253,6 +267,11 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 
 	if errRead := scanner.Err(); errRead != nil {
 		return nil, fmt.Errorf("error reading archive line %d: %w", lineNum, errRead)
+	}
+
+	// enforce authorization for every board before anything is persisted
+	if err := validateImportedBoards(boardsAndBlocks.Boards, opt.BoardValidator); err != nil {
+		return nil, err
 	}
 
 	// loop to remove the people how are not part of the team and system

@@ -184,6 +184,28 @@ func TestApp_ImportArchive(t *testing.T) {
 		require.Equal(t, board.ID, newBoard.ID)
 	})
 
+	t.Run("board validator aborts import before any board is created", func(t *testing.T) {
+		r := bytes.NewReader([]byte(boardArchive))
+
+		validatorErr := model.NewErrPermission("access denied to create private boards")
+		var validated []*model.Board
+		opts := model.ImportArchiveOptions{
+			TeamID:     "test-team",
+			ModifiedBy: "f1tydgc697fcbp8ampr6881jea",
+			BoardValidator: func(board *model.Board) error {
+				validated = append(validated, board)
+				return validatorErr
+			},
+		}
+
+		// No store mutations should be expected: the validator must fail the
+		// import before CreateBoardsAndBlocks is ever reached.
+		_, err := th.App.ImportBoardJSONL(r, opts)
+		require.ErrorIs(t, err, validatorErr)
+		require.Len(t, validated, 1)
+		require.Equal(t, model.BoardTypePrivate, validated[0].Type)
+	})
+
 	t.Run("fix image and attachment", func(t *testing.T) {
 		boardMap := map[string]*model.Board{
 			"test": board,

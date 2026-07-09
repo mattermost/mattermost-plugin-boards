@@ -141,6 +141,11 @@ type BoardModifier func(board *Board, cache map[string]interface{}) bool
 // Return true to import the block or false to skip import.
 type BlockModifier func(block *Block, cache map[string]interface{}) bool
 
+// BoardValidator is a callback invoked for each board during an import to
+// enforce authorization before any board is created. Returning a non-nil
+// error aborts the import.
+type BoardValidator func(board *Board) error
+
 func BlocksFromJSON(data io.Reader) []*Block {
 	var blocks []*Block
 	_ = json.NewDecoder(data).Decode(&blocks)

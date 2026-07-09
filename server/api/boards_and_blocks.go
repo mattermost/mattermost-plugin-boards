@@ -110,6 +110,13 @@ func (a *API) handleCreateBoardsAndBlocks(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	for _, board := range newBab.Boards {
+		if err = a.authorizeBoardCreate(userID, board.TeamID, board.Type); err != nil {
+			a.errorResponse(w, r, err)
+			return
+		}
+	}
+
 	for _, block := range newBab.Blocks {
 		// Error checking
 		if len(block.Type) < 1 {
