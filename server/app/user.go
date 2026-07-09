@@ -43,6 +43,9 @@ func (a *App) GetUserPreferences(userID string) ([]mmModel.Preference, error) {
 }
 
 func (a *App) UserIsGuest(userID string) (bool, error) {
+	if userID == model.SystemUserID {
+		return false, nil
+	}
 	user, err := a.store.GetUserByID(userID)
 	if err != nil {
 		return false, err
