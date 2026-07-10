@@ -21,7 +21,14 @@ import (
 
 const websocketMessagePrefix = "custom_focalboard_"
 
-var errMissingTeamInCommand = fmt.Errorf("command doesn't contain teamId")
+var (
+	errMissingTeamInCommand = fmt.Errorf("command doesn't contain teamId")
+	errInvalidFieldType     = fmt.Errorf("invalid field type in websocket command")
+)
+
+func invalidFieldTypeError(field string, value interface{}) error {
+	return fmt.Errorf("%w: %q has type %T", errInvalidFieldType, field, value)
+}
 
 type PluginAdapterInterface interface {
 	Adapter
@@ -311,24 +318,55 @@ func (pa *PluginAdapter) OnWebSocketDisconnect(webConnID, userID string) {
 func commandFromRequest(req *mmModel.WebSocketRequest) (*WebsocketCommand, error) {
 	c := &WebsocketCommand{Action: strings.TrimPrefix(req.Action, websocketMessagePrefix)}
 
-	if teamID, ok := req.Data["teamId"]; ok {
-		c.TeamID = teamID.(string)
-	} else {
+	rawTeamID, ok := req.Data["teamId"]
+	if !ok {
 		return nil, errMissingTeamInCommand
 	}
+	teamID, ok := rawTeamID.(string)
+	if !ok {
+		return nil, invalidFieldTypeError("teamId", rawTeamID)
+	}
+	c.TeamID = teamID
 
-	if readToken, ok := req.Data["readToken"]; ok {
-		c.ReadToken = readToken.(string)
+	if rawReadToken, ok := req.Data["readToken"]; ok {
+		readToken, ok := rawReadToken.(string)
+		if !ok {
+			return nil, invalidFieldTypeError("readToken", rawReadToken)
+		}
+		c.ReadToken = readToken
 	}
 
-	if blockIDs, ok := req.Data["blockIds"]; ok {
-		c.BlockIDs = blockIDs.([]string)
+	if rawBlockIDs, ok := req.Data["blockIds"]; ok {
+		rawList, ok := rawBlockIDs.([]interface{})
+		if !ok {
+			return nil, invalidFieldTypeError("blockIds", rawBlockIDs)
+		}
+		blockIDs := make([]string, 0, len(rawList))
+		for i, item := range rawList {
+			s, ok := item.(string)
+			if !ok {
+				return nil, fmt.Errorf("%w: blockIds[%d] has type %T", errInvalidFieldType, i, item)
+			}
+			blockIDs = append(blockIDs, s)
+		}
+		c.BlockIDs = blockIDs
 	}
 
 	return c, nil
 }
 
 func (pa *PluginAdapter) WebSocketMessageHasBeenPosted(webConnID, userID string, req *mmModel.WebSocketRequest) {
+	defer func() {
+		if r := recover(); r != nil {
+			pa.logger.Error("recovered from panic in WebSocketMessageHasBeenPosted",
+				mlog.String("webConnID", webConnID),
+				mlog.String("userID", userID),
+				mlog.String("action", req.Action),
+				mlog.Any("panic", r),
+			)
+		}
+	}()
+
 	pac, ok := pa.GetListenerByWebConnID(webConnID)
 	if !ok {
 		pa.logger.Debug("received a message for an unregistered webconn",
