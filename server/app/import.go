@@ -304,7 +304,7 @@ func (a *App) addUserToNewBoard(boardsAndBlocks *model.BoardsAndBlocks, opt mode
 				UserID:          boardMember.UserID,
 				Roles:           boardMember.Roles,
 				MinimumRole:     boardMember.MinimumRole,
-				SchemeAdmin:     boardMember.SchemeAdmin,
+				SchemeAdmin:     false,
 				SchemeEditor:    boardMember.SchemeEditor,
 				SchemeCommenter: boardMember.SchemeCommenter,
 				SchemeViewer:    boardMember.SchemeViewer,
