@@ -207,6 +207,25 @@ func (b *BoardsApp) OnPluginClusterEvent(_ *plugin.Context, ev mm_model.PluginCl
 	b.wsPluginAdapter.HandleClusterEvent(ev)
 }
 
+// UserHasLoggedIn mirrors the channel behavior of clearing admin roles on
+// guest demotion. Role changes invalidate active sessions, so the next
+// login is the first authenticated event we receive after the demotion.
+// If the user is now a guest, strip SchemeAdmin from every membership so
+// that any subsequent re-promotion to member cannot resurface stale admin
+// rights. The Hooks interface in mattermost/server/public does not expose
+// UserHasBeenUpdated, so login is the earliest reliable trigger.
+func (b *BoardsApp) UserHasLoggedIn(_ *plugin.Context, user *mm_model.User) {
+	if user == nil || !user.IsGuest() {
+		return
+	}
+	if err := b.server.App().RevokeBoardAdminForGuest(user.Id); err != nil {
+		b.logger.Error("failed to revoke board admin for guest on login",
+			mlog.String("userID", user.Id),
+			mlog.Err(err),
+		)
+	}
+}
+
 // ServeHTTP demonstrates a plugin that handles HTTP requests by greeting the world.
 func (b *BoardsApp) ServeHTTP(_ *plugin.Context, w http.ResponseWriter, r *http.Request) {
 	router := b.server.GetRootRouter()
