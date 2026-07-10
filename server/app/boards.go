@@ -56,6 +56,12 @@ func (a *App) validateBoardChannelPatchAccess(userID string, board *model.Board,
 		return nil
 	}
 
+	if patch.ChannelID != nil {
+		if !a.permissions.HasPermissionToBoard(userID, board.ID, model.PermissionManageBoardRoles) {
+			return model.NewErrPermission("access denied to modifying board access")
+		}
+	}
+
 	testChannel := ""
 	if patch.ChannelID != nil && *patch.ChannelID != "" {
 		testChannel = *patch.ChannelID

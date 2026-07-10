@@ -8,6 +8,7 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/auth"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/config"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/metrics"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/permissions/mmpermissions"
@@ -27,6 +28,7 @@ type TestHelper struct {
 	FilesBackend *mocks.FileBackend
 	logger       mlog.LoggerIFace
 	API          *mmpermissionsMocks.MockAPI
+	PermStore    *permissionsMocks.MockStore
 }
 
 func SetupTestHelper(t *testing.T) (*TestHelper, func()) {
@@ -69,5 +71,35 @@ func SetupTestHelper(t *testing.T) (*TestHelper, func()) {
 		FilesBackend: filesBackend,
 		logger:       logger,
 		API:          mockAPI,
+		PermStore:    mockStore,
 	}, tearDown
+}
+
+func (th *TestHelper) expectBoardAdmin(userID, boardID, teamID string) { //nolint:unparam
+	th.PermStore.EXPECT().GetBoard(boardID).Return(&model.Board{
+		ID:     boardID,
+		TeamID: teamID,
+	}, nil)
+	th.API.EXPECT().HasPermissionToTeam(userID, teamID, model.PermissionViewTeam).Return(true)
+	th.PermStore.EXPECT().GetMemberForBoard(boardID, userID).Return(&model.BoardMember{
+		BoardID:     boardID,
+		UserID:      userID,
+		SchemeAdmin: true,
+	}, nil)
+	// SchemeAdmin path triggers isGuest() in mmpermissions which loads the user
+	th.PermStore.EXPECT().GetUserByID(userID).Return(&model.User{ID: userID}, nil)
+}
+
+func (th *TestHelper) expectBoardEditor(userID, boardID, teamID string) {
+	th.PermStore.EXPECT().GetBoard(boardID).Return(&model.Board{
+		ID:     boardID,
+		TeamID: teamID,
+	}, nil)
+	th.API.EXPECT().HasPermissionToTeam(userID, teamID, model.PermissionViewTeam).Return(true)
+	th.PermStore.EXPECT().GetMemberForBoard(boardID, userID).Return(&model.BoardMember{
+		BoardID:      boardID,
+		UserID:       userID,
+		SchemeEditor: true,
+	}, nil)
+	th.API.EXPECT().HasPermissionToTeam(userID, teamID, model.PermissionManageTeam).Return(false)
 }
