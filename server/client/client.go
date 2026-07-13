@@ -97,6 +97,27 @@ func (c *Client) DoAPIPost(url, data string) (*http.Response, error) {
 	return c.DoAPIRequest(http.MethodPost, c.APIURL+url, data, "")
 }
 
+func (c *Client) DoAPIPostMultipart(url, fieldName, fileName string, data []byte) (*http.Response, error) {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile(fieldName, fileName)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = part.Write(data); err != nil {
+		return nil, err
+	}
+	if err = writer.Close(); err != nil {
+		return nil, err
+	}
+
+	opt := func(r *http.Request) {
+		r.Header.Set("Content-Type", writer.FormDataContentType())
+	}
+
+	return c.doAPIRequestReader(http.MethodPost, c.APIURL+url, body, "", opt)
+}
+
 func (c *Client) DoAPIPatch(url, data string) (*http.Response, error) {
 	return c.DoAPIRequest(http.MethodPatch, c.APIURL+url, data, "")
 }

@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"net/http"
 	"strings"
 	"testing"
 
@@ -17,6 +18,70 @@ import (
 	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/require"
 )
+
+func minimalImportArchiveZip(t *testing.T) []byte {
+	t.Helper()
+
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	w, err := zw.Create("version.json")
+	require.NoError(t, err)
+	_, err = w.Write([]byte(`{"version":2}`))
+	require.NoError(t, err)
+	require.NoError(t, zw.Close())
+	return buf.Bytes()
+}
+
+func TestImportArchiveAPIErrors(t *testing.T) {
+	t.Run("rejects oversized upload with 413 and JSON error body", func(t *testing.T) {
+		th := SetupTestHelperPluginMode(t)
+		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
+
+		config := th.Server.App().GetConfig()
+		origMaxFileSize := config.MaxFileSize
+		defer func() {
+			config.MaxFileSize = origMaxFileSize
+			th.Server.App().SetConfig(config)
+		}()
+
+		config.MaxFileSize = 1
+		th.Server.App().SetConfig(config)
+
+		var buf bytes.Buffer
+		zw := zip.NewWriter(&buf)
+		w, err := zw.Create("version.json")
+		require.NoError(t, err)
+		_, err = w.Write([]byte(`{"version":2}`))
+		require.NoError(t, err)
+		require.NoError(t, zw.Close())
+
+		resp := th.Client.ImportArchive(teamID, bytes.NewReader(buf.Bytes()))
+		th.CheckRequestEntityTooLarge(resp)
+		require.Equal(t, "application/json", resp.Header.Get("Content-Type"))
+	})
+
+	t.Run("returns 400 with JSON error body for malformed upload", func(t *testing.T) {
+		th := SetupTestHelperPluginMode(t)
+		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
+
+		url := th.Client.GetTeamRoute(teamID) + "/archive/import"
+		r, err := th.Client.DoAPIPost(url, "not-a-multipart-body")
+		require.NotNil(t, r)
+		defer r.Body.Close()
+
+		require.Equal(t, http.StatusBadRequest, r.StatusCode)
+		require.Equal(t, "application/json", r.Header.Get("Content-Type"))
+		_ = err // client returns RequestReaderError for non-2xx responses
+	})
+}
 
 func TestImportArchiveStripsGuestSchemeAdmin(t *testing.T) {
 	t.Run("import archive with guest member schemeAdmin true", func(t *testing.T) {
