@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"testing"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
@@ -208,6 +209,28 @@ func TestApp_ImportArchive(t *testing.T) {
 		require.ErrorIs(t, err, validatorErr)
 		require.Len(t, validated, 1)
 		require.Equal(t, model.BoardTypePrivate, validated[0].Type)
+	})
+
+	t.Run("board validator with non-seekable reader fails before import", func(t *testing.T) {
+		// The validator passes, but the reader cannot be rewound for the real
+		// import pass, so the import must abort with errArchiveNotSeekable and
+		// never persist anything (no CreateBoardsAndBlocks on the mock store).
+		var validated []*model.Board
+		opts := model.ImportArchiveOptions{
+			TeamID:     "y5tuzz9yb3y99gmobyc4hg5wnr",
+			ModifiedBy: "user",
+			BoardValidator: func(board *model.Board) error {
+				validated = append(validated, board)
+				return nil
+			},
+		}
+
+		// struct{ io.Reader } hides bytes.Reader's Seek method.
+		r := struct{ io.Reader }{bytes.NewReader([]byte(asana))}
+
+		err := th.App.ImportArchive(r, opts)
+		require.ErrorIs(t, err, errArchiveNotSeekable)
+		require.Len(t, validated, 1)
 	})
 
 	t.Run("multi-board archive is not partially imported when a later board is denied", func(t *testing.T) {

@@ -293,7 +293,7 @@ func (a *App) parseBoardsAndBlocks(r io.Reader, opt model.ImportArchiveOptions) 
 					block.UpdateAt = now
 					board, err := a.blockToBoard(block, opt)
 					if err != nil {
-						return nil, nil, fmt.Errorf("cannot convert archive line %d to block: %w", lineNum, err)
+						return nil, nil, fmt.Errorf("cannot convert archive line %d to board: %w", lineNum, err)
 					}
 					if err := board.IsValidForImport(); err != nil {
 						return nil, nil, err
