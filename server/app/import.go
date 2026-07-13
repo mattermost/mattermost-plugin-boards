@@ -495,7 +495,6 @@ func limitedReaderExceeded(lr *io.LimitedReader) bool {
 	return lr.N <= 0
 }
 
-
 func (a *App) effectiveArchiveEntryMaxSize() int64 {
 	maxEntry := int64(importMaxFileSize)
 	if a.config != nil {
