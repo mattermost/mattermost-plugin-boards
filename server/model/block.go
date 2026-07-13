@@ -29,6 +29,7 @@ var (
 	ErrBlockEmptyBoardID            = errors.New("boardID is empty")
 	ErrBlockTitleSizeLimitExceeded  = errors.New("block title size limit exceeded")
 	ErrBlockFieldsSizeLimitExceeded = errors.New("block fields size limit exceeded")
+	ErrBlockPropertiesInvalidType   = errors.New("block fields.properties must be a JSON object")
 )
 
 // Block is the basic data unit
@@ -195,6 +196,12 @@ func (b *Block) baseValidations() error {
 	if attachmentId, ok := b.Fields[BlockFieldAttachmentId].(string); ok {
 		if err = ValidateFileId(attachmentId); err != nil {
 			return err
+		}
+	}
+
+	if propsIface, present := b.Fields["properties"]; present {
+		if _, ok := propsIface.(map[string]interface{}); !ok {
+			return ErrBlockPropertiesInvalidType
 		}
 	}
 

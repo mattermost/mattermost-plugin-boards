@@ -6,6 +6,7 @@ package notifysubscriptions
 import (
 	"errors"
 	"fmt"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -61,8 +62,36 @@ func (n *notifier) start() {
 
 	if n.done == nil {
 		n.done = make(chan struct{})
-		go n.loop()
+		done := n.done
+		go n.safeLoop(done)
 	}
+}
+
+func (n *notifier) safeLoop(done chan struct{}) {
+	for {
+		if n.runLoopOnce(n.loop) {
+			return
+		}
+		select {
+		case <-done:
+			return
+		case <-time.After(time.Second * 5):
+		}
+	}
+}
+
+func (n *notifier) runLoopOnce(fn func()) (finished bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			n.logger.Error("panic recovered in notification loop",
+				mlog.Any("panic", r),
+				mlog.String("stack", string(debug.Stack())),
+			)
+			finished = false
+		}
+	}()
+	fn()
+	return true
 }
 
 func (n *notifier) stop() {

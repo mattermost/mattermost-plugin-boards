@@ -281,6 +281,9 @@ func (a *App) parseBoardsAndBlocks(r io.Reader, opt model.ImportArchiveOptions) 
 					board.ModifiedBy = userID
 					board.UpdateAt = now
 					board.TeamID = opt.TeamID
+					if err := a.validateBoardForImport(userID, opt.TeamID, &board); err != nil {
+						return nil, nil, err
+					}
 					boardsAndBlocks.Boards = append(boardsAndBlocks.Boards, &board)
 					boardID = board.ID
 				case "board_block":
@@ -295,7 +298,7 @@ func (a *App) parseBoardsAndBlocks(r io.Reader, opt model.ImportArchiveOptions) 
 					if err != nil {
 						return nil, nil, fmt.Errorf("cannot convert archive line %d to board: %w", lineNum, err)
 					}
-					if err := board.IsValidForImport(); err != nil {
+					if err := a.validateBoardForImport(userID, opt.TeamID, board); err != nil {
 						return nil, nil, err
 					}
 					boardsAndBlocks.Boards = append(boardsAndBlocks.Boards, board)
