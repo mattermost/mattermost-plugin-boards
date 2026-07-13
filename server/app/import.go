@@ -68,9 +68,11 @@ func (a *App) ImportArchive(r io.Reader, opt model.ImportArchiveOptions) error {
 		dir, filename := filepath.Split(hdr.Name)
 		dir = path.Clean(dir)
 
+		maxEntry := a.effectiveArchiveEntryMaxSize()
+
 		switch filename {
 		case "version.json":
-			ver, errVer := parseVersionFile(zr)
+			ver, errVer := parseVersionFile(zr, maxEntry)
 			if errVer != nil {
 				return errVer
 			}
@@ -92,11 +94,27 @@ func (a *App) ImportArchive(r io.Reader, opt model.ImportArchiveOptions) error {
 					mlog.String("dir", dir),
 					mlog.String("filename", filename),
 				)
+				if err := discardLimited(zr, maxEntry); err != nil {
+					return fmt.Errorf("cannot skip orphan file %s: %w", filename, err)
+				}
 				continue
 			}
-			newFileName, err := a.SaveFile(zr, opt.TeamID, board.ID, filename, board.IsTemplate)
+			fileReader := newLimitedReader(zr, maxEntry)
+			newFileName, err := a.SaveFile(fileReader, opt.TeamID, board.ID, filename, board.IsTemplate)
 			if err != nil {
 				return fmt.Errorf("cannot import file %s for board %s: %w", filename, dir, err)
+			}
+			if limitedReaderExceeded(fileReader) {
+				filePath, pathErr := getDestinationFilePath(board.IsTemplate, opt.TeamID, board.ID, newFileName)
+				if pathErr == nil {
+					if removeErr := a.filesBackend.RemoveFile(filePath); removeErr != nil {
+						a.logger.Warn("failed to remove oversized import file",
+							mlog.String("path", filePath),
+							mlog.Err(removeErr),
+						)
+					}
+				}
+				return fmt.Errorf("cannot import file %s for board %s: %w", filename, dir, errSizeLimitExceeded)
 			}
 			fileMap[filename] = newFileName
 
@@ -472,10 +490,32 @@ func arrayMapsValue(m map[string]interface{}, key string) ([]map[string]interfac
 	return arr, true
 }
 
-func parseVersionFile(r io.Reader) (int, error) {
-	file, err := io.ReadAll(r)
+func newLimitedReader(r io.Reader, limit int64) *io.LimitedReader {
+	return &io.LimitedReader{R: r, N: limit + 1}
+}
+
+func limitedReaderExceeded(lr *io.LimitedReader) bool {
+	return lr.N <= 0
+}
+
+func (a *App) effectiveArchiveEntryMaxSize() int64 {
+	maxEntry := int64(importMaxFileSize)
+	if a.config != nil {
+		if cfgMax := a.config.MaxFileSize; cfgMax > 0 && cfgMax < maxEntry {
+			maxEntry = cfgMax
+		}
+	}
+	return maxEntry
+}
+
+func parseVersionFile(r io.Reader, maxSize int64) (int, error) {
+	lr := newLimitedReader(r, maxSize)
+	file, err := io.ReadAll(lr)
 	if err != nil {
 		return 0, fmt.Errorf("cannot read version.json: %w", err)
+	}
+	if limitedReaderExceeded(lr) {
+		return 0, fmt.Errorf("cannot read version.json: %w", errSizeLimitExceeded)
 	}
 
 	var header model.ArchiveHeader
@@ -483,4 +523,15 @@ func parseVersionFile(r io.Reader) (int, error) {
 		return 0, fmt.Errorf("cannot parse version.json: %w", err)
 	}
 	return header.Version, nil
+}
+
+func discardLimited(r io.Reader, limit int64) error {
+	lr := newLimitedReader(r, limit)
+	if _, err := io.Copy(io.Discard, lr); err != nil {
+		return err
+	}
+	if limitedReaderExceeded(lr) {
+		return errSizeLimitExceeded
+	}
+	return nil
 }
