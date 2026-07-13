@@ -362,6 +362,9 @@ func TestImportArchiveImageFileSizeLimit(t *testing.T) {
 			Blocks: []*model.Block{block},
 		}
 
+		th.API.EXPECT().HasPermissionToTeam("user", teamID, model.PermissionCreatePrivateChannel).Return(true).AnyTimes()
+		th.API.EXPECT().HasPermissionToTeam("user", teamID, model.PermissionCreatePublicChannel).Return(true).AnyTimes()
+
 		th.Store.EXPECT().CreateBoardsAndBlocks(gomock.AssignableToTypeOf(&model.BoardsAndBlocks{}), "user").Return(babs, nil)
 		th.Store.EXPECT().GetMembersForBoard(board.ID).AnyTimes().Return([]*model.BoardMember{}, nil)
 		th.Store.EXPECT().GetBoard(board.ID).AnyTimes().Return(board, nil)
