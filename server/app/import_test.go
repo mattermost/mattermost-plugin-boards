@@ -251,16 +251,34 @@ func TestApp_ImportArchive(t *testing.T) {
 	})
 }
 
+func TestEffectiveArchiveEntryMaxSize(t *testing.T) {
+	th, tearDown := SetupTestHelper(t)
+	defer tearDown()
+
+	t.Run("returns importMaxFileSize when config is unset or larger", func(t *testing.T) {
+		th.App.config.MaxFileSize = 0
+		require.Equal(t, int64(importMaxFileSize), th.App.effectiveArchiveEntryMaxSize())
+
+		th.App.config.MaxFileSize = int64(importMaxFileSize) * 2
+		require.Equal(t, int64(importMaxFileSize), th.App.effectiveArchiveEntryMaxSize())
+	})
+
+	t.Run("honors configured MaxFileSize when stricter", func(t *testing.T) {
+		th.App.config.MaxFileSize = 1024
+		require.Equal(t, int64(1024), th.App.effectiveArchiveEntryMaxSize())
+	})
+}
+
 func TestParseVersionFile(t *testing.T) {
 	t.Run("valid version", func(t *testing.T) {
-		ver, err := parseVersionFile(strings.NewReader(`{"version":2}`))
+		ver, err := parseVersionFile(strings.NewReader(`{"version":2}`), importMaxFileSize)
 		require.NoError(t, err)
 		require.Equal(t, 2, ver)
 	})
 
 	t.Run("size limit exceeded", func(t *testing.T) {
 		payload := []byte(`{"version":2,"padding":"` + strings.Repeat("x", int(importMaxFileSize)) + `"}`)
-		_, err := parseVersionFile(bytes.NewReader(payload))
+		_, err := parseVersionFile(bytes.NewReader(payload), importMaxFileSize)
 		require.Error(t, err)
 		require.ErrorIs(t, err, errSizeLimitExceeded)
 	})
