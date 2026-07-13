@@ -51,6 +51,12 @@ func TestBoardCreationPermissionEnforcement(t *testing.T) {
 		_, resp := th.Client.CreateBoardsAndBlocks(newBoardAndBlocks(teamID, model.BoardTypePrivate))
 		th.CheckForbidden(resp)
 
+		// A batch mixing an allowed public board with a denied private board
+		// must be rejected as a whole: a single unauthorized board fails the
+		// entire request.
+		_, resp = th.Client.CreateBoardsAndBlocks(newBoardsAndBlocks(teamID, model.BoardTypeOpen, model.BoardTypePrivate))
+		th.CheckForbidden(resp)
+
 		bab, resp := th.Client.CreateBoardsAndBlocks(newBoardAndBlocks(teamID, model.BoardTypeOpen))
 		th.CheckOK(resp)
 		require.Len(t, bab.Boards, 1)
@@ -88,21 +94,27 @@ func TestBoardCreationPermissionEnforcement(t *testing.T) {
 }
 
 func newBoardAndBlocks(teamID string, boardType model.BoardType) *model.BoardsAndBlocks {
-	boardID := utils.NewID(utils.IDTypeBoard)
-	return &model.BoardsAndBlocks{
-		Boards: []*model.Board{{
+	return newBoardsAndBlocks(teamID, boardType)
+}
+
+func newBoardsAndBlocks(teamID string, boardTypes ...model.BoardType) *model.BoardsAndBlocks {
+	bab := &model.BoardsAndBlocks{}
+	for _, boardType := range boardTypes {
+		boardID := utils.NewID(utils.IDTypeBoard)
+		bab.Boards = append(bab.Boards, &model.Board{
 			ID:     boardID,
 			Title:  "Test Board",
 			TeamID: teamID,
 			Type:   boardType,
-		}},
-		Blocks: []*model.Block{{
+		})
+		bab.Blocks = append(bab.Blocks, &model.Block{
 			ID:       utils.NewID(utils.IDTypeCard),
 			Title:    "Test Block",
 			BoardID:  boardID,
 			Type:     model.TypeCard,
 			CreateAt: model.GetMillis(),
 			UpdateAt: model.GetMillis(),
-		}},
+		})
 	}
+	return bab
 }

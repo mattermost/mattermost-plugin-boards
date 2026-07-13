@@ -4,7 +4,10 @@
 package app
 
 import (
+	"archive/zip"
 	"bytes"
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
@@ -185,25 +188,55 @@ func TestApp_ImportArchive(t *testing.T) {
 	})
 
 	t.Run("board validator aborts import before any board is created", func(t *testing.T) {
-		r := bytes.NewReader([]byte(boardArchive))
+		r := bytes.NewReader([]byte(asana))
 
 		validatorErr := model.NewErrPermission("access denied to create private boards")
 		var validated []*model.Board
 		opts := model.ImportArchiveOptions{
-			TeamID:     "test-team",
-			ModifiedBy: "f1tydgc697fcbp8ampr6881jea",
+			TeamID:     "y5tuzz9yb3y99gmobyc4hg5wnr",
+			ModifiedBy: "user",
 			BoardValidator: func(board *model.Board) error {
 				validated = append(validated, board)
 				return validatorErr
 			},
 		}
 
-		// No store mutations should be expected: the validator must fail the
-		// import before CreateBoardsAndBlocks is ever reached.
-		_, err := th.App.ImportBoardJSONL(r, opts)
+		// No store mutations should be expected: the validator runs during the
+		// dedicated pre-pass in ImportArchive and must fail the import before
+		// CreateBoardsAndBlocks is ever reached.
+		err := th.App.ImportArchive(r, opts)
 		require.ErrorIs(t, err, validatorErr)
 		require.Len(t, validated, 1)
 		require.Equal(t, model.BoardTypePrivate, validated[0].Type)
+	})
+
+	t.Run("multi-board archive is not partially imported when a later board is denied", func(t *testing.T) {
+		// The archive contains an allowed public board followed by a denied
+		// private board. Validation happens up front for the whole archive, so
+		// neither board must be persisted (no CreateBoardsAndBlocks is expected
+		// on the mock store).
+		archive := buildBoardArchive(t,
+			&model.Board{ID: "board-open", Title: "Open", Type: model.BoardTypeOpen},
+			&model.Board{ID: "board-private", Title: "Private", Type: model.BoardTypePrivate},
+		)
+
+		validatorErr := model.NewErrPermission("access denied to create private boards")
+		var validated []model.BoardType
+		opts := model.ImportArchiveOptions{
+			TeamID:     "test-team",
+			ModifiedBy: "user",
+			BoardValidator: func(board *model.Board) error {
+				validated = append(validated, board.Type)
+				if board.Type != model.BoardTypeOpen {
+					return validatorErr
+				}
+				return nil
+			},
+		}
+
+		err := th.App.ImportArchive(bytes.NewReader(archive), opts)
+		require.ErrorIs(t, err, validatorErr)
+		require.Equal(t, []model.BoardType{model.BoardTypeOpen, model.BoardTypePrivate}, validated)
 	})
 
 	t.Run("fix image and attachment", func(t *testing.T) {
@@ -267,6 +300,42 @@ func TestApp_ImportArchive(t *testing.T) {
 		th.Store.EXPECT().PatchBlocks(gomock.Any(), "my-userid").Return(nil)
 		th.App.fixImagesAttachments(boardMap, fileMap, "test-team", "my-userid")
 	})
+}
+
+// buildBoardArchive builds an in-memory .boardarchive zip containing a
+// version.json and one board.jsonl entry per board, in order.
+func buildBoardArchive(t *testing.T, boards ...*model.Board) []byte {
+	t.Helper()
+
+	buf := &bytes.Buffer{}
+	zw := zip.NewWriter(buf)
+
+	header, err := json.Marshal(model.ArchiveHeader{Version: archiveVersion, Date: utils.GetMillis()})
+	require.NoError(t, err)
+	versionWriter, err := zw.Create("version.json")
+	require.NoError(t, err)
+	_, err = versionWriter.Write(header)
+	require.NoError(t, err)
+
+	for i, board := range boards {
+		line, err := json.Marshal(model.ArchiveLine{Type: "board", Data: mustMarshal(t, board)})
+		require.NoError(t, err)
+
+		boardWriter, err := zw.Create(fmt.Sprintf("board-%d/board.jsonl", i))
+		require.NoError(t, err)
+		_, err = boardWriter.Write(append(line, '\n'))
+		require.NoError(t, err)
+	}
+
+	require.NoError(t, zw.Close())
+	return buf.Bytes()
+}
+
+func mustMarshal(t *testing.T, v interface{}) json.RawMessage {
+	t.Helper()
+	data, err := json.Marshal(v)
+	require.NoError(t, err)
+	return data
 }
 
 //nolint:lll
