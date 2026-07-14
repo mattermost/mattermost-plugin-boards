@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mattermost/mattermost-plugin-boards/server/api"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 	mmModel "github.com/mattermost/mattermost/server/public/model"
@@ -277,7 +278,11 @@ func runTestCases(t *testing.T, ttCases []TestCase, testData TestData, clients C
 				response, err = reqClient.DoAPIGet(url, "")
 				defer response.Body.Close()
 			case methodPost:
-				response, err = reqClient.DoAPIPost(url, body)
+				if strings.Contains(url, "/archive/import") && tc.expectedStatusCode >= 200 && tc.expectedStatusCode < 300 {
+					response, err = reqClient.DoAPIPostMultipart(url, api.UploadFormFileKey, "archive.boardarchive", minimalImportArchiveZip(t))
+				} else {
+					response, err = reqClient.DoAPIPost(url, body)
+				}
 				defer response.Body.Close()
 			case methodPatch:
 				response, err = reqClient.DoAPIPatch(url, body)
@@ -2831,11 +2836,11 @@ func TestPermissionsBoardArchiveImport(t *testing.T) {
 	ttCases := []TestCase{
 		{"/teams/test-team/archive/import", methodPost, "", userAnon, http.StatusUnauthorized, 0},
 		{"/teams/test-team/archive/import", methodPost, "", userNoTeamMember, http.StatusForbidden, 1},
-		{"/teams/test-team/archive/import", methodPost, "", userTeamMember, http.StatusOK, 1},
-		{"/teams/test-team/archive/import", methodPost, "", userViewer, http.StatusOK, 1},
-		{"/teams/test-team/archive/import", methodPost, "", userCommenter, http.StatusOK, 1},
-		{"/teams/test-team/archive/import", methodPost, "", userEditor, http.StatusOK, 1},
-		{"/teams/test-team/archive/import", methodPost, "", userAdmin, http.StatusOK, 1},
+		{"/teams/test-team/archive/import", methodPost, "", userTeamMember, http.StatusOK, 0},
+		{"/teams/test-team/archive/import", methodPost, "", userViewer, http.StatusOK, 0},
+		{"/teams/test-team/archive/import", methodPost, "", userCommenter, http.StatusOK, 0},
+		{"/teams/test-team/archive/import", methodPost, "", userEditor, http.StatusOK, 0},
+		{"/teams/test-team/archive/import", methodPost, "", userAdmin, http.StatusOK, 0},
 		{"/teams/test-team/archive/import", methodPost, "", userGuest, http.StatusForbidden, 0},
 	}
 
