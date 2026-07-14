@@ -16,8 +16,8 @@ import (
 // TestBoardCreationPermissionEnforcement verifies that the per-type board
 // creation permission (create_public_channel / create_private_channel) is
 // enforced consistently across every board creation endpoint, guarding against
-// a regression where /boards-and-blocks and the archive import endpoints
-// skipped the check (MM-69622).
+// a regression where /boards-and-blocks, the archive import, and the board
+// duplicate endpoints skipped the check (MM-69622).
 func TestBoardCreationPermissionEnforcement(t *testing.T) {
 	t.Run("createBoard honors revoked create permissions", func(t *testing.T) {
 		th := SetupTestHelperPluginMode(t)
@@ -65,6 +65,26 @@ func TestBoardCreationPermissionEnforcement(t *testing.T) {
 		th.PermissionAPI.DenyTeamPermission(userTeamMember, model.PermissionCreatePublicChannel)
 
 		_, resp = th.Client.CreateBoardsAndBlocks(newBoardAndBlocks(teamID, model.BoardTypeOpen))
+		th.CheckForbidden(resp)
+	})
+
+	t.Run("duplicateBoard honors revoked create permissions", func(t *testing.T) {
+		th := SetupTestHelperPluginMode(t)
+		defer th.TearDown()
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+
+		teamID := mmModel.NewId()
+
+		// Duplicated boards are always created as private, so revoking the
+		// private create permission must block duplication.
+		source, resp := th.Client.CreateBoardsAndBlocks(newBoardAndBlocks(teamID, model.BoardTypeOpen))
+		th.CheckOK(resp)
+		require.Len(t, source.Boards, 1)
+
+		th.PermissionAPI.DenyTeamPermission(userTeamMember, model.PermissionCreatePrivateChannel)
+
+		_, resp = th.Client.DuplicateBoard(source.Boards[0].ID, false, teamID)
 		th.CheckForbidden(resp)
 	})
 

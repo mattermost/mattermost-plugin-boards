@@ -549,6 +549,11 @@ func (a *API) handleDuplicateBoard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err = a.authorizeBoardCreate(userID, toTeam, model.BoardTypePrivate); err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
 	auditRec := a.makeAuditRecord(r, "duplicateBoard", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelRead, auditRec)
 	auditRec.AddMeta("boardID", boardID)
