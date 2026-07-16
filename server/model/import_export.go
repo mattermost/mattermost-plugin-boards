@@ -45,10 +45,11 @@ type ExportArchiveOptions struct {
 
 // ImportArchiveOptions provides options when importing an archive.
 type ImportArchiveOptions struct {
-	TeamID        string
-	ModifiedBy    string
-	BoardModifier BoardModifier
-	BlockModifier BlockModifier
+	TeamID         string
+	ModifiedBy     string
+	BoardModifier  BoardModifier
+	BlockModifier  BlockModifier
+	BoardValidator BoardValidator
 }
 
 // ErrUnsupportedArchiveVersion is an error returned when trying to import an
