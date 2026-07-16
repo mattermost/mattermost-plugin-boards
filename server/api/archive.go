@@ -185,6 +185,9 @@ func (a *API) handleArchiveImport(w http.ResponseWriter, r *http.Request) {
 	opt := model.ImportArchiveOptions{
 		TeamID:     teamID,
 		ModifiedBy: userID,
+		BoardValidator: func(board *model.Board) error {
+			return a.authorizeBoardCreate(userID, teamID, board.Type)
+		},
 	}
 
 	if err := a.app.ImportArchive(file, opt); err != nil {
