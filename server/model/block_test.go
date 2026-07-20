@@ -609,6 +609,38 @@ func TestBlockIsValid(t *testing.T) {
 		require.ErrorIs(t, err, ErrBlockPropertiesInvalidType)
 	})
 
+	t.Run("Should accept block with empty fileId (no file attached)", func(t *testing.T) {
+		block := &Block{
+			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
+			BoardID:    string(utils.IDTypeNone) + mmModel.NewId(),
+			CreatedBy:  string(utils.IDTypeNone) + mmModel.NewId(),
+			ModifiedBy: string(utils.IDTypeNone) + mmModel.NewId(),
+			Schema:     1,
+			Type:       TypeImage,
+			Title:      "Image with empty fileId",
+			Fields:     map[string]interface{}{BlockFieldFileId: ""},
+			CreateAt:   1234567890,
+			UpdateAt:   1234567890,
+		}
+		require.NoError(t, block.IsValid())
+	})
+
+	t.Run("Should accept block with empty attachmentId (no file attached)", func(t *testing.T) {
+		block := &Block{
+			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
+			BoardID:    string(utils.IDTypeNone) + mmModel.NewId(),
+			CreatedBy:  string(utils.IDTypeNone) + mmModel.NewId(),
+			ModifiedBy: string(utils.IDTypeNone) + mmModel.NewId(),
+			Schema:     1,
+			Type:       TypeAttachment,
+			Title:      "Attachment with empty attachmentId",
+			Fields:     map[string]interface{}{BlockFieldAttachmentId: ""},
+			CreateAt:   1234567890,
+			UpdateAt:   1234567890,
+		}
+		require.NoError(t, block.IsValid())
+	})
+
 	t.Run("Should accept block with properties as map", func(t *testing.T) {
 		block := &Block{
 			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
