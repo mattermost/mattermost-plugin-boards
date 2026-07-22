@@ -187,13 +187,13 @@ func (b *Block) baseValidations() error {
 		return ErrBlockFieldsSizeLimitExceeded
 	}
 
-	if fileID, ok := b.Fields[BlockFieldFileId].(string); ok {
+	if fileID, ok := b.Fields[BlockFieldFileId].(string); ok && fileID != "" {
 		if err = ValidateFileId(fileID); err != nil {
 			return err
 		}
 	}
 
-	if attachmentId, ok := b.Fields[BlockFieldAttachmentId].(string); ok {
+	if attachmentId, ok := b.Fields[BlockFieldAttachmentId].(string); ok && attachmentId != "" {
 		if err = ValidateFileId(attachmentId); err != nil {
 			return err
 		}

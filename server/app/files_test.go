@@ -672,17 +672,13 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 	})
 
 	t.Run("Empty file ID", func(t *testing.T) {
+		// blocks with an empty fileId/attachmentId should be treated
+		// as having no attached file
 		th.Store.EXPECT().GetBoard(validTestBoardID2).Return(&model.Board{ID: validTestBoardID2, TeamID: "validteam12345678901234567", IsTemplate: false}, nil)
 		mockedFileBackend := &mocks.FileBackend{}
 		th.App.filesBackend = mockedFileBackend
 		err := th.App.CopyAndUpdateCardFiles(validTestBoardID2, "userID", []*model.Block{emptyFileBlock}, false)
-		assert.Error(t, err)
-		if err != nil {
-			assert.True(t,
-				strings.Contains(err.Error(), "Block ID cannot be empty") ||
-					strings.Contains(err.Error(), "Could not validate file ID"),
-				"Expected error message to contain 'Block ID cannot be empty' or 'Could not validate file ID', got: %s", err.Error())
-		}
+		assert.NoError(t, err)
 	})
 }
 

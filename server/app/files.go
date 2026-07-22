@@ -634,9 +634,9 @@ func (a *App) CopyCardFiles(sourceBoardID string, copiedBlocks []*model.Block, a
 		}
 
 		fileID, isOk := block.Fields["fileId"].(string)
-		if !isOk {
+		if !isOk || fileID == "" {
 			fileID, isOk = block.Fields["attachmentId"].(string)
-			if !isOk {
+			if !isOk || fileID == "" {
 				continue
 			}
 		}
