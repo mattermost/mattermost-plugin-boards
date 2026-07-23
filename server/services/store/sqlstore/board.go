@@ -43,6 +43,8 @@ func boardFields(tableAlias string) []string {
 		tableAlias + "template_version",
 		"COALESCE(" + tableAlias + "properties, '{}')",
 		"COALESCE(" + tableAlias + "card_properties, '[]')",
+		"COALESCE(" + tableAlias + "card_prefix, '')",
+		"COALESCE(" + tableAlias + "card_count, 0)",
 		tableAlias + "create_at",
 		tableAlias + "update_at",
 		tableAlias + "delete_at",
@@ -66,6 +68,8 @@ func boardHistoryFields() []string {
 		"template_version",
 		"COALESCE(properties, '{}')",
 		"COALESCE(card_properties, '[]')",
+		"COALESCE(card_prefix, '')",
+		"COALESCE(card_count, 0)",
 		"COALESCE(create_at, 0)",
 		"COALESCE(update_at, 0)",
 		"COALESCE(delete_at, 0)",
@@ -109,6 +113,8 @@ func (s *SQLStore) boardsFromRows(rows *sql.Rows) ([]*model.Board, error) {
 			&board.TemplateVersion,
 			&propertiesBytes,
 			&cardPropertiesBytes,
+			&board.CardPrefix,
+			&board.CardCount,
 			&board.CreateAt,
 			&board.UpdateAt,
 			&board.DeleteAt,
@@ -326,6 +332,8 @@ func (s *SQLStore) insertBoard(db sq.BaseRunner, board *model.Board, userID stri
 		"template_version": board.TemplateVersion,
 		"properties":       propertiesBytes,
 		"card_properties":  cardPropertiesBytes,
+		"card_prefix":      board.CardPrefix,
+		"card_count":       board.CardCount,
 		"create_at":        board.CreateAt,
 		"update_at":        board.UpdateAt,
 		"delete_at":        board.DeleteAt,
@@ -346,6 +354,8 @@ func (s *SQLStore) insertBoard(db sq.BaseRunner, board *model.Board, userID stri
 			Set("template_version", board.TemplateVersion).
 			Set("properties", propertiesBytes).
 			Set("card_properties", cardPropertiesBytes).
+			Set("card_prefix", board.CardPrefix).
+			Set("card_count", board.CardCount).
 			Set("update_at", board.UpdateAt).
 			Set("delete_at", board.DeleteAt)
 
@@ -422,6 +432,8 @@ func (s *SQLStore) deleteBoardAndChildren(db sq.BaseRunner, boardID, userID stri
 		"template_version": board.TemplateVersion,
 		"properties":       propertiesBytes,
 		"card_properties":  cardPropertiesBytes,
+		"card_prefix":      board.CardPrefix,
+		"card_count":       board.CardCount,
 		"create_at":        board.CreateAt,
 		"update_at":        now,
 		"delete_at":        now,
@@ -1013,16 +1025,16 @@ func (s *SQLStore) searchBoardsForUserInTeam(db sq.BaseRunner, teamID, term, use
 		})
 
 	if term != "" {
-		// break search query into space separated words
-		// and search for all words.
-		// This should later be upgraded to industrial-strength
-		// word tokenizer, that uses much more than space
-		// to break words.
-
+		// Search both title and card_prefix (OR logic) so users can find
+		// boards by their ticket code prefix (e.g. searching "PROJ" finds
+		// the board with card_prefix=PROJ).
 		conditions := sq.And{}
-
 		for _, word := range strings.Split(strings.TrimSpace(term), " ") {
-			conditions = append(conditions, sq.Like{"lower(b.title)": "%" + strings.ToLower(word) + "%"})
+			lowerWord := "%" + strings.ToLower(word) + "%"
+			conditions = append(conditions, sq.Or{
+				sq.Like{"lower(b.title)": lowerWord},
+				sq.Like{"lower(b.card_prefix)": lowerWord},
+			})
 		}
 
 		openBoardsQ = openBoardsQ.Where(conditions)
@@ -1123,15 +1135,23 @@ func (s *SQLStore) searchBoardsForUser(db sq.BaseRunner, term string, searchFiel
 			boardMembersQ = boardMembersQ.Where(where, whereTerm)
 			teamMembersQ = teamMembersQ.Where(where, whereTerm)
 			channelMembersQ = channelMembersQ.Where(where, whereTerm)
+		} else if searchField == model.BoardSearchFieldCardPrefix {
+			conditions := sq.Like{"lower(b.card_prefix)": "%" + strings.ToLower(term) + "%"}
+			boardMembersQ = boardMembersQ.Where(conditions)
+			teamMembersQ = teamMembersQ.Where(conditions)
+			channelMembersQ = channelMembersQ.Where(conditions)
 		} else { // model.BoardSearchFieldTitle
 			// break search query into space separated words
 			// and search for all words.
-			// This should later be upgraded to industrial-strength
-			// word tokenizer, that uses much more than space
-			// to break words.
+			// Also match card_prefix so users can find boards
+			// by typing a ticket code prefix.
 			conditions := sq.And{}
 			for _, word := range strings.Split(strings.TrimSpace(term), " ") {
-				conditions = append(conditions, sq.Like{"lower(b.title)": "%" + strings.ToLower(word) + "%"})
+				lowerWord := "%" + strings.ToLower(word) + "%"
+				conditions = append(conditions, sq.Or{
+					sq.Like{"lower(b.title)": lowerWord},
+					sq.Like{"lower(b.card_prefix)": lowerWord},
+				})
 			}
 
 			boardMembersQ = boardMembersQ.Where(conditions)
@@ -1194,4 +1214,69 @@ func (s *SQLStore) searchBoardsForUser(db sq.BaseRunner, term string, searchFiel
 	defer s.CloseRows(rows)
 
 	return s.boardsFromRows(rows)
+}
+
+func (s *SQLStore) incrementBoardCardCount(db sq.BaseRunner, boardID string) (int64, error) {
+	query := s.getQueryBuilder(db).
+		Update(s.tablePrefix+"boards").
+		Set("card_count", sq.Expr("COALESCE(card_count, 0) + 1")).
+		Where(sq.Eq{"id": boardID})
+
+	if _, err := query.Exec(); err != nil {
+		return 0, fmt.Errorf("incrementBoardCardCount error for board %s: %w", boardID, err)
+	}
+
+	// Read back the new count
+	row := s.getQueryBuilder(db).
+		Select("COALESCE(card_count, 0)").
+		From(s.tablePrefix + "boards").
+		Where(sq.Eq{"id": boardID}).
+		QueryRow()
+
+	var count int64
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("incrementBoardCardCount read error for board %s: %w", boardID, err)
+	}
+
+	return count, nil
+}
+
+func (s *SQLStore) getCardByTicketCode(db sq.BaseRunner, boardPrefix string, cardNumber int64, teamID string) (*model.Block, error) {
+	query := s.getQueryBuilder(db).
+		Select(s.blockFields("b")...).
+		From(s.tablePrefix + "blocks AS b").
+		Join(s.tablePrefix + "boards AS bo ON b.board_id = bo.id").
+		Where(sq.Eq{"bo.card_prefix": boardPrefix}).
+		Where(sq.Eq{"bo.team_id": teamID}).
+		Where(sq.Eq{"b.type": model.TypeCard}).
+		Where(sq.Eq{"b.delete_at": 0})
+
+	rows, err := query.Query()
+	if err != nil {
+		return nil, fmt.Errorf("getCardByTicketCode error: %w", err)
+	}
+	defer s.CloseRows(rows)
+
+	blocks, err := s.blocksFromRows(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	// Find the block whose fields.cardNumber matches
+	for _, block := range blocks {
+		if cn, ok := block.Fields["cardNumber"]; ok {
+			var num int64
+			switch v := cn.(type) {
+			case float64:
+				num = int64(v)
+			case int64:
+				num = v
+			}
+			if num == cardNumber {
+				return block, nil
+			}
+		}
+	}
+
+	return nil, model.NewErrNotFound("card with ticket code")
 }

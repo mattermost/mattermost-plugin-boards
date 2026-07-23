@@ -134,6 +134,11 @@ const KanbanCard = (props: Props) => {
                 </MenuWrapper>
                 }
 
+                {board.cardPrefix && card.fields.cardNumber ? (
+                    <div className='octo-ticket-code'>
+                        {`${board.cardPrefix}-${card.fields.cardNumber}`}
+                    </div>
+                ) : null}
                 <div className='octo-icontitle'>
                     { card.fields.icon ? <div className='octo-icon'>{emojiData?.native || card.fields.icon}</div> : undefined }
                     <div
