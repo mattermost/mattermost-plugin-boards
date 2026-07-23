@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -111,10 +112,11 @@ const (
 )
 
 type TestHelper struct {
-	T       *testing.T
-	Server  *server.Server
-	Client  *client.Client
-	Client2 *client.Client
+	T             *testing.T
+	Server        *server.Server
+	Client        *client.Client
+	Client2       *client.Client
+	PermissionAPI *FakePermissionPluginAPI
 
 	origEnvUnitTesting string
 	sqlSettings        *mmModel.SqlSettings
@@ -122,7 +124,31 @@ type TestHelper struct {
 }
 
 type FakePermissionPluginAPI struct {
+	mu          sync.RWMutex
 	emptyTeamID string
+	// deniedTeamPermissions maps a userID to the set of team-level permission IDs
+	// that should be denied for that user, allowing tests to simulate an admin
+	// revoking permissions such as create_public_channel / create_private_channel.
+	deniedTeamPermissions map[string]map[string]bool
+}
+
+// DenyTeamPermission simulates revoking a team-level permission for a user.
+func (f *FakePermissionPluginAPI) DenyTeamPermission(userID string, permission *mmModel.Permission) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.deniedTeamPermissions == nil {
+		f.deniedTeamPermissions = map[string]map[string]bool{}
+	}
+	if f.deniedTeamPermissions[userID] == nil {
+		f.deniedTeamPermissions[userID] = map[string]bool{}
+	}
+	f.deniedTeamPermissions[userID][permission.Id] = true
+}
+
+func (f *FakePermissionPluginAPI) isTeamPermissionDenied(userID string, permission *mmModel.Permission) bool {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+	return f.deniedTeamPermissions[userID][permission.Id]
 }
 
 func (f *FakePermissionPluginAPI) HasPermissionTo(userID string, permission *mmModel.Permission) bool {
@@ -138,6 +164,9 @@ func (f *FakePermissionPluginAPI) HasPermissionToTeam(userID string, teamID stri
 	}
 	// Check against the actual empty team ID from the store, not hardcoded string
 	if teamID == f.emptyTeamID {
+		return false
+	}
+	if f.isTeamPermissionDenied(userID, permission) {
 		return false
 	}
 	return true
@@ -398,6 +427,11 @@ func (t *testServicesAPI) UpdatePreferencesForUser(userID string, preferences mm
 }
 
 func NewTestServerPluginMode(sqlSettings *mmModel.SqlSettings) *server.Server {
+	srv, _ := newTestServerPluginMode(sqlSettings)
+	return srv
+}
+
+func newTestServerPluginMode(sqlSettings *mmModel.SqlSettings) (*server.Server, *FakePermissionPluginAPI) {
 	cfg, err := getTestConfig(sqlSettings)
 	if err != nil {
 		panic(err)
@@ -517,7 +551,7 @@ func NewTestServerPluginMode(sqlSettings *mmModel.SqlSettings) *server.Server {
 		panic(err)
 	}
 
-	return srv
+	return srv, fakePermissionAPI
 }
 
 func SetupTestHelper(t *testing.T) *TestHelper {
@@ -555,7 +589,7 @@ func SetupTestHelperPluginMode(t *testing.T) *TestHelper {
 		}
 	})
 
-	th.Server = NewTestServerPluginMode(sqlSettings)
+	th.Server, th.PermissionAPI = newTestServerPluginMode(sqlSettings)
 	th.Start()
 	return th
 }

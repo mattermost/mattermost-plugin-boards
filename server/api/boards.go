@@ -26,6 +26,24 @@ func (a *API) registerBoardsRoutes(r *mux.Router) {
 	r.HandleFunc("/boards/{boardID}/metadata", a.sessionRequired(a.handleGetBoardMetadata)).Methods("GET")
 }
 
+// authorizeBoardCreate enforces the per-type board creation policy: creating a
+// public board requires the create_public_channel team permission, and creating
+// any other board type requires create_private_channel. It is shared across all
+// board creation paths so the policy is enforced consistently.
+func (a *API) authorizeBoardCreate(userID, teamID string, boardType model.BoardType) error {
+	if boardType == model.BoardTypeOpen {
+		if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionCreatePublicChannel) {
+			return model.NewErrPermission("access denied to create public boards")
+		}
+	} else {
+		if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionCreatePrivateChannel) {
+			return model.NewErrPermission("access denied to create private boards")
+		}
+	}
+
+	return nil
+}
+
 func (a *API) authorizeBoardPatch(userID, boardID string, patch *model.BoardPatch) error {
 	if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardProperties) {
 		return model.NewErrPermission("access denied to modifying board properties")
@@ -163,16 +181,9 @@ func (a *API) handleCreateBoard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if newBoard.Type == model.BoardTypeOpen {
-		if !a.permissions.HasPermissionToTeam(userID, newBoard.TeamID, model.PermissionCreatePublicChannel) {
-			a.errorResponse(w, r, model.NewErrPermission("access denied to create public boards"))
-			return
-		}
-	} else {
-		if !a.permissions.HasPermissionToTeam(userID, newBoard.TeamID, model.PermissionCreatePrivateChannel) {
-			a.errorResponse(w, r, model.NewErrPermission("access denied to create private boards"))
-			return
-		}
+	if err = a.authorizeBoardCreate(userID, newBoard.TeamID, newBoard.Type); err != nil {
+		a.errorResponse(w, r, err)
+		return
 	}
 
 	isGuest, err := a.userIsGuest(userID)
@@ -535,6 +546,11 @@ func (a *API) handleDuplicateBoard(w http.ResponseWriter, r *http.Request) {
 	}
 	if isGuest {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to create board"))
+		return
+	}
+
+	if err = a.authorizeBoardCreate(userID, toTeam, model.BoardTypePrivate); err != nil {
+		a.errorResponse(w, r, err)
 		return
 	}
 
