@@ -4,7 +4,7 @@
 
 import React from 'react'
 
-import {Board, IPropertyTemplate} from '../blocks/board'
+import {Board, IPropertyTemplate, safePropertyValue} from '../blocks/board'
 import {Card} from '../blocks/card'
 
 import propsRegistry from '../properties'
@@ -20,10 +20,7 @@ type Props = {
 const PropertyValueElement = (props: Props): JSX.Element => {
     const {card, propertyTemplate, readOnly, showEmptyPlaceholder, board} = props
 
-    let propertyValue = card.fields.properties[propertyTemplate.id]
-    if (propertyValue === undefined) {
-        propertyValue = ''
-    }
+    const propertyValue = safePropertyValue(card.fields.properties[propertyTemplate.id])
     const property = propsRegistry.get(propertyTemplate.type)
     const Editor = property.Editor
     return (
