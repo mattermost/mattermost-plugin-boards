@@ -230,6 +230,20 @@ func ValidateFileId(id string) error {
 	}
 }
 
+func ValidateBlockProperties(block *Block) error {
+	propsIface, present := block.Fields[BlockFieldProperties]
+	if !present {
+		return nil
+	}
+
+	props, ok := propsIface.(map[string]interface{})
+	if !ok {
+		return ErrBlockPropertiesInvalidType
+	}
+
+	return ValidateCardPropertyValues(props)
+}
+
 func ValidateBlockPatch(patch *BlockPatch) error {
 	// Validate UpdatedFields map
 	if patch.UpdatedFields != nil {

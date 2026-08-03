@@ -8,15 +8,16 @@ import {useIntl} from 'react-intl'
 
 import mutator from '../mutator'
 import Editable from '../widgets/editable'
+import {safePropertyString} from '../blocks/board'
 
 import {PropertyProps} from './types'
 
 const BaseTextEditor = (props: PropertyProps & {validator: () => boolean, spellCheck?: boolean}): JSX.Element => {
-    const [value, setValue] = useState(props.card.fields.properties[props.propertyTemplate.id || ''] || '')
-    const onCancel = useCallback(() => setValue(props.propertyValue || ''), [props.propertyValue])
+    const [value, setValue] = useState(safePropertyString(props.card.fields.properties[props.propertyTemplate.id || '']))
+    const onCancel = useCallback(() => setValue(safePropertyString(props.propertyValue)), [props.propertyValue])
 
     const saveTextProperty = useCallback(() => {
-        if (value !== (props.card.fields.properties[props.propertyTemplate?.id || ''] || '')) {
+        if (value !== safePropertyString(props.card.fields.properties[props.propertyTemplate?.id || ''])) {
             mutator.changePropertyValue(props.board.id, props.card, props.propertyTemplate?.id || '', value)
         }
     }, [props.board.id, props.card, props.propertyTemplate?.id, value])
@@ -42,7 +43,7 @@ const BaseTextEditor = (props: PropertyProps & {validator: () => boolean, spellC
             <Editable
                 className={props.property.valueClassName(props.readOnly)}
                 placeholderText={emptyDisplayValue}
-                value={value.toString()}
+                value={value}
                 autoExpand={true}
                 onChange={setValue}
                 onSave={saveTextProperty}

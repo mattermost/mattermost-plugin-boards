@@ -24,7 +24,7 @@ const URLProperty = (props: PropertyProps): JSX.Element => {
         return <></>
     }
 
-    const [value, setValue] = useState(props.card.fields.properties[props.propertyTemplate.id || ''] || '')
+    const [value, setValue] = useState(safePropertyString(props.card.fields.properties[props.propertyTemplate.id || '']))
     const [isEditing, setIsEditing] = useState(false)
     const propertyValue = safePropertyString(props.propertyValue)
     const isEmpty = !propertyValue.trim()
@@ -35,7 +35,7 @@ const URLProperty = (props: PropertyProps): JSX.Element => {
     const emptyDisplayValue = props.showEmptyPlaceholder ? intl.formatMessage({id: 'PropertyValueElement.empty', defaultMessage: 'Empty'}) : ''
 
     const saveTextProperty = useCallback(() => {
-        if (value !== (props.card.fields.properties[props.propertyTemplate?.id || ''] || '')) {
+        if (value !== safePropertyString(props.card.fields.properties[props.propertyTemplate?.id || ''])) {
             mutator.changePropertyValue(props.board.id, props.card, props.propertyTemplate?.id || '', value)
         }
     }, [props.board.id, props.card, props.propertyTemplate?.id, value])
@@ -65,7 +65,7 @@ const URLProperty = (props: PropertyProps): JSX.Element => {
                     className={props.property.valueClassName(props.readOnly)}
                     ref={editableRef}
                     placeholderText={emptyDisplayValue}
-                    value={value as string}
+                    value={value}
                     autoExpand={true}
                     readonly={props.readOnly}
                     onChange={setValue}
@@ -85,7 +85,7 @@ const URLProperty = (props: PropertyProps): JSX.Element => {
                             return true
                         }
                         const urlRegexp = /(((.+:(?:\/\/)?)?(?:[-;:&=+$,\w]+@)?[A-Za-z0-9.-]+|(?:www\.|[-;:&=+$,\w]+@)[A-Za-z0-9.-]+)((?:\/[+~%/.\w\-_]*)?\??(?:[-+=&;%@.\w_]*)#?(?:[.!/\\\w]*))?)/
-                        return urlRegexp.test(value as string)
+                        return urlRegexp.test(value)
                     }}
                 />
             </div>

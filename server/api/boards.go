@@ -379,6 +379,11 @@ func (a *API) handlePatchBoard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if patch == nil {
+		a.errorResponse(w, r, model.NewErrBadRequest("missing board patch"))
+		return
+	}
+
 	if err = patch.IsValid(); err != nil {
 		a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
 		return

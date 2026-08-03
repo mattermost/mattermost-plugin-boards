@@ -5,6 +5,7 @@ package integrationtests
 
 import (
 	"fmt"
+	"net/http"
 	"strconv"
 	"testing"
 
@@ -262,6 +263,22 @@ func TestPatchCard(t *testing.T) {
 		cardNew, resp := th.Client.PatchCard(card.ID, patch, false)
 		require.Error(t, resp.Error)
 		require.Nil(t, cardNew)
+	})
+
+	t.Run("an empty patch body should be rejected", func(t *testing.T) {
+		th := SetupTestHelperPluginMode(t)
+		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
+		_, cards := th.CreateBoardAndCards(teamID, model.BoardTypeOpen, 1)
+		card := cards[0]
+
+		res, err := th.Client.DoAPIPatch("/cards/"+card.ID, "null")
+		require.Error(t, err)
+		require.NotNil(t, res)
+		require.Equal(t, http.StatusBadRequest, res.StatusCode)
 	})
 
 	t.Run("a patch with a malformed property value should be rejected", func(t *testing.T) {
