@@ -56,6 +56,24 @@ describe('desktopHistory', () => {
             handleBrowserHistoryPush('/boards-legacy/team/team-id', history)
             expect(history.replace).not.toHaveBeenCalled()
         })
+
+        test('rejects path traversal that escapes the boards route', () => {
+            const history = makeHistory()
+            handleBrowserHistoryPush('/boards/../admin', history)
+            expect(history.replace).not.toHaveBeenCalled()
+        })
+
+        test('rejects percent-encoded path traversal', () => {
+            const history = makeHistory()
+            handleBrowserHistoryPush('/boards/%2e%2e/admin', history)
+            expect(history.replace).not.toHaveBeenCalled()
+        })
+
+        test('preserves the query string and hash', () => {
+            const history = makeHistory()
+            handleBrowserHistoryPush('/boards/team/team-id?view=1#card', history)
+            expect(history.replace).toHaveBeenCalledWith('/team/team-id?view=1#card')
+        })
     })
 
     describe('handleBrowserHistoryMessage', () => {

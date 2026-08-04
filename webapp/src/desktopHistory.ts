@@ -35,8 +35,16 @@ export const handleBrowserHistoryPush = (pathName: string, history: History): vo
         return
     }
 
+    // Resolve dot segments so traversal like `/boards/../admin` can't escape the
+    // boards route, then re-check the boundary against the canonical path.
+    const {pathname, search, hash} = new URL(pathName, window.location.origin)
+    if (pathname !== boardsRouteBase && !pathname.startsWith(`${boardsRouteBase}/`)) {
+        return
+    }
+
+    const relativePath = pathname === boardsRouteBase ? '/' : pathname.slice(boardsRouteBase.length)
     Utils.log(`Navigating Boards to ${pathName}`)
-    history.replace(pathName === boardsRouteBase ? '/' : pathName.slice(boardsRouteBase.length))
+    history.replace(`${relativePath}${search}${hash}`)
 }
 
 export const handleBrowserHistoryMessage = (event: MessageEvent, history: History): void => {
