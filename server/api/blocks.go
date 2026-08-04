@@ -258,6 +258,11 @@ func (a *API) handlePostBlocks(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if err = model.ValidateBlockProperties(block); err != nil {
+			a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
+			return
+		}
+
 		if block.CreateAt < 1 {
 			message := fmt.Sprintf("invalid createAt for block id %s", block.ID)
 			a.errorResponse(w, r, model.NewErrBadRequest(message))

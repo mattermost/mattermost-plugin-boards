@@ -700,6 +700,63 @@ func TestPatchBoardsAndBlocks(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, newTitle, rBlock2.Title)
 	})
+
+	t.Run("patches should be rejected if a block patch has a malformed card property", func(t *testing.T) {
+		th := SetupTestHelperPluginMode(t)
+		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+		teamID := mmModel.NewId()
+		userID := th.GetUser1().ID
+		initialTitle := "initial title"
+		newTitle := "new other title"
+
+		newBoard := &model.Board{
+			Title:  initialTitle,
+			TeamID: teamID,
+			Type:   model.BoardTypeOpen,
+		}
+		board, err := th.Server.App().CreateBoard(newBoard, userID, true)
+		require.NoError(t, err)
+		require.NotNil(t, board)
+
+		newBlock := &model.Block{
+			ID:      "block-id-1",
+			BoardID: board.ID,
+			Title:   initialTitle,
+			Fields:  map[string]interface{}{"properties": map[string]interface{}{"property-id": "82%"}},
+		}
+		require.NoError(t, th.Server.App().InsertBlock(newBlock, userID))
+		block, err := th.Server.App().GetBlockByID("block-id-1")
+		require.NoError(t, err)
+		require.NotNil(t, block)
+
+		pbab := &model.PatchBoardsAndBlocks{
+			BoardIDs: []string{board.ID},
+			BoardPatches: []*model.BoardPatch{
+				{Title: &newTitle},
+			},
+			BlockIDs: []string{block.ID},
+			BlockPatches: []*model.BlockPatch{
+				{UpdatedFields: map[string]interface{}{
+					"properties": map[string]interface{}{"property-id": map[string]interface{}{}},
+				}},
+			},
+		}
+
+		bab, resp := th.Client.PatchBoardsAndBlocks(pbab)
+		th.CheckBadRequest(resp)
+		require.Nil(t, bab)
+
+		// nothing should have been updated
+		rBoard, err := th.Server.App().GetBoard(board.ID)
+		require.NoError(t, err)
+		require.Equal(t, initialTitle, rBoard.Title)
+		rBlock, err := th.Server.App().GetBlockByID(block.ID)
+		require.NoError(t, err)
+		require.Equal(t, map[string]interface{}{"property-id": "82%"}, rBlock.Fields["properties"])
+	})
 }
 
 func TestDeleteBoardsAndBlocks(t *testing.T) {

@@ -137,7 +137,7 @@ func (c *Card) CheckValid() error {
 	if c.UpdateAt == 0 {
 		return ErrInvalidCard{"UpdateAt"}
 	}
-	return nil
+	return ValidateCardPropertyValues(c.Properties)
 }
 
 // CardPatch is a patch for modifying cards
@@ -181,6 +181,10 @@ func (p *CardPatch) Patch(card *Card) *Card {
 	// if there are properties marked for update, we replace the
 	// existing ones or add them
 	for propID, propVal := range p.UpdatedProperties {
+		if !IsValidCardPropertyValue(propVal) {
+			continue
+		}
+
 		card.Properties[propID] = propVal
 	}
 
@@ -192,7 +196,7 @@ func (p *CardPatch) CheckValid() error {
 	if p.Icon != nil && uniseg.GraphemeClusterCount(*p.Icon) > 1 {
 		return ErrInvalidCard{"Icon can have only one grapheme"}
 	}
-	return nil
+	return ValidateCardPropertyValues(p.UpdatedProperties)
 }
 
 // Card2Block converts a card to block using a shallow copy. Not needed once cards are first class entities.

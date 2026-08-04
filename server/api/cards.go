@@ -297,6 +297,16 @@ func (a *API) handlePatchCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if patch == nil {
+		a.errorResponse(w, r, model.NewErrBadRequest("missing card patch"))
+		return
+	}
+
+	if err = patch.CheckValid(); err != nil {
+		a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
+		return
+	}
+
 	auditRec := a.makeAuditRecord(r, "patchCard", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)
 	auditRec.AddMeta("boardID", card.BoardID)

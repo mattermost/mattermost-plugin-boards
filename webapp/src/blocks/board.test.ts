@@ -3,7 +3,7 @@
 
 import {TestBlockFactory} from '../test/testBlockFactory'
 
-import {createPatchesFromBoards, createBoard, IPropertyTemplate, createPatchesFromBoardsAndBlocks} from './board'
+import {createPatchesFromBoards, createBoard, IPropertyTemplate, createPatchesFromBoardsAndBlocks, safePropertyString, safePropertyValue} from './board'
 import {createBlock} from './block'
 
 describe('board tests', () => {
@@ -116,6 +116,22 @@ describe('board tests', () => {
 
             const result = createPatchesFromBoardsAndBlocks(board, board, [newBlock.id], [newBlock], [oldBlock])
             expect(result).toMatchSnapshot()
+        })
+    })
+
+    describe('safely coerce malformed card properties', () => {
+        it('should keep strings and arrays of strings', () => {
+            expect(safePropertyString('Note')).toBe('Note')
+            expect(safePropertyValue('82%')).toBe('82%')
+            expect(safePropertyValue(['opt-1', 'opt-2'])).toEqual(['opt-1', 'opt-2'])
+        })
+
+        it('should discard values that are not renderable', () => {
+            expect(safePropertyString({})).toBe('')
+            expect(safePropertyString(undefined)).toBe('')
+            expect(safePropertyValue({})).toBe('')
+            expect(safePropertyValue(['opt-1', {}])).toBe('')
+            expect(safePropertyValue(undefined)).toBe('')
         })
     })
 })
