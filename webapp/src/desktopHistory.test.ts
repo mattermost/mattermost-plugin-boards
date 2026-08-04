@@ -6,7 +6,7 @@ import {History} from 'history'
 import {Utils} from './utils'
 import {SuiteWindow} from './types/index'
 
-import {boardsRouteBase, customHistory, doBrowserHistoryPush, handleBrowserHistoryPush} from './desktopHistory'
+import {boardsRouteBase, customHistory, doBrowserHistoryPush, handleBrowserHistoryMessage, handleBrowserHistoryPush} from './desktopHistory'
 
 const windowAny = (window as SuiteWindow)
 
@@ -43,6 +43,51 @@ describe('desktopHistory', () => {
             const history = makeHistory()
             handleBrowserHistoryPush(`${boardsRouteBase}/team/team-id`, history)
             expect(history.replace).toHaveBeenCalledWith('/team/team-id')
+        })
+
+        test('navigates to the root for the bare boards route', () => {
+            const history = makeHistory()
+            handleBrowserHistoryPush(boardsRouteBase, history)
+            expect(history.replace).toHaveBeenCalledWith('/')
+        })
+
+        test('ignores a route that only shares the boards prefix', () => {
+            const history = makeHistory()
+            handleBrowserHistoryPush('/boards-legacy/team/team-id', history)
+            expect(history.replace).not.toHaveBeenCalled()
+        })
+    })
+
+    describe('handleBrowserHistoryMessage', () => {
+        const makeHistory = () => ({replace: jest.fn()} as unknown as History)
+        const sameOrigin = window.location.origin
+
+        test('forwards a valid same-origin boards path', () => {
+            const history = makeHistory()
+            const event = {origin: sameOrigin, data: {message: {pathName: '/boards/team/team-id'}}} as MessageEvent
+            handleBrowserHistoryMessage(event, history)
+            expect(history.replace).toHaveBeenCalledWith('/team/team-id')
+        })
+
+        test('ignores messages from a different origin', () => {
+            const history = makeHistory()
+            const event = {origin: 'https://evil.example', data: {message: {pathName: '/boards/team/team-id'}}} as MessageEvent
+            handleBrowserHistoryMessage(event, history)
+            expect(history.replace).not.toHaveBeenCalled()
+        })
+
+        test('ignores a null payload without throwing', () => {
+            const history = makeHistory()
+            const event = {origin: sameOrigin, data: null} as MessageEvent
+            expect(() => handleBrowserHistoryMessage(event, history)).not.toThrow()
+            expect(history.replace).not.toHaveBeenCalled()
+        })
+
+        test('ignores a non-string pathName', () => {
+            const history = makeHistory()
+            const event = {origin: sameOrigin, data: {message: {pathName: 42}}} as unknown as MessageEvent
+            handleBrowserHistoryMessage(event, history)
+            expect(history.replace).not.toHaveBeenCalled()
         })
     })
 

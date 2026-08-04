@@ -29,12 +29,25 @@ export const doBrowserHistoryPush = (path: string): void => {
 }
 
 export const handleBrowserHistoryPush = (pathName: string, history: History): void => {
-    if (!pathName || !pathName.startsWith(boardsRouteBase)) {
+    // Only navigate for the boards root or a path under it, so a route like
+    // `/boards-legacy/...` is not mistaken for a boards path.
+    if (!pathName || (pathName !== boardsRouteBase && !pathName.startsWith(`${boardsRouteBase}/`))) {
         return
     }
 
     Utils.log(`Navigating Boards to ${pathName}`)
-    history.replace(pathName.replace(boardsRouteBase, ''))
+    history.replace(pathName === boardsRouteBase ? '/' : pathName.slice(boardsRouteBase.length))
+}
+
+export const handleBrowserHistoryMessage = (event: MessageEvent, history: History): void => {
+    if (event.origin !== windowAny.location.origin) {
+        return
+    }
+
+    const pathName = event.data?.message?.pathName
+    if (typeof pathName === 'string') {
+        handleBrowserHistoryPush(pathName, history)
+    }
 }
 
 export function customHistory() {
@@ -44,13 +57,7 @@ export function customHistory() {
         if (windowAny.desktopAPI?.onBrowserHistoryPush) {
             windowAny.desktopAPI.onBrowserHistoryPush((pathName) => handleBrowserHistoryPush(pathName, history))
         } else {
-            window.addEventListener('message', (event: MessageEvent) => {
-                if (event.origin !== windowAny.location.origin) {
-                    return
-                }
-
-                handleBrowserHistoryPush(event.data.message?.pathName, history)
-            })
+            window.addEventListener('message', (event: MessageEvent) => handleBrowserHistoryMessage(event, history))
         }
     }
 
