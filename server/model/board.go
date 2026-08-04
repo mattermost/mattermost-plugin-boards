@@ -329,7 +329,7 @@ func (p *BoardPatch) Patch(board *Board) *Board {
 		// existing ones or add them
 		for _, newprop := range p.UpdatedCardProperties {
 			id, ok := newprop["id"].(string)
-			if !ok {
+			if !ok || ValidateCardPropertyTemplate(newprop) != nil {
 				// bad new property, skipping
 				continue
 			}
@@ -377,7 +377,7 @@ func (p *BoardPatch) IsValid() error {
 		return InvalidBoardErr{"invalid-channel-id"}
 	}
 
-	return nil
+	return ValidateCardPropertyTemplates(p.UpdatedCardProperties)
 }
 
 type InvalidBoardErr struct {
@@ -401,6 +401,10 @@ func (b *Board) IsValid() error {
 	// Empty channel ID is fine as not every board is associated with a channel.
 	if b.ChannelID != "" && !mmModel.IsValidId(b.ChannelID) {
 		return InvalidBoardErr{"invalid-channel-id"}
+	}
+
+	if err := ValidateCardPropertyTemplates(b.CardProperties); err != nil {
+		return err
 	}
 
 	return b.baseValidation()

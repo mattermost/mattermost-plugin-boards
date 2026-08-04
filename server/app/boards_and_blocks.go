@@ -80,6 +80,16 @@ func (a *App) CreateBoardsAndBlocks(bab *model.BoardsAndBlocks, userID string, a
 }
 
 func (a *App) PatchBoardsAndBlocks(pbab *model.PatchBoardsAndBlocks, userID string) (*model.BoardsAndBlocks, error) {
+	for _, patch := range pbab.BlockPatches {
+		if patch == nil {
+			continue
+		}
+
+		if err := model.ValidateBlockPatch(patch); err != nil {
+			return nil, err
+		}
+	}
+
 	oldBlocks, err := a.store.GetBlocksByIDs(pbab.BlockIDs)
 	if err != nil {
 		return nil, err

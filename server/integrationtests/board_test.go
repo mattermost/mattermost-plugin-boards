@@ -5,6 +5,7 @@ package integrationtests
 
 import (
 	"encoding/json"
+	"net/http"
 	"os"
 	"sort"
 	"testing"
@@ -1031,6 +1032,66 @@ func TestPatchBoard(t *testing.T) {
 		rBoard, resp := th.Client.PatchBoard(board.ID, patch)
 		th.CheckBadRequest(resp)
 		require.Nil(t, rBoard)
+	})
+
+	t.Run("an empty patch body should be rejected", func(t *testing.T) {
+		th := SetupTestHelperPluginMode(t)
+		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+
+		teamID := mmModel.NewId()
+		user1 := th.GetUser1()
+
+		newBoard := &model.Board{
+			Title:  "title",
+			Type:   model.BoardTypeOpen,
+			TeamID: teamID,
+		}
+		board, err := th.Server.App().CreateBoard(newBoard, user1.ID, true)
+		require.NoError(t, err)
+
+		res, err := th.Client.DoAPIPatch("/boards/"+board.ID, "null")
+		require.Error(t, err)
+		require.NotNil(t, res)
+		require.Equal(t, http.StatusBadRequest, res.StatusCode)
+	})
+
+	t.Run("a patch with a malformed card property should be rejected", func(t *testing.T) {
+		th := SetupTestHelperPluginMode(t)
+		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.TeamMember
+
+		teamID := mmModel.NewId()
+		user1 := th.GetUser1()
+
+		newBoard := &model.Board{
+			Title:  "title",
+			Type:   model.BoardTypeOpen,
+			TeamID: teamID,
+			CardProperties: []map[string]any{
+				{"id": "property-id", "name": "Note", "type": "text", "options": []any{}},
+			},
+		}
+		board, err := th.Server.App().CreateBoard(newBoard, user1.ID, true)
+		require.NoError(t, err)
+
+		patch := &model.BoardPatch{
+			UpdatedCardProperties: []map[string]any{
+				{"id": "property-id", "name": map[string]any{}, "type": "text", "options": []any{}},
+			},
+		}
+
+		rBoard, resp := th.Client.PatchBoard(board.ID, patch)
+		th.CheckBadRequest(resp)
+		require.Nil(t, rBoard)
+
+		dbBoard, err := th.Server.App().GetBoard(board.ID)
+		require.NoError(t, err)
+		require.Equal(t, "Note", dbBoard.CardProperties[0]["name"])
 	})
 
 	t.Run("valid patch on a board with permissions", func(t *testing.T) {

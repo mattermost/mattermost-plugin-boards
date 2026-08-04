@@ -142,6 +142,11 @@ func (a *API) handleCreateBoardsAndBlocks(w http.ResponseWriter, r *http.Request
 			a.errorResponse(w, r, model.NewErrBadRequest(message))
 			return
 		}
+
+		if err = model.ValidateBlockProperties(block); err != nil {
+			a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
+			return
+		}
 	}
 
 	// IDs of boards and blocks are used to confirm that they're

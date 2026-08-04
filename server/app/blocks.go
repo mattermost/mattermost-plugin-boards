@@ -121,16 +121,16 @@ func (a *App) PatchBlockAndNotify(blockID string, blockPatch *model.BlockPatch, 
 }
 
 func (a *App) PatchBlocks(teamID string, blockPatches *model.BlockPatchBatch, modifiedByID string) error {
-	for _, patch := range blockPatches.BlockPatches {
-		err := model.ValidateBlockPatch(&patch)
-		if err != nil {
-			return err
-		}
-	}
 	return a.PatchBlocksAndNotify(teamID, blockPatches, modifiedByID, false)
 }
 
 func (a *App) PatchBlocksAndNotify(teamID string, blockPatches *model.BlockPatchBatch, modifiedByID string, disableNotify bool) error {
+	for i := range blockPatches.BlockPatches {
+		if err := model.ValidateBlockPatch(&blockPatches.BlockPatches[i]); err != nil {
+			return err
+		}
+	}
+
 	oldBlocks, err := a.store.GetBlocksByIDs(blockPatches.BlockIDs)
 	if err != nil {
 		return err
