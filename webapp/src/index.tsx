@@ -5,7 +5,7 @@ import React, {useEffect} from 'react'
 import {createIntl, createIntlCache} from 'react-intl'
 import {Store, Action} from 'redux'
 import {Provider as ReduxProvider} from 'react-redux'
-import {createBrowserHistory, History} from 'history'
+import {History} from 'history'
 import {GlobalState} from '@mattermost/types/store'
 import {selectTeam} from 'mattermost-redux/actions/teams'
 
@@ -21,6 +21,7 @@ import WithWebSockets from './components/withWebSockets'
 import {setChannel} from './store/channels'
 import {initialLoad} from './store/initialLoad'
 import {Utils} from './utils'
+import {customHistory} from './desktopHistory'
 import './styles/focalboard-variables.scss'
 import './styles/main.scss'
 import './styles/labels.scss'
@@ -66,58 +67,6 @@ function getSubpath(siteURL: string): string {
 
 type Props = {
     webSocketClient: MMWebSocketClient
-}
-
-const doBrowserHistoryPush = (path: string) => {
-    if (windowAny.desktopAPI?.sendBrowserHistoryPush) {
-        windowAny.desktopAPI.sendBrowserHistoryPush(path)
-    } else {
-        window.postMessage(
-            {
-                type: 'browser-history-push',
-                message: { path },
-            },
-            window.location.origin,
-        )
-    }
-}
-
-const handleBrowserHistoryPush = (pathName: string, history: ReturnType<typeof createBrowserHistory>) => {
-    if (!pathName || !pathName.startsWith('/boards')) {
-        return
-    }
-
-    Utils.log(`Navigating Boards to ${pathName}`)
-    history.replace(pathName.replace('/boards', ''))
-}
-
-function customHistory() {
-    const history = createBrowserHistory({ basename: Utils.getFrontendBaseURL() })
-
-    if (Utils.isDesktop()) {
-        if (windowAny.desktopAPI?.onBrowserHistoryPush) {
-            windowAny.desktopAPI.onBrowserHistoryPush((pathName) => handleBrowserHistoryPush(pathName, history))
-        } else {
-            window.addEventListener('message', (event: MessageEvent) => {
-                if (event.origin !== windowAny.location.origin) {
-                    return
-                }
-
-                handleBrowserHistoryPush(event.data.message?.pathName, history)
-            })
-        }
-    }
-
-    return {
-        ...history,
-        push: (path: string, state?: unknown) => {
-            if (Utils.isDesktop()) {
-                doBrowserHistoryPush(`${windowAny.frontendBaseURL}${path}`)
-            } else {
-                history.push(path, state as Record<string, never>)
-            }
-        },
-    }
 }
 
 let browserHistory: History<unknown>
