@@ -335,7 +335,7 @@ const Sidebar = (props: Props) => {
 
         setDraggedItemID('')
         setIsCategoryBeingDragged(false)
-    }, [team, sidebarCategories])
+    }, [team, sidebarCategories, handleCategoryDND, handleCategoryBoardDND])
 
     const [draggedItemID, setDraggedItemID] = useState<string>('')
     const [isCategoryBeingDragged, setIsCategoryBeingDragged] = useState<boolean>(false)
