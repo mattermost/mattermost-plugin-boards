@@ -46,7 +46,7 @@
 		"emoji-mart": "^3.0.1",
 		"fullcalendar": "^5.10.2",
 		"immutable": "3.7.6",
-		"lodash": "^4.17.21",
+		"lodash": "^4.17.23",
 		"marked": "^4.0.12",
 		"mattermost-redux": "10.8.0",
 		"moment": "^2.29.1",
