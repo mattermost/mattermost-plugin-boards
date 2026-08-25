@@ -981,7 +981,7 @@ func fileRefBlock(blockType model.BlockType, field, filename string) *model.Bloc
 	}
 }
 
-// legacyRefCase describes one shape of block reference that the ad-hoc scan has to recognise.
+// legacyRefCase describes one shape of block reference that the ad-hoc scan has to recognize.
 // Boards has written file references under two field names over time and either can appear on
 // either block type, so all four combinations must resolve to the same answer.
 type legacyRefCase struct {
@@ -1129,7 +1129,7 @@ func TestValidateFileOwnership(t *testing.T) {
 	})
 
 	// Legacy uploads (boards/YYYYMMDD/filename, written before v9.2.4) have no board in the
-	// path, so every reference shape has to be recognised by the block scan instead.
+	// path, so every reference shape has to be recognized by the block scan instead.
 	for _, tc := range legacyRefCases(filename) {
 		t.Run("Legacy path, "+tc.name, func(t *testing.T) {
 			th, _ := SetupTestHelper(t)
