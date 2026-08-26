@@ -13,6 +13,7 @@ import EditIcon from '../../widgets/icons/edit'
 import IconButton from '../../widgets/buttons/iconButton'
 import DuplicateIcon from '../../widgets/icons/duplicate'
 import {sendFlashMessage} from '../../components/flashMessages'
+import {safePropertyString} from '../../blocks/board'
 
 import {PropertyProps} from '../types'
 
@@ -23,9 +24,10 @@ const URLProperty = (props: PropertyProps): JSX.Element => {
         return <></>
     }
 
-    const [value, setValue] = useState(props.card.fields.properties[props.propertyTemplate.id || ''] || '')
+    const [value, setValue] = useState(safePropertyString(props.card.fields.properties[props.propertyTemplate.id || '']))
     const [isEditing, setIsEditing] = useState(false)
-    const isEmpty = !(props.propertyValue as string)?.trim()
+    const propertyValue = safePropertyString(props.propertyValue)
+    const isEmpty = !propertyValue.trim()
     const showEditable = !props.readOnly && (isEditing || isEmpty)
     const editableRef = useRef<Focusable>(null)
     const intl = useIntl()
@@ -33,7 +35,7 @@ const URLProperty = (props: PropertyProps): JSX.Element => {
     const emptyDisplayValue = props.showEmptyPlaceholder ? intl.formatMessage({id: 'PropertyValueElement.empty', defaultMessage: 'Empty'}) : ''
 
     const saveTextProperty = useCallback(() => {
-        if (value !== (props.card.fields.properties[props.propertyTemplate?.id || ''] || '')) {
+        if (value !== safePropertyString(props.card.fields.properties[props.propertyTemplate?.id || ''])) {
             mutator.changePropertyValue(props.board.id, props.card, props.propertyTemplate?.id || '', value)
         }
     }, [props.board.id, props.card, props.propertyTemplate?.id, value])
@@ -63,7 +65,7 @@ const URLProperty = (props: PropertyProps): JSX.Element => {
                     className={props.property.valueClassName(props.readOnly)}
                     ref={editableRef}
                     placeholderText={emptyDisplayValue}
-                    value={value as string}
+                    value={value}
                     autoExpand={true}
                     readonly={props.readOnly}
                     onChange={setValue}
@@ -73,7 +75,7 @@ const URLProperty = (props: PropertyProps): JSX.Element => {
                     }}
                     onCancel={() => {
                         setIsEditing(false)
-                        setValue(props.propertyValue || '')
+                        setValue(propertyValue)
                     }}
                     onFocus={() => {
                         setIsEditing(true)
@@ -83,7 +85,7 @@ const URLProperty = (props: PropertyProps): JSX.Element => {
                             return true
                         }
                         const urlRegexp = /(((.+:(?:\/\/)?)?(?:[-;:&=+$,\w]+@)?[A-Za-z0-9.-]+|(?:www\.|[-;:&=+$,\w]+@)[A-Za-z0-9.-]+)((?:\/[+~%/.\w\-_]*)?\??(?:[-+=&;%@.\w_]*)#?(?:[.!/\\\w]*))?)/
-                        return urlRegexp.test(value as string)
+                        return urlRegexp.test(value)
                     }}
                 />
             </div>
@@ -94,12 +96,12 @@ const URLProperty = (props: PropertyProps): JSX.Element => {
         <div className={`URLProperty ${props.property.valueClassName(props.readOnly)}`}>
             <a
                 className='link'
-                href={Utils.ensureProtocol((props.propertyValue as string).trim())}
+                href={Utils.ensureProtocol(propertyValue.trim())}
                 target='_blank'
                 rel='noreferrer'
                 onClick={(event) => event.stopPropagation()}
             >
-                {props.propertyValue}
+                {propertyValue}
             </a>
             {!props.readOnly &&
             <IconButton
@@ -114,7 +116,7 @@ const URLProperty = (props: PropertyProps): JSX.Element => {
                 icon={<DuplicateIcon/>}
                 onClick={(e) => {
                     e.stopPropagation()
-                    Utils.copyTextToClipboard(props.propertyValue as string)
+                    Utils.copyTextToClipboard(propertyValue)
                     sendFlashMessage({content: intl.formatMessage({id: 'URLProperty.copiedLink', defaultMessage: 'Copied!'}), severity: 'high'})
                 }}
             />
