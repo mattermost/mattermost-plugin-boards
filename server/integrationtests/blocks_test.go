@@ -4,6 +4,8 @@
 package integrationtests
 
 import (
+	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -171,6 +173,24 @@ func TestPostBlock(t *testing.T) {
 		require.NotNil(t, block4)
 		require.Equal(t, "Updated title", block4.Title)
 	})
+
+	t.Run("Create a block with a malformed card property", func(t *testing.T) {
+		block := &model.Block{
+			ID:       utils.NewID(utils.IDTypeBlock),
+			BoardID:  board.ID,
+			CreateAt: 1,
+			UpdateAt: 1,
+			Type:     model.TypeCard,
+			Fields: map[string]interface{}{
+				"properties": map[string]interface{}{"property-id": map[string]interface{}{}},
+			},
+		}
+
+		newBlocks, resp := th.Client.InsertBlocks(board.ID, []*model.Block{block}, false)
+		require.Error(t, resp.Error)
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		require.Empty(t, newBlocks)
+	})
 }
 
 func TestPatchBlock(t *testing.T) {
@@ -272,6 +292,30 @@ func TestPatchBlock(t *testing.T) {
 		require.Equal(t, nil, updatedBlock.Fields["test"])
 		require.Equal(t, "test value 2", updatedBlock.Fields["test2"])
 		require.Equal(t, nil, updatedBlock.Fields["test3"])
+	})
+
+	t.Run("Patch a block with a malformed card property", func(t *testing.T) {
+		blockPatch := &model.BlockPatch{
+			UpdatedFields: map[string]interface{}{
+				"properties": map[string]interface{}{"property-id": map[string]interface{}{}},
+			},
+		}
+
+		_, resp := th.Client.PatchBlock(board.ID, blockID, blockPatch, false)
+		require.Error(t, resp.Error)
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("Patch a batch of blocks with a malformed card property", func(t *testing.T) {
+		batch := fmt.Sprintf(
+			`{"block_ids":["%s"],"block_patches":[{"updatedFields":{"properties":{"property-id":{}}}}]}`,
+			blockID,
+		)
+
+		res, err := th.Client.DoAPIPatch("/boards/"+board.ID+"/blocks", batch)
+		require.Error(t, err)
+		require.NotNil(t, res)
+		require.Equal(t, http.StatusBadRequest, res.StatusCode)
 	})
 }
 

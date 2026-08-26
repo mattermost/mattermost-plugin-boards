@@ -23,6 +23,7 @@ const (
 	BlockFieldsMaxRunes    = 800000
 	BlockFieldFileId       = "fileId"
 	BlockFieldAttachmentId = "attachmentId"
+	BlockFieldProperties   = "properties"
 )
 
 var (
@@ -199,7 +200,7 @@ func (b *Block) baseValidations() error {
 		}
 	}
 
-	if propsIface, present := b.Fields["properties"]; present {
+	if propsIface, present := b.Fields[BlockFieldProperties]; present {
 		if _, ok := propsIface.(map[string]interface{}); !ok {
 			return ErrBlockPropertiesInvalidType
 		}
@@ -227,6 +228,20 @@ func ValidateFileId(id string) error {
 	} else {
 		return errInvalidId
 	}
+}
+
+func ValidateBlockProperties(block *Block) error {
+	propsIface, present := block.Fields[BlockFieldProperties]
+	if !present {
+		return nil
+	}
+
+	props, ok := propsIface.(map[string]interface{})
+	if !ok {
+		return ErrBlockPropertiesInvalidType
+	}
+
+	return ValidateCardPropertyValues(props)
 }
 
 func ValidateBlockPatch(patch *BlockPatch) error {
@@ -261,6 +276,17 @@ func validateUpdatedFields(fields map[string]interface{}) error {
 				if err := ValidateFileId(strVal); err != nil {
 					return err
 				}
+			}
+		}
+
+		if key == BlockFieldProperties {
+			props, ok := value.(map[string]interface{})
+			if !ok {
+				return NewErrBadRequest(ErrBlockPropertiesInvalidType.Error())
+			}
+
+			if err := ValidateCardPropertyValues(props); err != nil {
+				return NewErrBadRequest(err.Error())
 			}
 		}
 

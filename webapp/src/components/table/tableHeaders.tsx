@@ -5,7 +5,7 @@ import React, {useCallback, useMemo} from 'react'
 
 import {FormattedMessage, useIntl} from 'react-intl'
 
-import {IPropertyTemplate, Board} from '../../blocks/board'
+import {IPropertyTemplate, Board, safePropertyString} from '../../blocks/board'
 import {createBoardView, BoardView, ISortOption} from '../../blocks/boardView'
 import {Card} from '../../blocks/card'
 import {Constants} from '../../constants'
@@ -139,7 +139,7 @@ const TableHeaders = (props: Props): JSX.Element => {
                 }
                 return (
                     <TableHeader
-                        name={template.name}
+                        name={safePropertyString(template.name)}
                         sorted={sorted}
                         readonly={props.readonly}
                         board={board}
