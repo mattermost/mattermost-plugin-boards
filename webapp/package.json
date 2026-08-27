@@ -48,7 +48,7 @@
 		"immutable": "3.7.6",
 		"lodash": "^4.17.21",
 		"marked": "^4.0.12",
-		"mattermost-redux": "10.8.0",
+		"mattermost-redux": "10.9.0",
 		"moment": "^2.29.1",
 		"nanoevents": "^5.1.13",
 		"react": "17.0.2",
