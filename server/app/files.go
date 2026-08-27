@@ -185,9 +185,22 @@ func (a *App) validateFileOwnershipForBlockWrite(teamID, boardID, filename strin
 	return nil
 }
 
+// blockReferencesFile reports whether a block points at filename. Both field names are
+// checked on either block type: the webapp writes fileId for images and attachments alike,
+// while attachmentId survives in older data and in imported archives.
+func blockReferencesFile(block *model.Block, filename string) bool {
+	for _, field := range []string{model.BlockFieldFileId, model.BlockFieldAttachmentId} {
+		if fileID, ok := block.Fields[field].(string); ok && fileID == filename {
+			return true
+		}
+	}
+
+	return false
+}
+
 // validateFileReferencedByBoard checks if a file is referenced by blocks in the specified board.
-// Files use different storage patterns (teamID/boardID/filename for templates, boards/YYYYMMDD/filename for regular files).
-// Path mismatches don't indicate malicious files, just different storage patterns.
+// This is the ownership proof for legacy files stored at boards/YYYYMMDD/filename, whose path
+// carries no board ID. Blocks are already scoped to boardID, so a match means the board owns the file.
 func (a *App) validateFileReferencedByBoard(boardID, filename string) error {
 	imageBlocks, err := a.store.GetBlocksWithType(boardID, model.TypeImage)
 	if err != nil {
@@ -200,13 +213,13 @@ func (a *App) validateFileReferencedByBoard(boardID, filename string) error {
 	}
 
 	for _, block := range imageBlocks {
-		if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID == filename {
+		if blockReferencesFile(block, filename) {
 			return nil
 		}
 	}
 
 	for _, block := range attachmentBlocks {
-		if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok && attachmentID == filename {
+		if blockReferencesFile(block, filename) {
 			return nil
 		}
 	}
