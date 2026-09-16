@@ -5,6 +5,8 @@ package boards
 
 import (
 	"reflect"
+
+	mm_model "github.com/mattermost/mattermost/server/public/model"
 )
 
 // configuration captures the plugin's external configuration as exposed in the Mattermost server
@@ -95,7 +97,14 @@ func (b *BoardsApp) OnConfigurationChange() error {
 		enableBoardsDeletion = true
 	}
 	b.server.Config().EnableDataRetention = enableBoardsDeletion
-	b.server.Config().DataRetentionDays = *mmconfig.DataRetentionSettings.BoardsRetentionDays
+
+	// Removed from the server config in v12, so the pointer is nil there.
+	boardsRetentionDays := mm_model.DataRetentionSettingsDefaultBoardsRetentionDays
+	if mmconfig.DataRetentionSettings.BoardsRetentionDays != nil {
+		boardsRetentionDays = *mmconfig.DataRetentionSettings.BoardsRetentionDays
+	}
+	b.server.Config().DataRetentionDays = boardsRetentionDays
+
 	b.server.Config().TeammateNameDisplay = *mmconfig.TeamSettings.TeammateNameDisplay
 	showEmailAddress := false
 	if mmconfig.PrivacySettings.ShowEmailAddress != nil {

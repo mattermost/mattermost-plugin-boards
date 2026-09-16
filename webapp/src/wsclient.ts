@@ -377,6 +377,13 @@ class WSClient {
             this.client.addCloseListener(onClose)
             this.client.addReconnectListener(onReconnect)
 
+            // Components mount and register their subscriptions before this runs
+            // (child effects fire before the parent's), and the host connection may
+            // already be established, in which case addFirstConnectListener never
+            // fires. Flush now so those subscriptions are not lost; the host drops
+            // sends on a closed socket, and onConnect/onReconnect still cover that.
+            this.subscribe()
+
             return
         }
 
