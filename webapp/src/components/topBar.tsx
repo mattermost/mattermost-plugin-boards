@@ -11,7 +11,7 @@ import HelpIcon from '../widgets/icons/help'
 import {Utils} from '../utils'
 import {Constants} from '../constants'
 
-const TopBar = (): JSX.Element => {
+const TopBar = (): React.JSX.Element => {
     if (Utils.isFocalboardPlugin()) {
         const feedbackUrl = 'https://www.focalboard.com/fwlink/feedback-boards.html?v=' + Constants.versionString
         return (

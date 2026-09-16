@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`components/viewHeader/dateFilter handle clear 1`] = `
 <div>
@@ -36,72 +36,72 @@ exports[`components/viewHeader/dateFilter handles \`Today\` button click event 1
 
 exports[`components/viewHeader/dateFilter handles calendar click event 1`] = `
 <IntlProvider
-  defaultFormats={Object {}}
+  defaultFormats={{}}
   defaultLocale="en"
   fallbackOnEmptyString={true}
-  formats={Object {}}
+  formats={{}}
   locale="en"
-  messages={Object {}}
+  messages={{}}
   onError={[Function]}
   onWarn={[Function]}
   textComponent={Symbol(react.fragment)}
 >
   <DateFilter
     filter={
-      Object {
+      {
         "condition": "is",
         "propertyId": "myPropertyId",
-        "values": Array [],
+        "values": [],
       }
     }
     view={
-      Object {
+      {
         "boardId": "testBoardID",
         "createAt": 1672228800000,
         "createdBy": "",
         "deleteAt": 0,
-        "fields": Object {
-          "cardOrder": Array [
+        "fields": {
+          "cardOrder": [
             "card1",
             "card2",
             "card3",
           ],
-          "collapsedOptionIds": Array [],
-          "columnCalculations": Object {},
-          "columnWidths": Object {
+          "collapsedOptionIds": [],
+          "columnCalculations": {},
+          "columnWidths": {
             "column1": 100,
             "column2": 200,
           },
           "dateDisplayPropertyId": undefined,
           "defaultTemplateId": "",
-          "filter": Object {
-            "filters": Array [
-              Object {
+          "filter": {
+            "filters": [
+              {
                 "condition": "is",
                 "propertyId": "myPropertyId",
-                "values": Array [],
+                "values": [],
               },
             ],
             "operation": "and",
           },
           "groupById": "property1",
-          "hiddenOptionIds": Array [
+          "hiddenOptionIds": [
             "value1",
           ],
-          "kanbanCalculations": Object {},
-          "sortOptions": Array [
-            Object {
+          "kanbanCalculations": {},
+          "sortOptions": [
+            {
               "propertyId": "property1",
               "reversed": true,
             },
-            Object {
+            {
               "propertyId": "property2",
               "reversed": false,
             },
           ],
           "viewType": "board",
-          "visibleOptionIds": Array [],
-          "visiblePropertyIds": Array [],
+          "visibleOptionIds": [],
+          "visiblePropertyIds": [],
         },
         "id": "testViewID",
         "limited": false,

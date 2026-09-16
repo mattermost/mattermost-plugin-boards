@@ -13,7 +13,7 @@ import TopBar from './topBar'
 
 Object.defineProperty(Constants, 'versionString', {value: '1.0.0'})
 jest.mock('../utils')
-const mockedUtils = mocked(Utils, true)
+const mockedUtils = mocked(Utils)
 
 describe('src/components/topBar', () => {
     beforeEach(jest.resetAllMocks)

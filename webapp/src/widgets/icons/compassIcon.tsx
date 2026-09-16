@@ -9,7 +9,7 @@ type Props = {
     className?: string
 }
 
-export default function CompassIcon(props: Props): JSX.Element {
+export default function CompassIcon(props: Props): React.JSX.Element {
     // All compass icon classes start with icon,
     // so not expecting that prefix in props.
     return (

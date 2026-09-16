@@ -6,7 +6,7 @@ import React from 'react'
 
 import './hide.scss'
 
-export default function HideIcon(): JSX.Element {
+export default function HideIcon(): React.JSX.Element {
     return (
         <svg
             xmlns='http://www.w3.org/2000/svg'

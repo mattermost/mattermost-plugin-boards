@@ -28,7 +28,7 @@ const ViewTitle = (props: Props) => {
     const [title, setTitle] = useState(board.title)
     const onEditTitleSave = useCallback(() => mutator.changeBoardTitle(board.id, board.title, title), [board.id, board.title, title])
     const onEditTitleCancel = useCallback(() => setTitle(board.title), [board.title])
-    const onDescriptionBlur = useCallback((text) => mutator.changeBoardDescription(board.id, board.id, board.description, text), [board.id, board.description])
+    const onDescriptionBlur = useCallback((text: string) => mutator.changeBoardDescription(board.id, board.id, board.description, text), [board.id, board.description])
     const onAddRandomIcon = useCallback(() => {
         const newIcon = BlockIcons.shared.randomIcon()
         mutator.changeBoardIcon(board.id, board.icon, newIcon)

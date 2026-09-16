@@ -33,7 +33,7 @@ type Props = {
     optionsComponent: React.ComponentType<CommonCalculationOptionProps>
 }
 
-const Calculation = (props: Props): JSX.Element => {
+const Calculation = (props: Props): React.JSX.Element => {
     const value = props.value || Options.none.value
     const valueOption = Options[value]
     const intl = useIntl()

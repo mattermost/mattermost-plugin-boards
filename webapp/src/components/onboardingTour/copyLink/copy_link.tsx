@@ -15,7 +15,7 @@ import {BoardTourSteps, TOUR_BOARD} from '../index'
 import {OnboardingCardClassName} from '../../kanban/kanbanCard'
 import TourTipRenderer from '../tourTipRenderer/tourTipRenderer'
 
-const CopyLinkTourStep = (): JSX.Element | null => {
+const CopyLinkTourStep = (): React.JSX.Element | null => {
     const title = (
         <FormattedMessage
             id='OnboardingTour.CopyLink.Title'

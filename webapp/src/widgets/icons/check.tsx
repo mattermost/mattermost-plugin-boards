@@ -6,7 +6,7 @@ import React from 'react'
 
 import './check.scss'
 
-export default function CheckIcon(): JSX.Element {
+export default function CheckIcon(): React.JSX.Element {
     return (
         <svg
             xmlns='http://www.w3.org/2000/svg'

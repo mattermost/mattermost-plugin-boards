@@ -8,12 +8,12 @@ import {HTML5Backend} from 'react-dnd-html5-backend'
 import configureStore, {MockStoreEnhanced} from 'redux-mock-store'
 import {Middleware} from 'redux'
 
-import {DragDropContext, Droppable} from 'react-beautiful-dnd'
+import {DragDropContext, Droppable} from '@hello-pangea/dnd'
 
 import {Block} from './blocks/block'
 
-export const wrapIntl = (children?: React.ReactNode): JSX.Element => <IntlProvider locale='en'>{children}</IntlProvider>
-export const wrapDNDIntl = (children?: React.ReactNode): JSX.Element => {
+export const wrapIntl = (children?: React.ReactNode): React.JSX.Element => <IntlProvider locale='en'>{children}</IntlProvider>
+export const wrapDNDIntl = (children?: React.ReactNode): React.JSX.Element => {
     return (
         <DndProvider backend={HTML5Backend}>
             {wrapIntl(children)}
@@ -21,7 +21,7 @@ export const wrapDNDIntl = (children?: React.ReactNode): JSX.Element => {
     )
 }
 
-export const wrapRBDNDContext = (children?: React.ReactNode): JSX.Element => {
+export const wrapRBDNDContext = (children?: React.ReactNode): React.JSX.Element => {
     return (
         <DragDropContext onDragEnd={() => {}}>
             {children}
@@ -29,7 +29,7 @@ export const wrapRBDNDContext = (children?: React.ReactNode): JSX.Element => {
     )
 }
 
-export const wrapRBDNDDroppable = (children?: React.ReactNode): JSX.Element => {
+export const wrapRBDNDDroppable = (children?: React.ReactNode): React.JSX.Element => {
     const draggableComponent = (
         <Droppable droppableId='droppable_id'>
             {(provided) => (

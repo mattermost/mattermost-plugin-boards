@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`properties/person select user - cancel 1`] = `
 <div>
@@ -14,12 +14,13 @@ exports[`properties/person select user - cancel 1`] = `
       aria-live="polite"
       aria-relevant="additions text"
       class="css-1f43avz-a11yText-A11yText"
+      role="log"
     />
     <div
-      class="react-select__control css-18140j1-Control"
+      class="react-select__control css-aetwxa"
     >
       <div
-        class="react-select__value-container react-select__value-container--has-value css-1gbdvdc-ValueContainer"
+        class="react-select__value-container react-select__value-container--has-value css-xwc5uq"
       >
         <div
           class="react-select__single-value css-37w7ka-singleValue"
@@ -31,10 +32,11 @@ exports[`properties/person select user - cancel 1`] = `
           </div>
         </div>
         <div
-          class="react-select__input-container css-189c2ni-Input"
+          class="react-select__input-container css-85xuox"
           data-value=""
         >
           <input
+            aria-activedescendant=""
             aria-autocomplete="list"
             aria-expanded="false"
             aria-haspopup="true"
@@ -45,7 +47,7 @@ exports[`properties/person select user - cancel 1`] = `
             id="react-select-4-input"
             role="combobox"
             spellcheck="false"
-            style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+            style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
             tabindex="0"
             type="text"
             value=""
@@ -53,7 +55,7 @@ exports[`properties/person select user - cancel 1`] = `
         </div>
       </div>
       <div
-        class="react-select__indicators css-1hb7zxy-IndicatorsContainer"
+        class="react-select__indicators css-1wy0on6"
       >
         <div
           aria-hidden="true"
@@ -112,21 +114,30 @@ exports[`properties/person select user - cancel 2`] = `
       aria-live="polite"
       aria-relevant="additions text"
       class="css-1f43avz-a11yText-A11yText"
+      role="log"
     >
       <span
         id="aria-selection"
       />
       <span
-        id="aria-context"
+        id="aria-focused"
+      />
+      <span
+        id="aria-results"
       >
-        option username-4 focused, 1 of 2. 2 results available. Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.
+        2 results available.
+      </span>
+      <span
+        id="aria-guidance"
+      >
+        Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.
       </span>
     </span>
     <div
-      class="react-select__control react-select__control--is-focused react-select__control--menu-is-open css-18140j1-Control"
+      class="react-select__control react-select__control--is-focused react-select__control--menu-is-open css-aetwxa"
     >
       <div
-        class="react-select__value-container react-select__value-container--has-value css-1gbdvdc-ValueContainer"
+        class="react-select__value-container react-select__value-container--has-value css-xwc5uq"
       >
         <div
           class="react-select__single-value css-37w7ka-singleValue"
@@ -138,15 +149,15 @@ exports[`properties/person select user - cancel 2`] = `
           </div>
         </div>
         <div
-          class="react-select__input-container css-189c2ni-Input"
+          class="react-select__input-container css-85xuox"
           data-value=""
         >
           <input
+            aria-activedescendant="react-select-4-option-1-0"
             aria-autocomplete="list"
             aria-controls="react-select-4-listbox"
             aria-expanded="true"
             aria-haspopup="true"
-            aria-owns="react-select-4-listbox"
             autocapitalize="none"
             autocomplete="off"
             autocorrect="off"
@@ -154,7 +165,7 @@ exports[`properties/person select user - cancel 2`] = `
             id="react-select-4-input"
             role="combobox"
             spellcheck="false"
-            style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+            style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
             tabindex="0"
             type="text"
             value=""
@@ -162,7 +173,7 @@ exports[`properties/person select user - cancel 2`] = `
         </div>
       </div>
       <div
-        class="react-select__indicators css-1hb7zxy-IndicatorsContainer"
+        class="react-select__indicators css-1wy0on6"
       >
         <div
           aria-hidden="true"
@@ -205,13 +216,15 @@ exports[`properties/person select user - cancel 2`] = `
     </div>
     <div
       class="react-select__menu css-1slvcut-menu"
-      id="react-select-4-listbox"
     >
       <div
-        class="react-select__menu-list css-1d1qzc4-MenuList"
+        aria-multiselectable="false"
+        class="react-select__menu-list css-1fmksep"
+        id="react-select-4-listbox"
+        role="listbox"
       >
         <div
-          class="react-select__group css-syji7d-Group"
+          class="react-select__group css-1s9izoc"
         >
           <div
             class="react-select__group-heading css-jtaw72-group"
@@ -222,8 +235,10 @@ exports[`properties/person select user - cancel 2`] = `
           <div>
             <div
               aria-disabled="false"
+              aria-selected="false"
               class="react-select__option react-select__option--is-focused css-63bi6m-option"
               id="react-select-4-option-1-0"
+              role="option"
               tabindex="-1"
             >
               <div
@@ -234,8 +249,10 @@ exports[`properties/person select user - cancel 2`] = `
             </div>
             <div
               aria-disabled="false"
+              aria-selected="false"
               class="react-select__option css-1uk8033-option"
               id="react-select-4-option-1-1"
+              role="option"
               tabindex="-1"
             >
               <div
@@ -266,12 +283,13 @@ exports[`properties/person select user - confirm 1`] = `
       aria-live="polite"
       aria-relevant="additions text"
       class="css-1f43avz-a11yText-A11yText"
+      role="log"
     />
     <div
-      class="react-select__control css-18140j1-Control"
+      class="react-select__control css-aetwxa"
     >
       <div
-        class="react-select__value-container react-select__value-container--has-value css-1gbdvdc-ValueContainer"
+        class="react-select__value-container react-select__value-container--has-value css-xwc5uq"
       >
         <div
           class="react-select__single-value css-37w7ka-singleValue"
@@ -283,10 +301,11 @@ exports[`properties/person select user - confirm 1`] = `
           </div>
         </div>
         <div
-          class="react-select__input-container css-189c2ni-Input"
+          class="react-select__input-container css-85xuox"
           data-value=""
         >
           <input
+            aria-activedescendant=""
             aria-autocomplete="list"
             aria-expanded="false"
             aria-haspopup="true"
@@ -297,7 +316,7 @@ exports[`properties/person select user - confirm 1`] = `
             id="react-select-2-input"
             role="combobox"
             spellcheck="false"
-            style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+            style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
             tabindex="0"
             type="text"
             value=""
@@ -305,24 +324,21 @@ exports[`properties/person select user - confirm 1`] = `
         </div>
       </div>
       <div
-        class="react-select__indicators css-1hb7zxy-IndicatorsContainer"
+        class="react-select__indicators css-1wy0on6"
       >
         <div
           aria-hidden="true"
-          class="react-select__indicator react-select__clear-indicator css-31haax-indicatorContainer"
+          class="react-select__indicator react-select__loading-indicator css-rbsrx3-loadingIndicator"
         >
-          <svg
-            aria-hidden="true"
-            class="css-tj5bde-Svg"
-            focusable="false"
-            height="20"
-            viewBox="0 0 20 20"
-            width="20"
-          >
-            <path
-              d="M14.348 14.849c-0.469 0.469-1.229 0.469-1.697 0l-2.651-3.030-2.651 3.029c-0.469 0.469-1.229 0.469-1.697 0-0.469-0.469-0.469-1.229 0-1.697l2.758-3.15-2.759-3.152c-0.469-0.469-0.469-1.228 0-1.697s1.228-0.469 1.697 0l2.652 3.031 2.651-3.031c0.469-0.469 1.228-0.469 1.697 0s0.469 1.229 0 1.697l-2.758 3.152 2.758 3.15c0.469 0.469 0.469 1.229 0 1.698z"
-            />
-          </svg>
+          <span
+            class="css-1icxkl9-LoadingDot"
+          />
+          <span
+            class="css-1oazjx7-LoadingDot"
+          />
+          <span
+            class="css-1wonz24-LoadingDot"
+          />
         </div>
         <span
           class="react-select__indicator-separator css-1uei4ir-indicatorSeparator"
@@ -364,21 +380,30 @@ exports[`properties/person select user - confirm 2`] = `
       aria-live="polite"
       aria-relevant="additions text"
       class="css-1f43avz-a11yText-A11yText"
+      role="log"
     >
       <span
         id="aria-selection"
       />
       <span
-        id="aria-context"
+        id="aria-focused"
+      />
+      <span
+        id="aria-results"
       >
-        option username-4 focused, 1 of 2. 2 results available. Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.
+        2 results available.
+      </span>
+      <span
+        id="aria-guidance"
+      >
+        Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.
       </span>
     </span>
     <div
-      class="react-select__control react-select__control--is-focused react-select__control--menu-is-open css-18140j1-Control"
+      class="react-select__control react-select__control--is-focused react-select__control--menu-is-open css-aetwxa"
     >
       <div
-        class="react-select__value-container react-select__value-container--has-value css-1gbdvdc-ValueContainer"
+        class="react-select__value-container react-select__value-container--has-value css-xwc5uq"
       >
         <div
           class="react-select__single-value css-37w7ka-singleValue"
@@ -390,15 +415,15 @@ exports[`properties/person select user - confirm 2`] = `
           </div>
         </div>
         <div
-          class="react-select__input-container css-189c2ni-Input"
+          class="react-select__input-container css-85xuox"
           data-value=""
         >
           <input
+            aria-activedescendant="react-select-2-option-1-0"
             aria-autocomplete="list"
             aria-controls="react-select-2-listbox"
             aria-expanded="true"
             aria-haspopup="true"
-            aria-owns="react-select-2-listbox"
             autocapitalize="none"
             autocomplete="off"
             autocorrect="off"
@@ -406,7 +431,7 @@ exports[`properties/person select user - confirm 2`] = `
             id="react-select-2-input"
             role="combobox"
             spellcheck="false"
-            style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+            style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
             tabindex="0"
             type="text"
             value=""
@@ -414,7 +439,7 @@ exports[`properties/person select user - confirm 2`] = `
         </div>
       </div>
       <div
-        class="react-select__indicators css-1hb7zxy-IndicatorsContainer"
+        class="react-select__indicators css-1wy0on6"
       >
         <div
           aria-hidden="true"
@@ -457,13 +482,15 @@ exports[`properties/person select user - confirm 2`] = `
     </div>
     <div
       class="react-select__menu css-1slvcut-menu"
-      id="react-select-2-listbox"
     >
       <div
-        class="react-select__menu-list css-1d1qzc4-MenuList"
+        aria-multiselectable="false"
+        class="react-select__menu-list css-1fmksep"
+        id="react-select-2-listbox"
+        role="listbox"
       >
         <div
-          class="react-select__group css-syji7d-Group"
+          class="react-select__group css-1s9izoc"
         >
           <div
             class="react-select__group-heading css-jtaw72-group"
@@ -474,8 +501,10 @@ exports[`properties/person select user - confirm 2`] = `
           <div>
             <div
               aria-disabled="false"
+              aria-selected="false"
               class="react-select__option react-select__option--is-focused css-63bi6m-option"
               id="react-select-2-option-1-0"
+              role="option"
               tabindex="-1"
             >
               <div
@@ -486,8 +515,10 @@ exports[`properties/person select user - confirm 2`] = `
             </div>
             <div
               aria-disabled="false"
+              aria-selected="false"
               class="react-select__option css-1uk8033-option"
               id="react-select-2-option-1-1"
+              role="option"
               tabindex="-1"
             >
               <div

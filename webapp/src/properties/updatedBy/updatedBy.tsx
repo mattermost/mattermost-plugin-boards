@@ -12,7 +12,7 @@ import Person from '../person/person'
 
 import {PropertyProps} from '../types'
 
-const LastModifiedBy = (props: PropertyProps): JSX.Element => {
+const LastModifiedBy = (props: PropertyProps): React.JSX.Element => {
     const lastContent = useAppSelector(getLastCardContent(props.card.id || ''))
     const lastComment = useAppSelector(getLastCardComment(props.card.id))
 

@@ -23,7 +23,7 @@ type Props = {
     onClose: () => void
 }
 
-const BoardSwitcherDialog = (props: Props): JSX.Element => {
+const BoardSwitcherDialog = (props: Props): React.JSX.Element => {
     const [selected, setSelected] = useState<number>(-1)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [refs, setRefs] = useState<MutableRefObject<any>>(useRef([]))

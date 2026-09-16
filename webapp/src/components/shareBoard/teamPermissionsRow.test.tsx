@@ -4,7 +4,7 @@
 import {act, render} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import {Provider as ReduxProvider} from 'react-redux'
-import thunk from 'redux-thunk'
+import {thunk} from 'redux-thunk'
 
 import React from 'react'
 import {MemoryRouter} from 'react-router'
@@ -25,7 +25,7 @@ const boardId = '1'
 
 jest.mock('../../utils')
 
-const mockedUtils = mocked(Utils, true)
+const mockedUtils = mocked(Utils)
 
 const board = TestBlockFactory.createBoard()
 board.id = boardId

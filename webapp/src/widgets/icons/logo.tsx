@@ -7,7 +7,7 @@ import React from 'react'
 import './logo.scss'
 import CompassIcon from './compassIcon'
 
-export default function LogoIcon(): JSX.Element {
+export default function LogoIcon(): React.JSX.Element {
     return (
         <CompassIcon
             icon='product-boards'

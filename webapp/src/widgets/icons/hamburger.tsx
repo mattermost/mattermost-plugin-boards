@@ -6,7 +6,7 @@ import React from 'react'
 
 import './hamburger.scss'
 
-export default function HamburgerIcon(): JSX.Element {
+export default function HamburgerIcon(): React.JSX.Element {
     return (
         <svg
             xmlns='http://www.w3.org/2000/svg'

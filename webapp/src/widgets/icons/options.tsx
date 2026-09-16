@@ -8,7 +8,7 @@ import CompassIcon from './compassIcon'
 
 import './options.scss'
 
-export default function OptionsIcon(): JSX.Element {
+export default function OptionsIcon(): React.JSX.Element {
     return (
         <CompassIcon
             icon='dots-horizontal'

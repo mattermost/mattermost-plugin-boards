@@ -15,7 +15,7 @@ type OptionProps = SelectOption & {
     activeProperty: IPropertyTemplate
 }
 
-const Option = (props: {data: OptionProps}): JSX.Element => {
+const Option = (props: {data: OptionProps}): React.JSX.Element => {
     const [submenu, setSubmenu] = useState(false)
     const [height, setHeight] = useState(0)
     const [menuOptionRight, setMenuOptionRight] = useState(0)

@@ -12,7 +12,7 @@ import {safePropertyString} from '../blocks/board'
 
 import {PropertyProps} from './types'
 
-const BaseTextEditor = (props: PropertyProps & {validator: () => boolean, spellCheck?: boolean}): JSX.Element => {
+const BaseTextEditor = (props: PropertyProps & {validator: () => boolean, spellCheck?: boolean}): React.JSX.Element => {
     const [value, setValue] = useState(safePropertyString(props.card.fields.properties[props.propertyTemplate.id || '']))
     const onCancel = useCallback(() => setValue(safePropertyString(props.propertyValue)), [props.propertyValue])
 

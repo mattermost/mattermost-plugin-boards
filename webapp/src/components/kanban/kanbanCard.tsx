@@ -97,7 +97,7 @@ const KanbanCard = (props: Props) => {
     return (
         <>
             <div
-                ref={props.readonly ? () => null : cardRef}
+                ref={props.readonly ? undefined : cardRef}
                 className={`${className} ${showOnboarding && OnboardingCardClassName}`}
                 draggable={!props.readonly}
                 style={{opacity: isDragging ? 0.5 : 1}}

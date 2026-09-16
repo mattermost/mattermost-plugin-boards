@@ -39,7 +39,7 @@ const displayDate = (date: Date | undefined, intl: IntlShape): string | undefine
 
 const dateFormat = 'MM/DD/YYYY'
 
-function EditableDayPicker(props: Props): JSX.Element {
+function EditableDayPicker(props: Props): React.JSX.Element {
     const {className, onChange} = props
     const intl = useIntl()
     const [value, setValue] = useState(() => parseValue(props.value))

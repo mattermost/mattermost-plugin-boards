@@ -82,7 +82,7 @@ const ViewHeaderSortMenu = (props: Props) => {
                 }
 
                 {sortDisplayOptions?.map((option) => {
-                    let rightIcon: JSX.Element | undefined
+                    let rightIcon: React.JSX.Element | undefined
                     if (activeView.fields.sortOptions?.length > 0) {
                         const sortOption = activeView.fields.sortOptions[0]
                         if (sortOption.propertyId === option.id) {

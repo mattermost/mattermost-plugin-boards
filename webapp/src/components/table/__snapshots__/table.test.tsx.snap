@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`components/table/Table extended should have Duplicate Button 1`] = `
 <div>
@@ -2924,7 +2924,6 @@ exports[`components/table/Table should match snapshot with GroupBy 1`] = `
               >
                 No Property 1
               </span>
-              
             </div>
             <button
               type="button"

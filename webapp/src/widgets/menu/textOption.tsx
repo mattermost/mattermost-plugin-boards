@@ -14,7 +14,7 @@ type TextOptionProps = MenuOptionProps & {
     disabled?: boolean
 }
 
-function TextOption(props: TextOptionProps): JSX.Element {
+function TextOption(props: TextOptionProps): React.JSX.Element {
     const {name, icon, rightIcon, check, subText, disabled} = props
     let className = 'MenuOption TextOption menu-option'
     if (props.className) {

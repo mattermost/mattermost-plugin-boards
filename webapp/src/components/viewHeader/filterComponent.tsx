@@ -25,7 +25,7 @@ type Props = {
     onClose: () => void
 }
 
-const FilterComponent = (props: Props): JSX.Element => {
+const FilterComponent = (props: Props): React.JSX.Element => {
     const conditionClicked = (optionId: string, filter: FilterClause): void => {
         const {activeView} = props
 

@@ -43,7 +43,7 @@ const boardTreeGroup = {
     cards: [],
 }
 
-const Wrapper: React.FC = ({children}) => {
+const Wrapper: React.FC<React.PropsWithChildren> = ({children}) => {
     return wrapDNDIntl(
         <ColumnResizeProvider
             columnWidths={{}}
@@ -141,7 +141,7 @@ test('should match snapshot, hide group', async () => {
     act(() => {
         fireEvent.click(triangle as Element)
     })
-    expect(hideGroup).toBeCalled()
+    expect(hideGroup).toHaveBeenCalled()
     expect(container).toMatchSnapshot()
 })
 
@@ -169,7 +169,7 @@ test('should match snapshot, add new', async () => {
     act(() => {
         fireEvent.click(triangle as Element)
     })
-    expect(addNew).toBeCalled()
+    expect(addNew).toHaveBeenCalled()
     expect(container).toMatchSnapshot()
 })
 

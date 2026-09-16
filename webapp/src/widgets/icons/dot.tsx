@@ -6,7 +6,7 @@ import React from 'react'
 
 import './dot.scss'
 
-export default function DotIcon(): JSX.Element {
+export default function DotIcon(): React.JSX.Element {
     return (
         <svg
             xmlns='http://www.w3.org/2000/svg'

@@ -1,6 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
+import type {JSX} from 'react'
 import {IntlShape} from 'react-intl'
 
 import {BlockTypes} from '../../blocks/block'

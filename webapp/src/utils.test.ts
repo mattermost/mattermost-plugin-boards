@@ -61,7 +61,7 @@ describe('utils', () => {
         })
 
         test('should encode links', () => {
-            expect(Utils.htmlFromMarkdown('https://example.com?title=August<1>2022')).toBe('<p><a target=\"_blank\" rel=\"noreferrer\" href=\"https://example.com?title=August&lt;1&gt;2022\" title=\"\" onclick=\"\">https://example.com?title=August&lt;1&gt;2022</a></p>')
+            expect(Utils.htmlFromMarkdown('https://example.com?title=August<1>2022')).toBe('<p><a target=\"_blank\" rel=\"noreferrer\" href=\"https://example.com?title=August&lt;1%3E2022\" title=\"\" onclick=\"\">https://example.com?title=August&lt;1&gt;2022</a></p>')
             expect(Utils.htmlFromMarkdown('[Duck Duck Go](https://duckduckgo.com "The best search engine\'s for <privacy>")')).toBe('<p><a target="_blank" rel="noreferrer" href="https://duckduckgo.com" title="The best search engine&#39;s for &lt;privacy&gt;" onclick="">Duck Duck Go</a></p>')
         })
 
@@ -196,7 +196,7 @@ describe('utils', () => {
 
             Utils.showBoard('board_id_2', match, history)
 
-            expect(history.push).toBeCalledWith('/team/team_id_1/board_id_2')
+            expect(history.push).toHaveBeenCalledWith('/team/team_id_1/board_id_2')
         })
     })
 

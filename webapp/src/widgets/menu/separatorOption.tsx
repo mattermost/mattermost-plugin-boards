@@ -5,7 +5,7 @@ import React, {FC} from 'react'
 
 import './separatorOption.scss'
 
-const SeparatorOption: FC = (): JSX.Element => (
+const SeparatorOption: FC = (): React.JSX.Element => (
     <div className='MenuOption MenuSeparator menu-separator'/>
 )
 

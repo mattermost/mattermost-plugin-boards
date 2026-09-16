@@ -13,7 +13,7 @@ import Editable from '../../widgets/editable'
 import {useAppSelector, useAppDispatch} from '../../store/hooks'
 import {getSearchText, setSearchText} from '../../store/searchText'
 
-const ViewHeaderSearch = (): JSX.Element => {
+const ViewHeaderSearch = (): React.JSX.Element => {
     const searchText = useAppSelector<string>(getSearchText)
     const dispatch = useAppDispatch()
     const intl = useIntl()
@@ -49,7 +49,7 @@ const ViewHeaderSearch = (): JSX.Element => {
         }
     }, [])
 
-    useHotkeys('ctrl+shift+f,cmd+shift+f', () => {
+    useHotkeys('ctrl+shift+f,meta+shift+f', () => {
         searchFieldRef.current?.focus(true)
     })
 

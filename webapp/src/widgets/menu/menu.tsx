@@ -30,7 +30,7 @@ export default class Menu extends React.PureComponent<Props> {
     static TextInput = textInputOption
     static Label = LabelOption
 
-    menuRef: React.RefObject<HTMLDivElement>
+    menuRef: React.RefObject<HTMLDivElement | null>
 
     constructor(props: Props) {
         super(props)
@@ -43,7 +43,7 @@ export default class Menu extends React.PureComponent<Props> {
         menuStyle: {},
     }
 
-    public render(): JSX.Element {
+    public render(): React.JSX.Element {
         const {position, fixed, children} = this.props
 
         let style: CSSProperties = {}

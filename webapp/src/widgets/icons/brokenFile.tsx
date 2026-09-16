@@ -6,7 +6,7 @@ import React from 'react'
 
 import CompassIcon from './compassIcon'
 
-export default function BrokenFile(): JSX.Element {
+export default function BrokenFile(): React.JSX.Element {
     return (
         <CompassIcon
             icon='file-image-broken-outline'

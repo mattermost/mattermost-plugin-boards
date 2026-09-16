@@ -14,7 +14,7 @@ import addComment from '../../../../static/comment.gif'
 import {CardTourSteps, TOUR_CARD} from '../index'
 import TourTipRenderer from '../tourTipRenderer/tourTipRenderer'
 
-const AddCommentTourStep = (): JSX.Element | null => {
+const AddCommentTourStep = (): React.JSX.Element | null => {
     const title = (
         <FormattedMessage
             id='OnboardingTour.AddComments.Title'

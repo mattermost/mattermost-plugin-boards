@@ -54,7 +54,7 @@ export const TelemetryActions = {
     ClickChannelsRHSBoard: 'click_board_in_channels_RHS',
 }
 
-interface IEventProps {
+export interface IEventProps {
     channelID?: string
     teamID?: string
     board?: string

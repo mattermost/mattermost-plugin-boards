@@ -6,7 +6,7 @@ import React from 'react'
 
 import CompassIcon from './compassIcon'
 
-export default function Globe(): JSX.Element {
+export default function Globe(): React.JSX.Element {
     return (
         <CompassIcon
             icon='globe'

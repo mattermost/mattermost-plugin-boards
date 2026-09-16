@@ -70,7 +70,7 @@ type Props = {
     new?: boolean
 }
 
-const BoardPage = (props: Props): JSX.Element => {
+const BoardPage = (props: Props): React.JSX.Element => {
     const intl = useIntl()
     const activeBoardId = useAppSelector(getCurrentBoardId)
     const activeViewId = useAppSelector(getCurrentViewId)
@@ -119,7 +119,7 @@ const BoardPage = (props: Props): JSX.Element => {
         if (props.readonly) {
             return initialReadOnlyLoad
         }
-        return initialLoad
+        return () => initialLoad()
     }, [props.readonly])
 
     useWebsockets(teamId, (wsClient) => {

@@ -54,7 +54,7 @@ class FocalboardEmbeddedData {
     }
 }
 
-export const BoardsUnfurl = (props: Props): JSX.Element => {
+export const BoardsUnfurl = (props: Props): React.JSX.Element => {
     if (!props.embed || !props.embed.data) {
         return <></>
     }

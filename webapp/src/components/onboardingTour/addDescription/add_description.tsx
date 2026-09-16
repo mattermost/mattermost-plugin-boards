@@ -14,7 +14,7 @@ import addDescription from '../../../../static/addDescription.png'
 import {CardTourSteps, TOUR_CARD} from '../index'
 import TourTipRenderer from '../tourTipRenderer/tourTipRenderer'
 
-const AddDescriptionTourStep = (): JSX.Element | null => {
+const AddDescriptionTourStep = (): React.JSX.Element | null => {
     const title = (
         <FormattedMessage
             id='OnboardingTour.AddDescription.Title'

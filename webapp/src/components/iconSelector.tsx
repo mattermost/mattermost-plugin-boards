@@ -14,7 +14,7 @@ import './iconSelector.scss'
 
 type Props = {
     readonly?: boolean
-    iconElement: JSX.Element 
+    iconElement: React.JSX.Element 
     onAddRandomIcon: () => Promise<void>
     onSelectEmoji: (emoji: string) => void
     onRemoveIcon: () => Promise<void>

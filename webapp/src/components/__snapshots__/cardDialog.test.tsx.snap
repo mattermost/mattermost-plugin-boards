@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`components/cardDialog already following card 1`] = `
 <div>
@@ -165,7 +165,6 @@ exports[`components/cardDialog already following card 1`] = `
                   </div>
                 </div>
               </div>
-              
             </div>
             <hr
               class="CommentsList__divider"
@@ -903,7 +902,6 @@ exports[`components/cardDialog return cardDialog menu content 1`] = `
                   </div>
                 </div>
               </div>
-              
             </div>
             <hr
               class="CommentsList__divider"
@@ -1127,7 +1125,6 @@ exports[`components/cardDialog return cardDialog menu content and cancel delete 
                   </div>
                 </div>
               </div>
-              
             </div>
             <hr
               class="CommentsList__divider"
@@ -1351,7 +1348,6 @@ exports[`components/cardDialog should match snapshot 1`] = `
                   </div>
                 </div>
               </div>
-              
             </div>
             <hr
               class="CommentsList__divider"

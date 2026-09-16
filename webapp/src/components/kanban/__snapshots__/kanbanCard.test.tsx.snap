@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`src/components/kanban/kanbanCard return kanbanCard and click on copy link menu  1`] = `
 <div>

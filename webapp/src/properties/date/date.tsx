@@ -54,7 +54,7 @@ function datePropertyToString(dateProperty: DateProperty): string {
 
 const loadedLocales: Record<string, moment.Locale> = {}
 
-function DateRange(props: PropertyProps): JSX.Element {
+function DateRange(props: PropertyProps): React.JSX.Element {
     const {propertyValue, propertyTemplate, showEmptyPlaceholder, readOnly, board, card} = props
     const [value, setValue] = useState(propertyValue)
     const intl = useIntl()
@@ -65,7 +65,7 @@ function DateRange(props: PropertyProps): JSX.Element {
         }
     }, [propertyValue, setValue])
 
-    const onChange = useCallback((newValue) => {
+    const onChange = useCallback((newValue: string) => {
         if (value !== newValue) {
             setValue(newValue)
         }

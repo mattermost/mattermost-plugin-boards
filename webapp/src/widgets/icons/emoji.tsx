@@ -6,7 +6,7 @@ import React from 'react'
 
 import './emoji.scss'
 
-export default function EmojiIcon(): JSX.Element {
+export default function EmojiIcon(): React.JSX.Element {
     return (
         <svg
             xmlns='http://www.w3.org/2000/svg'

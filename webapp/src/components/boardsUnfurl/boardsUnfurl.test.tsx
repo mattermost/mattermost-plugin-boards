@@ -23,8 +23,8 @@ import BoardsUnfurl from './boardsUnfurl'
 
 jest.mock('../../octoClient')
 jest.mock('../../utils')
-const mockedOctoClient = mocked(octoClient, true)
-const mockedUtils = mocked(Utils, true)
+const mockedOctoClient = mocked(octoClient)
+const mockedUtils = mocked(Utils)
 mockedUtils.createGuid = jest.requireActual('../../utils').Utils.createGuid
 mockedUtils.blockTypeToIDType = jest.requireActual('../../utils').Utils.blockTypeToIDType
 mockedUtils.displayDateTime = jest.requireActual('../../utils').Utils.displayDateTime
@@ -86,8 +86,8 @@ describe('components/boardsUnfurl/BoardsUnfurl', () => {
             const result = render(component)
             container = result.container
         })
-        expect(mockedOctoClient.getBoard).toBeCalledWith(board.id)
-        expect(mockedOctoClient.getBlocksWithBlockID).toBeCalledWith(cards[0].id, board.id, "abc")
+        expect(mockedOctoClient.getBoard).toHaveBeenCalledWith(board.id)
+        expect(mockedOctoClient.getBlocksWithBlockID).toHaveBeenCalledWith(cards[0].id, board.id, "abc")
 
         expect(container).toMatchSnapshot()
     })
@@ -198,8 +198,8 @@ describe('components/boardsUnfurl/BoardsUnfurl', () => {
             const result = render(component)
             container = result.container
         })
-        expect(mockedOctoClient.getBoard).toBeCalledWith(board.id)
-        expect(mockedOctoClient.getBlocksWithBlockID).toBeCalledWith(cards[0].id, board.id, 'abc')
+        expect(mockedOctoClient.getBoard).toHaveBeenCalledWith(board.id)
+        expect(mockedOctoClient.getBlocksWithBlockID).toHaveBeenCalledWith(cards[0].id, board.id, 'abc')
 
         expect(container).toMatchSnapshot()
     })
@@ -237,8 +237,8 @@ describe('components/boardsUnfurl/BoardsUnfurl', () => {
             const result = render(component)
             container = result.container
         })
-        expect(mockedOctoClient.getBoard).toBeCalledWith(board.id)
-        expect(mockedOctoClient.getBlocksWithBlockID).toBeCalledWith('invalidCard', board.id, 'abc')
+        expect(mockedOctoClient.getBoard).toHaveBeenCalledWith(board.id)
+        expect(mockedOctoClient.getBlocksWithBlockID).toHaveBeenCalledWith('invalidCard', board.id, 'abc')
 
         expect(container).toMatchSnapshot()
     })

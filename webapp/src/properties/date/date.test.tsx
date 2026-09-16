@@ -19,7 +19,7 @@ import DateProperty from './property'
 import DateProp from './date'
 
 jest.mock('../../mutator')
-const mockedMutator = mocked(mutator, true)
+const mockedMutator = mocked(mutator)
 
 // create Dates for specific days for this year.
 const June15 = new Date(Date.UTC(new Date().getFullYear(), 5, 15, 12))

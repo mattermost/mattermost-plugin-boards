@@ -25,7 +25,7 @@ type Props = {
     disabled?: boolean
 }
 
-function Button(props: Props): JSX.Element {
+function Button(props: Props): React.JSX.Element {
     const classNames: Record<string, boolean> = {
         Button: true,
         active: Boolean(props.active),

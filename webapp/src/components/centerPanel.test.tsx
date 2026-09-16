@@ -36,9 +36,9 @@ jest.mock('../octoClient')
 jest.mock('../mutator')
 jest.mock('../telemetry/telemetryClient')
 jest.mock('draft-js/lib/generateRandomKey', () => () => '123')
-const mockedUtils = mocked(Utils, true)
-const mockedMutator = mocked(Mutator, true)
-const mockedOctoClient = mocked(octoClient, true)
+const mockedUtils = mocked(Utils)
+const mockedMutator = mocked(Mutator)
+const mockedOctoClient = mocked(octoClient)
 mockedUtils.createGuid.mockReturnValue('test-id')
 mockedUtils.generateClassName = jest.requireActual('../utils').Utils.generateClassName
 describe('components/centerPanel', () => {
@@ -250,7 +250,7 @@ describe('components/centerPanel', () => {
             //select card
             const cardElement = screen.getByRole('textbox', {name: 'card1'})
             expect(cardElement).not.toBeNull()
-            userEvent.click(cardElement, {shiftKey: true})
+            fireEvent.click(cardElement, {shiftKey: true})
             expect(container).toMatchSnapshot()
 
             //background
@@ -279,7 +279,7 @@ describe('components/centerPanel', () => {
             ))
 
             //touch '1'
-            fireEvent.keyDown(baseElement, {keyCode: 49})
+            fireEvent.keyDown(baseElement, {key: '1', code: 'Digit1', keyCode: 49})
             expect(container).toMatchSnapshot()
         })
 
@@ -304,12 +304,12 @@ describe('components/centerPanel', () => {
             act(() => {
                 const cardElement = screen.getByRole('textbox', {name: 'card1'})
                 expect(cardElement.parentNode).not.toBeNull()
-                userEvent.click(cardElement as HTMLElement, {shiftKey: true})
+                fireEvent.click(cardElement as HTMLElement, {shiftKey: true})
             })
             expect(container).toMatchSnapshot()
 
             //escape
-            fireEvent.keyDown(baseElement, {keyCode: 27})
+            fireEvent.keyDown(baseElement, {key: 'Escape', code: 'Escape', keyCode: 27})
             expect(container).toMatchSnapshot()
         })
         test('press touch esc for two cards selected', async () => {
@@ -334,7 +334,7 @@ describe('components/centerPanel', () => {
                 //select card1
                 const card1Element = screen.getByRole('textbox', {name: 'card1'})
                 expect(card1Element).not.toBeNull()
-                userEvent.click(card1Element, {shiftKey: true})
+                fireEvent.click(card1Element, {shiftKey: true})
             })
             expect(container).toMatchSnapshot()
 
@@ -342,12 +342,12 @@ describe('components/centerPanel', () => {
                 //select card2
                 const card2Element = screen.getByRole('textbox', {name: 'card2'})
                 expect(card2Element).not.toBeNull()
-                userEvent.click(card2Element, {shiftKey: true, ctrlKey: true})
+                fireEvent.click(card2Element, {shiftKey: true, ctrlKey: true})
             })
             expect(container).toMatchSnapshot()
 
             //escape
-            fireEvent.keyDown(baseElement, {keyCode: 27})
+            fireEvent.keyDown(baseElement, {key: 'Escape', code: 'Escape', keyCode: 27})
             expect(container).toMatchSnapshot()
         })
         test('press touch del for one card selected', () => {
@@ -370,13 +370,13 @@ describe('components/centerPanel', () => {
             act(() => {
                 const cardElement = screen.getByRole('textbox', {name: 'card1'})
                 expect(cardElement).not.toBeNull()
-                userEvent.click(cardElement, {shiftKey: true})
+                fireEvent.click(cardElement, {shiftKey: true})
             })
             expect(container).toMatchSnapshot()
 
             //delete
-            fireEvent.keyDown(baseElement, {keyCode: 8})
-            expect(mockedMutator.performAsUndoGroup).toBeCalledTimes(1)
+            fireEvent.keyDown(baseElement, {key: 'Backspace', code: 'Backspace', keyCode: 8})
+            expect(mockedMutator.performAsUndoGroup).toHaveBeenCalledTimes(1)
         })
         test('press touch ctrl+d for one card selected', () => {
             activeView.fields.viewType = 'table'
@@ -398,13 +398,13 @@ describe('components/centerPanel', () => {
             act(() => {
                 const cardElement = screen.getByRole('textbox', {name: 'card1'})
                 expect(cardElement).not.toBeNull()
-                userEvent.click(cardElement, {shiftKey: true})
+                fireEvent.click(cardElement, {shiftKey: true})
             })
             expect(container).toMatchSnapshot()
 
             //ctrl+d
-            fireEvent.keyDown(baseElement, {ctrlKey: true, keyCode: 68})
-            expect(mockedMutator.performAsUndoGroup).toBeCalledTimes(1)
+            fireEvent.keyDown(baseElement, {key: 'd', code: 'KeyD', ctrlKey: true, keyCode: 68})
+            expect(mockedMutator.performAsUndoGroup).toHaveBeenCalledTimes(1)
         })
         test('click on card to show card', () => {
             activeView.fields.viewType = 'board'
@@ -430,7 +430,7 @@ describe('components/centerPanel', () => {
             const kanbanCardElement = kanbanCardElements[0]
             userEvent.click(kanbanCardElement)
             expect(container).toMatchSnapshot()
-            expect(mockedShowCard).toBeCalledWith(card1.id)
+            expect(mockedShowCard).toHaveBeenCalledWith(card1.id)
         })
         test('click on new card to add card', () => {
             activeView.fields.viewType = 'table'
@@ -452,7 +452,7 @@ describe('components/centerPanel', () => {
             const buttonWithMenuElement = container.querySelector('.ButtonWithMenu')
             expect(buttonWithMenuElement).not.toBeNull()
             userEvent.click(buttonWithMenuElement!)
-            expect(mockedMutator.performAsUndoGroup).toBeCalledTimes(1)
+            expect(mockedMutator.performAsUndoGroup).toHaveBeenCalledTimes(1)
         })
         test('click on new card to add card template', () => {
             activeView.fields.viewType = 'table'
@@ -476,7 +476,7 @@ describe('components/centerPanel', () => {
             userEvent.click(elementMenuWrapper!)
             const buttonNewTemplate = within(elementMenuWrapper!.parentElement!).getByRole('button', {name: 'New template'})
             userEvent.click(buttonNewTemplate)
-            expect(mockedMutator.insertBlock).toBeCalledTimes(1)
+            expect(mockedMutator.insertBlock).toHaveBeenCalledTimes(1)
         })
 
         test('click on new card to add card from template', () => {
@@ -503,7 +503,7 @@ describe('components/centerPanel', () => {
             const elementCard1 = within(elementMenuWrapper!.parentElement!).getByRole('button', {name: 'card1'})
             expect(elementCard1).not.toBeNull()
             userEvent.click(elementCard1)
-            expect(mockedMutator.performAsUndoGroup).toBeCalledTimes(1)
+            expect(mockedMutator.performAsUndoGroup).toHaveBeenCalledTimes(1)
         })
 
         test('click on new card to edit template', () => {

@@ -26,7 +26,7 @@ type Props = {
     history?: History<unknown>
 }
 
-const App = (props: Props): JSX.Element => {
+const App = (props: Props): React.JSX.Element => {
     const language = useAppSelector<string>(getLanguage)
     const me = useAppSelector<IUser|null>(getMe)
     const dispatch = useAppDispatch()

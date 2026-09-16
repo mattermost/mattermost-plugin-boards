@@ -23,7 +23,7 @@ type Props = {
     setSelected: (n: number) => void
 }
 
-export const EmptySearch = (): JSX.Element => (
+export const EmptySearch = (): React.JSX.Element => (
     <div className='noResults introScreen'>
         <div className='iconWrapper'>
             <Search/>
@@ -37,7 +37,7 @@ export const EmptySearch = (): JSX.Element => (
     </div>
 )
 
-export const EmptyResults = (props: {query: string}): JSX.Element => (
+export const EmptyResults = (props: {query: string}): React.JSX.Element => (
     <div className='noResults'>
         <div className='iconWrapper'>
             <Search/>
@@ -60,7 +60,7 @@ export const EmptyResults = (props: {query: string}): JSX.Element => (
     </div>
 )
 
-const SearchDialog = (props: Props): JSX.Element => {
+const SearchDialog = (props: Props): React.JSX.Element => {
     const {selected, setSelected} = props
     const [results, setResults] = useState<ReactNode[]>(props.initialData || [])
     const [isSearching, setIsSearching] = useState<boolean>(false)

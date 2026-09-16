@@ -10,11 +10,11 @@ import {Router} from 'react-router-dom'
 
 import {render, waitFor} from '@testing-library/react'
 
-import thunk from 'redux-thunk'
+import {thunk} from 'redux-thunk'
 
 import {mocked} from 'jest-mock'
 
-import {DropResult} from 'react-beautiful-dnd'
+import {DropResult} from '@hello-pangea/dnd'
 
 import {mockMatchMedia, wrapIntl} from '../../testUtils'
 
@@ -29,7 +29,7 @@ type MockRenderChildren = {
     children: (provided: unknown, snapshot: unknown) => React.ReactNode
 }
 
-jest.mock('react-beautiful-dnd', () => {
+jest.mock('@hello-pangea/dnd', () => {
     const react = jest.requireActual('react')
 
     return {
@@ -49,7 +49,7 @@ jest.mock('react-beautiful-dnd', () => {
 })
 
 jest.mock('../../octoClient')
-const mockedOctoClient = mocked(octoClient, true)
+const mockedOctoClient = mocked(octoClient)
 
 beforeAll(() => {
     mockMatchMedia({matches: true})
@@ -153,7 +153,7 @@ describe('components/sidebar drag and drop ordering', () => {
             destination: {droppableId: 'category1', index: 0},
         } as DropResult)
 
-        await waitFor(() => expect(mockedOctoClient.reorderSidebarCategoryBoards).toBeCalledWith(
+        await waitFor(() => expect(mockedOctoClient.reorderSidebarCategoryBoards).toHaveBeenCalledWith(
             'team-id',
             'category1',
             [hiddenBoard.id, board3.id, board1.id, board2.id],
@@ -170,7 +170,7 @@ describe('components/sidebar drag and drop ordering', () => {
             destination: {droppableId: 'category1', index: 2},
         } as DropResult)
 
-        await waitFor(() => expect(mockedOctoClient.reorderSidebarCategoryBoards).toBeCalledWith(
+        await waitFor(() => expect(mockedOctoClient.reorderSidebarCategoryBoards).toHaveBeenCalledWith(
             'team-id',
             'category1',
             [hiddenBoard.id, board2.id, board3.id, board1.id],

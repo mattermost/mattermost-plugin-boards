@@ -76,7 +76,9 @@ function BlockContent(props: Props) {
         const DisplayContent = contentType.Display
         return (
             <div
-                ref={drop}
+                ref={(node) => {
+                    drop(node)
+                }}
                 data-testid='block-content'
                 className={`BlockContent ${isOver && draggingUp ? 'over-up' : ''}  ${isOver && !draggingUp ? 'over-down' : ''}`}
                 key={block.id}
@@ -100,13 +102,17 @@ function BlockContent(props: Props) {
                 </span>
                 <span
                     className='action'
-                    ref={drag}
+                    ref={(node) => {
+                        drag(node)
+                    }}
                 >
                     <GripIcon/>
                 </span>
                 <div
                     className='content'
-                    ref={preview}
+                    ref={(node) => {
+                        preview(node)
+                    }}
                 >
                     <DisplayContent
                         value={block.value}

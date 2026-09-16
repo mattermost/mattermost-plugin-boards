@@ -28,7 +28,7 @@ export function getEquivalentPropertyType(propertyType: PropertyTypeEnum): Prope
     return equivalentPropertyType.get(propertyType) || propertyType
 }
 
-export const KanbanCalculationOptions = (props: Props): JSX.Element => {
+export const KanbanCalculationOptions = (props: Props): React.JSX.Element => {
     const options: OptionProps[] = []
 
     // Show common options, first,

@@ -35,7 +35,7 @@ async function updateBoardType(board: Board, newType: string, newMinimumRole: Me
     await mutator.updateBoard(newBoard, board, 'update board type')
 }
 
-const TeamPermissionsRow = (): JSX.Element => {
+const TeamPermissionsRow = (): React.JSX.Element => {
     const intl = useIntl()
     const team = useAppSelector(getCurrentTeam)
     const board = useAppSelector(getCurrentBoard)

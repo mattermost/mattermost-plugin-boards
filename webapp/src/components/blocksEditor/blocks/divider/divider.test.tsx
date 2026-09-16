@@ -45,6 +45,6 @@ describe('components/blocksEditor/blocks/divider', () => {
                 onSave={onSave}
             />,
         )
-        expect(onSave).toBeCalled()
+        expect(onSave).toHaveBeenCalled()
     })
 })
