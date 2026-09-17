@@ -6,7 +6,7 @@ import React from 'react'
 
 import './card.scss'
 
-export default function CardIcon(): JSX.Element {
+export default function CardIcon(): React.JSX.Element {
     return (
         <svg
             xmlns='http://www.w3.org/2000/svg'

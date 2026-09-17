@@ -17,7 +17,9 @@ const defaultUsername        = "admin";
 const defaultPassword        = "admin";
 const defaultTeamName        = "test";
 const defaultTeamDisplayName = "Test";
-const defaultMattermostImage = "mattermostdevelopment/mattermost-enterprise-edition:release-11.9";
+// The plugin's min_server_version is 12.0.0, so it cannot activate on older
+// images. Switch to release-12 once that tag is published.
+const defaultMattermostImage = "mattermostdevelopment/mattermost-enterprise-edition:master";
 
 type PluginConfig = Record<string, unknown>;
 type PluginConfigInput = PluginConfig | {config: PluginConfig};

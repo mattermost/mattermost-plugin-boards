@@ -18,8 +18,8 @@ type Props = {
     toolbar?: React.ReactNode
     hideCloseButton?: boolean
     className?: string
-    title?: JSX.Element
-    subtitle?: JSX.Element
+    title?: React.JSX.Element
+    subtitle?: React.JSX.Element
     onClose: () => void
 }
 

@@ -68,6 +68,12 @@ func createBoardsConfig(mmconfig mm_model.Config, baseURL string, serverID strin
 		enableBoardsDeletion = true
 	}
 
+	// Removed from the server config in v12, so the pointer is nil there.
+	boardsRetentionDays := mm_model.DataRetentionSettingsDefaultBoardsRetentionDays
+	if mmconfig.DataRetentionSettings.BoardsRetentionDays != nil {
+		boardsRetentionDays = *mmconfig.DataRetentionSettings.BoardsRetentionDays
+	}
+
 	featureFlags := parseFeatureFlags(mmconfig.FeatureFlags.ToMap())
 
 	showEmailAddress := false
@@ -109,7 +115,7 @@ func createBoardsConfig(mmconfig mm_model.Config, baseURL string, serverID strin
 		NotifyFreqCardSeconds:    getPluginSettingInt(mmconfig, notifyFreqCardSecondsKey, 120),
 		NotifyFreqBoardSeconds:   getPluginSettingInt(mmconfig, notifyFreqBoardSecondsKey, 86400),
 		EnableDataRetention:      enableBoardsDeletion,
-		DataRetentionDays:        *mmconfig.DataRetentionSettings.BoardsRetentionDays,
+		DataRetentionDays:        boardsRetentionDays,
 		TeammateNameDisplay:      *mmconfig.TeamSettings.TeammateNameDisplay,
 		ShowEmailAddress:         showEmailAddress,
 		ShowFullName:             showFullName,

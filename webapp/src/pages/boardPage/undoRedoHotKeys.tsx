@@ -11,7 +11,7 @@ import {Utils} from '../../utils'
 const UndoRedoHotKeys = (): null => {
     const intl = useIntl()
 
-    useHotkeys('ctrl+z,cmd+z', () => {
+    useHotkeys('ctrl+z,meta+z', () => {
         Utils.log('Undo')
         if (mutator.canUndo) {
             const description = mutator.undoDescription
@@ -35,7 +35,7 @@ const UndoRedoHotKeys = (): null => {
         }
     })
 
-    useHotkeys('shift+ctrl+z,shift+cmd+z', () => {
+    useHotkeys('shift+ctrl+z,shift+meta+z', () => {
         Utils.log('Redo')
         if (mutator.canRedo) {
             const description = mutator.redoDescription

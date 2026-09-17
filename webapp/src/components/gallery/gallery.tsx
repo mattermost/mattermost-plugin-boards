@@ -30,7 +30,7 @@ type Props = {
     showHiddenCardCountNotification: (show: boolean) => void
 }
 
-const Gallery = (props: Props): JSX.Element => {
+const Gallery = (props: Props): React.JSX.Element => {
     const {activeView, board, cards, hiddenCardsCount} = props
     const visiblePropertyTemplates = useMemo(() => {
         return board.cardProperties.filter(

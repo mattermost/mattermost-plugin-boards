@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`should match snapshot on read only 1`] = `
 <div>
@@ -329,7 +329,6 @@ exports[`should match snapshot, no groups 1`] = `
       >
         No Property 1
       </span>
-      
     </div>
     <button
       class="Button"

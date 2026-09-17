@@ -3,7 +3,7 @@
 
 import React from 'react'
 
-export default function AccessDeniedIllustration(): JSX.Element {
+export default function AccessDeniedIllustration(): React.JSX.Element {
     return (
         <span>
             <svg width="400" height="290" viewBox="0 0 347 213" fill="none" xmlns="http://www.w3.org/2000/svg">

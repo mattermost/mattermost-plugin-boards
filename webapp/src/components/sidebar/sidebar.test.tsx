@@ -10,7 +10,7 @@ import {Router} from 'react-router-dom'
 
 import {render, waitFor} from '@testing-library/react'
 
-import thunk from 'redux-thunk'
+import {thunk} from 'redux-thunk'
 
 import {mocked} from 'jest-mock'
 
@@ -20,11 +20,14 @@ import {mockMatchMedia, wrapIntl} from '../../testUtils'
 
 import {TestBlockFactory} from '../../test/testBlockFactory'
 import octoClient from '../../../../webapp/src/octoClient'
+import {Constants} from '../../constants'
 
 import Sidebar from './sidebar'
 
+Object.defineProperty(Constants, 'versionString', {value: '1.0.0'})
+
 jest.mock('../../../../webapp/src/octoClient')
-const mockedOctoClient = mocked(octoClient, true)
+const mockedOctoClient = mocked(octoClient)
 
 beforeAll(() => {
     mockMatchMedia({matches: true})
@@ -365,7 +368,7 @@ describe('components/sidebarSidebar', () => {
         expect(container).toMatchSnapshot()
 
         await waitFor(() => 
-            expect(mockedOctoClient.moveBoardToCategory).toBeCalledWith('team-id', 'board2', 'default_category', '')
+            expect(mockedOctoClient.moveBoardToCategory).toHaveBeenCalledWith('team-id', 'board2', 'default_category', '')
         )
     })
 
@@ -428,7 +431,7 @@ describe('components/sidebarSidebar', () => {
         const {container} = render(component)
         expect(container).toMatchSnapshot()
 
-        expect(mockedOctoClient.moveBoardToCategory).toBeCalledTimes(0)
+        expect(mockedOctoClient.moveBoardToCategory).toHaveBeenCalledTimes(0)
     })
 
     // TODO: Fix this later

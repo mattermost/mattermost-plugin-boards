@@ -26,7 +26,7 @@ type Props = {
     readonly: boolean
 }
 
-const TableHeaders = (props: Props): JSX.Element => {
+const TableHeaders = (props: Props): React.JSX.Element => {
     const {board, cards, activeView, views} = props
     const intl = useIntl()
     const columnResize = useColumnResize()

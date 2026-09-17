@@ -11,8 +11,11 @@ import {render} from '@testing-library/react'
 import configureStore from 'redux-mock-store'
 
 import {wrapIntl} from '../../testUtils'
+import {Constants} from '../../constants'
 
 import GlobalHeader from './globalHeader'
+
+Object.defineProperty(Constants, 'versionString', {value: '1.0.0'})
 
 describe('components/sidebar/GlobalHeader', () => {
     const mockStore = configureStore([])

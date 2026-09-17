@@ -15,7 +15,7 @@ import './updatedTime.scss'
 
 import {PropertyProps} from '../types'
 
-const UpdatedTime = (props: PropertyProps): JSX.Element => {
+const UpdatedTime = (props: PropertyProps): React.JSX.Element => {
     const intl = useIntl()
     const lastContent = useAppSelector(getLastCardContent(props.card.id || ''))
     const lastComment = useAppSelector(getLastCardComment(props.card.id))

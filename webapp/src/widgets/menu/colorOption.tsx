@@ -12,7 +12,7 @@ type ColorOptionProps = MenuOptionProps & {
     icon?: React.ReactNode
 }
 
-function ColorOption(props: ColorOptionProps): JSX.Element {
+function ColorOption(props: ColorOptionProps): React.JSX.Element {
     const {id, name, icon} = props
     const intl = useIntl()
     return (

@@ -5,7 +5,8 @@
 import React, {useCallback, useMemo, useState} from 'react'
 import {useIntl} from 'react-intl'
 
-import FullCalendar, {EventChangeArg, EventInput, EventContentArg, DayCellContentArg} from '@fullcalendar/react'
+import FullCalendar from '@fullcalendar/react'
+import {EventChangeArg, EventInput, EventContentArg, DayCellContentArg} from '@fullcalendar/core'
 
 import interactionPlugin from '@fullcalendar/interaction'
 import dayGridPlugin from '@fullcalendar/daygrid'
@@ -72,7 +73,7 @@ const timeZoneOffset = (date: number): number => {
     return new Date(date).getTimezoneOffset() * 60 * 1000
 }
 
-const CalendarFullView = (props: Props): JSX.Element|null => {
+const CalendarFullView = (props: Props): React.JSX.Element|null => {
     const intl = useIntl()
     const {board, cards, activeView, dateDisplayProperty, readonly} = props
     const isSelectable = !readonly
@@ -152,7 +153,7 @@ const CalendarFullView = (props: Props): JSX.Element|null => {
         }
     }, [handleDeleteCard])
 
-    const renderEventContent = (eventProps: EventContentArg): JSX.Element|null => {
+    const renderEventContent = (eventProps: EventContentArg): React.JSX.Element|null => {
         const {event} = eventProps
         const card = cards.find((o) => o.id === event.id) || cards[0]
 
@@ -255,7 +256,7 @@ const CalendarFullView = (props: Props): JSX.Element|null => {
         week: intl.formatMessage({id: 'calendar.week', defaultMessage: 'Week'}),
     }), [])
 
-    const dayCellContent = useCallback((args: DayCellContentArg): JSX.Element|null => {
+    const dayCellContent = useCallback((args: DayCellContentArg): React.JSX.Element|null => {
         return (
             <div className={'dateContainer ' + (canAddCards ? 'with-plus' : '')}>
                 <div

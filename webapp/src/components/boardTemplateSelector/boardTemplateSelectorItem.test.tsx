@@ -196,10 +196,10 @@ describe('components/boardTemplateSelector/boardTemplateSelectorItem', () => {
             ,
         ))
         userEvent.click(container.querySelector('.BoardTemplateSelectorItem')!)
-        expect(onSelect).toBeCalledTimes(1)
-        expect(onSelect).toBeCalledWith(template)
-        expect(onDelete).not.toBeCalled()
-        expect(onEdit).not.toBeCalled()
+        expect(onSelect).toHaveBeenCalledTimes(1)
+        expect(onSelect).toHaveBeenCalledWith(template)
+        expect(onDelete).not.toHaveBeenCalled()
+        expect(onEdit).not.toHaveBeenCalled()
     })
 
     test('should trigger the onDelete (and not any other) when click the delete icon', async () => {
@@ -219,10 +219,10 @@ describe('components/boardTemplateSelector/boardTemplateSelectorItem', () => {
             ,
         ))
         userEvent.click(container.querySelector('.BoardTemplateSelectorItem .EditIcon')!)
-        expect(onEdit).toBeCalledTimes(1)
-        expect(onEdit).toBeCalledWith(template.id)
-        expect(onSelect).not.toBeCalled()
-        expect(onDelete).not.toBeCalled()
+        expect(onEdit).toHaveBeenCalledTimes(1)
+        expect(onEdit).toHaveBeenCalledWith(template.id)
+        expect(onSelect).not.toHaveBeenCalled()
+        expect(onDelete).not.toHaveBeenCalled()
     })
 
     test('should trigger the onDelete (and not any other) when click the delete icon and confirm', async () => {
@@ -255,9 +255,9 @@ describe('components/boardTemplateSelector/boardTemplateSelectorItem', () => {
             userEvent.click(getByText('Delete')!)
         })
 
-        await waitFor(async () => expect(onDelete).toBeCalledTimes(1))
-        await waitFor(async () => expect(onDelete).toBeCalledWith(template))
-        await waitFor(async () => expect(onSelect).not.toBeCalled())
-        await waitFor(async () => expect(onEdit).not.toBeCalled())
+        await waitFor(async () => expect(onDelete).toHaveBeenCalledTimes(1))
+        await waitFor(async () => expect(onDelete).toHaveBeenCalledWith(template))
+        await waitFor(async () => expect(onSelect).not.toHaveBeenCalled())
+        await waitFor(async () => expect(onEdit).not.toHaveBeenCalled())
     })
 })

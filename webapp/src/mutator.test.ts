@@ -28,12 +28,12 @@ describe('Mutator', () => {
         await mutator.changePropertyValue(board.id, card, 'property_1', 'hello')
 
         // No API call should be made as property value DIDN'T CHANGE
-        expect(FetchMock.fn).toBeCalledTimes(0)
+        expect(FetchMock.fn).toHaveBeenCalledTimes(0)
 
         await mutator.changePropertyValue(board.id, card, 'property_1', 'hello world')
 
         // 1 API call should be made as property value DID CHANGE
-        expect(FetchMock.fn).toBeCalledTimes(1)
+        expect(FetchMock.fn).toHaveBeenCalledTimes(1)
     })
 
     test('duplicateCard', async () => {

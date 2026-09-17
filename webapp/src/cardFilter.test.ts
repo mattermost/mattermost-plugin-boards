@@ -13,7 +13,7 @@ import {Utils} from './utils'
 import {IPropertyTemplate} from './blocks/board'
 
 jest.mock('./utils')
-const mockedUtils = mocked(Utils, true)
+const mockedUtils = mocked(Utils)
 
 const dayMillis = 24 * 60 * 60 * 1000
 
@@ -493,7 +493,7 @@ describe('src/cardFilter', () => {
         test('should return Utils.assertFailure and filterClause propertyId ', () => {
             const filterClauseIsNotEmpty = createFilterClause({propertyId: 'propertyId', condition: 'isNotEmpty', values: ['Status']})
             const result = CardFilter.propertyThatMeetsFilterClause(filterClauseIsNotEmpty, [])
-            expect(mockedUtils.assertFailure).toBeCalledTimes(1)
+            expect(mockedUtils.assertFailure).toHaveBeenCalledTimes(1)
             expect(result.id).toEqual(filterClauseIsNotEmpty.propertyId)
         })
         test('should return filterClause propertyId with non-select template and isNotEmpty clause ', () => {

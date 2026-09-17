@@ -20,8 +20,8 @@ type Props = {
     requireCard: boolean
     category: string
     step: number
-    screen: JSX.Element
-    title: JSX.Element
+    screen: React.JSX.Element
+    title: React.JSX.Element
     punchout: TutorialTourTipPunchout | null | undefined
     classname: string
     telemetryTag: string
@@ -33,7 +33,7 @@ type Props = {
     showForce?: boolean
 }
 
-const TourTipRenderer = (props: Props): JSX.Element | null => {
+const TourTipRenderer = (props: Props): React.JSX.Element | null => {
     const board = useAppSelector(getCurrentBoard)
     const clientConfig = useAppSelector<ClientConfig>(getClientConfig)
 

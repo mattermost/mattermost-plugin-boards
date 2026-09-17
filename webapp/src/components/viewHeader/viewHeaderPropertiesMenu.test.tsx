@@ -23,7 +23,7 @@ import {Constants} from '../../constants'
 import ViewHeaderPropertiesMenu from './viewHeaderPropertiesMenu'
 
 jest.mock('../../mutator')
-const mockedMutator = mocked(mutator, true)
+const mockedMutator = mocked(mutator)
 
 const board = TestBlockFactory.createBoard()
 let activeView: BoardView

@@ -9,7 +9,7 @@ type TextInputOptionProps = {
     onValueChanged: (value: string) => void
 }
 
-function TextInputOption(props: TextInputOptionProps): JSX.Element {
+function TextInputOption(props: TextInputOptionProps): React.JSX.Element {
     const nameTextbox = useRef<HTMLInputElement>(null)
     const [value, setValue] = useState(props.initialValue)
 

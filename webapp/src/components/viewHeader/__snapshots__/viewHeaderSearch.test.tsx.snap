@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`components/viewHeader/ViewHeaderSearch return search menu 1`] = `
 <div>
@@ -11,7 +11,6 @@ exports[`components/viewHeader/ViewHeaderSearch return search menu 1`] = `
     <input
       class="Editable "
       placeholder="Search cards"
-      value=""
     />
   </div>
 </div>

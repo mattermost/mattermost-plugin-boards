@@ -18,7 +18,7 @@ import SelectProperty from './property'
 import Select from './select'
 
 jest.mock('../../mutator')
-const mockedMutator = mocked(mutator, true)
+const mockedMutator = mocked(mutator)
 
 function selectPropertyTemplate(): IPropertyTemplate {
     return {

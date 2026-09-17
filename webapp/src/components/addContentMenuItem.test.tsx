@@ -36,7 +36,7 @@ const wrap = (child: ReactNode): ReactElement => (
 )
 
 jest.mock('../mutator')
-const mockedMutator = mocked(mutator, true)
+const mockedMutator = mocked(mutator)
 
 describe('components/addContentMenuItem', () => {
     beforeEach(() => {
@@ -68,7 +68,7 @@ describe('components/addContentMenuItem', () => {
         expect(container).toMatchSnapshot()
         const buttonElement = screen.getByRole('button', {name: 'text'})
         userEvent.click(buttonElement)
-        await waitFor(() => expect(mockedMutator.insertBlock).toBeCalled())
+        await waitFor(() => expect(mockedMutator.insertBlock).toHaveBeenCalled())
     })
 
     test('return a checkbox menu item', async () => {
@@ -84,7 +84,7 @@ describe('components/addContentMenuItem', () => {
         expect(container).toMatchSnapshot()
         const buttonElement = screen.getByRole('button', {name: 'checkbox'})
         userEvent.click(buttonElement)
-        await waitFor(() => expect(mockedMutator.insertBlock).toBeCalled())
+        await waitFor(() => expect(mockedMutator.insertBlock).toHaveBeenCalled())
     })
 
     test('return a divider menu item', async () => {
@@ -100,7 +100,7 @@ describe('components/addContentMenuItem', () => {
         expect(container).toMatchSnapshot()
         const buttonElement = screen.getByRole('button', {name: 'divider'})
         userEvent.click(buttonElement)
-        await waitFor(() => expect(mockedMutator.insertBlock).toBeCalled())
+        await waitFor(() => expect(mockedMutator.insertBlock).toHaveBeenCalled())
     })
 
     test('return an error and empty element from unknown type', () => {

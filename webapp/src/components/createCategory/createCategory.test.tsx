@@ -8,7 +8,7 @@ import {render} from '@testing-library/react'
 
 import userEvent from '@testing-library/user-event'
 
-import thunk from 'redux-thunk'
+import {thunk} from 'redux-thunk'
 
 import {Provider as ReduxProvider} from 'react-redux'
 
@@ -23,7 +23,7 @@ import mutator from '../../mutator'
 import CreateCategory from './createCategory'
 
 jest.mock('../../mutator')
-const mockedMutator = mocked(mutator, true)
+const mockedMutator = mocked(mutator)
 
 describe('components/createCategory/CreateCategory', () => {
     const me: IUser = {
@@ -84,12 +84,12 @@ describe('components/createCategory/CreateCategory', () => {
         const cancelBtn = container.querySelector('.createCategoryActions > .Button.danger')
         expect(cancelBtn).toBeTruthy()
         userEvent.click(cancelBtn as Element)
-        expect(onCloseHandler).toBeCalledTimes(1)
+        expect(onCloseHandler).toHaveBeenCalledTimes(1)
 
         const closeBtn = container.querySelector('.toolbar .dialog__close')
         expect(closeBtn).toBeTruthy()
         userEvent.click(closeBtn as Element)
-        expect(onCloseHandler).toBeCalledTimes(2)
+        expect(onCloseHandler).toHaveBeenCalledTimes(2)
     })
 
     it('should call onCreate on pressing enter', () => {
@@ -108,7 +108,7 @@ describe('components/createCategory/CreateCategory', () => {
         const inputField = container.querySelector('.categoryNameInput')
         expect(inputField).toBeTruthy()
         userEvent.type(inputField as Element, 'category name{enter}')
-        expect(mockedMutator.createCategory).toBeCalledWith({
+        expect(mockedMutator.createCategory).toHaveBeenCalledWith({
             name: 'category name',
             teamID: 'team-id',
             userID: 'user-id-1',

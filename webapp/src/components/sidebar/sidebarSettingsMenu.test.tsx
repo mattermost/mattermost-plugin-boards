@@ -21,7 +21,7 @@ import TelemetryClient, {TelemetryCategory, TelemetryActions} from '../../teleme
 import SidebarSettingsMenu from './sidebarSettingsMenu'
 
 jest.mock('../../telemetry/telemetryClient')
-const mockedTelemetry = mocked(TelemetryClient, true)
+const mockedTelemetry = mocked(TelemetryClient)
 
 describe('components/sidebar/SidebarSettingsMenu', () => {
     const mockStore = configureStore([])
@@ -118,6 +118,6 @@ describe('components/sidebar/SidebarSettingsMenu', () => {
         expect(container).toMatchSnapshot()
 
         userEvent.click(container.querySelector('[aria-label="Asana"]') as Element)
-        expect(mockedTelemetry.trackEvent).toBeCalledWith(TelemetryCategory, TelemetryActions.ImportAsana)
+        expect(mockedTelemetry.trackEvent).toHaveBeenCalledWith(TelemetryCategory, TelemetryActions.ImportAsana)
     })
 })

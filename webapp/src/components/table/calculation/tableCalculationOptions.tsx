@@ -5,7 +5,7 @@ import React from 'react'
 
 import {CalculationOptions, CommonCalculationOptionProps, optionsByType} from '../../calculations/options'
 
-export const TableCalculationOptions = (props: CommonCalculationOptionProps): JSX.Element => {
+export const TableCalculationOptions = (props: CommonCalculationOptionProps): React.JSX.Element => {
     const options = [...optionsByType.get('common')!]
     if (props.property && optionsByType.get(props.property.type)) {
         options.push(...optionsByType.get(props.property.type)!)

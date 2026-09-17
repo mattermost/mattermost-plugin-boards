@@ -19,7 +19,7 @@ type Props = {
     isTemplate?: boolean
 }
 
-export default function DeleteBoardDialog(props: Props): JSX.Element {
+export default function DeleteBoardDialog(props: Props): React.JSX.Element {
     const [isSubmitting, setSubmitting] = useState(false)
 
     return (

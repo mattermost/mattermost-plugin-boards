@@ -198,7 +198,7 @@ describe('components/sidebarCategory', () => {
         const subItems = container.querySelectorAll('.subitem')
         expect(subItems).toBeDefined()
         userEvent.click(subItems[0] as Element)
-        expect(mockTemplateClose).toBeCalled()
+        expect(mockTemplateClose).toHaveBeenCalled()
     })
 
     test('sidebar template close other', () => {
@@ -229,7 +229,7 @@ describe('components/sidebarCategory', () => {
         const subItems = container.querySelectorAll('.category-title')
         expect(subItems).toBeDefined()
         userEvent.click(subItems[0] as Element)
-        expect(mockTemplateClose).not.toBeCalled()
+        expect(mockTemplateClose).not.toHaveBeenCalled()
     })
 
     describe('onDeleteBoard navigation', () => {
@@ -326,7 +326,7 @@ describe('components/sidebarCategory', () => {
             const deleteButton = await screen.findByText('Delete')
             await act(async () => { userEvent.click(deleteButton) })
 
-            await waitFor(() => expect(mockedMutator.deleteBoard).toBeCalledTimes(1))
+            await waitFor(() => expect(mockedMutator.deleteBoard).toHaveBeenCalledTimes(1))
 
             return mockedMutator.deleteBoard.mock.calls[0][2] as () => Promise<void>
         }

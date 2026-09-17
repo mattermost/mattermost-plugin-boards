@@ -22,7 +22,7 @@ type SubMenuOptionProps = {
     className?: string
 }
 
-function SubMenuOption(props: SubMenuOptionProps): JSX.Element {
+function SubMenuOption(props: SubMenuOptionProps): React.JSX.Element {
     const [isOpen, setIsOpen] = useState(false)
     const isHovering = useContext(HoveringContext)
 

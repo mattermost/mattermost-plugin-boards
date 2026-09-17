@@ -15,7 +15,7 @@ type Props = {
     text: React.ReactNode
 }
 
-function ButtonWithMenu(props: Props): JSX.Element {
+function ButtonWithMenu(props: Props): React.JSX.Element {
     return (
         <div
             onClick={props.onClick}

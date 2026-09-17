@@ -60,6 +60,10 @@ server/vendor
 server/**/*.coverage
 ./dist
 
+# Generated from plugin.json by `make apply`
+webapp/src/manifest.ts
+server/manifest.go
+
 # notice
 .notice-work
 

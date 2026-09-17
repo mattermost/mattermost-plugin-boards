@@ -6,7 +6,7 @@ import React from 'react'
 
 import CompassIcon from './compassIcon'
 
-export default function MessageIcon(): JSX.Element {
+export default function MessageIcon(): React.JSX.Element {
     return (
         <CompassIcon
             icon='message-text-outline'

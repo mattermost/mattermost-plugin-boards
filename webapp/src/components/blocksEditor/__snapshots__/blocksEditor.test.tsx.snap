@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`components/blocksEditor/blocksEditor should match snapshot on empty 1`] = `
 <div>
@@ -21,9 +21,15 @@ exports[`components/blocksEditor/blocksEditor should match snapshot on empty 1`]
             option , selected.
           </span>
           <span
-            id="aria-context"
+            id="aria-focused"
+          />
+          <span
+            id="aria-results"
+          />
+          <span
+            id="aria-guidance"
           >
-              Select is focused ,type to refine list, press Down to open the menu, 
+            Select is focused ,type to refine list, press Down to open the menu, 
           </span>
         </span>
         <span
@@ -31,24 +37,26 @@ exports[`components/blocksEditor/blocksEditor should match snapshot on empty 1`]
           aria-live="polite"
           aria-relevant="additions text"
           class="css-1f43avz-a11yText-A11yText"
+          role="log"
         />
         <div
-          class=" css-a5687m-control"
+          class="css-a5687m-control"
         >
           <div
-            class=" css-b2z5qd-ValueContainer"
+            class="css-1neafsd"
           >
             <div
-              class=" css-1jqq78o-placeholder"
+              class="css-1jqq78o-placeholder"
               id="react-select-2-placeholder"
             >
               Introduce your text or your slash command
             </div>
             <div
-              class=" css-26cneq-Input"
+              class="css-x14nly"
               data-value=""
             >
               <input
+                aria-activedescendant=""
                 aria-autocomplete="list"
                 aria-describedby="react-select-2-placeholder"
                 aria-expanded="false"
@@ -60,7 +68,7 @@ exports[`components/blocksEditor/blocksEditor should match snapshot on empty 1`]
                 id="react-select-2-input"
                 role="combobox"
                 spellcheck="false"
-                style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                 tabindex="0"
                 type="text"
                 value=""
@@ -68,7 +76,7 @@ exports[`components/blocksEditor/blocksEditor should match snapshot on empty 1`]
             </div>
           </div>
           <div
-            class=" css-1hb7zxy-IndicatorsContainer"
+            class="css-1wy0on6"
           />
         </div>
       </div>
@@ -412,9 +420,15 @@ exports[`components/blocksEditor/blocksEditor should match snapshot with blocks 
             option , selected.
           </span>
           <span
-            id="aria-context"
+            id="aria-focused"
+          />
+          <span
+            id="aria-results"
+          />
+          <span
+            id="aria-guidance"
           >
-              Select is focused ,type to refine list, press Down to open the menu, 
+            Select is focused ,type to refine list, press Down to open the menu, 
           </span>
         </span>
         <span
@@ -422,24 +436,26 @@ exports[`components/blocksEditor/blocksEditor should match snapshot with blocks 
           aria-live="polite"
           aria-relevant="additions text"
           class="css-1f43avz-a11yText-A11yText"
+          role="log"
         />
         <div
-          class=" css-a5687m-control"
+          class="css-a5687m-control"
         >
           <div
-            class=" css-b2z5qd-ValueContainer"
+            class="css-1neafsd"
           >
             <div
-              class=" css-1jqq78o-placeholder"
+              class="css-1jqq78o-placeholder"
               id="react-select-3-placeholder"
             >
               Introduce your text or your slash command
             </div>
             <div
-              class=" css-26cneq-Input"
+              class="css-x14nly"
               data-value=""
             >
               <input
+                aria-activedescendant=""
                 aria-autocomplete="list"
                 aria-describedby="react-select-3-placeholder"
                 aria-expanded="false"
@@ -451,7 +467,7 @@ exports[`components/blocksEditor/blocksEditor should match snapshot with blocks 
                 id="react-select-3-input"
                 role="combobox"
                 spellcheck="false"
-                style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                 tabindex="0"
                 type="text"
                 value=""
@@ -459,7 +475,7 @@ exports[`components/blocksEditor/blocksEditor should match snapshot with blocks 
             </div>
           </div>
           <div
-            class=" css-1hb7zxy-IndicatorsContainer"
+            class="css-1wy0on6"
           />
         </div>
       </div>

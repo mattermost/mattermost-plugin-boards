@@ -9,7 +9,7 @@ import Switch from '../../widgets/switch'
 
 import {PropertyProps} from '../types'
 
-const Checkbox = (props: PropertyProps): JSX.Element => {
+const Checkbox = (props: PropertyProps): React.JSX.Element => {
     const {card, board, propertyTemplate, propertyValue} = props
     return (
         <Switch

@@ -23,7 +23,7 @@ type Props = {
     editCardTemplate: (cardTemplateId: string) => void
 }
 
-const NewCardButton = (props: Props): JSX.Element => {
+const NewCardButton = (props: Props): React.JSX.Element => {
     const cardTemplates: Card[] = useAppSelector(getCurrentBoardTemplates)
     const currentView = useAppSelector(getCurrentView)
     let defaultTemplateID = ''

@@ -4,7 +4,7 @@
 import {act, render, screen} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import {Provider as ReduxProvider} from 'react-redux'
-import thunk from 'redux-thunk'
+import {thunk} from 'redux-thunk'
 
 import React from 'react'
 import {MemoryRouter} from 'react-router'
@@ -29,8 +29,8 @@ const viewId = boardId
 jest.mock('../../octoClient')
 jest.mock('../../utils')
 
-const mockedOctoClient = mocked(client, true)
-const mockedUtils = mocked(Utils, true)
+const mockedOctoClient = mocked(client)
+const mockedUtils = mocked(Utils)
 
 let params = {}
 jest.mock('react-router', () => {
@@ -291,7 +291,7 @@ describe('src/components/shareBoard/shareBoard', () => {
             userEvent.click(copyLinkElement!)
         })
 
-        expect(mockedUtils.copyTextToClipboard).toBeCalledTimes(1)
+        expect(mockedUtils.copyTextToClipboard).toHaveBeenCalledTimes(1)
         expect(container).toMatchSnapshot()
 
         const copiedLinkElement = screen.getByText('Copied!')
@@ -342,7 +342,7 @@ describe('src/components/shareBoard/shareBoard', () => {
         await act(async () => {
             jest.runOnlyPendingTimers()
         })
-        expect(mockedOctoClient.setSharing).toBeCalledTimes(1)
+        expect(mockedOctoClient.setSharing).toHaveBeenCalledTimes(1)
         expect(container).toMatchSnapshot()
     })
 
@@ -381,22 +381,19 @@ describe('src/components/shareBoard/shareBoard', () => {
             userEvent.click(switchElement!)
         })
 
-        expect(mockedOctoClient.setSharing).toBeCalledTimes(1)
-        expect(mockedOctoClient.getSharing).toBeCalledTimes(2)
+        expect(mockedOctoClient.setSharing).toHaveBeenCalledTimes(1)
+        expect(mockedOctoClient.getSharing).toHaveBeenCalledTimes(2)
         expect(container).toMatchSnapshot()
     })
 
     test('return shareBoardComponent and click Switch without sharing', async () => {
-        const sharing: ISharing = {
-            id: '',
-            enabled: false,
-            token: '',
-        }
-        mockedOctoClient.getSharing.mockResolvedValue(sharing)
+        mockedOctoClient.getSharing.mockResolvedValue(undefined)
         mockedUtils.createGuid.mockReturnValue('aToken')
         let container: Element | undefined
+        let result: ReturnType<typeof render>
+
         await act(async () => {
-            const result = render(
+            result = render(
                 wrapDNDIntl(
                     <ReduxProvider store={store}>
                         <ShareBoard
@@ -407,22 +404,27 @@ describe('src/components/shareBoard/shareBoard', () => {
                 {wrapper: MemoryRouter},
             )
             container = result.container
-            mockedOctoClient.getSharing.mockResolvedValue({
-                id: boardId,
-                enabled: true,
-                token: 'aToken',
-            })
+        })
 
-            const publishButton = screen.getByRole('button', {name: 'Publish'})
-            expect(publishButton).toBeDefined()
+        mockedOctoClient.getSharing.mockResolvedValue({
+            id: boardId,
+            enabled: true,
+            token: 'aToken',
+        })
+
+        const publishButton = screen.getByRole('button', {name: 'Publish'})
+        expect(publishButton).toBeDefined()
+        await act(async () => {
             userEvent.click(publishButton)
             jest.runOnlyPendingTimers()
+        })
 
-            const switchElement = container?.querySelector('.Switch')
-            expect(switchElement).toBeDefined()
+        const switchElement = container?.querySelector('.Switch')
+        expect(switchElement).not.toBeNull()
+        await act(async () => {
             userEvent.click(switchElement!)
             jest.runOnlyPendingTimers()
-            result.rerender(
+            result!.rerender(
                 wrapDNDIntl(
                     <ReduxProvider store={store}>
                         <ShareBoard
@@ -432,9 +434,9 @@ describe('src/components/shareBoard/shareBoard', () => {
                     </ReduxProvider>))
         })
 
-        expect(mockedOctoClient.setSharing).toBeCalledTimes(1)
-        expect(mockedOctoClient.getSharing).toBeCalledTimes(2)
-        expect(mockedUtils.createGuid).toBeCalledTimes(1)
+        expect(mockedOctoClient.setSharing).toHaveBeenCalledTimes(1)
+        expect(mockedOctoClient.getSharing).toHaveBeenCalledTimes(2)
+        expect(mockedUtils.createGuid).toHaveBeenCalledTimes(1)
         expect(container).toMatchSnapshot()
     })
 
@@ -627,7 +629,7 @@ describe('src/components/shareBoard/shareBoard', () => {
         expect(unlinkConfirmationBtn).not.toBeNull()
         userEvent.click(unlinkConfirmationBtn)
 
-        expect(mockedOctoClient.patchBoard).toBeCalled()
+        expect(mockedOctoClient.patchBoard).toHaveBeenCalled()
 
         const closeButton = screen.getByRole('button', {name: 'Close dialog'})
         expect(closeButton).toBeDefined()
@@ -716,7 +718,7 @@ describe('src/components/shareBoard/shareBoard', () => {
             userEvent.click(selectElement!)
         })
 
-        expect(mockedOctoClient.searchUserChannels).not.toBeCalled()
+        expect(mockedOctoClient.searchUserChannels).not.toHaveBeenCalled()
         expect(container).toMatchSnapshot()
     })
 })

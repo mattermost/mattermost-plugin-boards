@@ -17,7 +17,7 @@ import {IUser} from '../../user'
 import AttachmentElement from './attachmentElement'
 
 jest.mock('../../octoClient')
-const mockedOcto = mocked(octoClient, true)
+const mockedOcto = mocked(octoClient)
 mockedOcto.getFileAsDataUrl.mockResolvedValue({url: 'test.txt'})
 mockedOcto.getFileInfo.mockResolvedValue({
     name: 'test.txt',

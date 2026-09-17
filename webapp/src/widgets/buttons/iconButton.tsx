@@ -16,7 +16,7 @@ type Props = {
     onMouseDown?: (e: React.MouseEvent<HTMLButtonElement>) => void
 }
 
-function IconButton(props: Props): JSX.Element {
+function IconButton(props: Props): React.JSX.Element {
     const classNames: Record<string, boolean> = {
         IconButton: true,
         'style--inverted': Boolean(props.inverted),

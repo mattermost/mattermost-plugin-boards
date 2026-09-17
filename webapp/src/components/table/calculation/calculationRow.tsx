@@ -23,7 +23,7 @@ type Props = {
     readonly: boolean
 }
 
-const CalculationRow = (props: Props): JSX.Element => {
+const CalculationRow = (props: Props): React.JSX.Element => {
     const {board, cards, activeView, readonly} = props
     const toggleOptions = (templateId: string, show: boolean) => {
         const newShowOptions = new Map<string, boolean>(showOptions)

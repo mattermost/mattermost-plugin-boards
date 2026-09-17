@@ -13,7 +13,7 @@ type SwitchOptionProps = MenuOptionProps & {
     suppressItemClicked?: boolean
 }
 
-function SwitchOption(props: SwitchOptionProps): JSX.Element {
+function SwitchOption(props: SwitchOptionProps): React.JSX.Element {
     const {name, icon, isOn, suppressItemClicked} = props
 
     return (

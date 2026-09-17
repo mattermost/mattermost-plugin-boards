@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`components/cardDetail/CardDetail should render hidden view if limited 1`] = `
 <div>
@@ -426,7 +426,6 @@ exports[`components/cardDetail/CardDetail should show add description tour tip 1
                 <span>
                   Done
                 </span>
-                
               </button>
             </div>
           </div>

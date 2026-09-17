@@ -13,7 +13,7 @@ type Props = {
     fileInfo: FileInfo
 }
 
-const ArchivedFile = (props: Props): JSX.Element => {
+const ArchivedFile = (props: Props): React.JSX.Element => {
     const fileName = useCallback(() => props.fileInfo.name || 'untitled file', [props.fileInfo.name])
 
     const fileExtension = useCallback(() => {

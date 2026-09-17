@@ -14,7 +14,7 @@ import {contentRegistry} from '../content/contentRegistry'
 
 import {useCardDetailContext} from './cardDetailContext'
 
-function addContentMenu(intl: IntlShape, type: BlockTypes): JSX.Element {
+function addContentMenu(intl: IntlShape, type: BlockTypes): React.JSX.Element {
     const handler = contentRegistry.getHandler(type)
     if (!handler) {
         Utils.logError(`addContentMenu, unknown content type: ${type}`)

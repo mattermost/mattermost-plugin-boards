@@ -71,7 +71,7 @@ const selectStyles = {
     }),
 }
 
-const PersonSelector = (props: Props): JSX.Element => {
+const PersonSelector = (props: Props): React.JSX.Element => {
     const {readOnly, userIDs, allowAddUsers, isMulti, closeMenuOnSelect = true, emptyDisplayValue, showMe = false, onChange} = props
 
     const clientConfig = useAppSelector<ClientConfig>(getClientConfig)
@@ -82,7 +82,7 @@ const PersonSelector = (props: Props): JSX.Element => {
     const boardUsersKey = Object.keys(boardUsersById) ? Utils.hashCode(JSON.stringify(Object.keys(boardUsersById))) : 0
     const me = useAppSelector<IUser|null>(getMe)
 
-    const formatOptionLabel = (user: any): JSX.Element => {
+    const formatOptionLabel = (user: any): React.JSX.Element => {
         if (!user) {
             return <div/>
         }

@@ -14,7 +14,7 @@ type Props = {
     showHiddenCardNotification: (show: boolean) => void
 }
 
-const HiddenCardCount = (props: Props): JSX.Element => {
+const HiddenCardCount = (props: Props): React.JSX.Element => {
     const intl = useIntl()
 
     const onClickHandler = () => {

@@ -24,8 +24,8 @@ import ViewHeaderActionsMenu from './viewHeaderActionsMenu'
 jest.mock('../../archiver')
 jest.mock('../../csvExporter')
 jest.mock('../../mutator')
-const mockedArchiver = mocked(Archiver, true)
-const mockedCsvExporter = mocked(CsvExporter, true)
+const mockedArchiver = mocked(Archiver)
+const mockedCsvExporter = mocked(CsvExporter)
 
 const board = TestBlockFactory.createBoard()
 const activeView = TestBlockFactory.createBoardView(board)
@@ -81,7 +81,7 @@ describe('components/viewHeader/viewHeaderActionsMenu', () => {
         expect(container).toMatchSnapshot()
         const buttonExportCSV = screen.getByRole('button', {name: 'Export to CSV'})
         userEvent.click(buttonExportCSV)
-        expect(mockedCsvExporter.exportTableCsv).toBeCalledTimes(1)
+        expect(mockedCsvExporter.exportTableCsv).toHaveBeenCalledTimes(1)
     })
 
     test('return menu and verify call to board archive', () => {
@@ -101,7 +101,7 @@ describe('components/viewHeader/viewHeaderActionsMenu', () => {
         expect(container).toMatchSnapshot()
         const buttonExportBoardArchive = screen.getByRole('button', {name: 'Export board archive'})
         userEvent.click(buttonExportBoardArchive)
-        expect(mockedArchiver.exportBoardArchive).toBeCalledTimes(1)
-        expect(mockedArchiver.exportBoardArchive).toBeCalledWith(board)
+        expect(mockedArchiver.exportBoardArchive).toHaveBeenCalledTimes(1)
+        expect(mockedArchiver.exportBoardArchive).toHaveBeenCalledWith(board)
     })
 })

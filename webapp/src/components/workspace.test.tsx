@@ -9,7 +9,7 @@ import {mocked} from 'jest-mock'
 
 import userEvent from '@testing-library/user-event'
 
-import thunk from 'redux-thunk'
+import {thunk} from 'redux-thunk'
 
 import {IUser} from '../user'
 import octoClient from '../octoClient'
@@ -25,8 +25,8 @@ jest.useFakeTimers()
 jest.mock('../utils')
 jest.mock('../octoClient')
 jest.mock('draft-js/lib/generateRandomKey', () => () => '123')
-const mockedUtils = mocked(Utils, true)
-const mockedOctoClient = mocked(octoClient, true)
+const mockedUtils = mocked(Utils)
+const mockedOctoClient = mocked(octoClient)
 const board = TestBlockFactory.createBoard()
 board.id = 'board1'
 board.teamId = 'team-id'
@@ -221,10 +221,11 @@ describe('src/components/workspace', () => {
             ), {wrapper: MemoryRouter})
             container = result.container
             jest.runOnlyPendingTimers()
-            const cardElements = container!.querySelectorAll('.KanbanCard')
-            expect(cardElements).toBeDefined()
-            const cardElement = cardElements[0]
-            userEvent.click(cardElement)
+        })
+        const cardElements = container!.querySelectorAll('.KanbanCard')
+        expect(cardElements.length).toBeGreaterThan(0)
+        await act(async () => {
+            userEvent.click(cardElements[0])
         })
         expect(container).toMatchSnapshot()
     })
@@ -239,13 +240,14 @@ describe('src/components/workspace', () => {
             ), {wrapper: MemoryRouter})
             container = result.container
             jest.runOnlyPendingTimers()
-            const cardElements = container!.querySelectorAll('.KanbanCard')
-            expect(cardElements).toBeDefined()
-            const cardElement = cardElements[0]
-            userEvent.click(cardElement)
+        })
+        const cardElements = container!.querySelectorAll('.KanbanCard')
+        expect(cardElements.length).toBeGreaterThan(0)
+        await act(async () => {
+            userEvent.click(cardElements[0])
         })
         expect(container).toMatchSnapshot()
-        expect(mockedUtils.getReadToken).toBeCalledTimes(1)
+        expect(mockedUtils.getReadToken).toHaveBeenCalledTimes(1)
     })
 
     test('return workspace with BoardTemplateSelector component', async () => {
@@ -512,7 +514,7 @@ describe('src/components/workspace', () => {
 
         jest.runOnlyPendingTimers()
 
-        await waitFor(() => expect(document.querySelectorAll('.AddViewTourStep')).toBeDefined(), {timeout: 5000})
+        await waitFor(() => expect(document.querySelectorAll('.AddViewTourStep').length).toBe(2), {timeout: 5000})
 
         const elements = document.querySelectorAll('.AddViewTourStep')
         expect(elements.length).toBe(2)

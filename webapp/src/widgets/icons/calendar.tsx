@@ -6,7 +6,7 @@ import React from 'react'
 
 import './calendar.scss'
 
-export default function CalendarIcon(): JSX.Element {
+export default function CalendarIcon(): React.JSX.Element {
     return (
         <svg
             width='24'

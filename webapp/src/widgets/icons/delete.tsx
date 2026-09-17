@@ -8,7 +8,7 @@ import CompassIcon from './compassIcon'
 
 import './delete.scss'
 
-export default function DeleteIcon(): JSX.Element {
+export default function DeleteIcon(): React.JSX.Element {
     return (
         <CompassIcon
             icon='trash-can-outline'

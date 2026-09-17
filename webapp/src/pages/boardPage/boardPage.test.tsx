@@ -11,7 +11,7 @@ import {render, waitFor} from '@testing-library/react'
 import {Provider as ReduxProvider} from 'react-redux'
 
 import configureStore from 'redux-mock-store'
-import thunk from 'redux-thunk'
+import {thunk} from 'redux-thunk'
 
 import {mocked} from 'jest-mock'
 

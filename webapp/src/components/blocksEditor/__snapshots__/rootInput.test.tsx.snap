@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`components/blocksEditor/rootInput should match Display snapshot 1`] = `
 <div>
@@ -15,9 +15,15 @@ exports[`components/blocksEditor/rootInput should match Display snapshot 1`] = `
         option , selected.
       </span>
       <span
-        id="aria-context"
+        id="aria-focused"
+      />
+      <span
+        id="aria-results"
+      />
+      <span
+        id="aria-guidance"
       >
-          Select is focused ,type to refine list, press Down to open the menu, 
+        Select is focused ,type to refine list, press Down to open the menu, 
       </span>
     </span>
     <span
@@ -25,18 +31,20 @@ exports[`components/blocksEditor/rootInput should match Display snapshot 1`] = `
       aria-live="polite"
       aria-relevant="additions text"
       class="css-1f43avz-a11yText-A11yText"
+      role="log"
     />
     <div
-      class=" css-a5687m-control"
+      class="css-a5687m-control"
     >
       <div
-        class=" css-b2z5qd-ValueContainer"
+        class="css-1neafsd"
       >
         <div
-          class=" css-1qgh1u0-Input"
+          class="css-vy475m"
           data-value="test-value"
         >
           <input
+            aria-activedescendant=""
             aria-autocomplete="list"
             aria-describedby="react-select-2-placeholder"
             aria-expanded="false"
@@ -48,7 +56,7 @@ exports[`components/blocksEditor/rootInput should match Display snapshot 1`] = `
             id="react-select-2-input"
             role="combobox"
             spellcheck="false"
-            style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+            style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
             tabindex="0"
             type="text"
             value="test-value"
@@ -56,7 +64,7 @@ exports[`components/blocksEditor/rootInput should match Display snapshot 1`] = `
         </div>
       </div>
       <div
-        class=" css-1hb7zxy-IndicatorsContainer"
+        class="css-1wy0on6"
       />
     </div>
   </div>
@@ -78,9 +86,15 @@ exports[`components/blocksEditor/rootInput should match Input snapshot 1`] = `
         option , selected.
       </span>
       <span
-        id="aria-context"
+        id="aria-focused"
+      />
+      <span
+        id="aria-results"
+      />
+      <span
+        id="aria-guidance"
       >
-          Select is focused ,type to refine list, press Down to open the menu, 
+        Select is focused ,type to refine list, press Down to open the menu, 
       </span>
     </span>
     <span
@@ -88,18 +102,20 @@ exports[`components/blocksEditor/rootInput should match Input snapshot 1`] = `
       aria-live="polite"
       aria-relevant="additions text"
       class="css-1f43avz-a11yText-A11yText"
+      role="log"
     />
     <div
-      class=" css-a5687m-control"
+      class="css-a5687m-control"
     >
       <div
-        class=" css-b2z5qd-ValueContainer"
+        class="css-1neafsd"
       >
         <div
-          class=" css-1qgh1u0-Input"
+          class="css-vy475m"
           data-value="test-value"
         >
           <input
+            aria-activedescendant=""
             aria-autocomplete="list"
             aria-describedby="react-select-3-placeholder"
             aria-expanded="false"
@@ -111,7 +127,7 @@ exports[`components/blocksEditor/rootInput should match Input snapshot 1`] = `
             id="react-select-3-input"
             role="combobox"
             spellcheck="false"
-            style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+            style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
             tabindex="0"
             type="text"
             value="test-value"
@@ -119,7 +135,7 @@ exports[`components/blocksEditor/rootInput should match Input snapshot 1`] = `
         </div>
       </div>
       <div
-        class=" css-1hb7zxy-IndicatorsContainer"
+        class="css-1wy0on6"
       />
     </div>
   </div>
@@ -140,39 +156,48 @@ exports[`components/blocksEditor/rootInput should match Input snapshot with menu
       aria-live="polite"
       aria-relevant="additions text"
       class="css-1f43avz-a11yText-A11yText"
+      role="log"
     >
       <span
         id="aria-selection"
       />
       <span
-        id="aria-context"
+        id="aria-focused"
+      />
+      <span
+        id="aria-results"
       >
-        option /title Creates a new Title block. focused, 1 of 11. 11 results available. Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.
+        11 results available.
+      </span>
+      <span
+        id="aria-guidance"
+      >
+        Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.
       </span>
     </span>
     <div
-      class=" css-a5687m-control"
+      class="css-a5687m-control"
     >
       <div
-        class=" css-b2z5qd-ValueContainer"
+        class="css-1neafsd"
       >
         <div
-          class=" css-1jqq78o-placeholder"
+          class="css-1jqq78o-placeholder"
           id="react-select-4-placeholder"
         >
           Introduce your text or your slash command
         </div>
         <div
-          class=" css-26cneq-Input"
+          class="css-x14nly"
           data-value=""
         >
           <input
+            aria-activedescendant="react-select-4-option-0"
             aria-autocomplete="list"
             aria-controls="react-select-4-listbox"
             aria-describedby="react-select-4-placeholder"
             aria-expanded="true"
             aria-haspopup="true"
-            aria-owns="react-select-4-listbox"
             autocapitalize="none"
             autocomplete="off"
             autocorrect="off"
@@ -180,7 +205,7 @@ exports[`components/blocksEditor/rootInput should match Input snapshot with menu
             id="react-select-4-input"
             role="combobox"
             spellcheck="false"
-            style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+            style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
             tabindex="0"
             type="text"
             value=""
@@ -188,103 +213,127 @@ exports[`components/blocksEditor/rootInput should match Input snapshot with menu
         </div>
       </div>
       <div
-        class=" css-1hb7zxy-IndicatorsContainer"
+        class="css-1wy0on6"
       />
     </div>
     <div
-      class=" css-u0i6pk-MenuPortal"
+      class="css-1aj7brc"
     >
       <div
-        class=" css-45h7mv-menu"
-        id="react-select-4-listbox"
+        class="css-45h7mv-menu"
       >
         <div
-          class=" css-1d1qzc4-MenuList"
+          aria-multiselectable="false"
+          class="css-1fmksep"
+          id="react-select-4-listbox"
+          role="listbox"
         >
           <div
             aria-disabled="false"
-            class=" css-8e5kjb-option"
+            aria-selected="false"
+            class="css-8e5kjb-option"
             id="react-select-4-option-0"
+            role="option"
             tabindex="-1"
           >
             /title Creates a new Title block.
           </div>
           <div
             aria-disabled="false"
-            class=" css-x3yilo-option"
+            aria-selected="false"
+            class="css-x3yilo-option"
             id="react-select-4-option-1"
+            role="option"
             tabindex="-1"
           >
             /subtitle Creates a new Sub title block.
           </div>
           <div
             aria-disabled="false"
-            class=" css-x3yilo-option"
+            aria-selected="false"
+            class="css-x3yilo-option"
             id="react-select-4-option-2"
+            role="option"
             tabindex="-1"
           >
             /subsubtitle Creates a new Sub Sub title block.
           </div>
           <div
             aria-disabled="false"
-            class=" css-x3yilo-option"
+            aria-selected="false"
+            class="css-x3yilo-option"
             id="react-select-4-option-3"
+            role="option"
             tabindex="-1"
           >
             /image Creates a new Image block.
           </div>
           <div
             aria-disabled="false"
-            class=" css-x3yilo-option"
+            aria-selected="false"
+            class="css-x3yilo-option"
             id="react-select-4-option-4"
+            role="option"
             tabindex="-1"
           >
             /text Creates a new Text block.
           </div>
           <div
             aria-disabled="false"
-            class=" css-x3yilo-option"
+            aria-selected="false"
+            class="css-x3yilo-option"
             id="react-select-4-option-5"
+            role="option"
             tabindex="-1"
           >
             /divider Creates a new Divider block.
           </div>
           <div
             aria-disabled="false"
-            class=" css-x3yilo-option"
+            aria-selected="false"
+            class="css-x3yilo-option"
             id="react-select-4-option-6"
+            role="option"
             tabindex="-1"
           >
             /list-item Creates a new List item block.
           </div>
           <div
             aria-disabled="false"
-            class=" css-x3yilo-option"
+            aria-selected="false"
+            class="css-x3yilo-option"
             id="react-select-4-option-7"
+            role="option"
             tabindex="-1"
           >
             /attachment Creates a new Attachment block.
           </div>
           <div
             aria-disabled="false"
-            class=" css-x3yilo-option"
+            aria-selected="false"
+            class="css-x3yilo-option"
             id="react-select-4-option-8"
+            role="option"
             tabindex="-1"
           >
             /quote Creates a new Quote block.
           </div>
           <div
             aria-disabled="false"
-            class=" css-x3yilo-option"
+            aria-selected="false"
+            class="css-x3yilo-option"
             id="react-select-4-option-9"
+            role="option"
             tabindex="-1"
           >
             /video Creates a new Video block.
           </div>
           <div
             aria-disabled="false"
-            class=" css-x3yilo-option"
+            aria-selected="false"
+            class="css-x3yilo-option"
             id="react-select-4-option-10"
+            role="option"
             tabindex="-1"
           >
             /checkbox Creates a new Checkbox block.

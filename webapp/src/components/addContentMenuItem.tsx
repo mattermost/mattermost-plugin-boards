@@ -20,7 +20,7 @@ type Props = {
     cords: {x: number, y?: number, z?: number}
 }
 
-const AddContentMenuItem = (props: Props): JSX.Element => {
+const AddContentMenuItem = (props: Props): React.JSX.Element => {
     const {card, type, cords} = props
     const index = cords.x
     const intl = useIntl()

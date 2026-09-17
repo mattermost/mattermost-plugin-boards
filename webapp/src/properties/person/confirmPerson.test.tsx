@@ -31,8 +31,8 @@ import ConfirmPerson from './confirmPerson'
 jest.mock('../../mutator')
 jest.mock('../../octoClient')
 
-const mockedMutator = mocked(mutator, true)
-const mockedOctoClient = mocked(client, true)
+const mockedMutator = mocked(mutator)
+const mockedOctoClient = mocked(client)
 
 const board = TestBlockFactory.createBoard()
 board.teamId = 'team-id-1'
@@ -176,7 +176,7 @@ describe('properties/person', () => {
             expect(confirmButton).toBeDefined()
             userEvent.click(confirmButton)
 
-            expect(mockedMutator.createBoardMember).toBeCalled()
+            expect(mockedMutator.createBoardMember).toHaveBeenCalled()
         } else {
             throw new Error('container should have been initialized')
         }
@@ -230,7 +230,7 @@ describe('properties/person', () => {
             expect(cancelButton).toBeDefined()
             userEvent.click(cancelButton)
 
-            expect(mockedMutator.createBoardMember).not.toBeCalled()
+            expect(mockedMutator.createBoardMember).not.toHaveBeenCalled()
         } else {
             throw new Error('container should have been initialized')
         }

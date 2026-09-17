@@ -6,7 +6,7 @@ import React from 'react'
 
 import './logoWithNameWhite.scss'
 
-export default function LogoWithNameWhiteIcon(): JSX.Element {
+export default function LogoWithNameWhiteIcon(): React.JSX.Element {
     return (
         <svg
             className='LogoWithNameWhiteIcon Icon'

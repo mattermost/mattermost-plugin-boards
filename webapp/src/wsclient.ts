@@ -372,10 +372,30 @@ class WSClient {
                 }
             }
 
-            this.client.addFirstConnectListener(onConnect)
+            // onConnect is not idempotent, so make sure the initial connection is
+            // only ever set up once regardless of which path detects it.
+            let connectHandled = false
+            const onFirstConnect = () => {
+                if (connectHandled) {
+                    return
+                }
+                connectHandled = true
+                onConnect()
+            }
+
+            this.client.addFirstConnectListener(onFirstConnect)
             this.client.addErrorListener(onError)
             this.client.addCloseListener(onClose)
             this.client.addReconnectListener(onReconnect)
+
+            // Components mount and register their subscriptions before this runs
+            // (child effects fire before the parent's), so on a full page load the
+            // host connection is usually open already and addFirstConnectListener
+            // never fires for it. Set up here instead, otherwise those subscriptions
+            // are never sent and state stays 'init'.
+            if (this.client.conn?.readyState === WebSocket.OPEN) {
+                onFirstConnect()
+            }
 
             return
         }

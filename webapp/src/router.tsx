@@ -203,7 +203,7 @@ type Props = {
     history?: History<unknown>
 }
 
-const FocalboardRouter = (props: Props): JSX.Element => {
+const FocalboardRouter = (props: Props): React.JSX.Element => {
 
     let browserHistory: History<unknown>
     if (props.history) {

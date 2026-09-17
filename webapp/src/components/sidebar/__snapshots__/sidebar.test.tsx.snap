@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`components/sidebarSidebar dont show hidden boards 1`] = `
 <div>
@@ -51,9 +51,9 @@ exports[`components/sidebarSidebar dont show hidden boards 1`] = `
                   >
                     <div
                       class="version"
-                      title="v0.0.0"
+                      title="v1.0.0"
                     >
-                      v0.0.0
+                      v1.0.0
                     </div>
                   </div>
                 </div>
@@ -108,29 +108,29 @@ exports[`components/sidebarSidebar dont show hidden boards 1`] = `
     </div>
     <div
       class="octo-sidebar-list"
-      data-rbd-droppable-context-id="2"
-      data-rbd-droppable-id="lhs-categories"
+      data-rfd-droppable-context-id="_r_c_"
+      data-rfd-droppable-id="lhs-categories"
     >
       <div
-        data-rbd-draggable-context-id="2"
-        data-rbd-draggable-id="category1"
+        data-rfd-draggable-context-id="_r_c_"
+        data-rfd-draggable-id="category1"
       >
         <div
           class="SidebarCategory"
         >
           <div
             class="categoryBoardsDroppableArea"
-            data-rbd-droppable-context-id="2"
-            data-rbd-droppable-id="category1"
+            data-rfd-droppable-context-id="_r_c_"
+            data-rfd-droppable-id="category1"
           >
             <div
               class="octo-sidebar-item category expanded "
             >
               <div
-                aria-describedby="rbd-hidden-text-2-hidden-text-10"
+                aria-describedby="rfd-hidden-text-_r_c_-hidden-text-_r_d_"
                 class="octo-sidebar-title category-title"
-                data-rbd-drag-handle-context-id="2"
-                data-rbd-drag-handle-draggable-id="category1"
+                data-rfd-drag-handle-context-id="_r_c_"
+                data-rfd-drag-handle-draggable-id="category1"
                 draggable="false"
                 role="button"
                 tabindex="0"
@@ -252,9 +252,9 @@ exports[`components/sidebarSidebar should assign default category if current boa
                   >
                     <div
                       class="version"
-                      title="v0.0.0"
+                      title="v1.0.0"
                     >
-                      v0.0.0
+                      v1.0.0
                     </div>
                   </div>
                 </div>
@@ -309,29 +309,29 @@ exports[`components/sidebarSidebar should assign default category if current boa
     </div>
     <div
       class="octo-sidebar-list"
-      data-rbd-droppable-context-id="4"
-      data-rbd-droppable-id="lhs-categories"
+      data-rfd-droppable-context-id="_r_p_"
+      data-rfd-droppable-id="lhs-categories"
     >
       <div
-        data-rbd-draggable-context-id="4"
-        data-rbd-draggable-id="category1"
+        data-rfd-draggable-context-id="_r_p_"
+        data-rfd-draggable-id="category1"
       >
         <div
           class="SidebarCategory"
         >
           <div
             class="categoryBoardsDroppableArea"
-            data-rbd-droppable-context-id="4"
-            data-rbd-droppable-id="category1"
+            data-rfd-droppable-context-id="_r_p_"
+            data-rfd-droppable-id="category1"
           >
             <div
               class="octo-sidebar-item category expanded "
             >
               <div
-                aria-describedby="rbd-hidden-text-4-hidden-text-21"
+                aria-describedby="rfd-hidden-text-_r_p_-hidden-text-_r_q_"
                 class="octo-sidebar-title category-title"
-                data-rbd-drag-handle-context-id="4"
-                data-rbd-drag-handle-draggable-id="category1"
+                data-rfd-drag-handle-context-id="_r_p_"
+                data-rfd-drag-handle-draggable-id="category1"
                 draggable="false"
                 role="button"
                 tabindex="0"
@@ -368,25 +368,25 @@ exports[`components/sidebarSidebar should assign default category if current boa
         </div>
       </div>
       <div
-        data-rbd-draggable-context-id="4"
-        data-rbd-draggable-id="default_category"
+        data-rfd-draggable-context-id="_r_p_"
+        data-rfd-draggable-id="default_category"
       >
         <div
           class="SidebarCategory"
         >
           <div
             class="categoryBoardsDroppableArea"
-            data-rbd-droppable-context-id="4"
-            data-rbd-droppable-id="default_category"
+            data-rfd-droppable-context-id="_r_p_"
+            data-rfd-droppable-id="default_category"
           >
             <div
               class="octo-sidebar-item category expanded "
             >
               <div
-                aria-describedby="rbd-hidden-text-4-hidden-text-21"
+                aria-describedby="rfd-hidden-text-_r_p_-hidden-text-_r_q_"
                 class="octo-sidebar-title category-title"
-                data-rbd-drag-handle-context-id="4"
-                data-rbd-drag-handle-draggable-id="default_category"
+                data-rfd-drag-handle-context-id="_r_p_"
+                data-rfd-drag-handle-draggable-id="default_category"
                 draggable="false"
                 role="button"
                 tabindex="0"
@@ -508,9 +508,9 @@ exports[`components/sidebarSidebar shouldnt do any category assignment is board 
                   >
                     <div
                       class="version"
-                      title="v0.0.0"
+                      title="v1.0.0"
                     >
-                      v0.0.0
+                      v1.0.0
                     </div>
                   </div>
                 </div>
@@ -565,29 +565,29 @@ exports[`components/sidebarSidebar shouldnt do any category assignment is board 
     </div>
     <div
       class="octo-sidebar-list"
-      data-rbd-droppable-context-id="5"
-      data-rbd-droppable-id="lhs-categories"
+      data-rfd-droppable-context-id="_r_10_"
+      data-rfd-droppable-id="lhs-categories"
     >
       <div
-        data-rbd-draggable-context-id="5"
-        data-rbd-draggable-id="category1"
+        data-rfd-draggable-context-id="_r_10_"
+        data-rfd-draggable-id="category1"
       >
         <div
           class="SidebarCategory"
         >
           <div
             class="categoryBoardsDroppableArea"
-            data-rbd-droppable-context-id="5"
-            data-rbd-droppable-id="category1"
+            data-rfd-droppable-context-id="_r_10_"
+            data-rfd-droppable-id="category1"
           >
             <div
               class="octo-sidebar-item category expanded "
             >
               <div
-                aria-describedby="rbd-hidden-text-5-hidden-text-27"
+                aria-describedby="rfd-hidden-text-_r_10_-hidden-text-_r_11_"
                 class="octo-sidebar-title category-title"
-                data-rbd-drag-handle-context-id="5"
-                data-rbd-drag-handle-draggable-id="category1"
+                data-rfd-drag-handle-context-id="_r_10_"
+                data-rfd-drag-handle-draggable-id="category1"
                 draggable="false"
                 role="button"
                 tabindex="0"
@@ -624,25 +624,25 @@ exports[`components/sidebarSidebar shouldnt do any category assignment is board 
         </div>
       </div>
       <div
-        data-rbd-draggable-context-id="5"
-        data-rbd-draggable-id="category2"
+        data-rfd-draggable-context-id="_r_10_"
+        data-rfd-draggable-id="category2"
       >
         <div
           class="SidebarCategory"
         >
           <div
             class="categoryBoardsDroppableArea"
-            data-rbd-droppable-context-id="5"
-            data-rbd-droppable-id="category2"
+            data-rfd-droppable-context-id="_r_10_"
+            data-rfd-droppable-id="category2"
           >
             <div
               class="octo-sidebar-item category expanded "
             >
               <div
-                aria-describedby="rbd-hidden-text-5-hidden-text-27"
+                aria-describedby="rfd-hidden-text-_r_10_-hidden-text-_r_11_"
                 class="octo-sidebar-title category-title"
-                data-rbd-drag-handle-context-id="5"
-                data-rbd-drag-handle-draggable-id="category2"
+                data-rfd-drag-handle-context-id="_r_10_"
+                data-rfd-drag-handle-draggable-id="category2"
                 draggable="false"
                 role="button"
                 tabindex="0"
@@ -676,14 +676,14 @@ exports[`components/sidebarSidebar shouldnt do any category assignment is board 
               </div>
             </div>
             <div
-              data-rbd-draggable-context-id="5"
-              data-rbd-draggable-id="board2"
+              data-rfd-draggable-context-id="_r_10_"
+              data-rfd-draggable-id="board2"
             >
               <div
-                aria-describedby="rbd-hidden-text-5-hidden-text-27"
+                aria-describedby="rfd-hidden-text-_r_10_-hidden-text-_r_11_"
                 class="SidebarBoardItem subitem "
-                data-rbd-drag-handle-context-id="5"
-                data-rbd-drag-handle-draggable-id="board2"
+                data-rfd-drag-handle-context-id="_r_10_"
+                data-rfd-drag-handle-draggable-id="board2"
                 draggable="false"
                 role="button"
                 tabindex="0"
@@ -721,25 +721,25 @@ exports[`components/sidebarSidebar shouldnt do any category assignment is board 
         </div>
       </div>
       <div
-        data-rbd-draggable-context-id="5"
-        data-rbd-draggable-id="default_category"
+        data-rfd-draggable-context-id="_r_10_"
+        data-rfd-draggable-id="default_category"
       >
         <div
           class="SidebarCategory"
         >
           <div
             class="categoryBoardsDroppableArea"
-            data-rbd-droppable-context-id="5"
-            data-rbd-droppable-id="default_category"
+            data-rfd-droppable-context-id="_r_10_"
+            data-rfd-droppable-id="default_category"
           >
             <div
               class="octo-sidebar-item category expanded "
             >
               <div
-                aria-describedby="rbd-hidden-text-5-hidden-text-27"
+                aria-describedby="rfd-hidden-text-_r_10_-hidden-text-_r_11_"
                 class="octo-sidebar-title category-title"
-                data-rbd-drag-handle-context-id="5"
-                data-rbd-drag-handle-draggable-id="default_category"
+                data-rfd-drag-handle-context-id="_r_10_"
+                data-rfd-drag-handle-draggable-id="default_category"
                 draggable="false"
                 role="button"
                 tabindex="0"
@@ -919,9 +919,9 @@ exports[`components/sidebarSidebar sidebar hidden 1`] = `
                   >
                     <div
                       class="version"
-                      title="v0.0.0"
+                      title="v1.0.0"
                     >
-                      v0.0.0
+                      v1.0.0
                     </div>
                   </div>
                 </div>
@@ -976,29 +976,29 @@ exports[`components/sidebarSidebar sidebar hidden 1`] = `
     </div>
     <div
       class="octo-sidebar-list"
-      data-rbd-droppable-context-id="0"
-      data-rbd-droppable-id="lhs-categories"
+      data-rfd-droppable-context-id="_r_0_"
+      data-rfd-droppable-id="lhs-categories"
     >
       <div
-        data-rbd-draggable-context-id="0"
-        data-rbd-draggable-id="category1"
+        data-rfd-draggable-context-id="_r_0_"
+        data-rfd-draggable-id="category1"
       >
         <div
           class="SidebarCategory"
         >
           <div
             class="categoryBoardsDroppableArea"
-            data-rbd-droppable-context-id="0"
-            data-rbd-droppable-id="category1"
+            data-rfd-droppable-context-id="_r_0_"
+            data-rfd-droppable-id="category1"
           >
             <div
               class="octo-sidebar-item category expanded "
             >
               <div
-                aria-describedby="rbd-hidden-text-0-hidden-text-0"
+                aria-describedby="rfd-hidden-text-_r_0_-hidden-text-_r_1_"
                 class="octo-sidebar-title category-title"
-                data-rbd-drag-handle-context-id="0"
-                data-rbd-drag-handle-draggable-id="category1"
+                data-rfd-drag-handle-context-id="_r_0_"
+                data-rfd-drag-handle-draggable-id="category1"
                 draggable="false"
                 role="button"
                 tabindex="0"
@@ -1032,14 +1032,14 @@ exports[`components/sidebarSidebar sidebar hidden 1`] = `
               </div>
             </div>
             <div
-              data-rbd-draggable-context-id="0"
-              data-rbd-draggable-id="board1"
+              data-rfd-draggable-context-id="_r_0_"
+              data-rfd-draggable-id="board1"
             >
               <div
-                aria-describedby="rbd-hidden-text-0-hidden-text-0"
+                aria-describedby="rfd-hidden-text-_r_0_-hidden-text-_r_1_"
                 class="SidebarBoardItem subitem "
-                data-rbd-drag-handle-context-id="0"
-                data-rbd-drag-handle-draggable-id="board1"
+                data-rfd-drag-handle-context-id="_r_0_"
+                data-rfd-drag-handle-draggable-id="board1"
                 draggable="false"
                 role="button"
                 tabindex="0"
@@ -1213,9 +1213,9 @@ exports[`components/sidebarSidebar some categories hidden 1`] = `
                   >
                     <div
                       class="version"
-                      title="v0.0.0"
+                      title="v1.0.0"
                     >
-                      v0.0.0
+                      v1.0.0
                     </div>
                   </div>
                 </div>
@@ -1270,29 +1270,29 @@ exports[`components/sidebarSidebar some categories hidden 1`] = `
     </div>
     <div
       class="octo-sidebar-list"
-      data-rbd-droppable-context-id="3"
-      data-rbd-droppable-id="lhs-categories"
+      data-rfd-droppable-context-id="_r_h_"
+      data-rfd-droppable-id="lhs-categories"
     >
       <div
-        data-rbd-draggable-context-id="3"
-        data-rbd-draggable-id="category1"
+        data-rfd-draggable-context-id="_r_h_"
+        data-rfd-draggable-id="category1"
       >
         <div
           class="SidebarCategory"
         >
           <div
             class="categoryBoardsDroppableArea"
-            data-rbd-droppable-context-id="3"
-            data-rbd-droppable-id="category1"
+            data-rfd-droppable-context-id="_r_h_"
+            data-rfd-droppable-id="category1"
           >
             <div
               class="octo-sidebar-item category expanded "
             >
               <div
-                aria-describedby="rbd-hidden-text-3-hidden-text-14"
+                aria-describedby="rfd-hidden-text-_r_h_-hidden-text-_r_i_"
                 class="octo-sidebar-title category-title"
-                data-rbd-drag-handle-context-id="3"
-                data-rbd-drag-handle-draggable-id="category1"
+                data-rfd-drag-handle-context-id="_r_h_"
+                data-rfd-drag-handle-draggable-id="category1"
                 draggable="false"
                 role="button"
                 tabindex="0"
@@ -1326,14 +1326,14 @@ exports[`components/sidebarSidebar some categories hidden 1`] = `
               </div>
             </div>
             <div
-              data-rbd-draggable-context-id="3"
-              data-rbd-draggable-id="board1"
+              data-rfd-draggable-context-id="_r_h_"
+              data-rfd-draggable-id="board1"
             >
               <div
-                aria-describedby="rbd-hidden-text-3-hidden-text-14"
+                aria-describedby="rfd-hidden-text-_r_h_-hidden-text-_r_i_"
                 class="SidebarBoardItem subitem "
-                data-rbd-drag-handle-context-id="3"
-                data-rbd-drag-handle-draggable-id="board1"
+                data-rfd-drag-handle-context-id="_r_h_"
+                data-rfd-drag-handle-draggable-id="board1"
                 draggable="false"
                 role="button"
                 tabindex="0"
@@ -1371,25 +1371,25 @@ exports[`components/sidebarSidebar some categories hidden 1`] = `
         </div>
       </div>
       <div
-        data-rbd-draggable-context-id="3"
-        data-rbd-draggable-id="categoryCollapsed"
+        data-rfd-draggable-context-id="_r_h_"
+        data-rfd-draggable-id="categoryCollapsed"
       >
         <div
           class="SidebarCategory"
         >
           <div
             class="categoryBoardsDroppableArea"
-            data-rbd-droppable-context-id="3"
-            data-rbd-droppable-id="categoryCollapsed"
+            data-rfd-droppable-context-id="_r_h_"
+            data-rfd-droppable-id="categoryCollapsed"
           >
             <div
               class="octo-sidebar-item category collapsed "
             >
               <div
-                aria-describedby="rbd-hidden-text-3-hidden-text-14"
+                aria-describedby="rfd-hidden-text-_r_h_-hidden-text-_r_i_"
                 class="octo-sidebar-title category-title"
-                data-rbd-drag-handle-context-id="3"
-                data-rbd-drag-handle-draggable-id="categoryCollapsed"
+                data-rfd-drag-handle-context-id="_r_h_"
+                data-rfd-drag-handle-draggable-id="categoryCollapsed"
                 draggable="false"
                 role="button"
                 tabindex="0"
