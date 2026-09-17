@@ -76,7 +76,7 @@ apply:
 
 ## Runs eslint and golangci-lint
 .PHONY: check-style
-check-style: webapp/node_modules
+check-style: apply webapp/node_modules
 	@echo Checking for style guide compliance
 
 ifneq ($(HAS_WEBAPP),)
@@ -101,7 +101,7 @@ templates-archive: ## Build templates archive file
 
 ## Builds the server, if it exists, for all supported architectures.
 .PHONY: server
-server: templates-archive
+server: apply templates-archive
 ifneq ($(HAS_SERVER),)
 	mkdir -p server/dist;
 ifeq ($(MM_DEBUG),)
@@ -123,7 +123,7 @@ endif
 
 ## Builds the server, if it exists, for Linux architectures only.
 .PHONY: server-linux
-server-linux: templates-archive
+server-linux: apply templates-archive
 ifneq ($(HAS_SERVER),)
 	mkdir -p server/dist;
 ifeq ($(MM_DEBUG),)
@@ -144,7 +144,7 @@ endif
 
 ## Generate dist and pack files for the webapp.
 .PHONY: webapp
-webapp: webapp/node_modules
+webapp: apply webapp/node_modules
 ifneq ($(HAS_WEBAPP),)
 ifeq ($(MM_DEBUG),)
 	cd webapp && $(NPM) run build;
@@ -263,7 +263,7 @@ detach: setup-attach
 ## Runs any lints and unit tests defined for the server and webapp, if they exist.
 .PHONY: test
 test: export FOCALBOARD_UNIT_TESTING=1
-test: webapp/node_modules
+test: apply webapp/node_modules
 ifneq ($(HAS_SERVER),)
 	$(GO) test -v $(GO_TEST_FLAGS) ./server/...
 endif
@@ -300,7 +300,7 @@ e2e-ci: e2e-install-browsers e2e-validate-shards
 
 ## Creates a coverage report for the server code.
 .PHONY: coverage
-coverage: webapp/node_modules
+coverage: apply webapp/node_modules
 ifneq ($(HAS_SERVER),)
 	$(GO) test $(GO_TEST_FLAGS) -coverprofile=server/coverage.txt ./server/...
 	$(GO) tool cover -html=server/coverage.txt
@@ -429,7 +429,7 @@ generate: ## Install and run code generators.
 
 server-ci: server-lint server-test ## Run linters and tests on server code.
 
-server-lint: ## Run linters on server code.
+server-lint: apply ## Run linters on server code.
 	@if ! [ -x "$$(command -v golangci-lint)" ]; then \
 		echo "golangci-lint is not installed. Please see https://github.com/golangci/golangci-lint#install-golangci-lint for installation instructions."; \
 		exit 1; \
@@ -442,12 +442,12 @@ modd-precheck:
 		exit 1; \
 	fi; \
 
-webapp-ci: ## Webapp CI: linting & testing.
+webapp-ci: apply ## Webapp CI: linting & testing.
 	cd webapp; npm run check
 	cd webapp; npm run test
 	cd webapp; npm run check-types
 
-webapp-test: ## jest tests for webapp
+webapp-test: apply ## jest tests for webapp
 	cd webapp; npm run test
 
 watch-plugin: modd-precheck ## Run and upload the plugin to a development server
@@ -456,7 +456,7 @@ watch-plugin: modd-precheck ## Run and upload the plugin to a development server
 live-watch-plugin: modd-precheck ## Run and update locally the plugin in the development server
 	make live-watch
 
-server-test: ## Run server tests
+server-test: apply ## Run server tests
 	@echo Starting tests for server
 	cd server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=plugin-profile.coverage -count=1 -timeout=30m ./...
 

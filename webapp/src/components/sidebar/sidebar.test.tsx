@@ -20,8 +20,11 @@ import {mockMatchMedia, wrapIntl} from '../../testUtils'
 
 import {TestBlockFactory} from '../../test/testBlockFactory'
 import octoClient from '../../../../webapp/src/octoClient'
+import {Constants} from '../../constants'
 
 import Sidebar from './sidebar'
+
+Object.defineProperty(Constants, 'versionString', {value: '1.0.0'})
 
 jest.mock('../../../../webapp/src/octoClient')
 const mockedOctoClient = mocked(octoClient)
