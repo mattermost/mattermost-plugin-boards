@@ -36,10 +36,8 @@ jobs:
         debug: false
         config-file: ./.github/codeql/codeql-config.yml              
     
-    # server/manifest.go and webapp/src/manifest.ts are generated, so autobuild
-    # cannot compile without them.
     - name: Generate plugin manifest
-      run: make apply
+      run: mkdir -p build/bin && make apply
 
     # Autobuild attempts to build any compiled languages
     - name: Autobuild
