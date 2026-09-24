@@ -477,7 +477,9 @@ swagger: ## Generate swagger API spec and clients based on it.
 PROTECTED_BRANCH := main
 APP_NAME    := $(shell basename -s .git `git config --get remote.origin.url`)
 CURRENT_VERSION := $(strip $(shell git describe --abbrev=0 --tags))
-LATEST_RELEASE_TAG_RAW := $(shell git tag -l "v*" --sort=-v:refname | grep -v '\-rc' | head -n 1 || true)
+# --merged keeps the base tag on this branch's history, so a patch cut from
+# release-9.4 counts from v9.4.0 rather than whatever main has since tagged.
+LATEST_RELEASE_TAG_RAW := $(shell git tag -l "v*" --sort=-v:refname --merged HEAD | grep -v '\-rc' | head -n 1 || true)
 LATEST_RELEASE_TAG := $(strip $(LATEST_RELEASE_TAG_RAW))
 ifeq ($(LATEST_RELEASE_TAG),)
 LATEST_RELEASE_TAG := $(CURRENT_VERSION)
