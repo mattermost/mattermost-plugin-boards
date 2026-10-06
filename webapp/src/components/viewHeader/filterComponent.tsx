@@ -59,9 +59,27 @@ export function nextFilterClause(board: Board, filters: FilterClause[]): FilterC
 }
 
 const FilterComponent = (props: Props): React.JSX.Element => {
-    const conditionClicked = (optionId: string, filter: FilterClause): void => {
-        const {activeView} = props
+    const {board, activeView} = props
 
+    // Ignore extra clicks until the view includes the last added clause.
+    // changeViewFilter PATCHes over the network; the view updates later.
+    const pendingPropertyIdRef = React.useRef<string | undefined>()
+    const [pendingPropertyId, setPendingPropertyId] = React.useState<string | undefined>()
+
+    const filters: FilterClause[] = activeView.fields.filter?.filters.filter((o) => !isAFilterGroupInstance(o)) as FilterClause[] || []
+    const filterPropertyKey = filters.map((f) => f.propertyId).join(',')
+
+    React.useEffect(() => {
+        if (!pendingPropertyId) {
+            return
+        }
+        if (filters.some((f) => f.propertyId === pendingPropertyId)) {
+            pendingPropertyIdRef.current = undefined
+            setPendingPropertyId(undefined)
+        }
+    }, [filterPropertyKey, pendingPropertyId, filters])
+
+    const conditionClicked = (optionId: string, filter: FilterClause): void => {
         const filterIndex = activeView.fields.filter.filters.indexOf(filter)
         Utils.assert(filterIndex >= 0, "Can't find filter")
 
@@ -76,24 +94,32 @@ const FilterComponent = (props: Props): React.JSX.Element => {
     }
 
     const addFilterClicked = () => {
-        const {board, activeView} = props
+        // Read the live view so a completed update is visible on the next
+        // click, while an in-flight PATCH (unchanged view) is ignored.
+        const currentFilters = activeView.fields.filter?.filters.filter((o) => !isAFilterGroupInstance(o)) as FilterClause[] || []
+        if (pendingPropertyIdRef.current && !currentFilters.some((f) => f.propertyId === pendingPropertyIdRef.current)) {
+            return
+        }
 
-        const filters = activeView.fields.filter?.filters.filter((o) => !isAFilterGroupInstance(o)) as FilterClause[] || []
-        const filter = nextFilterClause(board, filters)
+        const filter = nextFilterClause(board, currentFilters)
         if (!filter) {
             return
         }
 
+        pendingPropertyIdRef.current = filter.propertyId
+        setPendingPropertyId(filter.propertyId)
+
         const filterGroup = createFilterGroup(activeView.fields.filter)
         filterGroup.filters.push(filter)
 
-        mutator.changeViewFilter(board.id, activeView.id, activeView.fields.filter, filterGroup)
+        Promise.resolve(mutator.changeViewFilter(board.id, activeView.id, activeView.fields.filter, filterGroup)).catch(() => {
+            pendingPropertyIdRef.current = undefined
+            setPendingPropertyId(undefined)
+        })
     }
 
-    const {board, activeView} = props
-
-    const filters: FilterClause[] = activeView.fields.filter?.filters.filter((o) => !isAFilterGroupInstance(o)) as FilterClause[] || []
-    const canAddFilter = Boolean(nextFilterClause(board, filters))
+    const awaitingAdd = Boolean(pendingPropertyId && !filters.some((f) => f.propertyId === pendingPropertyId))
+    const canAddFilter = Boolean(nextFilterClause(board, filters)) && !awaitingAdd
 
     return (
         <Modal

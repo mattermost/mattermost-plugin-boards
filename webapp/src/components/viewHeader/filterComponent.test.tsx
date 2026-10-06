@@ -216,6 +216,32 @@ describe('components/viewHeader/filterComponent', () => {
         expect(mockedMutator.changeViewFilter).toHaveBeenCalledTimes(filterable.length + 1)
     })
 
+    test('rapid clicks before the view updates only persist one new clause', () => {
+        activeView.fields.filter.filters = []
+        mockedMutator.changeViewFilter.mockResolvedValue(undefined)
+
+        render(
+            wrapIntl(
+                <ReduxProvider store={store}>
+                    <FilterComponenet
+                        board={board}
+                        activeView={activeView}
+                        onClose={jest.fn()}
+                    />
+                </ReduxProvider>,
+            ),
+        )
+
+        const buttonAdd = screen.getByRole('button', {name: '+ Add filter'})
+        userEvent.click(buttonAdd)
+        userEvent.click(buttonAdd)
+        userEvent.click(buttonAdd)
+
+        expect(mockedMutator.changeViewFilter).toHaveBeenCalledTimes(1)
+        const newFilterGroup = mockedMutator.changeViewFilter.mock.calls[0][3] as FilterGroup
+        expect(newFilterGroup.filters).toHaveLength(1)
+    })
+
     test('add filter on a board with a person property uses a valid person condition', () => {
         const personBoard = TestBlockFactory.createBoard()
         personBoard.cardProperties = [{id: 'assignee', name: 'Assignee', type: 'person', options: []}]
