@@ -86,12 +86,18 @@ describe('utils', () => {
             expect(Utils.htmlFromMarkdown('[Open](jav&#x61;script:alert%281%29)')).toBe('<p>Open</p>')
             expect(Utils.htmlFromMarkdown('[Open](&#106;avascript:alert(1))')).toBe('<p>Open</p>')
             expect(Utils.htmlFromMarkdown('[Open](javascript&colon;alert(1))')).toBe('<p>Open</p>')
+            expect(Utils.htmlFromMarkdown('[Open](&amp;#x6a;avascript:alert(1))')).toBe('<p>Open</p>')
         })
 
         test('should not throw on malformed percent escapes in link hrefs', () => {
             expect(() => Utils.htmlFromMarkdown('[site](https://example.org/100%)')).not.toThrow()
             expect(() => Utils.htmlFromMarkdown('https://example.org/100%')).not.toThrow()
             expect(Utils.htmlFromMarkdown('[site](https://example.org/100%)')).toBe('<p><a target="_blank" rel="noreferrer" href="https://example.org/100%25" title="" onclick="">site</a></p>')
+        })
+
+        test('should not throw on unpaired surrogate numeric references in hrefs', () => {
+            expect(() => Utils.htmlFromMarkdown('[site](https://example.org/&#xD800;)')).not.toThrow()
+            expect(Utils.htmlFromMarkdown('[site](https://example.org/&#xD800;)')).toContain('site')
         })
     })
 

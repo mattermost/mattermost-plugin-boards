@@ -199,12 +199,12 @@ class Utils {
     // Named entities plus numeric references that include the required
     // semicolon, so query text like &b=2 is left alone.
     private static decodeMarkdownHrefEntities(href: string): string {
-        return Utils.htmlDecode(href).replace(/&#(x[0-9A-Fa-f]+|\d+);/g, (entity, n: string) => {
+        return Utils.htmlDecode(href).replace(/&#(x[0-9A-Fa-f]+|\d+);/g, (_, n: string) => {
             const code = n[0] === 'x' || n[0] === 'X' ? parseInt(n.slice(1), 16) : parseInt(n, 10)
-            if (!code) {
-                return entity
+            if (!Number.isFinite(code) || code <= 0 || code > 0x10FFFF || (code >= 0xD800 && code <= 0xDFFF)) {
+                return ''
             }
-            return String.fromCharCode(code)
+            return String.fromCodePoint(code)
         })
     }
 
@@ -309,19 +309,22 @@ class Utils {
     static getMarkdownRenderer(): marked.Renderer {
         const renderer = new marked.Renderer()
         renderer.link = (href, title, contents) => {
-            if (Utils.hasUnsafeMarkdownProtocol(href)) {
+            let decodedHref = Utils.decodeMarkdownHrefEntities(href || '')
+            if (Utils.hasUnsafeMarkdownProtocol(decodedHref)) {
                 return contents
             }
-            // Decode named and semicolon-terminated numeric entities so
-            // htmlEncode does not double-escape them. Do not use
-            // unescapeMarkdownHtmlEntities: optional semicolons would strip &b=.
-            let decodedHref = Utils.decodeMarkdownHrefEntities(href || '')
             try {
                 decodedHref = decodeURI(decodedHref)
             } catch {
                 // Malformed percent-escape (e.g. trailing "%"); keep the original href.
             }
-            const hrefAttr = Utils.htmlEncode(encodeURI(decodedHref))
+            let encodedHref = decodedHref
+            try {
+                encodedHref = encodeURI(decodedHref)
+            } catch {
+                return contents
+            }
+            const hrefAttr = Utils.htmlEncode(encodedHref)
             return '<a ' +
                 'target="_blank" ' +
                 'rel="noreferrer" ' +

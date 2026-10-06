@@ -114,6 +114,17 @@ describe('components/markdownPreview', () => {
             expect(container.textContent).toContain('Open')
         })
 
+        test('does not render nested-entity javascript: destinations as active links', () => {
+            const {container} = renderPreview('[Open](&amp;#x6a;avascript:alert(1))')
+
+            expect(container.querySelector('a')).not.toBeInTheDocument()
+            expect(container.textContent).toContain('Open')
+        })
+
+        test('does not throw when a href numeric entity is an unpaired surrogate', () => {
+            expect(() => renderPreview('[site](https://example.org/&#xD800;)')).not.toThrow()
+        })
+
         test('renders empty text without throwing', () => {
             const {container} = renderPreview('')
             expect(container.textContent).toBe('')
