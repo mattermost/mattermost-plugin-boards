@@ -1053,11 +1053,10 @@ func TestPermissionsCreateBoardBlocksFromSourceBoard(t *testing.T) {
 	t.Run("editor without access to the source board is denied", func(t *testing.T) {
 		url := fmt.Sprintf("/boards/%s/blocks?sourceBoardID=%s", destBoardID, secretBoard.ID)
 		response, err := clients.Editor.DoAPIPost(url, cardBlockBody())
+		require.ErrorContains(t, err, "access denied to source board")
+		require.NotNil(t, response)
 		defer response.Body.Close()
 		require.Equal(t, http.StatusForbidden, response.StatusCode)
-		// The client surfaces the error body on the returned error; assert the
-		// denial is the source-board gate and not an incidental 403.
-		require.ErrorContains(t, err, "access denied to source board")
 	})
 
 	t.Run("editor with access to the source board is allowed", func(t *testing.T) {
@@ -1092,7 +1091,9 @@ func TestPermissionsCreateBoardBlocksFromSourceBoard(t *testing.T) {
 		// sourceBoardID == destBoardID, which the editor can access, so the gate in
 		// layer #1 passes and the ownership check in layer #2 is what must reject.
 		url := fmt.Sprintf("/boards/%s/blocks?sourceBoardID=%s", destBoardID, destBoardID)
-		response, _ := clients.Editor.DoAPIPost(url, attachmentBlock)
+		response, err := clients.Editor.DoAPIPost(url, attachmentBlock)
+		require.Error(t, err)
+		require.NotNil(t, response)
 		defer response.Body.Close()
 		require.Equal(t, http.StatusForbidden, response.StatusCode)
 	})
