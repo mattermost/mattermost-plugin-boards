@@ -2,7 +2,7 @@
 // See LICENSE.txt for license information.
 
 import Editor from '@draft-js-plugins/editor'
-import createEmojiPlugin from '@draft-js-plugins/emoji'
+import createEmojiPlugin, {defaultTheme as defaultEmojiTheme} from '@draft-js-plugins/emoji'
 import '@draft-js-plugins/emoji/lib/plugin.css'
 import createMentionPlugin from '@draft-js-plugins/mention'
 import '@draft-js-plugins/mention/lib/plugin.css'
@@ -168,7 +168,18 @@ const MarkdownEditorInput = (props: Props): ReactElement => {
 
     const {MentionSuggestions, plugins, EmojiSuggestions} = useMemo(() => {
         const mentionPlugin = createMentionPlugin({mentionPrefix: '@'})
-        const emojiPlugin = createEmojiPlugin()
+
+        // createEmojiPlugin replaces its default theme rather than merging, so we spread
+        // defaultEmojiTheme to keep the plugin's layout/positioning styles and only append
+        // Boards-owned class names that we theme with the Mattermost CSS variables.
+        const emojiPlugin = createEmojiPlugin({
+            theme: {
+                ...defaultEmojiTheme,
+                emojiSuggestions: `${defaultEmojiTheme.emojiSuggestions} EmojiSuggestions`,
+                emojiSuggestionsEntry: `${defaultEmojiTheme.emojiSuggestionsEntry} EmojiSuggestions__entry`,
+                emojiSuggestionsEntryFocused: `${defaultEmojiTheme.emojiSuggestionsEntryFocused} EmojiSuggestions__entry EmojiSuggestions__entry--focused`,
+            },
+        })
         const markdownPlugin = createLiveMarkdownPlugin()
 
         // eslint-disable-next-line @typescript-eslint/no-shadow
