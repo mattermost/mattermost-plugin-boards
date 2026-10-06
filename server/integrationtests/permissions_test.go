@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -1096,6 +1098,22 @@ func TestPermissionsCreateBoardBlocksFromSourceBoard(t *testing.T) {
 		require.NotNil(t, response)
 		defer response.Body.Close()
 		require.Equal(t, http.StatusForbidden, response.StatusCode)
+
+		// A copy-then-403 regression would still fail the request, so also assert
+		// the destination gained neither an attachment block nor a stored file.
+		attachmentBlocks, listErr := th.Server.App().GetBlocks(destBoardID, "", model.TypeAttachment)
+		require.NoError(t, listErr)
+		require.Empty(t, attachmentBlocks)
+
+		sourceInfo, infoErr := th.Server.App().GetFileInfo(foreignFileID)
+		require.NoError(t, infoErr)
+		require.NotNil(t, sourceInfo)
+		_, srcStatErr := os.Stat(filepath.Join(th.Server.Config().FilesPath, sourceInfo.Path))
+		require.NoError(t, srcStatErr)
+
+		destCopies, globErr := filepath.Glob(filepath.Join(th.Server.Config().FilesPath, "boards", "*", destBoardID, "*"))
+		require.NoError(t, globErr)
+		require.Empty(t, destCopies)
 	})
 }
 
