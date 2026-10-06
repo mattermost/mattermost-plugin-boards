@@ -216,6 +216,43 @@ describe('components/viewHeader/filterComponent', () => {
         expect(mockedMutator.changeViewFilter).toHaveBeenCalledTimes(filterable.length + 1)
     })
 
+    test('clears pending add state when the active view changes', () => {
+        activeView.fields.filter.filters = []
+        mockedMutator.changeViewFilter.mockResolvedValue(undefined)
+
+        const {rerender} = render(
+            wrapIntl(
+                <ReduxProvider store={store}>
+                    <FilterComponenet
+                        board={board}
+                        activeView={activeView}
+                        onClose={jest.fn()}
+                    />
+                </ReduxProvider>,
+            ),
+        )
+
+        const buttonAdd = screen.getByRole('button', {name: '+ Add filter'})
+        userEvent.click(buttonAdd)
+        expect(buttonAdd).toBeDisabled()
+
+        const otherView = TestBlockFactory.createBoardView(board)
+        otherView.fields.filter.filters = []
+        rerender(
+            wrapIntl(
+                <ReduxProvider store={store}>
+                    <FilterComponenet
+                        board={board}
+                        activeView={otherView}
+                        onClose={jest.fn()}
+                    />
+                </ReduxProvider>,
+            ),
+        )
+
+        expect(screen.getByRole('button', {name: '+ Add filter'})).toBeEnabled()
+    })
+
     test('rapid clicks before the view updates only persist one new clause', () => {
         activeView.fields.filter.filters = []
         mockedMutator.changeViewFilter.mockResolvedValue(undefined)

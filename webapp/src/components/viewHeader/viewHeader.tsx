@@ -192,6 +192,7 @@ const ViewHeader = (props: Props) => {
                     </Button>
                     {showFilter &&
                     <FilterComponent
+                        key={activeView.id}
                         board={board}
                         activeView={activeView}
                         onClose={() => {

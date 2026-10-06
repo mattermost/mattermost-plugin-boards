@@ -70,6 +70,11 @@ const FilterComponent = (props: Props): React.JSX.Element => {
     const filterPropertyKey = filters.map((f) => f.propertyId).join(',')
 
     React.useEffect(() => {
+        pendingPropertyIdRef.current = undefined
+        setPendingPropertyId(undefined)
+    }, [activeView.id])
+
+    React.useEffect(() => {
         if (!pendingPropertyId) {
             return
         }
