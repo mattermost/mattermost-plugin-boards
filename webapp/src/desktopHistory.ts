@@ -58,7 +58,7 @@ export const handleBrowserHistoryMessage = (event: MessageEvent, history: Histor
     }
 }
 
-export function customHistory() {
+export function customHistory(): History {
     const history = createBrowserHistory({basename: Utils.getFrontendBaseURL()})
 
     if (Utils.isDesktop()) {
@@ -69,14 +69,41 @@ export function customHistory() {
         }
     }
 
-    return {
-        ...history,
-        push: (path: string, state?: unknown) => {
-            if (Utils.isDesktop()) {
-                doBrowserHistoryPush(`${boardsRouteBase}${path}`)
-            } else {
-                history.push(path, state as Record<string, never>)
-            }
-        },
+    // Patch push on the real history object rather than returning a spread
+    // copy. history v4 keeps `location`/`action` current by reassigning them on
+    // its own object, so a shallow copy would freeze `location` at init time and
+    // cause <Router> to render a stale board (MM-68337).
+    const originalPush = history.push.bind(history)
+    history.push = (path: string, state?: unknown) => {
+        if (Utils.isDesktop()) {
+            doBrowserHistoryPush(`${boardsRouteBase}${path}`)
+        } else {
+            originalPush(path, state as Record<string, never>)
+        }
+    }
+
+    return history
+}
+
+// Mattermost owns the browser URL and navigates through its own history
+// instance, so the Boards history never hears about a core navigation. Adopt the
+// current browser location before the first render so the router mounts the board
+// the URL actually points to instead of the previously visited one (MM-68337).
+export function syncHistoryWithBrowserLocation(history: History): void {
+    // Same source as the history basename so the two can never drift.
+    const base = Utils.getFrontendBaseURL()
+    const prefix = base.startsWith('/') ? base : `/${base}`
+
+    const {pathname, search, hash} = window.location
+    if (pathname !== prefix && !pathname.startsWith(`${prefix}/`)) {
+        return
+    }
+
+    const relativePath = pathname === prefix ? '/' : pathname.slice(prefix.length)
+    const target = `${relativePath}${search}${hash}`
+
+    const current = `${history.location.pathname}${history.location.search}${history.location.hash}`
+    if (current !== target) {
+        history.replace(target)
     }
 }
