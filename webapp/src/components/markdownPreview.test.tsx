@@ -107,6 +107,13 @@ describe('components/markdownPreview', () => {
             expect(container.textContent).toContain('Open')
         })
 
+        test('does not render javascript: destinations encoded as HTML entities as active links', () => {
+            const {container} = renderPreview('[Open](jav&#x61;script:alert%281%29)')
+
+            expect(container.querySelector('a')).not.toBeInTheDocument()
+            expect(container.textContent).toContain('Open')
+        })
+
         test('renders empty text without throwing', () => {
             const {container} = renderPreview('')
             expect(container.textContent).toBe('')

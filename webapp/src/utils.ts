@@ -306,10 +306,11 @@ class Utils {
             } catch {
                 // Malformed percent-escape (e.g. trailing "%"); keep the original href.
             }
+            const hrefAttr = Utils.htmlEncode(encodeURI(decodedHref))
             return '<a ' +
                 'target="_blank" ' +
                 'rel="noreferrer" ' +
-                `href="${encodeURI(decodedHref)}" ` +
+                `href="${hrefAttr}" ` +
                 `title="${title || ''}" ` +
                 `onclick="${(window.openInNewBrowser ? ' openInNewBrowser && openInNewBrowser(event.target.href);' : '')}"` +
             '>' + contents + '</a>'
@@ -329,8 +330,24 @@ class Utils {
     // marked's default link renderer only strips these schemes when `sanitize` is
     // true (deprecated / off by default). The custom renderer above must reject
     // them itself so htmlFromMarkdown never emits an active javascript:/data:/vbscript: href.
-    private static hasUnsafeMarkdownProtocol(href?: string): boolean {
-        const raw = href || ''
+    // Decode HTML character references first so jav&#x61;script: cannot bypass the check.
+    private static unescapeMarkdownHtmlEntities(html: string): string {
+        return html.replace(/&(#(?:\d+)|(?:#x[0-9A-Fa-f]+)|(?:\w+));?/ig, (_, n: string) => {
+            n = n.toLowerCase()
+            if (n === 'colon') {
+                return ':'
+            }
+            if (n.charAt(0) === '#') {
+                return n.charAt(1) === 'x' ?
+                    String.fromCharCode(parseInt(n.substring(2), 16)) :
+                    String.fromCharCode(+n.substring(1))
+            }
+            return ''
+        })
+    }
+
+    private static hasUnsafeMarkdownProtocol(href?: string | null): boolean {
+        const raw = Utils.unescapeMarkdownHtmlEntities(href || '')
         let decoded = raw
         try {
             decoded = decodeURIComponent(raw)
