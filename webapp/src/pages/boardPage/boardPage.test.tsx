@@ -129,25 +129,35 @@ describe('pages/boardPage', () => {
         return {store, ...rendered}
     }
 
-    test('deleted board (404) navigates to the team page and does not attempt to join', async () => {
+    test('deleted board (404) shows the board-not-found error and does not attempt to join', async () => {
         const history = createMemoryHistory()
         history.push('/team/team-id/deleted-board-id')
         history.push = jest.fn()
         const setLastBoardID = jest.spyOn(UserSettings, 'setLastBoardID')
+        const setLastViewId = jest.spyOn(UserSettings, 'setLastViewId')
 
         mockedOctoClient.probeBoard.mockResolvedValue(404)
 
-        const {store} = renderBoardPage(history)
+        const {store, queryByText} = renderBoardPage(history)
 
         await waitFor(() => {
-            expect(history.push).toHaveBeenCalledWith('/team/team-id')
+            expect(store.getActions()).toContainEqual(
+                {type: 'globalError/setGlobalError', payload: ErrorId.BoardNotFound},
+            )
         })
 
         expect(mockedOctoClient.probeBoard).toHaveBeenCalledWith('deleted-board-id')
         expect(mockedOctoClient.joinBoard).not.toHaveBeenCalled()
         expect(setLastBoardID).toHaveBeenCalledWith('team-id', null)
+        expect(setLastViewId).toHaveBeenCalledWith('deleted-board-id', null)
 
-        // A deleted board must never surface the access-denied page.
+        // A deleted board is never bounced to the team page...
+        expect(history.push).not.toHaveBeenCalledWith('/team/team-id')
+
+        // ...nor prompted to join...
+        expect(queryByText('Join private board')).not.toBeInTheDocument()
+
+        // ...and must never surface the access-denied page.
         expect(store.getActions()).not.toContainEqual(
             {type: 'globalError/setGlobalError', payload: ErrorId.AccessDenied},
         )

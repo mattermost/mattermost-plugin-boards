@@ -275,11 +275,10 @@ const BoardPage = (props: Props): React.JSX.Element => {
             try {
                 const status = await octoClient.probeBoard(boardId)
                 if (status === 404) {
-                    // Board was deleted — navigate to the team page so TeamToBoardAndViewRedirect
-                    // can redirect to the next available board or show the template selector.
+                    // Board was deleted — show the "Board not found" error page.
                     UserSettings.setLastBoardID(boardTeamId, null)
-                    const teamBasePath = match.path.split('/:boardId')[0]
-                    history.push(generatePath(teamBasePath, {teamId: boardTeamId}))
+                    UserSettings.setLastViewId(boardId, null)
+                    dispatch(setGlobalError(ErrorId.BoardNotFound))
                     return
                 }
                 if (status === 200 || status === 403) {
