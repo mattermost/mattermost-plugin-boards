@@ -300,7 +300,10 @@ class Utils {
             if (Utils.hasUnsafeMarkdownProtocol(href)) {
                 return contents
             }
-            let decodedHref = href || ''
+            // Decode marked/'<'-pre-escape entities so htmlEncode does not
+            // turn &lt; into &amp;lt;. Skip unescapeMarkdownHtmlEntities:
+            // its optional semicolon would strip query names like &b=.
+            let decodedHref = Utils.htmlDecode(href || '')
             try {
                 decodedHref = decodeURI(decodedHref)
             } catch {
