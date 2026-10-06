@@ -770,13 +770,17 @@ class OctoClient {
         return this.getJson<Board>(response, {} as Board)
     }
 
+    async probeBoard(boardID: string): Promise<number> {
+        const response = await this.fetchBoard(boardID)
+        return response.status
+    }
+
     // The server resolves the board before checking permissions, so a 404 means
     // the board is gone, while a 403 means it exists but isn't readable by this
     // user. Callers that only want to know whether a board was deleted must use
     // this instead of getBoard, which collapses both cases into undefined.
     async boardNotFound(boardID: string): Promise<boolean> {
-        const response = await this.fetchBoard(boardID)
-        return response.status === 404
+        return (await this.probeBoard(boardID)) === 404
     }
 
     async duplicateBoard(boardID: string, asTemplate: boolean, toTeam?: string): Promise<BoardsAndBlocks | undefined> {

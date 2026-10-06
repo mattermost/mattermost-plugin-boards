@@ -135,8 +135,7 @@ describe('pages/boardPage', () => {
         history.push = jest.fn()
         const setLastBoardID = jest.spyOn(UserSettings, 'setLastBoardID')
 
-        // boardNotFound resolves true → the board was really deleted (server answered 404)
-        mockedOctoClient.boardNotFound.mockResolvedValue(true)
+        mockedOctoClient.probeBoard.mockResolvedValue(404)
 
         const {store} = renderBoardPage(history)
 
@@ -144,7 +143,7 @@ describe('pages/boardPage', () => {
             expect(history.push).toHaveBeenCalledWith('/team/team-id')
         })
 
-        expect(mockedOctoClient.boardNotFound).toHaveBeenCalledWith('deleted-board-id')
+        expect(mockedOctoClient.probeBoard).toHaveBeenCalledWith('deleted-board-id')
         expect(mockedOctoClient.joinBoard).not.toHaveBeenCalled()
         expect(setLastBoardID).toHaveBeenCalledWith('team-id', null)
 
@@ -161,8 +160,7 @@ describe('pages/boardPage', () => {
         const setLastBoardID = jest.spyOn(UserSettings, 'setLastBoardID')
         const setLastViewId = jest.spyOn(UserSettings, 'setLastViewId')
 
-        // boardNotFound resolves false → the board exists (server answered 403), so we must try to join it
-        mockedOctoClient.boardNotFound.mockResolvedValue(false)
+        mockedOctoClient.probeBoard.mockResolvedValue(403)
         const accessDenied = Object.assign(new Error('access-denied'), {status: 403})
         mockedOctoClient.joinBoard.mockRejectedValue(accessDenied)
 
@@ -200,7 +198,7 @@ describe('pages/boardPage', () => {
         const history = createMemoryHistory()
         history.push('/team/team-id/private-board-id')
 
-        mockedOctoClient.boardNotFound.mockResolvedValue(false)
+        mockedOctoClient.probeBoard.mockResolvedValue(403)
         const accessDenied = Object.assign(new Error('access-denied'), {status: 403})
         mockedOctoClient.joinBoard.mockRejectedValue(accessDenied)
 
@@ -231,7 +229,7 @@ describe('pages/boardPage', () => {
         })
 
         // The load path short-circuits before the deleted-board probe or a join attempt.
-        expect(mockedOctoClient.boardNotFound).not.toHaveBeenCalled()
+        expect(mockedOctoClient.probeBoard).not.toHaveBeenCalled()
         expect(mockedOctoClient.joinBoard).not.toHaveBeenCalled()
         expect(setLastBoardID).toHaveBeenCalledWith('team-id', null)
     })
@@ -274,12 +272,12 @@ describe('pages/boardPage', () => {
             expect(setLastBoardID).toHaveBeenCalledWith('team-id', 'readable-board-id')
         })
 
-        expect(mockedOctoClient.boardNotFound).not.toHaveBeenCalled()
+        expect(mockedOctoClient.probeBoard).not.toHaveBeenCalled()
         expect(mockedOctoClient.joinBoard).not.toHaveBeenCalled()
     })
 
     test('joining an existing board the user may access loads its data and records the last board', async () => {
-        mockedOctoClient.boardNotFound.mockResolvedValue(false)
+        mockedOctoClient.probeBoard.mockResolvedValue(200)
         mockedOctoClient.joinBoard.mockResolvedValue({boardId: 'joinable-board-id'} as BoardMember)
         // After joining, loadBoardData is dispatched again and returns real blocks.
         mockLoadBoardDataFn.
@@ -309,7 +307,7 @@ describe('pages/boardPage', () => {
     })
 
     test('a join that silently fails for a regular user shows the board-not-found error, not access denied', async () => {
-        mockedOctoClient.boardNotFound.mockResolvedValue(false)
+        mockedOctoClient.probeBoard.mockResolvedValue(403)
         // joinBoard resolves undefined (non-throwing failure) rather than rejecting with 403.
         mockedOctoClient.joinBoard.mockResolvedValue(undefined)
         const history = createMemoryHistory()
@@ -325,5 +323,48 @@ describe('pages/boardPage', () => {
         expect(store.getActions()).not.toContainEqual(
             {type: 'globalError/setGlobalError', payload: ErrorId.AccessDenied},
         )
+    })
+
+    test('a 500 from the board probe is a service error and does not attempt to join', async () => {
+        const history = createMemoryHistory()
+        history.push('/team/team-id/broken-board-id')
+        history.push = jest.fn()
+
+        mockedOctoClient.probeBoard.mockResolvedValue(500)
+
+        const {store} = renderBoardPage(history)
+
+        await waitFor(() => {
+            expect(store.getActions()).toContainEqual(
+                {type: 'globalError/setGlobalError', payload: 'unknown'},
+            )
+        })
+
+        expect(mockedOctoClient.probeBoard).toHaveBeenCalledWith('broken-board-id')
+        expect(mockedOctoClient.joinBoard).not.toHaveBeenCalled()
+        expect(history.push).not.toHaveBeenCalledWith('/team/team-id')
+        expect(store.getActions()).not.toContainEqual(
+            {type: 'globalError/setGlobalError', payload: ErrorId.AccessDenied},
+        )
+        expect(store.getActions()).not.toContainEqual(
+            {type: 'globalError/setGlobalError', payload: ErrorId.BoardNotFound},
+        )
+    })
+
+    test('a 401 from the board probe is a not-logged-in error and does not attempt to join', async () => {
+        const history = createMemoryHistory()
+        history.push('/team/team-id/expired-session-board-id')
+
+        mockedOctoClient.probeBoard.mockResolvedValue(401)
+
+        const {store} = renderBoardPage(history)
+
+        await waitFor(() => {
+            expect(store.getActions()).toContainEqual(
+                {type: 'globalError/setGlobalError', payload: ErrorId.NotLoggedIn},
+            )
+        })
+
+        expect(mockedOctoClient.joinBoard).not.toHaveBeenCalled()
     })
 })

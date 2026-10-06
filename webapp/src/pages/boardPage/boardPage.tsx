@@ -273,17 +273,21 @@ const BoardPage = (props: Props): React.JSX.Element => {
             // to join — otherwise a deleted board triggers the "join private board" dialog
             // (admin) or "something went wrong" page (regular user).
             try {
-                if (await octoClient.boardNotFound(boardId)) {
-                    // Board was deleted (404) — navigate to the team page so TeamToBoardAndViewRedirect
+                const status = await octoClient.probeBoard(boardId)
+                if (status === 404) {
+                    // Board was deleted — navigate to the team page so TeamToBoardAndViewRedirect
                     // can redirect to the next available board or show the template selector.
-                    // A private board the user can't read answers 403, not 404, so it falls
-                    // through to joinBoard, which surfaces the access-denied page.
                     UserSettings.setLastBoardID(boardTeamId, null)
                     const teamBasePath = match.path.split('/:boardId')[0]
                     history.push(generatePath(teamBasePath, {teamId: boardTeamId}))
                     return
                 }
-                await joinBoard(myUser, boardTeamId, boardId, false)
+                if (status === 200 || status === 403) {
+                    await joinBoard(myUser, boardTeamId, boardId, false)
+                } else {
+                    dispatch(setGlobalError(status === 401 ? ErrorId.NotLoggedIn : 'unknown'))
+                    return
+                }
             } catch (error: unknown) {
                 // Error already handled in joinBoard
             }

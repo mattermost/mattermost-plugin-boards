@@ -130,6 +130,25 @@ describe('OctoClient: getBoard vs boardNotFound', () => {
         readTokenSpy.mockRestore()
     })
 
+    test.each([200, 403, 404, 401, 500])('probeBoard returns the raw %i status', async (status) => {
+        FetchMock.fn.mockReturnValueOnce(statusResponse(status))
+
+        await expect(octoClient.probeBoard(boardID)).resolves.toBe(status)
+    })
+
+    test('probeBoard forwards the share read_token on the probe request', async () => {
+        const readTokenSpy = jest.spyOn(Utils, 'getReadToken').mockReturnValue('secret-token')
+        FetchMock.fn.mockReturnValueOnce(statusResponse(500))
+
+        await octoClient.probeBoard(boardID)
+
+        expect(FetchMock.fn).toHaveBeenCalledWith(
+            `${boardPath}?read_token=secret-token`,
+            expect.objectContaining({method: 'GET'}),
+        )
+        readTokenSpy.mockRestore()
+    })
+
     test('getBoard forwards the share read_token too (shared with boardNotFound)', async () => {
         const readTokenSpy = jest.spyOn(Utils, 'getReadToken').mockReturnValue('secret-token')
         FetchMock.fn.mockReturnValueOnce(FetchMock.jsonResponse(JSON.stringify({id: boardID})))
