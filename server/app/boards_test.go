@@ -199,10 +199,10 @@ func TestAddMemberToBoard(t *testing.T) {
 }
 
 func TestPatchBoard(t *testing.T) {
-	th, tearDown := SetupTestHelper(t)
-	defer tearDown()
-
 	t.Run("base case, title patch", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
 		const boardID = "board_id_1"
 		const userID = "user_id_1"
 		const teamID = "team_id_1"
@@ -229,6 +229,9 @@ func TestPatchBoard(t *testing.T) {
 	})
 
 	t.Run("patch type open, no users", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
 		const boardID = "board_id_1"
 		const userID = "user_id_2"
 		const teamID = "team_id_1"
@@ -248,7 +251,6 @@ func TestPatchBoard(t *testing.T) {
 
 		// Type not null will retrieve team members
 		th.Store.EXPECT().GetUsersByTeam(teamID, "", false, false).Return([]*model.User{}, nil)
-		th.Store.EXPECT().GetUserByID(userID).Return(&model.User{ID: userID, Username: "UserName"}, nil)
 
 		th.Store.EXPECT().PatchBoard(boardID, patch, userID).Return(
 			&model.Board{
@@ -268,6 +270,9 @@ func TestPatchBoard(t *testing.T) {
 	})
 
 	t.Run("patch type private, no users", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
 		const boardID = "board_id_1"
 		const userID = "user_id_2"
 		const teamID = "team_id_1"
@@ -306,6 +311,9 @@ func TestPatchBoard(t *testing.T) {
 	})
 
 	t.Run("patch type open, single user", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
 		const boardID = "board_id_1"
 		const userID = "user_id_2"
 		const teamID = "team_id_1"
@@ -344,6 +352,9 @@ func TestPatchBoard(t *testing.T) {
 	})
 
 	t.Run("patch type private, single user", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
 		const boardID = "board_id_1"
 		const userID = "user_id_2"
 		const teamID = "team_id_1"
@@ -382,6 +393,9 @@ func TestPatchBoard(t *testing.T) {
 	})
 
 	t.Run("patch type open, user with member", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
 		const boardID = "board_id_1"
 		const userID = "user_id_2"
 		const teamID = "team_id_1"
@@ -397,7 +411,7 @@ func TestPatchBoard(t *testing.T) {
 			ID:         boardID,
 			TeamID:     teamID,
 			IsTemplate: true,
-		}, nil).Times(3)
+		}, nil).Times(2)
 
 		th.API.EXPECT().HasPermissionToTeam(userID, teamID, model.PermissionManageTeam).Return(false).Times(1)
 
@@ -423,6 +437,9 @@ func TestPatchBoard(t *testing.T) {
 	})
 
 	t.Run("patch type private, user with member", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
 		const boardID = "board_id_1"
 		const userID = "user_id_2"
 		const teamID = "team_id_1"
@@ -439,7 +456,7 @@ func TestPatchBoard(t *testing.T) {
 			TeamID:     teamID,
 			IsTemplate: true,
 			ChannelID:  "",
-		}, nil).Times(1)
+		}, nil).Times(2)
 
 		th.API.EXPECT().HasPermissionToTeam(userID, teamID, model.PermissionManageTeam).Return(false).Times(1)
 
@@ -465,6 +482,9 @@ func TestPatchBoard(t *testing.T) {
 	})
 
 	t.Run("patch type channel, user without read permissions", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
 		const boardID = "board_id_1"
 		const userID = "user_id_2"
 		const teamID = "team_id_1"
@@ -491,6 +511,9 @@ func TestPatchBoard(t *testing.T) {
 	})
 
 	t.Run("patch type channel, user without post permissions", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
 		const boardID = "board_id_1"
 		const userID = "user_id_2"
 		const teamID = "team_id_1"
@@ -516,6 +539,9 @@ func TestPatchBoard(t *testing.T) {
 	})
 
 	t.Run("patch type channel, user with link permissions", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
 		const boardID = "board_id_1"
 		const userID = "user_id_2"
 		const teamID = "team_id_1"
@@ -548,6 +574,7 @@ func TestPatchBoard(t *testing.T) {
 		// - for AddTeamMembers check
 		th.Store.EXPECT().GetMembersForBoard(boardID).Return([]*model.BoardMember{}, nil).Times(2)
 
+		th.Store.EXPECT().GetUserByID(userID).Return(&model.User{ID: userID, Username: "UserName"}, nil)
 		th.Store.EXPECT().PostMessage(utils.Anything, "", "").Times(1)
 
 		patchedBoard, err := th.App.PatchBoard(patch, boardID, userID)
@@ -556,6 +583,9 @@ func TestPatchBoard(t *testing.T) {
 	})
 
 	t.Run("patch type remove channel, user without read permissions", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
 		const boardID = "board_id_1"
 		const userID = "user_id_2"
 		const teamID = "team_id_1"
