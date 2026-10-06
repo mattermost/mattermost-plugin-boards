@@ -196,6 +196,18 @@ class Utils {
         return String(text).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
     }
 
+    // Named entities plus numeric references that include the required
+    // semicolon, so query text like &b=2 is left alone.
+    private static decodeMarkdownHrefEntities(href: string): string {
+        return Utils.htmlDecode(href).replace(/&#(x[0-9A-Fa-f]+|\d+);/g, (entity, n: string) => {
+            const code = n[0] === 'x' || n[0] === 'X' ? parseInt(n.slice(1), 16) : parseInt(n, 10)
+            if (!code) {
+                return entity
+            }
+            return String.fromCharCode(code)
+        })
+    }
+
     // re-use canvas object for better performance
     static canvas: HTMLCanvasElement | undefined
     static getTextWidth(displayText: string, fontDescriptor: string): number {
@@ -300,10 +312,10 @@ class Utils {
             if (Utils.hasUnsafeMarkdownProtocol(href)) {
                 return contents
             }
-            // Decode marked/'<'-pre-escape entities so htmlEncode does not
-            // turn &lt; into &amp;lt;. Skip unescapeMarkdownHtmlEntities:
-            // its optional semicolon would strip query names like &b=.
-            let decodedHref = Utils.htmlDecode(href || '')
+            // Decode named and semicolon-terminated numeric entities so
+            // htmlEncode does not double-escape them. Do not use
+            // unescapeMarkdownHtmlEntities: optional semicolons would strip &b=.
+            let decodedHref = Utils.decodeMarkdownHrefEntities(href || '')
             try {
                 decodedHref = decodeURI(decodedHref)
             } catch {

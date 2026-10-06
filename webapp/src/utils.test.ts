@@ -67,6 +67,9 @@ describe('utils', () => {
 
         test('should not double-encode query ampersands in bare URLs', () => {
             expect(Utils.htmlFromMarkdown('https://example.com?a=1&b=2')).toBe('<p><a target="_blank" rel="noreferrer" href="https://example.com?a=1&amp;b=2" title="" onclick="">https://example.com?a=1&amp;b=2</a></p>')
+            expect(Utils.htmlFromMarkdown('[x](https://example.com?a=1&amp;b=2)')).toBe('<p><a target="_blank" rel="noreferrer" href="https://example.com?a=1&amp;b=2" title="" onclick="">x</a></p>')
+            expect(Utils.htmlFromMarkdown('[x](https://example.com?a=1&#38;b=2)')).toBe('<p><a target="_blank" rel="noreferrer" href="https://example.com?a=1&amp;b=2" title="" onclick="">x</a></p>')
+            expect(Utils.htmlFromMarkdown('[x](https://example.com?a=1&#x26;b=2)')).toBe('<p><a target="_blank" rel="noreferrer" href="https://example.com?a=1&amp;b=2" title="" onclick="">x</a></p>')
         })
 
         test('should not double encode title and href', () => {
