@@ -100,7 +100,7 @@ const filterValue = (props: Props): React.JSX.Element|null => {
 
     return (
         <MenuWrapper className='filterValue'>
-            <Button>{displayValue}</Button>
+            <Button title={displayValue}>{displayValue}</Button>
 
             <Menu>
                 {template?.options.map((o) => (
