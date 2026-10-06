@@ -25,6 +25,9 @@ import (
 const (
 	testFileName = "temp-file-name"
 	testPath     = "/path/to/file/fileName.txt"
+	// testOwnedPath is a regular boards storage path whose board segment matches
+	// the board used in the copy tests, so the copy-path ownership check passes.
+	testOwnedPath = "boards/20230101/bvalidtestboard123456789012/file.png"
 )
 
 var testBoardID = utils.NewID(utils.IDTypeBoard)
@@ -471,14 +474,14 @@ func TestCopyCard(t *testing.T) {
 	t.Run("Board exists, image block, with FileInfo", func(t *testing.T) {
 		fileInfo := &mm_model.FileInfo{
 			Id:   "imageBlock",
-			Path: testPath,
+			Path: testOwnedPath,
 		}
 		th.Store.EXPECT().GetBoard(validTestBoardID).Return(&model.Board{
 			ID:         validTestBoardID,
 			TeamID:     "validteam12345678901234567",
 			IsTemplate: false,
 		}, nil)
-		th.Store.EXPECT().GetFileInfo("fileName123456789012345678").Return(fileInfo, nil)
+		th.Store.EXPECT().GetFileInfo("fileName123456789012345678").Return(fileInfo, nil).Times(2)
 		th.Store.EXPECT().SaveFileInfo(fileInfo).Return(nil)
 
 		mockedFileBackend := &mocks.FileBackend{}
@@ -511,14 +514,14 @@ func TestCopyCard(t *testing.T) {
 
 		fileInfo := &mm_model.FileInfo{
 			Id:   "attachmentBlock",
-			Path: testPath,
+			Path: testOwnedPath,
 		}
 		th.Store.EXPECT().GetBoard(validTestBoardID).Return(&model.Board{
 			ID:         validTestBoardID,
 			TeamID:     "validteam12345678901234567",
 			IsTemplate: false,
 		}, nil)
-		th.Store.EXPECT().GetFileInfo("fileName123456789012345678").Return(fileInfo, nil)
+		th.Store.EXPECT().GetFileInfo("fileName123456789012345678").Return(fileInfo, nil).Times(2)
 		th.Store.EXPECT().SaveFileInfo(fileInfo).Return(nil)
 
 		mockedFileBackend := &mocks.FileBackend{}
@@ -538,7 +541,7 @@ func TestCopyCard(t *testing.T) {
 			TeamID:     "validteam12345678901234567",
 			IsTemplate: false,
 		}, nil)
-		th.Store.EXPECT().GetFileInfo(gomock.Any()).Return(nil, nil)
+		th.Store.EXPECT().GetFileInfo(gomock.Any()).Return(nil, nil).Times(2)
 		th.Store.EXPECT().SaveFileInfo(gomock.Any()).Return(nil)
 
 		mockedFileBackend := &mocks.FileBackend{}
@@ -620,14 +623,14 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 	t.Run("Board exists, image block, with FileInfo", func(t *testing.T) {
 		fileInfo := &mm_model.FileInfo{
 			Id:   "imageBlock",
-			Path: testPath,
+			Path: testOwnedPath,
 		}
 		th.Store.EXPECT().GetBoard("bvalidtestboard123456789012").Return(&model.Board{
 			ID:         "bvalidtestboard123456789012",
 			TeamID:     "validteam12345678901234567",
 			IsTemplate: false,
 		}, nil)
-		th.Store.EXPECT().GetFileInfo("fileName123456789012345678").Return(fileInfo, nil)
+		th.Store.EXPECT().GetFileInfo("fileName123456789012345678").Return(fileInfo, nil).Times(2)
 		th.Store.EXPECT().SaveFileInfo(fileInfo).Return(nil)
 		th.Store.EXPECT().PatchBlocks(gomock.Any(), "userID").Return(nil)
 
@@ -645,10 +648,10 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 	t.Run("Valid file ID", func(t *testing.T) {
 		fileInfo := &mm_model.FileInfo{
 			Id:   "validImageBlock",
-			Path: testPath,
+			Path: testOwnedPath,
 		}
 		th.Store.EXPECT().GetBoard(validTestBoardID2).Return(&model.Board{ID: validTestBoardID2, TeamID: "validteam12345678901234567", IsTemplate: false}, nil)
-		th.Store.EXPECT().GetFileInfo("xhwgf5r15fr3dryfozf1dmy41r").Return(fileInfo, nil)
+		th.Store.EXPECT().GetFileInfo("xhwgf5r15fr3dryfozf1dmy41r").Return(fileInfo, nil).Times(2)
 		th.Store.EXPECT().SaveFileInfo(fileInfo).Return(nil)
 		th.Store.EXPECT().PatchBlocks(gomock.Any(), "userID").Return(nil)
 
@@ -711,7 +714,7 @@ func TestCopyCardFiles(t *testing.T) {
 			TeamID:     teamID,
 			IsTemplate: false,
 		}, nil)
-		th.Store.EXPECT().GetFileInfo(fileInfoID).Return(nil, nil)
+		th.Store.EXPECT().GetFileInfo(fileInfoID).Return(nil, nil).Times(2)
 		th.Store.EXPECT().SaveFileInfo(gomock.Any()).Return(nil)
 
 		mockedFileBackend := &mocks.FileBackend{}
@@ -746,6 +749,165 @@ func TestCopyCardFiles(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, newFileNames)
+	})
+
+	t.Run("RejectsFileOwnedByAnotherBoard", func(t *testing.T) {
+		// A user-supplied fileID that resolves to a FileInfo living under a
+		// different board must be refused: its bytes must never be read or
+		// copied into the source board's storage.
+		sourceBoardID := "bsourceboard123456789012345"
+		foreignBoardID := "bforeignboard12345678901234"
+		fileInfoID := mm_model.NewId()
+		foreignFileID := "7" + fileInfoID + ".png"
+		copiedBlocks := []*model.Block{
+			{
+				Type:    model.TypeAttachment,
+				Fields:  map[string]interface{}{"fileId": foreignFileID},
+				BoardID: sourceBoardID,
+			},
+		}
+
+		th.Store.EXPECT().GetBoard(sourceBoardID).Return(&model.Board{
+			ID:         sourceBoardID,
+			TeamID:     "validteam12345678901234567",
+			IsTemplate: false,
+		}, nil)
+		th.Store.EXPECT().GetFileInfo(fileInfoID).Return(&mm_model.FileInfo{
+			Id:   fileInfoID,
+			Path: "boards/20230101/" + foreignBoardID + "/" + foreignFileID,
+		}, nil)
+
+		mockedFileBackend := &mocks.FileBackend{}
+		th.App.filesBackend = mockedFileBackend
+
+		newFileNames, err := th.App.CopyCardFiles(sourceBoardID, copiedBlocks, false)
+
+		assert.Error(t, err)
+		var permErr *model.ErrPermission
+		assert.True(t, errors.As(err, &permErr), "expected a permission error, got %v", err)
+		assert.Nil(t, newFileNames)
+		mockedFileBackend.AssertNotCalled(t, "FileExists", mock.Anything)
+		mockedFileBackend.AssertNotCalled(t, "CopyFile", mock.Anything, mock.Anything)
+	})
+
+	t.Run("RejectsForeignTemplateFile", func(t *testing.T) {
+		// Template files are stored at teamID/boardID/filename. A FileInfo whose
+		// template path points at a different board must be refused.
+		sourceBoardID := "bsourceboard123456789012345"
+		foreignBoardID := "bforeignboard12345678901234"
+		teamID := "validteam12345678901234567"
+		fileInfoID := mm_model.NewId()
+		foreignFileID := "7" + fileInfoID + ".png"
+		copiedBlocks := []*model.Block{
+			{
+				Type:    model.TypeAttachment,
+				Fields:  map[string]interface{}{"fileId": foreignFileID},
+				BoardID: sourceBoardID,
+			},
+		}
+
+		th.Store.EXPECT().GetBoard(sourceBoardID).Return(&model.Board{
+			ID:         sourceBoardID,
+			TeamID:     teamID,
+			IsTemplate: false,
+		}, nil)
+		th.Store.EXPECT().GetFileInfo(fileInfoID).Return(&mm_model.FileInfo{
+			Id:   fileInfoID,
+			Path: teamID + "/" + foreignBoardID + "/" + foreignFileID,
+		}, nil)
+
+		mockedFileBackend := &mocks.FileBackend{}
+		th.App.filesBackend = mockedFileBackend
+
+		newFileNames, err := th.App.CopyCardFiles(sourceBoardID, copiedBlocks, false)
+
+		assert.Error(t, err)
+		var permErr *model.ErrPermission
+		assert.True(t, errors.As(err, &permErr), "expected a permission error, got %v", err)
+		assert.Nil(t, newFileNames)
+		mockedFileBackend.AssertNotCalled(t, "FileExists", mock.Anything)
+		mockedFileBackend.AssertNotCalled(t, "CopyFile", mock.Anything, mock.Anything)
+	})
+
+	t.Run("RejectsLegacyFileNotReferencedBySourceBoard", func(t *testing.T) {
+		// Legacy files are stored at boards/YYYYMMDD/filename with no board ID in
+		// the path, so ownership is proven by a block scan. A file not referenced
+		// by any block in the source board must be refused.
+		sourceBoardID := "bsourceboard123456789012345"
+		fileInfoID := mm_model.NewId()
+		foreignFileID := "7" + fileInfoID + ".png"
+		copiedBlocks := []*model.Block{
+			{
+				Type:    model.TypeAttachment,
+				Fields:  map[string]interface{}{"fileId": foreignFileID},
+				BoardID: sourceBoardID,
+			},
+		}
+
+		th.Store.EXPECT().GetBoard(sourceBoardID).Return(&model.Board{
+			ID:         sourceBoardID,
+			TeamID:     "validteam12345678901234567",
+			IsTemplate: false,
+		}, nil)
+		th.Store.EXPECT().GetFileInfo(fileInfoID).Return(&mm_model.FileInfo{
+			Id:   fileInfoID,
+			Path: "boards/20230101/" + foreignFileID,
+		}, nil)
+		th.Store.EXPECT().GetBlocksWithType(sourceBoardID, model.TypeImage).Return([]*model.Block{}, nil)
+		th.Store.EXPECT().GetBlocksWithType(sourceBoardID, model.TypeAttachment).Return([]*model.Block{}, nil)
+
+		mockedFileBackend := &mocks.FileBackend{}
+		th.App.filesBackend = mockedFileBackend
+
+		newFileNames, err := th.App.CopyCardFiles(sourceBoardID, copiedBlocks, false)
+
+		assert.Error(t, err)
+		var permErr *model.ErrPermission
+		assert.True(t, errors.As(err, &permErr), "expected a permission error, got %v", err)
+		assert.Nil(t, newFileNames)
+		mockedFileBackend.AssertNotCalled(t, "FileExists", mock.Anything)
+		mockedFileBackend.AssertNotCalled(t, "CopyFile", mock.Anything, mock.Anything)
+	})
+
+	t.Run("AllowsLegacyFileReferencedBySourceBoard", func(t *testing.T) {
+		// The mirror of the previous case: a legacy file that IS referenced by a
+		// block in the source board is legitimately owned and must still copy.
+		sourceBoardID := "bsourceboard123456789012345"
+		fileInfoID := mm_model.NewId()
+		legacyFileID := "7" + fileInfoID + ".png"
+		copiedBlocks := []*model.Block{
+			{
+				Type:    model.TypeAttachment,
+				Fields:  map[string]interface{}{"fileId": legacyFileID},
+				BoardID: sourceBoardID,
+			},
+		}
+
+		th.Store.EXPECT().GetBoard(sourceBoardID).Return(&model.Board{
+			ID:         sourceBoardID,
+			TeamID:     "validteam12345678901234567",
+			IsTemplate: false,
+		}, nil)
+		th.Store.EXPECT().GetFileInfo(fileInfoID).Return(&mm_model.FileInfo{
+			Id:   fileInfoID,
+			Path: "boards/20230101/" + legacyFileID,
+		}, nil).Times(2)
+		th.Store.EXPECT().GetBlocksWithType(sourceBoardID, model.TypeImage).Return([]*model.Block{
+			{BoardID: sourceBoardID, Type: model.TypeImage, Fields: map[string]interface{}{"fileId": legacyFileID}},
+		}, nil)
+		th.Store.EXPECT().GetBlocksWithType(sourceBoardID, model.TypeAttachment).Return([]*model.Block{}, nil)
+		th.Store.EXPECT().SaveFileInfo(gomock.Any()).Return(nil)
+
+		mockedFileBackend := &mocks.FileBackend{}
+		th.App.filesBackend = mockedFileBackend
+		mockedFileBackend.On("FileExists", mock.Anything).Return(true, nil).Twice()
+		mockedFileBackend.On("CopyFile", mock.Anything, mock.Anything).Return(nil)
+
+		newFileNames, err := th.App.CopyCardFiles(sourceBoardID, copiedBlocks, false)
+
+		assert.NoError(t, err)
+		assert.NotEmpty(t, newFileNames[legacyFileID])
+		mockedFileBackend.AssertCalled(t, "CopyFile", mock.Anything, mock.Anything)
 	})
 }
 
