@@ -297,10 +297,19 @@ class Utils {
     static getMarkdownRenderer(): marked.Renderer {
         const renderer = new marked.Renderer()
         renderer.link = (href, title, contents) => {
+            if (Utils.hasUnsafeMarkdownProtocol(href)) {
+                return contents
+            }
+            let decodedHref = href || ''
+            try {
+                decodedHref = decodeURI(decodedHref)
+            } catch {
+                // Malformed percent-escape (e.g. trailing "%"); keep the original href.
+            }
             return '<a ' +
                 'target="_blank" ' +
                 'rel="noreferrer" ' +
-                `href="${encodeURI(decodeURI(href || ''))}" ` +
+                `href="${encodeURI(decodedHref)}" ` +
                 `title="${title || ''}" ` +
                 `onclick="${(window.openInNewBrowser ? ' openInNewBrowser && openInNewBrowser(event.target.href);' : '')}"` +
             '>' + contents + '</a>'
@@ -315,6 +324,25 @@ class Utils {
     static htmlFromMarkdownWithRenderer(text: string, renderer: marked.Renderer): string {
         const html = marked(text.replace(/</g, '&lt;'), {renderer, breaks: true})
         return html.trim()
+    }
+
+    // marked's default link renderer only strips these schemes when `sanitize` is
+    // true (deprecated / off by default). The custom renderer above must reject
+    // them itself so htmlFromMarkdown never emits an active javascript:/data:/vbscript: href.
+    private static hasUnsafeMarkdownProtocol(href?: string): boolean {
+        const raw = href || ''
+        let decoded = raw
+        try {
+            decoded = decodeURIComponent(raw)
+        } catch {
+            try {
+                decoded = decodeURI(raw)
+            } catch {
+                decoded = raw
+            }
+        }
+        const protocol = decoded.replace(/[^\w:]/g, '').toLowerCase()
+        return protocol.startsWith('javascript:') || protocol.startsWith('vbscript:') || protocol.startsWith('data:')
     }
 
     static countCheckboxesInMarkdown(text: string): {total: number, checked: number} {

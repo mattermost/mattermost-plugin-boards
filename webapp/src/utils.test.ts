@@ -69,6 +69,20 @@ describe('utils', () => {
             expect(Utils.htmlFromMarkdown('https://example.com?title=August%201%20-%202022')).toBe('<p><a target="_blank" rel="noreferrer" href="https://example.com?title=August%201%20-%202022" title="" onclick="">https://example.com?title=August%201%20-%202022</a></p>')
             expect(Utils.htmlFromMarkdown('[Duck Duck Go](https://duckduckgo.com "The best search engine#39;s for &lt;privacy&gt;")')).toBe('<p><a target="_blank" rel="noreferrer" href="https://duckduckgo.com" title="The best search engine#39;s for &lt;privacy&gt;" onclick="">Duck Duck Go</a></p>')
         })
+
+        test('should not emit javascript, data, or vbscript links', () => {
+            expect(Utils.htmlFromMarkdown('[Open](javascript:alert%281%29)')).toBe('<p>Open</p>')
+            expect(Utils.htmlFromMarkdown('[Open](javascript:alert(1))')).toBe('<p>Open</p>')
+            expect(Utils.htmlFromMarkdown('[Open](JAVASCRIPT:alert(1))')).toBe('<p>Open</p>')
+            expect(Utils.htmlFromMarkdown('[Open](data:text/html,alert(1))')).toBe('<p>Open</p>')
+            expect(Utils.htmlFromMarkdown('[Open](vbscript:msgbox(1))')).toBe('<p>Open</p>')
+        })
+
+        test('should not throw on malformed percent escapes in link hrefs', () => {
+            expect(() => Utils.htmlFromMarkdown('[site](https://example.org/100%)')).not.toThrow()
+            expect(() => Utils.htmlFromMarkdown('https://example.org/100%')).not.toThrow()
+            expect(Utils.htmlFromMarkdown('[site](https://example.org/100%)')).toBe('<p><a target="_blank" rel="noreferrer" href="https://example.org/100%25" title="" onclick="">site</a></p>')
+        })
     })
 
     describe('countCheckboxesInMarkdown', () => {

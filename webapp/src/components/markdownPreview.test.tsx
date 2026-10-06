@@ -84,12 +84,27 @@ describe('components/markdownPreview', () => {
             expect(link).toHaveAttribute('href', 'https://example.com')
         })
 
+        test('does not throw when a link href contains a malformed percent escape', () => {
+            expect(() => renderPreview('[site](https://example.org/100%)')).not.toThrow()
+            expect(() => renderPreview('https://example.org/100%')).not.toThrow()
+
+            const {container} = renderPreview('[site](https://example.org/100%)')
+            expect(container.querySelector('a')).toHaveAttribute('href', 'https://example.org/100%25')
+        })
+
         test('escapes raw HTML so markdown cannot inject elements', () => {
             const {container} = renderPreview('<img src=x onerror=alert(1)>')
 
             // The native renderer escapes '<', so no real <img> element is created.
             expect(container.querySelector('img')).not.toBeInTheDocument()
             expect(container.textContent).toContain('<img src=x onerror=alert(1)>')
+        })
+
+        test('does not render javascript: destinations as active links', () => {
+            const {container} = renderPreview('[Open](javascript:alert%281%29)')
+
+            expect(container.querySelector('a')).not.toBeInTheDocument()
+            expect(container.textContent).toContain('Open')
         })
 
         test('renders empty text without throwing', () => {
