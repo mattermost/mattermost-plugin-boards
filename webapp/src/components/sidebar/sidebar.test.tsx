@@ -527,6 +527,91 @@ describe('components/sidebarSidebar', () => {
         expect(mockedOctoClient.moveBoardToCategory).not.toHaveBeenCalled()
     })
 
+    test('shouldnt assign default category when category list mixes current and other team', async () => {
+        // A websocket update can unshift a current-team category in front of
+        // stale categories from an in-flight fetch for the previous team.
+        // Checking only the first category would miss that mixed state and move
+        // the current team's board into the previous team's "Boards" category.
+        const board2 = TestBlockFactory.createBoard()
+        board2.id = 'board2'
+        board2.teamId = 'team-id'
+
+        const currentTeamCategory = TestBlockFactory.createCategoryBoards()
+        currentTeamCategory.id = 'current_category'
+        currentTeamCategory.name = 'Category 1'
+        currentTeamCategory.teamID = 'team-id'
+        currentTeamCategory.boardMetadata = []
+
+        const staleDefaultCategory = TestBlockFactory.createCategoryBoards()
+        staleDefaultCategory.id = 'other_default_category'
+        staleDefaultCategory.name = 'Boards'
+        staleDefaultCategory.teamID = 'other-team-id'
+        staleDefaultCategory.boardMetadata = []
+
+        const store = mockStore({
+            teams: {
+                current: {id: 'team-id'},
+            },
+            boards: {
+                current: board2.id,
+                boards: {
+                    [board2.id]: board2,
+                },
+                myBoardMemberships: {
+                    [board2.id]: board2,
+                },
+            },
+            cards: {
+                cards: {
+                    card_id_1: {title: 'Card'},
+                },
+                current: 'card_id_1',
+            },
+            views: {
+                views: [],
+            },
+            users: {
+                me: {
+                    id: 'user_id_1',
+                    props: {},
+                },
+            },
+            sidebar: {
+                categoryAttributes: [
+                    currentTeamCategory,
+                    staleDefaultCategory,
+                ],
+                hiddenBoardIDs: [],
+            },
+        })
+
+        const history = createMemoryHistory()
+        const onBoardTemplateSelectorOpen = jest.fn()
+
+        mockedOctoClient.getSidebarCategories.mockResolvedValue([])
+
+        const component = wrapIntl(
+            <ReduxProvider store={store}>
+                <Router history={history}>
+                    <Sidebar onBoardTemplateSelectorOpen={onBoardTemplateSelectorOpen}/>
+                </Router>
+            </ReduxProvider>,
+        )
+        render(component)
+
+        // getSidebarCategories being called confirms the fetch effect ran and its
+        // ".then(setInitialized(true))" will flip the flag the move effect waits
+        // on, so the assertion below isn't vacuous. Drain the microtasks + one
+        // macrotask so that chain and the follow-up effect have definitely run.
+        await waitFor(() => expect(mockedOctoClient.getSidebarCategories).toHaveBeenCalled())
+        await act(async () => {
+            await Promise.resolve()
+            await new Promise((resolve) => setTimeout(resolve, 0))
+        })
+
+        expect(mockedOctoClient.moveBoardToCategory).not.toHaveBeenCalled()
+    })
+
     test('shouldnt assign default category when current board belongs to a different team', async () => {
         // The current board belongs to a team other than the one being viewed
         // (stale board left over from the previous team during a switch).
