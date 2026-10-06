@@ -63,8 +63,8 @@ const FilterComponent = (props: Props): React.JSX.Element => {
 
     // Ignore extra clicks until the view includes the last added clause.
     // changeViewFilter PATCHes over the network; the view updates later.
-    const pendingPropertyIdRef = React.useRef<string | undefined>()
-    const [pendingPropertyId, setPendingPropertyId] = React.useState<string | undefined>()
+    const pendingPropertyIdRef = React.useRef<string | undefined>(undefined)
+    const [pendingPropertyId, setPendingPropertyId] = React.useState<string | undefined>(undefined)
 
     const filters: FilterClause[] = activeView.fields.filter?.filters.filter((o) => !isAFilterGroupInstance(o)) as FilterClause[] || []
     const filterPropertyKey = filters.map((f) => f.propertyId).join(',')
