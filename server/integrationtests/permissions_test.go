@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -1015,6 +1017,108 @@ func TestPermissionsCreateBoardBlocks(t *testing.T) {
 	testTeamID, otherTeamID, emptyTeamID := th.GetTestTeamIDs()
 	runTestCases(t, ttCases, testData, clients, testTeamID, otherTeamID, emptyTeamID)
 }
+
+// TestPermissionsCreateBoardBlocksFromSourceBoard verifies that the file-copy
+// triggered by the sourceBoardID query parameter is gated on access to that
+// source board, not only on write access to the destination board.
+func TestPermissionsCreateBoardBlocksFromSourceBoard(t *testing.T) {
+	th := SetupTestHelperPluginMode(t)
+	defer th.TearDown()
+	clients := setupClients(th)
+	testData := setupData(t, th)
+	testTeamID, _, _ := th.GetTestTeamIDs()
+
+	// A board the editor can write to is the destination; the editor is a member
+	// of publicBoard with the editor role.
+	destBoardID := testData.publicBoard.ID
+
+	// A separate board the editor is NOT a member of (private, and no board
+	// membership is granted to the editor below), standing in for any board whose
+	// files the caller must not be able to reach. MinimumRole only applies to
+	// members, so a non-member editor still has no access to it.
+	secretBoard, err := th.Server.App().CreateBoard(
+		&model.Board{Title: "Secret source board", TeamID: testTeamID, Type: model.BoardTypePrivate, MinimumRole: "viewer"},
+		userAdminID,
+		true,
+	)
+	require.NoError(t, err)
+
+	cardBlockBody := func() string {
+		return toJSON(t, []*model.Block{{
+			ID:       utils.NewID(utils.IDTypeBlock),
+			Title:    "card",
+			BoardID:  destBoardID,
+			Type:     "card",
+			CreateAt: model.GetMillis(),
+			UpdateAt: model.GetMillis(),
+		}})
+	}
+
+	t.Run("editor without access to the source board is denied", func(t *testing.T) {
+		url := fmt.Sprintf("/boards/%s/blocks?sourceBoardID=%s", destBoardID, secretBoard.ID)
+		response, err := clients.Editor.DoAPIPost(url, cardBlockBody())
+		require.ErrorContains(t, err, "access denied to source board")
+		require.NotNil(t, response)
+		defer response.Body.Close()
+		require.Equal(t, http.StatusForbidden, response.StatusCode)
+	})
+
+	t.Run("editor with access to the source board is allowed", func(t *testing.T) {
+		url := fmt.Sprintf("/boards/%s/blocks?sourceBoardID=%s", destBoardID, destBoardID)
+		response, err := clients.Editor.DoAPIPost(url, cardBlockBody())
+		require.NoError(t, err)
+		defer response.Body.Close()
+		require.Equal(t, http.StatusOK, response.StatusCode)
+	})
+
+	// Defense layer #2 is independent of the source-board gate: even when the
+	// caller legitimately has access to the source board, a block that references
+	// a fileId whose file belongs to a different board must not be copied.
+	t.Run("file owned by another board is not copied even with source access", func(t *testing.T) {
+		// Upload a real file to the secret board so a FileInfo exists whose stored
+		// path lives under that board.
+		foreignFileID, saveErr := th.Server.App().SaveFile(
+			strings.NewReader("secret-bytes"), testTeamID, secretBoard.ID, "secret.png", false,
+		)
+		require.NoError(t, saveErr)
+
+		attachmentBlock := toJSON(t, []*model.Block{{
+			ID:       utils.NewID(utils.IDTypeBlock),
+			Title:    "attachment",
+			BoardID:  destBoardID,
+			Type:     model.TypeAttachment,
+			Fields:   map[string]interface{}{"fileId": foreignFileID},
+			CreateAt: model.GetMillis(),
+			UpdateAt: model.GetMillis(),
+		}})
+
+		// sourceBoardID == destBoardID, which the editor can access, so the gate in
+		// layer #1 passes and the ownership check in layer #2 is what must reject.
+		url := fmt.Sprintf("/boards/%s/blocks?sourceBoardID=%s", destBoardID, destBoardID)
+		response, err := clients.Editor.DoAPIPost(url, attachmentBlock)
+		require.Error(t, err)
+		require.NotNil(t, response)
+		defer response.Body.Close()
+		require.Equal(t, http.StatusForbidden, response.StatusCode)
+
+		// A copy-then-403 regression would still fail the request, so also assert
+		// the destination gained neither an attachment block nor a stored file.
+		attachmentBlocks, listErr := th.Server.App().GetBlocks(destBoardID, "", model.TypeAttachment)
+		require.NoError(t, listErr)
+		require.Empty(t, attachmentBlocks)
+
+		sourceInfo, infoErr := th.Server.App().GetFileInfo(foreignFileID)
+		require.NoError(t, infoErr)
+		require.NotNil(t, sourceInfo)
+		_, srcStatErr := os.Stat(filepath.Join(th.Server.Config().FilesPath, sourceInfo.Path))
+		require.NoError(t, srcStatErr)
+
+		destCopies, globErr := filepath.Glob(filepath.Join(th.Server.Config().FilesPath, "boards", "*", destBoardID, "*"))
+		require.NoError(t, globErr)
+		require.Empty(t, destCopies)
+	})
+}
+
 func TestPermissionsCreateBoardComments(t *testing.T) {
 	ttCasesF := func(testData TestData) []TestCase {
 		counter := 0
