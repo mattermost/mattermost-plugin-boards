@@ -784,10 +784,12 @@ class Mutator {
         )
     }
 
-    async changeViewFilter(boardId: string, viewId: string, oldFilter: FilterGroup, filter: FilterGroup): Promise<void> {
-        await undoManager.perform(
+    async changeViewFilter(boardId: string, viewId: string, oldFilter: FilterGroup, filter: FilterGroup): Promise<Response> {
+        // Return the PATCH response so callers can detect a rejected update:
+        // patchBlock resolves on HTTP 4xx/5xx, so a failure never throws.
+        return undoManager.perform(
             async () => {
-                await octoClient.patchBlock(boardId, viewId, {updatedFields: {filter}})
+                return octoClient.patchBlock(boardId, viewId, {updatedFields: {filter}})
             },
             async () => {
                 await octoClient.patchBlock(boardId, viewId, {updatedFields: {filter: oldFilter}})
