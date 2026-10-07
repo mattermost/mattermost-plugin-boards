@@ -669,7 +669,7 @@ func (a *App) CopyCardFiles(sourceBoardID string, copiedBlocks []*model.Block, a
 		// bytes are read or copied, so a foreign FileInfo cannot be pulled into this
 		// board's storage.
 		if err = a.validateFileOwnershipForBlockWrite(sourceBoard.TeamID, sourceBoard.ID, fileID); err != nil {
-			a.logger.Error(
+			a.logger.Warn(
 				"CopyCardFiles: refusing to copy file that does not belong to the source board",
 				mlog.String("sourceBoardID", sourceBoard.ID),
 				mlog.String("fileID", fileID),
