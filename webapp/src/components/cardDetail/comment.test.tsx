@@ -2,6 +2,7 @@
 // See LICENSE.txt for license information.
 
 import {render, screen} from '@testing-library/react'
+import '@testing-library/jest-dom'
 import userEvent from '@testing-library/user-event'
 import React from 'react'
 import {Provider as ReduxProvider} from 'react-redux'
@@ -105,6 +106,39 @@ describe('components/cardDetail/comment', () => {
         userEvent.click(buttonDelete)
         expect(mockedMutator.deleteBlock).toHaveBeenCalledTimes(1)
         expect(mockedMutator.deleteBlock).toHaveBeenCalledWith(comment)
+    })
+
+    test('renders a comment on a published board where the Mattermost store is unavailable', () => {
+        const savedStore = (window as any).store
+        delete (window as any).store
+
+        try {
+            const localComment = TestBlockFactory.createComment(card)
+            localComment.title = 'Published *comment* body'
+
+            let container: HTMLElement | undefined
+            // Pre-fix this called (window as any).store.getState() directly and
+            // wrapped the body in <Provider store={undefined}>, throwing during
+            // render and blanking the published board.
+            expect(() => {
+                container = render(wrapIntl(
+                    <ReduxProvider store={store}>
+                        <Comment
+                            comment={localComment}
+                            userId={localComment.modifiedBy}
+                            userImageUrl={userImageUrl}
+                            readonly={true}
+                        />
+                    </ReduxProvider>,
+                )).container
+            }).not.toThrow()
+
+            const emphasized = screen.getByText('comment')
+            expect(emphasized.tagName.toLowerCase()).toBe('em')
+            expect(container!.querySelector('.mocked-message-html')).not.toBeInTheDocument()
+        } finally {
+            (window as any).store = savedStore
+        }
     })
 
     test('return guest comment', () => {
