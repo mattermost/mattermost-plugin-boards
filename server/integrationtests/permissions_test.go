@@ -404,7 +404,9 @@ func TestPermissionsGetTeamTemplates(t *testing.T) {
 		{"/teams/test-team/templates", methodGet, "", userCommenter, http.StatusOK, 2},
 		{"/teams/test-team/templates", methodGet, "", userEditor, http.StatusOK, 2},
 		{"/teams/test-team/templates", methodGet, "", userAdmin, http.StatusOK, 2},
-		{"/teams/test-team/templates", methodGet, "", userGuest, http.StatusForbidden, 0},
+		// Guests have no access to templates but receive an empty list rather
+		// than an error to avoid flooding the server log on every page load.
+		{"/teams/test-team/templates", methodGet, "", userGuest, http.StatusOK, 0},
 		// Built-in templates
 		{"/teams/0/templates", methodGet, "", userAnon, http.StatusUnauthorized, 0},
 		{"/teams/0/templates", methodGet, "", userNoTeamMember, http.StatusOK, builtInTemplateCount},
@@ -412,7 +414,7 @@ func TestPermissionsGetTeamTemplates(t *testing.T) {
 		{"/teams/0/templates", methodGet, "", userViewer, http.StatusOK, builtInTemplateCount},
 		{"/teams/0/templates", methodGet, "", userCommenter, http.StatusOK, builtInTemplateCount},
 		{"/teams/0/templates", methodGet, "", userEditor, http.StatusOK, builtInTemplateCount},
-		{"/teams/0/templates", methodGet, "", userGuest, http.StatusForbidden, 0},
+		{"/teams/0/templates", methodGet, "", userGuest, http.StatusOK, 0},
 	}
 
 	th := SetupTestHelperPluginMode(t)

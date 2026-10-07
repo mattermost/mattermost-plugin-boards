@@ -56,9 +56,11 @@ test.describe('Board View Features', () => {
 
     /**
      * Create a new card and give it a name.
+     * The view-header New control is a div.ButtonWithMenu, not a <button>.
+     * getByRole('button', { name: 'New' }) matches every kanban column's "+ New".
      */
     async function createNamedCard(page: Page, cardName: string): Promise<void> {
-        await page.getByRole('button', { name: 'New' }).click();
+        await page.locator('.ViewHeader .ButtonWithMenu .button-text').click();
 
         const dialog = page.locator('.Dialog.cardDialog');
         await expect(dialog).toBeVisible({ timeout: 10000 });
@@ -71,6 +73,34 @@ test.describe('Board View Features', () => {
         await expect(dialog).not.toBeVisible({ timeout: 5000 });
 
         await expect(page.locator('.KanbanCard').filter({ hasText: cardName })).toBeVisible({ timeout: 10000 });
+    }
+
+    /**
+     * Create a new card and give it a brand-new Status option, which also
+     * registers that option on the board so it becomes selectable in filters.
+     */
+    async function createCardWithStatus(page: Page, cardName: string, statusName: string): Promise<void> {
+        await page.locator('.ViewHeader .ButtonWithMenu .button-text').click();
+
+        const dialog = page.locator('.Dialog.cardDialog');
+        await expect(dialog).toBeVisible({ timeout: 10000 });
+
+        const titleField = dialog.locator('.CardDetail .Editable.title:not([disabled])');
+        await titleField.click();
+        await titleField.fill(cardName);
+
+        // Open the Status value selector and create a new option by name.
+        await dialog.locator('.octo-propertyvalue').first().click();
+        const valueInput = page.locator('.ValueSelector input').last();
+        await valueInput.fill(statusName);
+        await valueInput.press('Enter');
+
+        // Confirm the option was actually created and selected before closing, so
+        // a setup failure surfaces here rather than later in the filter menu.
+        await expect(dialog.locator('.octo-propertyvalue').first()).toContainText(statusName, { timeout: 5000 });
+
+        await dialog.locator('.dialog__close').click();
+        await expect(dialog).not.toBeVisible({ timeout: 5000 });
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -217,5 +247,66 @@ test.describe('Board View Features', () => {
         await expect(
             page.locator('.KanbanCard').filter({ hasText: 'PropDisplay Card' }).locator('.Label'),
         ).toContainText('In Progress', { timeout: 10000 });
+    });
+
+    // Runs last: it adds Status options and an active filter on the shared board,
+    // which would hide empty-status cards created by the tests above.
+    test('filter value with many options stays on one line, ellipsised, with a full tooltip', async ({ page }) => {
+        await createBoard(page);
+
+        // Register several Status options so the filter value is long enough to overflow.
+        const statuses = ['Not Started', 'In Progress', 'In Review', 'Ready for QA', 'Completed'];
+        for (let i = 0; i < statuses.length; i++) {
+            await createCardWithStatus(page, `Card ${i + 1}`, statuses[i]);
+        }
+
+        // Open the Filter panel and add a filter (defaults to: Status includes …).
+        await page.locator('.ViewHeader').getByRole('button', { name: 'Filter' }).click();
+        await page.getByRole('button', { name: '+ Add filter' }).click();
+
+        const filterEntry = page.locator('.FilterEntry').last();
+        const valueButton = filterEntry.locator('.filterValue button.Button');
+
+        // Switch every Status option on.
+        await valueButton.click();
+        const optionMenu = page.locator('.Menu.noselect');
+        await expect(optionMenu).toBeVisible({ timeout: 5000 });
+
+        // Toggle each option on, waiting for the value label to register the
+        // addition before clicking the next. Each onClick reads the current
+        // filter values, so clicking faster than the store propagates would
+        // drop earlier selections.
+        for (const status of statuses) {
+            await optionMenu.getByRole('button', { name: status, exact: true }).click();
+            await expect(valueButton).toContainText(status, { timeout: 5000 });
+        }
+        await page.keyboard.press('Escape');
+
+        const expectedLabel = statuses.join(', ');
+
+        // Tooltip: the full list must be exposed via the native title attribute.
+        await expect(valueButton).toHaveAttribute('title', expectedLabel, { timeout: 10000 });
+        await expect(valueButton).toHaveText(expectedLabel);
+
+        // The label span must be truncated on a single line (not wrapped/sliced).
+        const labelSpan = valueButton.locator('span');
+        await expect(labelSpan).toHaveCSS('white-space', 'nowrap');
+        await expect(labelSpan).toHaveCSS('text-overflow', 'ellipsis');
+        await expect(labelSpan).toHaveCSS('overflow', 'hidden');
+
+        // Geometry: no vertical overflow (single line, nothing sliced) but the
+        // label does overflow horizontally, which is what makes the ellipsis render.
+        const geometry = await valueButton.evaluate((btn) => {
+            const span = btn.querySelector('span') as HTMLElement;
+            return {
+                btnScrollHeight: btn.scrollHeight,
+                btnClientHeight: btn.clientHeight,
+                spanScrollWidth: span.scrollWidth,
+                spanClientWidth: span.clientWidth,
+            };
+        });
+        expect(geometry.btnScrollHeight).toBe(geometry.btnClientHeight);
+        // Use a margin so the overflow assertion stays robust against CI font variance.
+        expect(geometry.spanScrollWidth).toBeGreaterThan(geometry.spanClientWidth + 20);
     });
 });

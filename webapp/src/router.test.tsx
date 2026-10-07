@@ -2,140 +2,174 @@
 // See LICENSE.txt for license information.
 
 import React from 'react'
-import {createMemoryHistory, MemoryHistory} from 'history'
-import {render, act, screen} from '@testing-library/react'
+
+import {render, screen} from '@testing-library/react'
 import {Provider as ReduxProvider} from 'react-redux'
-import {configureStore} from '@reduxjs/toolkit'
+import configureStore from 'redux-mock-store'
+import {thunk} from 'redux-thunk'
 
 import {wrapIntl} from './testUtils'
-
-import {reducer as usersReducer, setMe} from './store/users'
-import {reducer as clientConfigReducer, setClientConfig} from './store/clientConfig'
-import {reducer as globalErrorReducer} from './store/globalError'
-import {IUser} from './user'
-import {ClientConfig} from './config/clientConfig'
-
+import {customHistory} from './desktopHistory'
 import {SuiteWindow} from './types/index'
-
-// The board/welcome/access-denied pages pull in heavy, websocket-driven trees
-// that are irrelevant to routing behaviour, so stub them out. ErrorPage is kept
-// real because the tests assert on the error message it renders.
-jest.mock('./pages/boardPage/boardPage', () => ({
-    __esModule: true,
-    default: () => <div>MOCK_BOARD_PAGE</div>,
-}))
-jest.mock('./pages/welcome/welcomePage', () => ({
-    __esModule: true,
-    default: () => <div>MOCK_WELCOME_PAGE</div>,
-}))
-jest.mock('./pages/accessDeniedPage', () => ({
-    __esModule: true,
-    default: () => <div>MOCK_ACCESS_DENIED_PAGE</div>,
-}))
 
 import FocalboardRouter from './router'
 
+// BoardPage is replaced with a recorder that reports every board the router
+// actually mounts. Mounting the wrong board for even a single frame is recorded,
+// so the test fails on a stale render and not merely on the final destination.
+const mockRenderedBoards: Array<{teamId?: string, boardId?: string, viewId?: string}> = []
+jest.mock('./pages/boardPage/boardPage', () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
+    const {useParams} = require('react-router-dom')
+    const BoardPageRecorder = () => {
+        const params = useParams() as {teamId?: string, boardId?: string, viewId?: string}
+        mockRenderedBoards.push({teamId: params.teamId, boardId: params.boardId, viewId: params.viewId})
+        return null
+    }
+    return {__esModule: true, default: BoardPageRecorder}
+})
+
+jest.mock('./pages/welcome/welcomePage', () => ({__esModule: true, default: () => null}))
+jest.mock('./pages/accessDeniedPage', () => ({__esModule: true, default: () => null}))
+
 const windowAny = (window as SuiteWindow)
 
-const makeStore = () => {
-    const store = configureStore({
-        reducer: {
-            users: usersReducer,
-            clientConfig: clientConfigReducer,
-            globalError: globalErrorReducer,
-        },
-    })
-
-    // A logged-in user, so FBRoute renders the requested route.
-    store.dispatch(setMe({id: 'user-1', username: 'user-1'} as IUser))
-
-    // Disable the first-time tour so FBRoute does not redirect to /welcome.
-    store.dispatch(setClientConfig({
-        telemetry: false,
-        telemetryid: '',
-        enablePublicSharedBoards: false,
-        teammateNameDisplay: 'username',
-        featureFlags: {disableTour: 'true'},
-        maxFileSize: 0,
-    } as unknown as ClientConfig))
-
-    return store
-}
-
-const renderAt = (windowPath: string, store: ReturnType<typeof makeStore>): MemoryHistory => {
-    // The router re-syncs to window.location on mount, so drive it from there.
-    window.history.replaceState({}, '', windowPath)
-    // Start the in-memory history on the bare boards-relative path (basename
-    // stripped, query/hash removed) so the '/' HomeToCurrentTeam route isn't
-    // exercised AND any surviving query/hash can only come from the mount-time
-    // re-sync to window.location, not from the seeded entry.
-    const initialEntry = (windowPath.replace('/boards', '') || '/').split('?')[0].split('#')[0] || '/'
-    const history = createMemoryHistory({initialEntries: [initialEntry]})
-    act(() => {
-        render(
-            <ReduxProvider store={store}>
-                {wrapIntl(<FocalboardRouter history={history}/>)}
-            </ReduxProvider>,
-        )
-    })
-    return history
-}
-
 describe('router', () => {
-    let originalFrontendBaseURL: string | undefined
-    let originalIsPlugin: boolean | undefined
+    const state = {
+        users: {
+            me: {id: 'user-1', props: {}, is_guest: false},
+            loggedIn: true,
+            myConfig: {},
+        },
+        clientConfig: {
+            // disableTour keeps FBRoute from redirecting to /welcome when plugin
+            // mode is on (needed by the MM-69658 error-page assertions).
+            value: {featureFlags: {disableTour: 'true'}},
+        },
+        globalError: {value: ''},
+    }
+
+    const renderRouter = (history: ReturnType<typeof customHistory>) => {
+        const store = configureStore([thunk])(state)
+        return render(
+            wrapIntl(
+                <ReduxProvider store={store}>
+                    <FocalboardRouter history={history}/>
+                </ReduxProvider>,
+            ),
+        )
+    }
 
     beforeEach(() => {
-        originalFrontendBaseURL = windowAny.frontendBaseURL
-        originalIsPlugin = windowAny.isFocalboardPlugin
+        mockRenderedBoards.length = 0
+        window.history.pushState({}, '', '/')
         windowAny.frontendBaseURL = '/boards'
-        // ErrorPage only renders its message (instead of auto-redirecting) in plugin mode.
-        windowAny.isFocalboardPlugin = true
+
+        // isFocalboardPlugin gates the welcome-page redirect; keep it off so the
+        // router renders the board route directly.
+        windowAny.isFocalboardPlugin = false
     })
 
-    afterEach(() => {
-        windowAny.frontendBaseURL = originalFrontendBaseURL
-        windowAny.isFocalboardPlugin = originalIsPlugin
-        window.history.replaceState({}, '', '/')
+    test('mounts the board the browser URL points to, never the stale last-visited board (MM-68337)', () => {
+        // The Boards history instance is created while the browser is on a board
+        // in another team (the previously visited board).
+        window.history.pushState({}, '', '/boards/team/team-b/board-b/view-b')
+        const history = customHistory()
+
+        // Mattermost then navigates its own history to the clicked share link
+        // without notifying the Boards history instance — this is the real flow
+        // that leaves the Boards history stale.
+        window.history.pushState({}, '', '/boards/team/team-a/board-a/view-a')
+
+        renderRouter(history)
+
+        const stale = mockRenderedBoards.find((board) => board.boardId === 'board-b')
+        expect(stale).toBeUndefined()
+
+        expect(mockRenderedBoards.length).toBeGreaterThan(0)
+        expect(mockRenderedBoards[mockRenderedBoards.length - 1]).toMatchObject({
+            teamId: 'team-a',
+            boardId: 'board-a',
+            viewId: 'view-a',
+        })
     })
 
-    describe('FocalboardRouter initial location sync', () => {
-        it('preserves the error id query string so a specific error is shown (MM-69658)', () => {
-            const store = makeStore()
-            const history = renderAt('/boards/error?id=not-logged-in&r=%2Fteam%2Ft1%2F', store)
+    test('opens the linked shared board, not the stale one, for a cross-team share link (MM-68337)', () => {
+        // Share links are the reported trigger and match the readonly /shared/ route.
+        window.history.pushState({}, '', '/boards/team/team-b/board-b/view-b')
+        const history = customHistory()
 
-            // The query string must survive the mount-time re-sync...
+        window.history.pushState({}, '', '/boards/team/team-a/shared/board-a/view-a')
+
+        renderRouter(history)
+
+        const stale = mockRenderedBoards.find((board) => board.boardId === 'board-b')
+        expect(stale).toBeUndefined()
+
+        expect(mockRenderedBoards.length).toBeGreaterThan(0)
+        expect(mockRenderedBoards[mockRenderedBoards.length - 1]).toMatchObject({
+            teamId: 'team-a',
+            boardId: 'board-a',
+        })
+    })
+
+    test('renders the board already in the URL when history is in sync', () => {
+        window.history.pushState({}, '', '/boards/team/team-a/board-a/view-a')
+        const history = customHistory()
+
+        renderRouter(history)
+
+        expect(mockRenderedBoards.find((board) => board.boardId !== 'board-a')).toBeUndefined()
+        expect(mockRenderedBoards[mockRenderedBoards.length - 1]).toMatchObject({
+            teamId: 'team-a',
+            boardId: 'board-a',
+        })
+    })
+
+    describe('FocalboardRouter initial location sync (MM-69658)', () => {
+        beforeEach(() => {
+            // ErrorPage only renders its message (instead of auto-redirecting)
+            // in plugin mode.
+            windowAny.isFocalboardPlugin = true
+        })
+
+        it('preserves the error id query string so a specific error is shown', () => {
+            window.history.pushState({}, '', '/boards/team/t1/b1')
+            const history = customHistory()
+            window.history.pushState({}, '', '/boards/error?id=not-logged-in&r=%2Fteam%2Ft1%2F')
+
+            renderRouter(history)
+
             expect(history.location.pathname).toBe('/error')
             expect(history.location.search).toContain('id=not-logged-in')
             expect(history.location.search).toContain('r=')
 
-            // ...so the user sees the specific "log in" error with a working login
-            // button, not a bare, generic error page.
-            // getByText/getByRole throw when absent, so they double as assertions.
             screen.getByText(/session may have expired/)
             screen.getByRole('button', {name: 'Log in'})
             expect(screen.queryByText('An error occurred.')).toBeNull()
         })
 
-        it('preserves the query string and hash together on the initial sync (MM-69658)', () => {
-            const store = makeStore()
-            const history = renderAt('/boards/team/t1/b1?foo=bar#section', store)
+        it('preserves the query string and hash together on the initial sync', () => {
+            window.history.pushState({}, '', '/boards/team/t1/b1')
+            const history = customHistory()
+            window.history.pushState({}, '', '/boards/team/t1/b1?foo=bar#section')
+
+            renderRouter(history)
 
             expect(history.location.pathname).toBe('/team/t1/b1')
             expect(history.location.search).toBe('?foo=bar')
             expect(history.location.hash).toBe('#section')
-            screen.getByText('MOCK_BOARD_PAGE')
         })
 
         it('leaves a plain path without query or hash untouched', () => {
-            const store = makeStore()
-            const history = renderAt('/boards/team/t1/b1', store)
+            window.history.pushState({}, '', '/boards/team/t1/b1')
+            const history = customHistory()
 
-            // Guards against the fix appending a stray '?' or '#' to clean URLs.
+            renderRouter(history)
+
             expect(history.location.pathname).toBe('/team/t1/b1')
             expect(history.location.search).toBe('')
             expect(history.location.hash).toBe('')
-            screen.getByText('MOCK_BOARD_PAGE')
         })
     })
 })

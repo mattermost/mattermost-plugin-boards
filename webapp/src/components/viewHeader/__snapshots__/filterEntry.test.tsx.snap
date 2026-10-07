@@ -12,6 +12,7 @@ exports[`components/viewHeader/filterEntry return filterEntry 1`] = `
     >
       <button
         class="Button"
+        title="Status"
         type="button"
       >
         <span>
@@ -219,6 +220,7 @@ exports[`components/viewHeader/filterEntry return filterEntry 1`] = `
     >
       <button
         class="Button"
+        title="Status"
         type="button"
       >
         <span>
@@ -253,6 +255,7 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on delet
     >
       <button
         class="Button"
+        title="Status"
         type="button"
       >
         <span>
@@ -433,6 +436,7 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on delet
     >
       <button
         class="Button"
+        title="Status"
         type="button"
       >
         <span>
@@ -467,6 +471,7 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on diffe
     >
       <button
         class="Button"
+        title="Status"
         type="button"
       >
         <span>
@@ -674,6 +679,7 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on diffe
     >
       <button
         class="Button"
+        title="Status"
         type="button"
       >
         <span>
@@ -708,6 +714,7 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on diffe
     >
       <button
         class="Button"
+        title="Property 1"
         type="button"
       >
         <span>
@@ -935,6 +942,7 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on doesn
     >
       <button
         class="Button"
+        title="Status"
         type="button"
       >
         <span>
@@ -1115,6 +1123,7 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on doesn
     >
       <button
         class="Button"
+        title="Status"
         type="button"
       >
         <span>
@@ -1149,6 +1158,7 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on inclu
     >
       <button
         class="Button"
+        title="Status"
         type="button"
       >
         <span>
@@ -1329,6 +1339,7 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on inclu
     >
       <button
         class="Button"
+        title="Status"
         type="button"
       >
         <span>
@@ -1363,6 +1374,7 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on is em
     >
       <button
         class="Button"
+        title="Status"
         type="button"
       >
         <span>
@@ -1543,6 +1555,7 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on is em
     >
       <button
         class="Button"
+        title="Status"
         type="button"
       >
         <span>
@@ -1577,6 +1590,7 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on is no
     >
       <button
         class="Button"
+        title="Status"
         type="button"
       >
         <span>
@@ -1757,6 +1771,7 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on is no
     >
       <button
         class="Button"
+        title="Status"
         type="button"
       >
         <span>
@@ -1791,6 +1806,7 @@ exports[`components/viewHeader/filterEntry return filterEntry and click on statu
     >
       <button
         class="Button"
+        title="(unknown)"
         type="button"
       >
         <span>
@@ -2018,6 +2034,7 @@ exports[`components/viewHeader/filterEntry return filterEntry for boolean field 
     >
       <button
         class="Button"
+        title="Property 1"
         type="button"
       >
         <span>
@@ -2066,6 +2083,7 @@ exports[`components/viewHeader/filterEntry return filterEntry for boolean field 
     >
       <button
         class="Button"
+        title="Property 1"
         type="button"
       >
         <span>
@@ -2216,6 +2234,7 @@ exports[`components/viewHeader/filterEntry return filterEntry for date field 1`]
     >
       <button
         class="Button"
+        title="Property 3"
         type="button"
       >
         <span>
@@ -2276,6 +2295,7 @@ exports[`components/viewHeader/filterEntry return filterEntry for date field 2`]
     >
       <button
         class="Button"
+        title="Property 3"
         type="button"
       >
         <span>
@@ -2514,6 +2534,7 @@ exports[`components/viewHeader/filterEntry return filterEntry for text field 1`]
     >
       <button
         class="Button"
+        title="Property 2"
         type="button"
       >
         <span>
@@ -2568,6 +2589,7 @@ exports[`components/viewHeader/filterEntry return filterEntry for text field 2`]
     >
       <button
         class="Button"
+        title="Property 2"
         type="button"
       >
         <span>

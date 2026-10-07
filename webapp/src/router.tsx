@@ -1,7 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useEffect, useMemo, useState} from 'react'
+import React, {useEffect, useLayoutEffect, useMemo, useState} from 'react'
 import {
     Router,
     Redirect,
@@ -27,6 +27,7 @@ import {getFirstTeam, fetchTeams, Team} from './store/teams'
 import {getSidebarCategories, CategoryBoards} from './store/sidebar'
 import {getMySortedBoards} from './store/boards'
 import {UserSettings} from './userSettings'
+import {syncHistoryWithBrowserLocation} from './desktopHistory'
 import FBRoute from './route'
 
 declare let window: IAppWindow
@@ -214,16 +215,18 @@ const FocalboardRouter = (props: Props): React.JSX.Element => {
         }, [])
     }
 
-    useEffect(() => {
-        if (window.frontendBaseURL) {
-            // Preserve the query string and hash so a specific error id
-            // (e.g. ?id=not-logged-in) and the post-login return path (r=...)
-            // survive this initial sync instead of being dropped, which would
-            // degrade a specific error into a bare, generic /error page. (MM-69658)
-            const {pathname, search, hash} = window.location
-            browserHistory.replace(`${pathname.replace(window.frontendBaseURL, '')}${search}${hash}`)
-        }
+    // Adopt the current browser URL before the first render (not in a post-render
+    // useEffect, whose child effects run first and would mount a stale board).
+    // Render nothing until the sync has run so the wrong board is never mounted.
+    const [synced, setSynced] = useState(false)
+    useLayoutEffect(() => {
+        syncHistoryWithBrowserLocation(browserHistory)
+        setSynced(true)
     }, [])
+
+    if (!synced) {
+        return <></>
+    }
 
     return (
         <Router history={browserHistory}>

@@ -273,8 +273,8 @@ const BoardPage = (props: Props): React.JSX.Element => {
             // to join — otherwise a deleted board triggers the "join private board" dialog
             // (admin) or "something went wrong" page (regular user).
             try {
-                const boardExists = await octoClient.getBoard(boardId)
-                if (!boardExists) {
+                const status = await octoClient.probeBoard(boardId)
+                if (status === 404) {
                     // Board was deleted — navigate to the team page so TeamToBoardAndViewRedirect
                     // can redirect to the next available board or show the template selector.
                     UserSettings.setLastBoardID(boardTeamId, null)
@@ -282,7 +282,12 @@ const BoardPage = (props: Props): React.JSX.Element => {
                     history.push(generatePath(teamBasePath, {teamId: boardTeamId}))
                     return
                 }
-                await joinBoard(myUser, boardTeamId, boardId, false)
+                if (status === 200 || status === 403) {
+                    await joinBoard(myUser, boardTeamId, boardId, false)
+                } else {
+                    dispatch(setGlobalError(status === 401 ? ErrorId.NotLoggedIn : 'unknown'))
+                    return
+                }
             } catch (error: unknown) {
                 // Error already handled in joinBoard
             }

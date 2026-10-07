@@ -6,7 +6,7 @@ import {History} from 'history'
 import {Utils} from './utils'
 import {SuiteWindow} from './types/index'
 
-import {boardsRouteBase, customHistory, doBrowserHistoryPush, handleBrowserHistoryMessage, handleBrowserHistoryPush} from './desktopHistory'
+import {boardsRouteBase, customHistory, doBrowserHistoryPush, handleBrowserHistoryMessage, handleBrowserHistoryPush, syncHistoryWithBrowserLocation} from './desktopHistory'
 
 const windowAny = (window as SuiteWindow)
 
@@ -156,6 +156,121 @@ describe('desktopHistory', () => {
             history.push('/team/team-id')
 
             expect(sendBrowserHistoryPush).not.toHaveBeenCalled()
+        })
+    })
+
+    describe('customHistory live location (MM-68337)', () => {
+        beforeEach(() => {
+            window.history.pushState({}, '', '/')
+        })
+
+        test('keeps location current after navigating, instead of freezing it at init', () => {
+            jest.spyOn(Utils, 'isDesktop').mockReturnValue(false)
+            window.history.pushState({}, '', '/boards/team/team-a/board-a')
+
+            const history = customHistory()
+            expect(history.location.pathname).toBe('/team/team-a/board-a')
+
+            // A shallow-copied history would keep the stale location here.
+            history.push('/team/team-a/board-a/view-2')
+            expect(history.location.pathname).toBe('/team/team-a/board-a/view-2')
+        })
+
+        test('keeps location live on desktop via the browser-history round-trip', () => {
+            jest.spyOn(Utils, 'isDesktop').mockReturnValue(true)
+            let pushListener: ((pathName: string) => void) | undefined
+            const sendBrowserHistoryPush = jest.fn()
+            windowAny.desktopAPI = {
+                sendBrowserHistoryPush,
+                onBrowserHistoryPush: (listener: (pathName: string) => void) => {
+                    pushListener = listener
+                    return () => {}
+                },
+            }
+
+            window.history.pushState({}, '', '/boards/team/team-a/board-a')
+            const history = customHistory()
+            expect(history.location.pathname).toBe('/team/team-a/board-a')
+
+            // On desktop, push routes through the desktop app instead of mutating
+            // the local history directly.
+            history.push('/team/team-a/board-a/view-2')
+            expect(sendBrowserHistoryPush).toHaveBeenCalledWith('/boards/team/team-a/board-a/view-2')
+            expect(history.location.pathname).toBe('/team/team-a/board-a')
+
+            // The desktop app echoes the navigation back, which must advance the
+            // live location so the router can react to it.
+            pushListener?.('/boards/team/team-a/board-a/view-2')
+            expect(history.location.pathname).toBe('/team/team-a/board-a/view-2')
+        })
+    })
+
+    describe('syncHistoryWithBrowserLocation', () => {
+        const makeHistory = (pathname: string, search = '', hash = '') => ({
+            location: {pathname, search, hash},
+            replace: jest.fn(),
+        } as unknown as History)
+
+        beforeEach(() => {
+            window.history.pushState({}, '', '/')
+            windowAny.frontendBaseURL = '/boards'
+        })
+
+        test('adopts the current browser URL, stripping the basename', () => {
+            window.history.pushState({}, '', '/boards/team/team-a/board-a')
+            const history = makeHistory('/')
+            syncHistoryWithBrowserLocation(history)
+            expect(history.replace).toHaveBeenCalledWith('/team/team-a/board-a')
+        })
+
+        test('preserves the query string and hash', () => {
+            window.history.pushState({}, '', '/boards/team/team-a/board-a?view=1#card')
+            const history = makeHistory('/')
+            syncHistoryWithBrowserLocation(history)
+            expect(history.replace).toHaveBeenCalledWith('/team/team-a/board-a?view=1#card')
+        })
+
+        test('preserves an error-page query string so the error id survives (MM-69658)', () => {
+            window.history.pushState({}, '', '/boards/error?id=not-logged-in&r=%2Fteam%2Ft1%2F')
+            const history = makeHistory('/')
+            syncHistoryWithBrowserLocation(history)
+            expect(history.replace).toHaveBeenCalledWith('/error?id=not-logged-in&r=%2Fteam%2Ft1%2F')
+        })
+
+        test('maps the bare boards route to the root', () => {
+            window.history.pushState({}, '', '/boards')
+            const history = makeHistory('/team/old-team/old-board')
+            syncHistoryWithBrowserLocation(history)
+            expect(history.replace).toHaveBeenCalledWith('/')
+        })
+
+        test('does nothing when the browser is not on a boards route', () => {
+            window.history.pushState({}, '', '/admin_console/user_management')
+            const history = makeHistory('/team/team-a/board-a')
+            syncHistoryWithBrowserLocation(history)
+            expect(history.replace).not.toHaveBeenCalled()
+        })
+
+        test('ignores a route that only shares the boards prefix', () => {
+            window.history.pushState({}, '', '/boards-legacy/team/team-a')
+            const history = makeHistory('/')
+            syncHistoryWithBrowserLocation(history)
+            expect(history.replace).not.toHaveBeenCalled()
+        })
+
+        test('does not replace when the history is already in sync', () => {
+            window.history.pushState({}, '', '/boards/team/team-a/board-a')
+            const history = makeHistory('/team/team-a/board-a')
+            syncHistoryWithBrowserLocation(history)
+            expect(history.replace).not.toHaveBeenCalled()
+        })
+
+        test('strips a subpath basename on subpath deployments', () => {
+            windowAny.frontendBaseURL = '/company/boards'
+            window.history.pushState({}, '', '/company/boards/team/team-a/board-a')
+            const history = makeHistory('/')
+            syncHistoryWithBrowserLocation(history)
+            expect(history.replace).toHaveBeenCalledWith('/team/team-a/board-a')
         })
     })
 })

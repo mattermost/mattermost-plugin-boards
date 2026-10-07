@@ -90,6 +90,34 @@ describe('components/viewHeader/filterEntry', () => {
         expect(container).toMatchSnapshot()
     })
 
+    test('property-name button exposes its full name as a title tooltip', () => {
+        const longNameBoard = TestBlockFactory.createBoard()
+        const longNameView = TestBlockFactory.createBoardView(longNameBoard)
+        const longPropertyName = 'A very long status property name that overflows'
+        longNameBoard.cardProperties[0].name = longPropertyName
+        longNameBoard.cardProperties[0].options = [{id: 'opt1', value: 'Not Started', color: ''}]
+        const longNameFilter: FilterClause = {
+            propertyId: longNameBoard.cardProperties[0].id,
+            condition: 'includes',
+            values: ['opt1'],
+        }
+        longNameView.fields.filter.filters = [longNameFilter]
+        render(
+            wrapIntl(
+                <ReduxProvider store={store}>
+                    <FilterEntry
+                        board={longNameBoard}
+                        view={longNameView}
+                        conditionClicked={mockedConditionClicked}
+                        filter={longNameFilter}
+                    />
+                </ReduxProvider>,
+            ),
+        )
+        const propertyButton = screen.getByRole('button', {name: longPropertyName})
+        expect(propertyButton).toHaveAttribute('title', longPropertyName)
+    })
+
     test('return filterEntry for boolean field', () => {
         activeView.fields.filter.filters = [booleanFilter]
         const {container} = render(

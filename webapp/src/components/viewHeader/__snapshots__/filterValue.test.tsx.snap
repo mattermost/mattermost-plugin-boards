@@ -26,6 +26,7 @@ exports[`components/viewHeader/filterValue return filterValue 1`] = `
   >
     <button
       class="Button"
+      title="Status"
       type="button"
     >
       <span>
@@ -112,6 +113,7 @@ exports[`components/viewHeader/filterValue return filterValue and click Status 1
   >
     <button
       class="Button"
+      title="Status"
       type="button"
     >
       <span>
@@ -198,6 +200,7 @@ exports[`components/viewHeader/filterValue return filterValue and click Status w
   >
     <button
       class="Button"
+      title="(Unknown)"
       type="button"
     >
       <span>

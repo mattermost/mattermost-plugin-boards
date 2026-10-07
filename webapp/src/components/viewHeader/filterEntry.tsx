@@ -45,7 +45,7 @@ const FilterEntry = (props: Props): React.JSX.Element => {
             key={key}
         >
             <MenuWrapper>
-                <Button>{propertyName}</Button>
+                <Button title={propertyName}>{propertyName}</Button>
                 <Menu>
                     <Menu.Text
                         key={'title'}

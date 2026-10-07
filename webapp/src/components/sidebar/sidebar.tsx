@@ -133,6 +133,17 @@ const Sidebar = (props: Props) => {
             return
         }
 
+        // Guard against acting on stale, cross-team state during a team switch.
+        // Sidebar categories are fetched per-team and boards are team-scoped. A
+        // fast team switch can leave the previous team's categories (or an
+        // in-flight fetch for them) in the store while the new team is already
+        // current. A later websocket update can unshift a current-team category
+        // ahead of those stale entries, so every category — not only the first —
+        // must belong to the team being viewed.
+        if (currentBoard.teamId !== team.id || sidebarCategories.some((category) => category.teamID !== team.id)) {
+            return
+        }
+
         // find the category the current board belongs to
         // const category = sidebarCategories.find((c) => c.boardIDs.indexOf(currentBoard.id) >= 0)
         const category = sidebarCategories.find((c) => c.boardMetadata.find((boardMetadata) => boardMetadata.boardID === currentBoard.id))

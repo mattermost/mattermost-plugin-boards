@@ -60,7 +60,11 @@ func (a *API) handleGetTemplates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if isGuest {
-		a.errorResponse(w, r, model.NewErrPermission("access denied to templates"))
+		// Guests have no access to templates. The webapp requests the
+		// templates list on every load and team switch for all users, so
+		// returning an error here floods the server log with a routine,
+		// expected permission denial. Return an empty list instead.
+		jsonStringResponse(w, http.StatusOK, "[]")
 		return
 	}
 
