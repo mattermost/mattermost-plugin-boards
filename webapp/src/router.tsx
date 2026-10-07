@@ -216,7 +216,12 @@ const FocalboardRouter = (props: Props): React.JSX.Element => {
 
     useEffect(() => {
         if (window.frontendBaseURL) {
-            browserHistory.replace(window.location.pathname.replace(window.frontendBaseURL, ''))
+            // Preserve the query string and hash so a specific error id
+            // (e.g. ?id=not-logged-in) and the post-login return path (r=...)
+            // survive this initial sync instead of being dropped, which would
+            // degrade a specific error into a bare, generic /error page. (MM-69658)
+            const {pathname, search, hash} = window.location
+            browserHistory.replace(`${pathname.replace(window.frontendBaseURL, '')}${search}${hash}`)
         }
     }, [])
 
