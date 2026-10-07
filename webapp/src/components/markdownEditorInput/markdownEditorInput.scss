@@ -20,6 +20,27 @@
         border-radius: 4px;
         color: inherit;
     }
+
+    .EmojiSuggestions {
+        background: rgba(var(--center-channel-bg-rgb), 1);
+        box-shadow: var(--elevation-1);
+        border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+        border-radius: 4px;
+    }
+
+    .EmojiSuggestions__entry {
+        color: rgba(var(--center-channel-color-rgb), 0.9);
+        background: transparent;
+
+        &--focused,
+        &:hover {
+            background: rgba(var(--center-channel-color-rgb), 0.08);
+        }
+
+        &:active {
+            background: rgba(var(--button-bg-rgb), 0.08);
+        }
+    }
 }
 
 .DraftEditor-root + div {
