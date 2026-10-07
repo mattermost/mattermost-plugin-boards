@@ -3,7 +3,7 @@
 
 
 import React from 'react'
-import {render, screen} from '@testing-library/react'
+import {render, screen, waitFor} from '@testing-library/react'
 import {Provider as ReduxProvider} from 'react-redux'
 
 import {mocked} from 'jest-mock'
@@ -185,7 +185,7 @@ describe('components/viewHeader/filterComponent', () => {
         activeView.fields.filter.filters = []
         mockedMutator.changeViewFilter.mockImplementation((_boardId, _viewId, _oldFilter, newFilter) => {
             activeView.fields.filter = newFilter as FilterGroup
-            return Promise.resolve()
+            return Promise.resolve({ok: true} as Response)
         })
 
         render(
@@ -218,7 +218,7 @@ describe('components/viewHeader/filterComponent', () => {
 
     test('clears pending add state when the active view changes', () => {
         activeView.fields.filter.filters = []
-        mockedMutator.changeViewFilter.mockResolvedValue(undefined)
+        mockedMutator.changeViewFilter.mockResolvedValue({ok: true} as Response)
 
         const {rerender} = render(
             wrapIntl(
@@ -255,7 +255,7 @@ describe('components/viewHeader/filterComponent', () => {
 
     test('rapid clicks before the view updates only persist one new clause', () => {
         activeView.fields.filter.filters = []
-        mockedMutator.changeViewFilter.mockResolvedValue(undefined)
+        mockedMutator.changeViewFilter.mockResolvedValue({ok: true} as Response)
 
         render(
             wrapIntl(
@@ -277,6 +277,32 @@ describe('components/viewHeader/filterComponent', () => {
         expect(mockedMutator.changeViewFilter).toHaveBeenCalledTimes(1)
         const newFilterGroup = mockedMutator.changeViewFilter.mock.calls[0][3] as FilterGroup
         expect(newFilterGroup.filters).toHaveLength(1)
+    })
+
+    test('re-enables + Add filter when the add request is rejected', async () => {
+        activeView.fields.filter.filters = []
+        mockedMutator.changeViewFilter.mockResolvedValue({ok: false} as Response)
+
+        render(
+            wrapIntl(
+                <ReduxProvider store={store}>
+                    <FilterComponenet
+                        board={board}
+                        activeView={activeView}
+                        onClose={jest.fn()}
+                    />
+                </ReduxProvider>,
+            ),
+        )
+
+        const buttonAdd = screen.getByRole('button', {name: '+ Add filter'})
+        userEvent.click(buttonAdd)
+
+        // The add is pending until the view reflects it, so the button is
+        // momentarily disabled; a rejected request must re-enable it in place
+        // rather than leaving it stuck until the dialog is closed.
+        expect(buttonAdd).toBeDisabled()
+        await waitFor(() => expect(screen.getByRole('button', {name: '+ Add filter'})).toBeEnabled())
     })
 
     test('add filter on a board with a person property uses a valid person condition', () => {

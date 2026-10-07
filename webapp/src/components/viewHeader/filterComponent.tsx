@@ -114,13 +114,23 @@ const FilterComponent = (props: Props): React.JSX.Element => {
         pendingPropertyIdRef.current = filter.propertyId
         setPendingPropertyId(filter.propertyId)
 
+        const clearPending = () => {
+            pendingPropertyIdRef.current = undefined
+            setPendingPropertyId(undefined)
+        }
+
         const filterGroup = createFilterGroup(activeView.fields.filter)
         filterGroup.filters.push(filter)
 
-        Promise.resolve(mutator.changeViewFilter(board.id, activeView.id, activeView.fields.filter, filterGroup)).catch(() => {
-            pendingPropertyIdRef.current = undefined
-            setPendingPropertyId(undefined)
-        })
+        // changeViewFilter resolves even on an HTTP error, so re-enable the
+        // button on a rejected add instead of waiting for the dialog to close.
+        Promise.resolve(mutator.changeViewFilter(board.id, activeView.id, activeView.fields.filter, filterGroup)).
+            then((response) => {
+                if (response && !response.ok) {
+                    clearPending()
+                }
+            }).
+            catch(clearPending)
     }
 
     const awaitingAdd = Boolean(pendingPropertyId && !filters.some((f) => f.propertyId === pendingPropertyId))
