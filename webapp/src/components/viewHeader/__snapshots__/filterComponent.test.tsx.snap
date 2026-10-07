@@ -32,6 +32,7 @@ exports[`components/viewHeader/filterComponent return filterComponent 1`] = `
         >
           <button
             class="Button"
+            title="Status"
             type="button"
           >
             <span>
@@ -239,6 +240,7 @@ exports[`components/viewHeader/filterComponent return filterComponent 1`] = `
         >
           <button
             class="Button"
+            title="Status"
             type="button"
           >
             <span>
@@ -304,6 +306,7 @@ exports[`components/viewHeader/filterComponent return filterComponent and add Fi
         >
           <button
             class="Button"
+            title="Status"
             type="button"
           >
             <span>
@@ -511,6 +514,7 @@ exports[`components/viewHeader/filterComponent return filterComponent and add Fi
         >
           <button
             class="Button"
+            title="Status"
             type="button"
           >
             <span>
@@ -576,6 +580,7 @@ exports[`components/viewHeader/filterComponent return filterComponent and click 
         >
           <button
             class="Button"
+            title="Status"
             type="button"
           >
             <span>
@@ -756,6 +761,7 @@ exports[`components/viewHeader/filterComponent return filterComponent and click 
         >
           <button
             class="Button"
+            title="Status"
             type="button"
           >
             <span>
@@ -821,6 +827,7 @@ exports[`components/viewHeader/filterComponent return filterComponent and filter
         >
           <button
             class="Button"
+            title="(unknown)"
             type="button"
           >
             <span>

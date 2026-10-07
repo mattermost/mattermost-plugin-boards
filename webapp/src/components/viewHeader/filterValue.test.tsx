@@ -131,6 +131,91 @@ describe('components/viewHeader/filterValue', () => {
         expect(switchStatus).toBeInTheDocument()
     })
 
+    test('value button exposes the full comma-separated option list as its title tooltip', () => {
+        const multiBoard = TestBlockFactory.createBoard()
+        const multiView = TestBlockFactory.createBoardView(multiBoard)
+        multiBoard.cardProperties[0].options = [
+            {id: 'opt1', value: 'Not Started', color: ''},
+            {id: 'opt2', value: 'In Progress', color: ''},
+            {id: 'opt3', value: 'In Review', color: ''},
+            {id: 'opt4', value: 'Completed', color: ''},
+        ]
+        const multiFilter: FilterClause = {
+            propertyId: multiBoard.cardProperties[0].id,
+            condition: 'includes',
+            values: ['opt1', 'opt2', 'opt3', 'opt4'],
+        }
+        multiView.fields.filter.filters = [multiFilter]
+        render(
+            wrapIntl(
+                <ReduxProvider store={store}>
+                    <FilterValue
+                        view={multiView}
+                        filter={multiFilter}
+                        template={multiBoard.cardProperties[0]}
+                        propertyType={propsRegistry.get(multiBoard.cardProperties[0].type)}
+                    />
+                </ReduxProvider>,
+            ),
+        )
+        const expected = 'Not Started, In Progress, In Review, Completed'
+        const buttonElement = screen.getByRole('button', {name: expected})
+        expect(buttonElement).toHaveAttribute('title', expected)
+        expect(buttonElement).toHaveTextContent(expected)
+    })
+
+    test('value button title falls back to (empty) when no options are selected', () => {
+        const emptyBoard = TestBlockFactory.createBoard()
+        const emptyView = TestBlockFactory.createBoardView(emptyBoard)
+        emptyBoard.cardProperties[0].options = [{id: 'opt1', value: 'Not Started', color: ''}]
+        const emptyFilter: FilterClause = {
+            propertyId: emptyBoard.cardProperties[0].id,
+            condition: 'includes',
+            values: [],
+        }
+        emptyView.fields.filter.filters = [emptyFilter]
+        render(
+            wrapIntl(
+                <ReduxProvider store={store}>
+                    <FilterValue
+                        view={emptyView}
+                        filter={emptyFilter}
+                        template={emptyBoard.cardProperties[0]}
+                        propertyType={propsRegistry.get(emptyBoard.cardProperties[0].type)}
+                    />
+                </ReduxProvider>,
+            ),
+        )
+        const buttonElement = screen.getByRole('button', {name: '(empty)'})
+        expect(buttonElement).toHaveAttribute('title', '(empty)')
+    })
+
+    test('value button title falls back to (Unknown) for a selected option missing from the template', () => {
+        const unknownBoard = TestBlockFactory.createBoard()
+        const unknownView = TestBlockFactory.createBoardView(unknownBoard)
+        unknownBoard.cardProperties[0].options = [{id: 'opt1', value: 'Not Started', color: ''}]
+        const unknownFilter: FilterClause = {
+            propertyId: unknownBoard.cardProperties[0].id,
+            condition: 'includes',
+            values: ['deleted-option-id'],
+        }
+        unknownView.fields.filter.filters = [unknownFilter]
+        render(
+            wrapIntl(
+                <ReduxProvider store={store}>
+                    <FilterValue
+                        view={unknownView}
+                        filter={unknownFilter}
+                        template={unknownBoard.cardProperties[0]}
+                        propertyType={propsRegistry.get(unknownBoard.cardProperties[0].type)}
+                    />
+                </ReduxProvider>,
+            ),
+        )
+        const buttonElement = screen.getByRole('button', {name: '(Unknown)'})
+        expect(buttonElement).toHaveAttribute('title', '(Unknown)')
+    })
+
     test('return date filter value', () => {
         const propertyTemplate: IPropertyTemplate = {
             id: 'datePropertyID',

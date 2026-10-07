@@ -8,10 +8,15 @@
     }
 
     .Button {
-        overflow: hidden;
         max-width: 220px;
-        text-overflow: ellipsis;
-        white-space: normal;
-        display: block;
+
+        // Keep the label on a single line so the ellipsis renders. Wrapping a
+        // fixed-height button slices the overflowing text in half instead, so
+        // truncate the inner label span rather than the button itself.
+        > span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
     }
 }
