@@ -71,7 +71,10 @@ const BoardSwitcherDialog = (props: Props): React.JSX.Element => {
         setRefs(refs)
         return items.map((item, i) => {
             const resultTitle = item.title || untitledBoardTitle
-            const teamTitle = teamsById[item.teamId].title
+
+            // Search can return boards from teams the user is not a member of
+            // (e.g. via board or channel membership), which are absent from the store.
+            const teamTitle = teamsById[item.teamId]?.title
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             setIDs((prevIDs: any) => ({
                 ...prevIDs,
@@ -87,7 +90,7 @@ const BoardSwitcherDialog = (props: Props): React.JSX.Element => {
                     {item.type === BoardTypeOpen && <Globe/>}
                     {item.type === BoardTypePrivate && <LockOutline/>}
                     <span className='resultTitle'>{resultTitle}</span>
-                    <span className='teamTitle'>{teamTitle}</span>
+                    {teamTitle && <span className='teamTitle'>{teamTitle}</span>}
                 </div>
             )
         })
