@@ -753,7 +753,7 @@ func TestCopyCardFiles(t *testing.T) {
 
 	t.Run("SkipsBlockThatOnlyHasLegacyAttachmentId", func(t *testing.T) {
 		// Legacy attachmentId is no longer read on the copy path (schema migration 41
-		// normalises it to fileId), so a block that still carries only attachmentId
+		// normalizes it to fileId), so a block that still carries only attachmentId
 		// references no copyable file and must be skipped without error.
 		sourceBoardID := "bsourceboard123456789012345"
 		copiedBlocks := []*model.Block{
@@ -1169,7 +1169,7 @@ func fileRefBlock(blockType model.BlockType, field, filename string) *model.Bloc
 }
 
 // legacyRefCase describes one shape of block reference that the ad-hoc scan has to recognize.
-// File references are now stored only under fileId (schema migration 41 normalises any legacy
+// File references are now stored only under fileId (schema migration 41 normalizes any legacy
 // attachmentId values), so only fileId on either block type resolves; a stale attachmentId does not.
 type legacyRefCase struct {
 	name             string

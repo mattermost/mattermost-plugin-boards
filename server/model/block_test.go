@@ -367,7 +367,7 @@ func TestValidateBlockPatch(t *testing.T) {
 	})
 
 	t.Run("Should not validate the legacy attachmentId field as a file ID", func(t *testing.T) {
-		// attachmentId is no longer a recognised file field: schema migration 41
+		// attachmentId is no longer a recognized file field: schema migration 41
 		// rewrites stored values to fileId, so a patch carrying attachmentId is
 		// treated as any other unknown field rather than validated as a file ID.
 		patch := &BlockPatch{
@@ -560,7 +560,7 @@ func TestBlockIsValid(t *testing.T) {
 	})
 
 	t.Run("Should not validate the legacy attachmentId field as a file ID", func(t *testing.T) {
-		// The legacy attachmentId field is no longer validated; it is normalised to
+		// The legacy attachmentId field is no longer validated; it is normalized to
 		// fileId by schema migration 41 and on import, so a stored value is ignored.
 		block := &Block{
 			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
@@ -760,7 +760,7 @@ func TestBlock_IsValidForImport(t *testing.T) {
 	})
 
 	t.Run("Should not validate the legacy attachmentId field as a file ID on import", func(t *testing.T) {
-		// Imported blocks are normalised via NormalizeLegacyFileFields before this
+		// Imported blocks are normalized via NormalizeLegacyFileFields before this
 		// runs; IsValidForImport itself no longer treats attachmentId specially.
 		block := &Block{
 			ID:         string(utils.IDTypeNone) + mmModel.NewId(),

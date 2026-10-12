@@ -208,7 +208,7 @@ func (b *Block) baseValidations() error {
 // run on import to keep stored data on the current field name. A non-empty string
 // value is moved to fileId (taking precedence over any existing fileId, matching
 // the legacy read order); any other attachmentId value is dropped without touching
-// fileId. This mirrors the behaviour of schema migration 41.
+// fileId. This mirrors the behavior of schema migration 41.
 func (b *Block) NormalizeLegacyFileFields() {
 	if b.Fields == nil {
 		return

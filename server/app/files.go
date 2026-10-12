@@ -91,7 +91,7 @@ func (a *App) GetFileInfo(filename string) (*mm_model.FileInfo, error) {
 	return fileInfo, nil
 }
 
-// isBoardsFilePath reports whether a normalised file path is under the regular
+// isBoardsFilePath reports whether a normalized file path is under the regular
 // boards storage root (boards/YYYYMMDD/...). Template files (teamID/boardID/filename)
 // return false.
 func isBoardsFilePath(normalizedPath string) bool {
@@ -186,7 +186,7 @@ func (a *App) validateFileOwnershipForBlockWrite(teamID, boardID, filename strin
 }
 
 // blockReferencesFile reports whether a block points at filename. The webapp writes
-// fileId for images and attachments alike, and schema migration 41 normalises any
+// fileId for images and attachments alike, and schema migration 41 normalizes any
 // legacy attachmentId values to fileId, so only fileId is checked.
 func blockReferencesFile(block *model.Block, filename string) bool {
 	if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID == filename {
