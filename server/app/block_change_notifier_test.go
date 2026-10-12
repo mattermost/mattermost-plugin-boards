@@ -318,7 +318,6 @@ func TestShutdownWaitsForInFlightChangeNotification(t *testing.T) {
 	adapter := newParkingAdapter()
 	var releaseOnce sync.Once
 	release := func() { releaseOnce.Do(func() { close(adapter.release) }) }
-	t.Cleanup(release)
 
 	cfg := config.Configuration{}
 	// BlockChangeNotifier is left unset so New falls back to the production queue.
@@ -326,6 +325,15 @@ func TestShutdownWaitsForInFlightChangeNotification(t *testing.T) {
 		Store:            store,
 		Logger:           logger,
 		SkipTemplateInit: true,
+	})
+
+	// Release first so a parked callback can finish, then shut down the
+	// production queue even if an assertion fails after New.
+	var shutdownOnce sync.Once
+	shutdown := func() { shutdownOnce.Do(app.Shutdown) }
+	t.Cleanup(func() {
+		release()
+		shutdown()
 	})
 
 	store.EXPECT().CreateCategory(gomock.Any()).Return(nil)
@@ -343,7 +351,7 @@ func TestShutdownWaitsForInFlightChangeNotification(t *testing.T) {
 
 	shutdownReturned := make(chan struct{})
 	go func() {
-		app.Shutdown()
+		shutdown()
 		close(shutdownReturned)
 	}()
 
