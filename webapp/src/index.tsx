@@ -8,6 +8,7 @@ import {Provider as ReduxProvider} from 'react-redux'
 import {History} from 'history'
 import {GlobalState} from '@mattermost/types/store'
 import {selectTeam} from 'mattermost-redux/actions/teams'
+import {makeGetChannel} from 'mattermost-redux/selectors/entities/channels'
 
 import appBarIcon from '../static/app-bar-icon.png'
 
@@ -181,8 +182,13 @@ export default class Plugin {
         let lastViewedChannel = mmStore.getState().entities.channels.currentChannelId
         let prevTeamID: string
 
+        // makeGetChannel resolves the full display name for DM/GM channels from
+        // their members. The channel's stored display_name is truncated server-side,
+        // so group messages would otherwise show a partial list of usernames.
+        const getChannel = makeGetChannel()
+
         const currentChannel = mmStore.getState().entities.channels.currentChannelId
-        const currentChannelObj = mmStore.getState().entities.channels.channels[currentChannel]
+        const currentChannelObj = getChannel(mmStore.getState(), currentChannel) || mmStore.getState().entities.channels.channels[currentChannel]
         store.dispatch(setChannel(currentChannelObj))
 
         mmStore.subscribe(() => {
@@ -192,7 +198,7 @@ export default class Plugin {
                 localStorage.setItem('focalboardLastViewedChannel:' + currentUserId, currentChannel)
                 lastViewedChannel = currentChannel
                 octoClient.channelId = currentChannel
-                const currentChannelObj = mmStore.getState().entities.channels.channels[lastViewedChannel]
+                const currentChannelObj = getChannel(mmStore.getState(), lastViewedChannel) || mmStore.getState().entities.channels.channels[lastViewedChannel]
                 store.dispatch(setChannel(currentChannelObj))
             }
 
