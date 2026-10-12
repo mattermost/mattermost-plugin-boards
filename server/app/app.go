@@ -4,6 +4,7 @@
 package app
 
 import (
+	"context"
 	"io"
 	"sync"
 	"time"
@@ -33,6 +34,15 @@ type servicesAPI interface {
 	GetUsersFromProfiles(options *mm_model.UserGetOptions) ([]*mm_model.User, error)
 }
 
+// BlockChangeNotifier dispatches the websocket/webhook/notification callbacks
+// that follow a mutating operation. Production uses an asynchronous
+// utils.CallbackQueue; tests can supply a synchronous implementation so a
+// broadcast is delivered before the operation returns.
+type BlockChangeNotifier interface {
+	Enqueue(f utils.CallbackFunc)
+	Shutdown(ctx context.Context) bool
+}
+
 type ReadCloseSeeker = filestore.ReadCloseSeeker
 
 type fileBackend interface {
@@ -55,6 +65,9 @@ type Services struct {
 	Permissions      permissions.PermissionsService
 	SkipTemplateInit bool
 	ServicesAPI      servicesAPI
+	// BlockChangeNotifier is optional. When nil, New falls back to the
+	// production asynchronous utils.CallbackQueue.
+	BlockChangeNotifier BlockChangeNotifier
 }
 
 type App struct {
@@ -68,7 +81,7 @@ type App struct {
 	notifications       *notify.Service
 	logger              mlog.LoggerIFace
 	permissions         permissions.PermissionsService
-	blockChangeNotifier *utils.CallbackQueue
+	blockChangeNotifier BlockChangeNotifier
 	servicesAPI         servicesAPI
 
 	cardLimitMux sync.RWMutex
@@ -84,6 +97,11 @@ func (a *App) GetConfig() *config.Configuration {
 }
 
 func New(config *config.Configuration, wsAdapter ws.Adapter, services Services) *App {
+	blockChangeNotifier := services.BlockChangeNotifier
+	if blockChangeNotifier == nil {
+		blockChangeNotifier = utils.NewCallbackQueue("blockChangeNotifier", blockChangeNotifierQueueSize, blockChangeNotifierPoolSize, services.Logger)
+	}
+
 	app := &App{
 		config:              config,
 		store:               services.Store,
@@ -95,7 +113,7 @@ func New(config *config.Configuration, wsAdapter ws.Adapter, services Services) 
 		notifications:       services.Notifications,
 		logger:              services.Logger,
 		permissions:         services.Permissions,
-		blockChangeNotifier: utils.NewCallbackQueue("blockChangeNotifier", blockChangeNotifierQueueSize, blockChangeNotifierPoolSize, services.Logger),
+		blockChangeNotifier: blockChangeNotifier,
 		servicesAPI:         services.ServicesAPI,
 	}
 	app.initialize(services.SkipTemplateInit)
