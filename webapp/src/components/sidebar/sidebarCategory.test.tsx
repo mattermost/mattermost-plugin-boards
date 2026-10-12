@@ -23,6 +23,7 @@ import {wrapIntl, wrapRBDNDDroppable} from '../../testUtils'
 
 import mutator from '../../mutator'
 import octoClient from '../../octoClient'
+import {Utils} from '../../utils'
 
 import SidebarCategory from './sidebarCategory'
 
@@ -468,6 +469,52 @@ describe('components/sidebarCategory', () => {
             // auto-assign effect moves the restored board to the default category.
             expect(order).toEqual(['fetchCategories', 'navigate'])
 
+            getSidebarCategoriesSpy.mockRestore()
+        })
+
+        test('undo still reopens the board if restoring the category fails', async () => {
+            mockedMutator.moveBoardToCategory.mockRejectedValueOnce(new Error('move failed'))
+            const logErrorSpy = jest.spyOn(Utils, 'logError').mockImplementation(() => {})
+
+            const getSidebarCategoriesSpy = jest.spyOn(octoClient, 'getSidebarCategories').mockResolvedValue([])
+
+            const testHistory = createMemoryHistory()
+            testHistory.push('/team/team-id/board_1_id')
+            testHistory.push = jest.fn()
+
+            const mockStore = configureStore([thunk])
+            const store = mockStore(deleteNavState)
+
+            render(
+                wrapRBDNDDroppable(wrapIntl(
+                    <ReduxProvider store={store}>
+                        <Router history={testHistory}>
+                            <Route path='/team/:teamId/:boardId'>
+                                <SidebarCategory
+                                    hideSidebar={jest.fn()}
+                                    activeBoardID={board1.id}
+                                    categoryBoards={categoryBoards1}
+                                    boards={[board1, board2]}
+                                    allCategories={allCategoryBoards}
+                                    index={0}
+                                />
+                            </Route>
+                        </Router>
+                    </ReduxProvider>,
+                )),
+            )
+
+            const afterUndo = await triggerDeleteAndGetAfterUndo()
+
+            await act(async () => {
+                await afterUndo()
+            })
+
+            expect(logErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to restore board category'))
+            expect(getSidebarCategoriesSpy).toHaveBeenCalledWith('team-id')
+            expect(testHistory.push).toHaveBeenCalledWith('/team/team-id/board_1_id')
+
+            logErrorSpy.mockRestore()
             getSidebarCategoriesSpy.mockRestore()
         })
     })

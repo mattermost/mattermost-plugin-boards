@@ -245,7 +245,11 @@ const SidebarCategory = (props: Props) => {
                 // before navigating, otherwise the sidebar's auto-assign effect
                 // treats the board as uncategorized and moves it to the default
                 // "Boards" category.
-                await mutator.moveBoardToCategory(teamID, deleteBoard.id, deletedFromCategoryID, '')
+                try {
+                    await mutator.moveBoardToCategory(teamID, deleteBoard.id, deletedFromCategoryID, '')
+                } catch (e) {
+                    Utils.logError(`Failed to restore board category: ${e}`)
+                }
                 await dispatch(fetchSidebarCategories(teamID))
                 showBoard(deleteBoard.id)
             },
