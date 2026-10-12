@@ -156,7 +156,7 @@ class OctoUtils {
     }
 
     static filterConditionValidOrDefault(filterValueType: FilterValueType, currentFilterCondition: FilterCondition): FilterCondition {
-        if (filterValueType === 'options') {
+        if (filterValueType === 'options' || filterValueType === 'person') {
             switch (currentFilterCondition) {
             case 'includes':
             case 'notIncludes':
