@@ -664,6 +664,20 @@ func (a *App) CopyCardFiles(sourceBoardID string, copiedBlocks []*model.Block, a
 			return nil, model.NewErrBadRequest(errMessage)
 		}
 
+		// Defense in depth: fileID can be attacker-controlled on the copy path.
+		// Ensure the referenced file actually belongs to the source board before its
+		// bytes are read or copied, so a foreign FileInfo cannot be pulled into this
+		// board's storage.
+		if err = a.validateFileOwnershipForBlockWrite(sourceBoard.TeamID, sourceBoard.ID, fileID); err != nil {
+			a.logger.Warn(
+				"CopyCardFiles: refusing to copy file that does not belong to the source board",
+				mlog.String("sourceBoardID", sourceBoard.ID),
+				mlog.String("fileID", fileID),
+				mlog.Err(err),
+			)
+			return nil, err
+		}
+
 		// create unique filename
 		ext := filepath.Ext(fileID)
 		fileInfoID := utils.NewID(utils.IDTypeNone)

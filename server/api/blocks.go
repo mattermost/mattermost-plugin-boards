@@ -309,6 +309,13 @@ func (a *API) handlePostBlocks(w http.ResponseWriter, r *http.Request) {
 	// this query param exists when creating template from board, or board from template
 	sourceBoardID := r.URL.Query().Get("sourceBoardID")
 	if sourceBoardID != "" {
+		// The copy path reads files from the source board. Require the caller to have
+		// access to that board so a user-supplied sourceBoardID cannot be used to copy
+		// files out of boards they are not allowed to see.
+		if !a.permissions.HasPermissionToBoard(userID, sourceBoardID, model.PermissionViewBoard) {
+			a.errorResponse(w, r, model.NewErrPermission("access denied to source board"))
+			return
+		}
 		if updateFileIDsErr := a.app.CopyAndUpdateCardFiles(sourceBoardID, userID, blocks, false); updateFileIDsErr != nil {
 			a.errorResponse(w, r, updateFileIDsErr)
 			return
