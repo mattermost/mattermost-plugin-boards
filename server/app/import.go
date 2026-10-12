@@ -326,6 +326,7 @@ func (a *App) parseBoardsAndBlocks(r io.Reader, opt model.ImportArchiveOptions) 
 					if err2 := json.Unmarshal(archiveLine.Data, &block); err2 != nil {
 						return nil, nil, fmt.Errorf("invalid block in archive line %d: %w", lineNum, err2)
 					}
+					block.NormalizeLegacyFileFields()
 					if err := block.IsValidForImport(); err != nil {
 						return nil, nil, err
 					}

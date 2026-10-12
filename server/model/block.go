@@ -194,12 +194,6 @@ func (b *Block) baseValidations() error {
 		}
 	}
 
-	if attachmentId, ok := b.Fields[BlockFieldAttachmentId].(string); ok && attachmentId != "" {
-		if err = ValidateFileId(attachmentId); err != nil {
-			return err
-		}
-	}
-
 	if propsIface, present := b.Fields[BlockFieldProperties]; present {
 		if _, ok := propsIface.(map[string]interface{}); !ok {
 			return ErrBlockPropertiesInvalidType
@@ -207,6 +201,29 @@ func (b *Block) baseValidations() error {
 	}
 
 	return nil
+}
+
+// NormalizeLegacyFileFields rewrites the deprecated attachmentId field to fileId.
+// Archives exported by older Boards releases still carry attachmentId, so this is
+// run on import to keep stored data on the current field name. A non-empty string
+// value is moved to fileId (taking precedence over any existing fileId, matching
+// the legacy read order); any other attachmentId value is dropped without touching
+// fileId. This mirrors the behaviour of schema migration 41.
+func (b *Block) NormalizeLegacyFileFields() {
+	if b.Fields == nil {
+		return
+	}
+
+	attachmentID, present := b.Fields[BlockFieldAttachmentId]
+	if !present {
+		return
+	}
+
+	delete(b.Fields, BlockFieldAttachmentId)
+
+	if fileID, ok := attachmentID.(string); ok && fileID != "" {
+		b.Fields[BlockFieldFileId] = fileID
+	}
 }
 
 var safeInputPattern = regexp.MustCompile(`^[a-zA-Z0-9 _-]+$`)
@@ -264,14 +281,6 @@ func validateUpdatedFields(fields map[string]interface{}) error {
 		}
 
 		if key == BlockFieldFileId {
-			if strVal, ok := value.(string); ok {
-				if err := ValidateFileId(strVal); err != nil {
-					return err
-				}
-			}
-		}
-
-		if key == BlockFieldAttachmentId {
 			if strVal, ok := value.(string); ok {
 				if err := ValidateFileId(strVal); err != nil {
 					return err

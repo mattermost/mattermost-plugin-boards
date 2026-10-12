@@ -19,7 +19,7 @@ function createAttachmentBlock(block?: Block): AttachmentBlock {
         ...createBlock(block),
         type: 'attachment',
         fields: {
-            fileId: block?.fields.attachmentId || block?.fields.fileId || '',
+            fileId: block?.fields.fileId || '',
         },
         isUploading: false,
         uploadingPercent: 0,

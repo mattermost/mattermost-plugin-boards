@@ -189,16 +189,10 @@ func (a *App) PatchBlocksAndNotify(teamID string, blockPatches *model.BlockPatch
 }
 
 // validateFileRefsInFields checks that any file referenced in a block's field
-// map belongs to the given board. It checks both BlockFieldFileId and
-// BlockFieldAttachmentId. blockID is used only for error messages.
+// map belongs to the given board. blockID is used only for error messages.
 func (a *App) validateFileRefsInFields(teamID, boardID, blockID string, fields map[string]interface{}) error {
 	if fileID, ok := fields[model.BlockFieldFileId].(string); ok && fileID != "" {
 		if err := a.validateFileOwnershipForBlockWrite(teamID, boardID, fileID); err != nil {
-			return fmt.Errorf("unauthorized file reference in block %s: %w", blockID, err)
-		}
-	}
-	if attachmentID, ok := fields[model.BlockFieldAttachmentId].(string); ok && attachmentID != "" {
-		if err := a.validateFileOwnershipForBlockWrite(teamID, boardID, attachmentID); err != nil {
 			return fmt.Errorf("unauthorized file reference in block %s: %w", blockID, err)
 		}
 	}
