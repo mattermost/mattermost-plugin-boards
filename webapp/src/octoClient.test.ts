@@ -163,6 +163,103 @@ describe('OctoClient: getBoard vs boardNotFound', () => {
     })
 })
 
+describe('OctoClient: getMe/getTeam retry on transient failures', () => {
+    // getMe/getTeam feed initialLoad and fetchMe. Before this retry, a single
+    // transient non-2xx made the webapp conclude "not logged in" / "invalid
+    // team" and strand the user on the Boards error page. These tests pin that
+    // transient failures are retried while genuine auth failures are not.
+    let sleepSpy: jest.SpyInstance
+
+    beforeEach(() => {
+        sleepSpy = jest.spyOn(Utils, 'sleep').mockResolvedValue()
+    })
+
+    afterEach(() => {
+        sleepSpy.mockRestore()
+    })
+
+    test('getMe recovers when a transient 500 is followed by a 200', async () => {
+        const me = {id: 'user-1', username: 'me'}
+        FetchMock.fn.mockReturnValueOnce(statusResponse(500))
+        FetchMock.fn.mockReturnValueOnce(FetchMock.jsonResponse(JSON.stringify(me)))
+
+        const result = await octoClient.getMe()
+
+        expect(result).toEqual(me)
+        expect(FetchMock.fn).toHaveBeenCalledTimes(2)
+    })
+
+    test('getMe recovers when a dropped connection is followed by a 200', async () => {
+        const me = {id: 'user-1', username: 'me'}
+        FetchMock.fn.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+        FetchMock.fn.mockReturnValueOnce(FetchMock.jsonResponse(JSON.stringify(me)))
+
+        const result = await octoClient.getMe()
+
+        expect(result).toEqual(me)
+        expect(FetchMock.fn).toHaveBeenCalledTimes(2)
+    })
+
+    test('getMe recovers when a transient 429 is followed by a 200', async () => {
+        const me = {id: 'user-1', username: 'me'}
+        FetchMock.fn.mockReturnValueOnce(statusResponse(429))
+        FetchMock.fn.mockReturnValueOnce(FetchMock.jsonResponse(JSON.stringify(me)))
+
+        const result = await octoClient.getMe()
+
+        expect(result).toEqual(me)
+        expect(FetchMock.fn).toHaveBeenCalledTimes(2)
+    })
+
+    test('getMe gives up after exhausting retries on persistent dropped connections', async () => {
+        FetchMock.fn.mockRejectedValue(new TypeError('Failed to fetch'))
+
+        await expect(octoClient.getMe()).rejects.toThrow('Failed to fetch')
+        expect(FetchMock.fn).toHaveBeenCalledTimes(3)
+    })
+
+    test('getMe does not retry a genuine 401 and reports logged out', async () => {
+        FetchMock.fn.mockReturnValueOnce(statusResponse(401))
+
+        const result = await octoClient.getMe()
+
+        expect(result).toBeUndefined()
+        expect(FetchMock.fn).toHaveBeenCalledTimes(1)
+    })
+
+    test('getMe gives up after exhausting retries on persistent 500s with increasing backoff', async () => {
+        FetchMock.fn.mockReturnValue(statusResponse(500))
+
+        const result = await octoClient.getMe()
+
+        expect(result).toBeUndefined()
+        expect(FetchMock.fn).toHaveBeenCalledTimes(3)
+        expect(sleepSpy).toHaveBeenCalledTimes(2)
+        expect(sleepSpy).toHaveBeenNthCalledWith(1, 500)
+        expect(sleepSpy).toHaveBeenNthCalledWith(2, 1000)
+    })
+
+    test('getTeam recovers when a transient 503 is followed by a 200', async () => {
+        const team = {id: 'team-1', title: 'My Team'}
+        FetchMock.fn.mockReturnValueOnce(statusResponse(503))
+        FetchMock.fn.mockReturnValueOnce(FetchMock.jsonResponse(JSON.stringify(team)))
+
+        const result = await octoClient.getTeam()
+
+        expect(result).toEqual(team)
+        expect(FetchMock.fn).toHaveBeenCalledTimes(2)
+    })
+
+    test('getTeam does not retry a genuine 403 and reports no team', async () => {
+        FetchMock.fn.mockReturnValueOnce(statusResponse(403))
+
+        const result = await octoClient.getTeam()
+
+        expect(result).toBeNull()
+        expect(FetchMock.fn).toHaveBeenCalledTimes(1)
+    })
+})
+
 function createBlocks(): Block[] {
     const blocks = []
 

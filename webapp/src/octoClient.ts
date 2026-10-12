@@ -149,6 +149,35 @@ class OctoClient {
         }
     }
 
+    private static readonly transientRetryCount = 2
+    private static readonly transientRetryDelayMs = 500
+
+    private static isTransientStatus(status: number): boolean {
+        return status === 429 || status >= 500
+    }
+
+    // Session-critical reads (getMe/getTeam) must not treat a transient server
+    // blip or dropped connection as "logged out" / "invalid team": a single
+    // non-2xx would otherwise strand the user on the Boards error page while
+    // navigating to Boards. Retry only on transient failures (network errors,
+    // 429, and 5xx) and return 4xx responses immediately so genuine auth and
+    // not-found handling is unchanged.
+    private async fetchWithRetry(url: string, options: RequestInit, retries = OctoClient.transientRetryCount): Promise<Response> {
+        for (let attempt = 0; ; attempt++) {
+            try {
+                const response = await fetch(url, options)
+                if (attempt >= retries || !OctoClient.isTransientStatus(response.status)) {
+                    return response
+                }
+            } catch (error) {
+                if (attempt >= retries) {
+                    throw error
+                }
+            }
+            await Utils.sleep(OctoClient.transientRetryDelayMs * (attempt + 1))
+        }
+    }
+
     private teamPath(teamId?: string): string {
         let teamIdToUse = teamId
         if (!teamId) {
@@ -179,7 +208,7 @@ class OctoClient {
         if (parameters) {
             path += '?' + parameters
         }
-        const response = await fetch(this.getBaseURL() + path, {headers: this.headers()})
+        const response = await this.fetchWithRetry(this.getBaseURL() + path, {headers: this.headers()})
         if (response.status !== 200) {
             return undefined
         }
@@ -680,7 +709,7 @@ class OctoClient {
 
     async getTeam(): Promise<Team | null> {
         const path = this.teamPath()
-        const response = await fetch(this.getBaseURL() + path, {headers: this.headers()})
+        const response = await this.fetchWithRetry(this.getBaseURL() + path, {headers: this.headers()})
         if (response.status !== 200) {
             return null
         }
