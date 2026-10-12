@@ -151,9 +151,40 @@ class OctoClient {
 
     private static readonly transientRetryCount = 2
     private static readonly transientRetryDelayMs = 500
+    private static readonly transientRetryAfterMaxMs = 5000
 
     private static isTransientStatus(status: number): boolean {
         return status === 429 || status >= 500
+    }
+
+    // Retry-After is either delay-seconds or an HTTP-date (RFC 9110). Invalid
+    // values fall back to the fixed backoff so a bad header cannot stall load.
+    private static parseRetryAfterMs(header: string): number | undefined {
+        const value = header.trim()
+        if (/^\d+$/.test(value)) {
+            return Number(value) * 1000
+        }
+        const dateMs = Date.parse(value)
+        if (Number.isNaN(dateMs)) {
+            return undefined
+        }
+        return Math.max(0, dateMs - Date.now())
+    }
+
+    private static retryDelayMs(attempt: number, response?: Response): number {
+        const backoffMs = OctoClient.transientRetryDelayMs * (attempt + 1)
+        if (!response) {
+            return backoffMs
+        }
+        const header = response.headers.get('Retry-After')
+        if (!header) {
+            return backoffMs
+        }
+        const retryAfterMs = OctoClient.parseRetryAfterMs(header)
+        if (retryAfterMs === undefined) {
+            return backoffMs
+        }
+        return Math.min(retryAfterMs, OctoClient.transientRetryAfterMaxMs)
     }
 
     // Session-critical reads (getMe/getTeam) must not treat a transient server
@@ -164,8 +195,9 @@ class OctoClient {
     // not-found handling is unchanged.
     private async fetchWithRetry(url: string, options: RequestInit, retries = OctoClient.transientRetryCount): Promise<Response> {
         for (let attempt = 0; ; attempt++) {
+            let response: Response | undefined
             try {
-                const response = await fetch(url, options)
+                response = await fetch(url, options)
                 if (attempt >= retries || !OctoClient.isTransientStatus(response.status)) {
                     return response
                 }
@@ -174,7 +206,7 @@ class OctoClient {
                     throw error
                 }
             }
-            await Utils.sleep(OctoClient.transientRetryDelayMs * (attempt + 1))
+            await Utils.sleep(OctoClient.retryDelayMs(attempt, response))
         }
     }
 
