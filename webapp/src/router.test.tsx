@@ -3,7 +3,7 @@
 
 import React from 'react'
 
-import {render} from '@testing-library/react'
+import {render, screen} from '@testing-library/react'
 import {Provider as ReduxProvider} from 'react-redux'
 import configureStore from 'redux-mock-store'
 import {thunk} from 'redux-thunk'
@@ -30,7 +30,6 @@ jest.mock('./pages/boardPage/boardPage', () => {
 })
 
 jest.mock('./pages/welcome/welcomePage', () => ({__esModule: true, default: () => null}))
-jest.mock('./pages/errorPage', () => ({__esModule: true, default: () => null}))
 jest.mock('./pages/accessDeniedPage', () => ({__esModule: true, default: () => null}))
 
 const windowAny = (window as SuiteWindow)
@@ -43,7 +42,9 @@ describe('router', () => {
             myConfig: {},
         },
         clientConfig: {
-            value: {featureFlags: {}},
+            // disableTour keeps FBRoute from redirecting to /welcome when plugin
+            // mode is on (needed by the MM-69658 error-page assertions).
+            value: {featureFlags: {disableTour: 'true'}},
         },
         globalError: {value: ''},
     }
@@ -122,6 +123,53 @@ describe('router', () => {
         expect(mockRenderedBoards[mockRenderedBoards.length - 1]).toMatchObject({
             teamId: 'team-a',
             boardId: 'board-a',
+        })
+    })
+
+    describe('FocalboardRouter initial location sync (MM-69658)', () => {
+        beforeEach(() => {
+            // ErrorPage only renders its message (instead of auto-redirecting)
+            // in plugin mode.
+            windowAny.isFocalboardPlugin = true
+        })
+
+        it('preserves the error id query string so a specific error is shown', () => {
+            window.history.pushState({}, '', '/boards/team/t1/b1')
+            const history = customHistory()
+            window.history.pushState({}, '', '/boards/error?id=not-logged-in&r=%2Fteam%2Ft1%2F')
+
+            renderRouter(history)
+
+            expect(history.location.pathname).toBe('/error')
+            expect(history.location.search).toContain('id=not-logged-in')
+            expect(history.location.search).toContain('r=')
+
+            screen.getByText(/session may have expired/)
+            screen.getByRole('button', {name: 'Log in'})
+            expect(screen.queryByText('An error occurred.')).toBeNull()
+        })
+
+        it('preserves the query string and hash together on the initial sync', () => {
+            window.history.pushState({}, '', '/boards/team/t1/b1')
+            const history = customHistory()
+            window.history.pushState({}, '', '/boards/team/t1/b1?foo=bar#section')
+
+            renderRouter(history)
+
+            expect(history.location.pathname).toBe('/team/t1/b1')
+            expect(history.location.search).toBe('?foo=bar')
+            expect(history.location.hash).toBe('#section')
+        })
+
+        it('leaves a plain path without query or hash untouched', () => {
+            window.history.pushState({}, '', '/boards/team/t1/b1')
+            const history = customHistory()
+
+            renderRouter(history)
+
+            expect(history.location.pathname).toBe('/team/t1/b1')
+            expect(history.location.search).toBe('')
+            expect(history.location.hash).toBe('')
         })
     })
 })

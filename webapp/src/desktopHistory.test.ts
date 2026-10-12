@@ -230,6 +230,13 @@ describe('desktopHistory', () => {
             expect(history.replace).toHaveBeenCalledWith('/team/team-a/board-a?view=1#card')
         })
 
+        test('preserves an error-page query string so the error id survives (MM-69658)', () => {
+            window.history.pushState({}, '', '/boards/error?id=not-logged-in&r=%2Fteam%2Ft1%2F')
+            const history = makeHistory('/')
+            syncHistoryWithBrowserLocation(history)
+            expect(history.replace).toHaveBeenCalledWith('/error?id=not-logged-in&r=%2Fteam%2Ft1%2F')
+        })
+
         test('maps the bare boards route to the root', () => {
             window.history.pushState({}, '', '/boards')
             const history = makeHistory('/team/old-team/old-board')
