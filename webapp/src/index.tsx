@@ -19,6 +19,7 @@ import store from './store'
 import {setTeam} from './store/teams'
 import WithWebSockets from './components/withWebSockets'
 import {setChannel} from './store/channels'
+import {createCurrentChannelSync} from './mattermostChannel'
 import {initialLoad} from './store/initialLoad'
 import {Utils} from './utils'
 import {customHistory} from './desktopHistory'
@@ -181,9 +182,12 @@ export default class Plugin {
         let lastViewedChannel = mmStore.getState().entities.channels.currentChannelId
         let prevTeamID: string
 
-        const currentChannel = mmStore.getState().entities.channels.currentChannelId
-        const currentChannelObj = mmStore.getState().entities.channels.channels[currentChannel]
-        store.dispatch(setChannel(currentChannelObj))
+        const syncCurrentChannel = createCurrentChannelSync(
+            () => mmStore.getState(),
+            (channel) => store.dispatch(setChannel(channel)),
+        )
+
+        syncCurrentChannel()
 
         mmStore.subscribe(() => {
             const currentUserId = mmStore.getState().entities.users.currentUserId
@@ -192,9 +196,9 @@ export default class Plugin {
                 localStorage.setItem('focalboardLastViewedChannel:' + currentUserId, currentChannel)
                 lastViewedChannel = currentChannel
                 octoClient.channelId = currentChannel
-                const currentChannelObj = mmStore.getState().entities.channels.channels[lastViewedChannel]
-                store.dispatch(setChannel(currentChannelObj))
             }
+
+            syncCurrentChannel()
 
             // Watch for change in active team.
             // This handles the user selecting a team from the team sidebar.
