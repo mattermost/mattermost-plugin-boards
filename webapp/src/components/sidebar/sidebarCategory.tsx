@@ -21,12 +21,12 @@ import Menu from '../../widgets/menu'
 import MenuWrapper from '../../widgets/menuWrapper'
 
 import './sidebarCategory.scss'
-import {Category, CategoryBoardMetadata, CategoryBoards} from '../../store/sidebar'
+import {Category, CategoryBoardMetadata, CategoryBoards, fetchSidebarCategories} from '../../store/sidebar'
 import ChevronDown from '../../widgets/icons/chevronDown'
 import ChevronRight from '../../widgets/icons/chevronRight'
 import CreateNewFolder from '../../widgets/icons/newFolder'
 import CreateCategory from '../createCategory/createCategory'
-import {useAppSelector} from '../../store/hooks'
+import {useAppDispatch, useAppSelector} from '../../store/hooks'
 import {
     getOnboardingTourCategory,
     getOnboardingTourStep,
@@ -69,6 +69,7 @@ const SidebarCategory = (props: Props) => {
     const [collapsed, setCollapsed] = useState(props.categoryBoards.collapsed)
     const intl = useIntl()
     const history = useHistory()
+    const dispatch = useAppDispatch()
 
     const [deleteBoard, setDeleteBoard] = useState<Board|null>()
     const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] = useState<boolean>(false)
@@ -237,12 +238,19 @@ const SidebarCategory = (props: Props) => {
                 }, 120)
             },
             async () => {
-                // Restore the board to the category it was deleted from
+                // Restore the board to the category it was deleted from. The
+                // board (now undeleted) retains its original category on the
+                // server, but the client removed it from the sidebar on delete.
+                // Re-assert the mapping and refresh the sidebar from the server
+                // before navigating, otherwise the sidebar's auto-assign effect
+                // treats the board as uncategorized and moves it to the default
+                // "Boards" category.
                 await mutator.moveBoardToCategory(teamID, deleteBoard.id, deletedFromCategoryID, '')
+                await dispatch(fetchSidebarCategories(teamID))
                 showBoard(deleteBoard.id)
             },
         )
-    }, [showBoard, deleteBoard, props.boards, props.allCategories, props.categoryBoards.id, teamID, allMyBoards, intl, isBoardVisible, match.path, history])
+    }, [showBoard, deleteBoard, props.boards, props.allCategories, props.categoryBoards.id, teamID, allMyBoards, intl, isBoardVisible, match.path, history, dispatch])
 
     const updateCategory = useCallback(async (value: boolean) => {
         const updatedCategory: Category = {
