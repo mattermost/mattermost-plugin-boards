@@ -17,6 +17,7 @@ func (a *App) CreateBoardsAndBlocks(bab *model.BoardsAndBlocks, userID string, a
 		boardsByID[board.ID] = board
 	}
 	for _, block := range bab.Blocks {
+		block.NormalizeLegacyFileFields()
 		board, ok := boardsByID[block.BoardID]
 		if !ok {
 			continue
