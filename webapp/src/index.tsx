@@ -22,6 +22,7 @@ import {setChannel} from './store/channels'
 import {initialLoad} from './store/initialLoad'
 import {Utils} from './utils'
 import {customHistory} from './desktopHistory'
+import {resolveChannelForBoards} from './resolveChannel'
 import './styles/focalboard-variables.scss'
 import './styles/main.scss'
 import './styles/labels.scss'
@@ -182,8 +183,10 @@ export default class Plugin {
         let prevTeamID: string
 
         const currentChannel = mmStore.getState().entities.channels.currentChannelId
-        const currentChannelObj = mmStore.getState().entities.channels.channels[currentChannel]
-        store.dispatch(setChannel(currentChannelObj))
+        const initialChannelObj = resolveChannelForBoards(mmStore.getState(), currentChannel)
+        if (initialChannelObj) {
+            store.dispatch(setChannel(initialChannelObj))
+        }
 
         mmStore.subscribe(() => {
             const currentUserId = mmStore.getState().entities.users.currentUserId
@@ -192,8 +195,22 @@ export default class Plugin {
                 localStorage.setItem('focalboardLastViewedChannel:' + currentUserId, currentChannel)
                 lastViewedChannel = currentChannel
                 octoClient.channelId = currentChannel
-                const currentChannelObj = mmStore.getState().entities.channels.channels[lastViewedChannel]
-                store.dispatch(setChannel(currentChannelObj))
+                const currentChannelObj = resolveChannelForBoards(mmStore.getState(), lastViewedChannel)
+                if (currentChannelObj) {
+                    store.dispatch(setChannel(currentChannelObj))
+                }
+            } else if (currentChannel) {
+                // Member profiles can arrive after the channel is selected.
+                // Refresh the stored name without treating this as a channel switch.
+                const currentChannelObj = resolveChannelForBoards(mmStore.getState(), currentChannel)
+                const storedChannel = store.getState().channels.current
+                if (
+                    currentChannelObj &&
+                    (currentChannelObj.id !== storedChannel?.id ||
+                        currentChannelObj.display_name !== storedChannel?.display_name)
+                ) {
+                    store.dispatch(setChannel(currentChannelObj))
+                }
             }
 
             // Watch for change in active team.
