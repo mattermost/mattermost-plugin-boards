@@ -149,6 +149,67 @@ class OctoClient {
         }
     }
 
+    private static readonly transientRetryCount = 2
+    private static readonly transientRetryDelayMs = 500
+    private static readonly transientRetryAfterMaxMs = 5000
+
+    private static isTransientStatus(status: number): boolean {
+        return status === 429 || status >= 500
+    }
+
+    // Retry-After is either delay-seconds or an HTTP-date (RFC 9110). Invalid
+    // values fall back to the fixed backoff so a bad header cannot stall load.
+    private static parseRetryAfterMs(header: string): number | undefined {
+        const value = header.trim()
+        if (/^\d+$/.test(value)) {
+            return Number(value) * 1000
+        }
+        const dateMs = Date.parse(value)
+        if (Number.isNaN(dateMs)) {
+            return undefined
+        }
+        return Math.max(0, dateMs - Date.now())
+    }
+
+    private static retryDelayMs(attempt: number, response?: Response): number {
+        const backoffMs = OctoClient.transientRetryDelayMs * (attempt + 1)
+        if (!response) {
+            return backoffMs
+        }
+        const header = response.headers.get('Retry-After')
+        if (!header) {
+            return backoffMs
+        }
+        const retryAfterMs = OctoClient.parseRetryAfterMs(header)
+        if (retryAfterMs === undefined) {
+            return backoffMs
+        }
+        return Math.min(retryAfterMs, OctoClient.transientRetryAfterMaxMs)
+    }
+
+    // Session-critical reads (getMe/getTeam) must not treat a transient server
+    // blip or dropped connection as "logged out" / "invalid team": a single
+    // non-2xx would otherwise strand the user on the Boards error page while
+    // navigating to Boards. Retry only on transient failures (network errors,
+    // 429, and 5xx) and return 4xx responses immediately so genuine auth and
+    // not-found handling is unchanged.
+    private async fetchWithRetry(url: string, options: RequestInit, retries = OctoClient.transientRetryCount): Promise<Response> {
+        for (let attempt = 0; ; attempt++) {
+            let response: Response | undefined
+            try {
+                response = await fetch(url, options)
+                if (attempt >= retries || !OctoClient.isTransientStatus(response.status)) {
+                    return response
+                }
+            } catch (error) {
+                if (attempt >= retries) {
+                    throw error
+                }
+            }
+            await Utils.sleep(OctoClient.retryDelayMs(attempt, response))
+        }
+    }
+
     private teamPath(teamId?: string): string {
         let teamIdToUse = teamId
         if (!teamId) {
@@ -179,7 +240,7 @@ class OctoClient {
         if (parameters) {
             path += '?' + parameters
         }
-        const response = await fetch(this.getBaseURL() + path, {headers: this.headers()})
+        const response = await this.fetchWithRetry(this.getBaseURL() + path, {headers: this.headers()})
         if (response.status !== 200) {
             return undefined
         }
@@ -680,7 +741,7 @@ class OctoClient {
 
     async getTeam(): Promise<Team | null> {
         const path = this.teamPath()
-        const response = await fetch(this.getBaseURL() + path, {headers: this.headers()})
+        const response = await this.fetchWithRetry(this.getBaseURL() + path, {headers: this.headers()})
         if (response.status !== 200) {
             return null
         }
