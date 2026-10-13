@@ -218,15 +218,15 @@ class Mutator {
         )
     }
 
-    async deleteBoard(board: Board, description?: string, afterRedo?: (b: Board) => Promise<void>, beforeUndo?: (b: Board) => Promise<void>) {
+    async deleteBoard(board: Board, description?: string, afterRedo?: (b: Board) => Promise<void>, afterUndo?: (b: Board) => Promise<void>) {
         await undoManager.perform(
             async () => {
                 await octoClient.deleteBoard(board.id)
                 await afterRedo?.(board)
             },
             async () => {
-                await beforeUndo?.(board)
                 await octoClient.undeleteBoard(board.id)
+                await afterUndo?.(board)
             },
             description,
             this.undoGroupId,
