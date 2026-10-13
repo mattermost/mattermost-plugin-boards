@@ -865,3 +865,36 @@ func TestBlock_NormalizeLegacyFileFields(t *testing.T) {
 		require.False(t, present)
 	})
 }
+
+func TestBlockPatch_RemoveLegacyFileFields(t *testing.T) {
+	t.Run("Should drop attachmentId from updated fields without touching fileId", func(t *testing.T) {
+		patch := &BlockPatch{
+			UpdatedFields: map[string]interface{}{
+				BlockFieldAttachmentId: "7abcdefghijklmnopqrstuvwxyz.txt",
+				BlockFieldFileId:       "7keepthisfileid1234567890.txt",
+			},
+		}
+		patch.RemoveLegacyFileFields()
+		require.Equal(t, "7keepthisfileid1234567890.txt", patch.UpdatedFields[BlockFieldFileId])
+		_, present := patch.UpdatedFields[BlockFieldAttachmentId]
+		require.False(t, present)
+	})
+
+	t.Run("Should preserve sibling updated fields", func(t *testing.T) {
+		patch := &BlockPatch{
+			UpdatedFields: map[string]interface{}{
+				BlockFieldAttachmentId: "7abcdefghijklmnopqrstuvwxyz.txt",
+				"contentOrder":         []interface{}{"a", "b"},
+			},
+		}
+		patch.RemoveLegacyFileFields()
+		require.Equal(t, []interface{}{"a", "b"}, patch.UpdatedFields["contentOrder"])
+		_, present := patch.UpdatedFields[BlockFieldAttachmentId]
+		require.False(t, present)
+	})
+
+	t.Run("Should not panic when UpdatedFields is nil", func(t *testing.T) {
+		patch := &BlockPatch{}
+		require.NotPanics(t, patch.RemoveLegacyFileFields)
+	})
+}

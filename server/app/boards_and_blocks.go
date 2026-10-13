@@ -88,6 +88,7 @@ func (a *App) PatchBoardsAndBlocks(pbab *model.PatchBoardsAndBlocks, userID stri
 		if err := model.ValidateBlockPatch(patch); err != nil {
 			return nil, err
 		}
+		patch.RemoveLegacyFileFields()
 	}
 
 	oldBlocks, err := a.store.GetBlocksByIDs(pbab.BlockIDs)

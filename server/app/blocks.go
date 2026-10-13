@@ -76,6 +76,8 @@ func (a *App) PatchBlockAndNotify(blockID string, blockPatch *model.BlockPatch, 
 		return nil, err
 	}
 
+	blockPatch.RemoveLegacyFileFields()
+
 	oldBlock, err := a.store.GetBlock(blockID)
 	if err != nil {
 		return nil, err
@@ -129,6 +131,7 @@ func (a *App) PatchBlocksAndNotify(teamID string, blockPatches *model.BlockPatch
 		if err := model.ValidateBlockPatch(&blockPatches.BlockPatches[i]); err != nil {
 			return err
 		}
+		blockPatches.BlockPatches[i].RemoveLegacyFileFields()
 	}
 
 	oldBlocks, err := a.store.GetBlocksByIDs(blockPatches.BlockIDs)
@@ -204,6 +207,8 @@ func (a *App) InsertBlock(block *model.Block, modifiedByID string) error {
 }
 
 func (a *App) InsertBlockAndNotify(block *model.Block, modifiedByID string, disableNotify bool) error {
+	block.NormalizeLegacyFileFields()
+
 	board, bErr := a.store.GetBoard(block.BoardID)
 	if bErr != nil {
 		return bErr
@@ -253,6 +258,7 @@ func (a *App) InsertBlocksAndNotify(blocks []*model.Block, modifiedByID string, 
 
 	// Reject blocks that reference files not belonging to this board.
 	for _, block := range blocks {
+		block.NormalizeLegacyFileFields()
 		if err := a.validateFileRefsInFields(board.TeamID, boardID, block.ID, block.Fields); err != nil {
 			return nil, err
 		}
