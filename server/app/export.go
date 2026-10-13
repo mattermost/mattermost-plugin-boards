@@ -280,7 +280,7 @@ func (a *App) getBoardsForArchive(boardIDs []string) ([]model.Board, error) {
 }
 
 func extractFilename(block *model.Block) (string, error) {
-	f, ok := block.Fields["fileId"]
+	f, ok := block.Fields[model.BlockFieldFileId]
 	if !ok {
 		return "", model.ErrInvalidImageBlock
 	}

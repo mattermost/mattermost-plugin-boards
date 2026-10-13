@@ -22,11 +22,11 @@ func Test41AttachmentIDToFileID(t *testing.T) {
 		runMigration41Assertions(t, th)
 	})
 
-	// MySQL is exercised through the same plugin-mode path when the test DB is MySQL.
-	// Note the bundled Mattermost core only ships Postgres migration assets, so the
-	// plugin-mode helper can currently only run against Postgres in this repo; the
-	// MySQL branch of migration 41 is covered by the standalone store SQL regardless.
-	t.Run("MySQL and PostgreSQL", func(t *testing.T) {
+	// The bundled Mattermost core only ships Postgres migration assets, so the
+	// plugin-mode helper only runs against Postgres here. Mattermost 11+ does not
+	// support MySQL (min_server_version is 12.0.0), so the MySQL branch cannot run
+	// in production and is not exercised by this test; it is validated manually.
+	t.Run("PostgreSQL", func(t *testing.T) {
 		th, tearDown := SetupPluginTestHelper(t)
 		defer tearDown()
 

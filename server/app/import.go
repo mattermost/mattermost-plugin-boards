@@ -224,12 +224,15 @@ func (a *App) fixImagesAttachments(boardMap map[string]*model.Board, fileMap map
 		for _, block := range newBlocks {
 			if block.Type == "image" || block.Type == "attachment" {
 				fieldName := "fileId"
-				oldID := block.Fields[fieldName]
+				oldID, ok := block.Fields[fieldName].(string)
+				if !ok || oldID == "" {
+					continue
+				}
 				blockIDs = append(blockIDs, block.ID)
 
 				blockPatches = append(blockPatches, model.BlockPatch{
 					UpdatedFields: map[string]interface{}{
-						fieldName: fileMap[oldID.(string)],
+						fieldName: fileMap[oldID],
 					},
 				})
 			}

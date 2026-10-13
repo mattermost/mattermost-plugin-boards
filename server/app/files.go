@@ -186,8 +186,8 @@ func (a *App) validateFileOwnershipForBlockWrite(teamID, boardID, filename strin
 }
 
 // blockReferencesFile reports whether a block points at filename. The webapp writes
-// fileId for images and attachments alike, and schema migration 41 normalizes any
-// legacy attachmentId values to fileId, so only fileId is checked.
+// fileId for images and attachments alike, and legacy attachmentId values are
+// normalized to fileId, so only fileId is checked.
 func blockReferencesFile(block *model.Block, filename string) bool {
 	if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID == filename {
 		return true
@@ -561,7 +561,7 @@ func (a *App) CopyCardFiles(sourceBoardID string, copiedBlocks []*model.Block, a
 			continue
 		}
 
-		fileID, isOk := block.Fields["fileId"].(string)
+		fileID, isOk := block.Fields[model.BlockFieldFileId].(string)
 		if !isOk || fileID == "" {
 			continue
 		}
