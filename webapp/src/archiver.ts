@@ -2,11 +2,14 @@
 // See LICENSE.txt for license information.
 
 
+import {IntlShape} from 'react-intl'
+
 import {IAppWindow} from './types'
 import {Block} from './blocks/block'
 import {Board} from './blocks/board'
 import mutator from './mutator'
 import {Utils} from './utils'
+import {sendFlashMessage} from './components/flashMessages'
 
 declare let window: IAppWindow
 
@@ -47,10 +50,55 @@ class Archiver {
         })
     }
 
-    private static async importArchiveFromFile(file: File): Promise<void> {
-        const response = await mutator.importFullArchive(file)
+    private static async importArchiveFromFile(file: File, intl: IntlShape): Promise<void> {
+        sendFlashMessage({
+            content: intl.formatMessage({id: 'ImportArchive.importing', defaultMessage: 'Importing archive…'}),
+            severity: 'normal',
+        })
+
+        let response: Response
+        try {
+            response = await mutator.importFullArchive(file)
+        } catch (e) {
+            Utils.logError(`ERROR importing archive: ${e}`)
+            sendFlashMessage({
+                content: intl.formatMessage({id: 'ImportArchive.failed', defaultMessage: 'Import failed'}),
+                severity: 'high',
+            })
+            return
+        }
+
         if (response.status !== 200) {
-            Utils.log('ERROR importing archive: ' + response.text())
+            const errorMessage = await Archiver.readImportError(response)
+            Utils.logError(`ERROR importing archive: ${response.status} ${errorMessage}`)
+            sendFlashMessage({
+                content: errorMessage ? intl.formatMessage({id: 'ImportArchive.failedWithReason', defaultMessage: 'Import failed: {error}'}, {error: errorMessage}) : intl.formatMessage({id: 'ImportArchive.failed', defaultMessage: 'Import failed'}),
+                severity: 'high',
+            })
+            return
+        }
+
+        sendFlashMessage({
+            content: intl.formatMessage({id: 'ImportArchive.succeeded', defaultMessage: 'Archive imported'}),
+            severity: 'normal',
+        })
+    }
+
+    private static async readImportError(response: Response): Promise<string> {
+        try {
+            const text = await response.text()
+            if (!text) {
+                return ''
+            }
+
+            try {
+                const json = JSON.parse(text)
+                return json?.error || text
+            } catch {
+                return text
+            }
+        } catch {
+            return ''
         }
     }
 
@@ -62,14 +110,14 @@ class Archiver {
         return true
     }
 
-    static importFullArchive(onComplete?: () => void): void {
+    static importFullArchive(intl: IntlShape, onComplete?: () => void): void {
         const input = document.createElement('input')
         input.type = 'file'
         input.accept = '.boardarchive'
         input.onchange = async () => {
             const file = input.files && input.files[0]
             if (file) {
-                await Archiver.importArchiveFromFile(file)
+                await Archiver.importArchiveFromFile(file, intl)
             }
 
             onComplete?.()
