@@ -36,9 +36,10 @@ func (a *App) CreateCategory(category *model.Category) (*model.Category, error) 
 		return nil, err
 	}
 
-	go func() {
+	a.blockChangeNotifier.Enqueue(func() error {
 		a.wsAdapter.BroadcastCategoryChange(*createdCategory)
-	}()
+		return nil
+	})
 
 	return createdCategory, nil
 }
@@ -90,9 +91,10 @@ func (a *App) UpdateCategory(category *model.Category) (*model.Category, error) 
 		return nil, err
 	}
 
-	go func() {
+	a.blockChangeNotifier.Enqueue(func() error {
 		a.wsAdapter.BroadcastCategoryChange(*updatedCategory)
-	}()
+		return nil
+	})
 
 	return updatedCategory, nil
 }
@@ -136,9 +138,10 @@ func (a *App) DeleteCategory(categoryID, userID, teamID string) (*model.Category
 		return nil, err
 	}
 
-	go func() {
+	a.blockChangeNotifier.Enqueue(func() error {
 		a.wsAdapter.BroadcastCategoryChange(*deletedCategory)
-	}()
+		return nil
+	})
 
 	return deletedCategory, nil
 }
@@ -204,9 +207,10 @@ func (a *App) ReorderCategories(userID, teamID string, newCategoryOrder []string
 		return nil, err
 	}
 
-	go func() {
+	a.blockChangeNotifier.Enqueue(func() error {
 		a.wsAdapter.BroadcastCategoryReorder(teamID, userID, newOrder)
-	}()
+		return nil
+	})
 
 	return newOrder, nil
 }
