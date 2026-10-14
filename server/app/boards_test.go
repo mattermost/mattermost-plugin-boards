@@ -747,6 +747,47 @@ func TestCreateBoardsAndBlocksChannelAccess(t *testing.T) {
 	})
 }
 
+func TestCreateBoardsAndBlocksNormalizesLegacyAttachmentId(t *testing.T) {
+	th, tearDown := SetupTestHelper(t)
+	defer tearDown()
+
+	const userID = "user_id_1"
+	const teamID = "team_id_1"
+	const channelID = "public_channel"
+	const boardID = "board_id_1"
+
+	block := &model.Block{
+		BoardID: boardID,
+		Type:    model.TypeAttachment,
+		Fields:  map[string]interface{}{model.BlockFieldAttachmentId: "x"},
+	}
+	bab := &model.BoardsAndBlocks{
+		Boards: []*model.Board{{
+			ID:        boardID,
+			TeamID:    teamID,
+			Type:      model.BoardTypeOpen,
+			Title:     "Test Board",
+			ChannelID: channelID,
+		}},
+		Blocks: []*model.Block{block},
+	}
+
+	th.API.EXPECT().HasPermissionToChannel(userID, channelID, model.PermissionReadChannel).Return(true).Times(1)
+	th.Store.EXPECT().CreateBoardsAndBlocks(utils.Anything, userID).Return(bab, nil)
+	th.Store.EXPECT().GetMembersForBoard(utils.Anything).Return([]*model.BoardMember{}, nil).AnyTimes()
+	th.Store.EXPECT().GetUserCategoryBoards(userID, teamID).Return([]model.CategoryBoards{
+		{Category: model.Category{ID: "default_category_id", Name: "Boards", Type: "system"}},
+	}, nil).AnyTimes()
+	th.Store.EXPECT().AddUpdateCategoryBoard(userID, "default_category_id", utils.Anything).Return(nil).AnyTimes()
+
+	_, err := th.App.CreateBoardsAndBlocks(bab, userID, false)
+	require.NoError(t, err)
+
+	_, hasAttachment := block.Fields[model.BlockFieldAttachmentId]
+	require.False(t, hasAttachment, "attachmentId must never be persisted on the boards-and-blocks create path")
+	require.Equal(t, "x", block.Fields[model.BlockFieldFileId])
+}
+
 func TestPatchBoardsAndBlocksChannelAccess(t *testing.T) {
 	th, tearDown := SetupTestHelper(t)
 	defer tearDown()

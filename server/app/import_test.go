@@ -640,6 +640,50 @@ func writeZipEntry(t *testing.T, zw *zip.Writer, name string, content []byte) {
 	require.NoError(t, err)
 }
 
+func TestParseBoardsAndBlocksNormalizesLegacyFileFields(t *testing.T) {
+	const (
+		teamID  = "abcdefghijklmnopqrstuvwxyz"
+		boardID = "bfoi6yy6pa3yzika53spj7pq9ee"
+	)
+	//nolint:lll
+	boardLine := `{"type":"board","data":{"id":"` + boardID + `","teamId":"` + teamID + `","createdBy":"user","modifiedBy":"user","type":"P","title":"Test","createAt":1,"updateAt":1}}`
+
+	t.Run("moves a legacy attachmentId to fileId", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+		th.expectBoardImportPermissions("user", teamID, model.BoardTypePrivate)
+
+		//nolint:lll
+		jsonl := boardLine + "\n" +
+			`{"type":"block","data":{"id":"ckpc3b1dp3pbw7bqntfryy9jbzo","parentId":"` + boardID + `","createdBy":"user","modifiedBy":"user","schema":1,"type":"attachment","title":"A","fields":{"attachmentId":"7abcdefghijklmnopqrstuvwxyz.txt"},"createAt":1,"updateAt":1}}` + "\n"
+
+		bab, _, err := th.App.parseBoardsAndBlocks(bytes.NewReader([]byte(jsonl)), model.ImportArchiveOptions{TeamID: teamID, ModifiedBy: "user"})
+		require.NoError(t, err)
+		require.Len(t, bab.Blocks, 1)
+
+		block := bab.Blocks[0]
+		require.Equal(t, "7abcdefghijklmnopqrstuvwxyz.txt", block.Fields["fileId"])
+		_, hasAttachment := block.Fields["attachmentId"]
+		require.False(t, hasAttachment)
+	})
+
+	t.Run("normalizes before validating so a traversal attachmentId is rejected as a file id", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+		th.expectBoardImportPermissions("user", teamID, model.BoardTypePrivate)
+
+		//nolint:lll
+		jsonl := boardLine + "\n" +
+			`{"type":"block","data":{"id":"ckpc3b1dp3pbw7bqntfryy9jbzo","parentId":"` + boardID + `","createdBy":"user","modifiedBy":"user","schema":1,"type":"attachment","title":"A","fields":{"attachmentId":"../../../.../../././././././././filePath"},"createAt":1,"updateAt":1}}` + "\n"
+
+		_, _, err := th.App.parseBoardsAndBlocks(bytes.NewReader([]byte(jsonl)), model.ImportArchiveOptions{TeamID: teamID, ModifiedBy: "user"})
+		require.Error(t, err)
+		// The error must come from validating the promoted fileId, proving normalize
+		// ran before validation rather than the block being rejected for another reason.
+		require.ErrorContains(t, err, "Invalid Block ID")
+	})
+}
+
 //nolint:lll
 const openBoardArchive = `{"type":"board","data":{"id":"bfoi6yy6pa3yzika53spj7pq9ee","teamId":"wsmqbtwb5jb35jb3mtp85c8a9h","createdBy":"f1tydgc697fcbp8ampr6881jea","modifiedBy":"f1tydgc697fcbp8ampr6881jea","type":"O","minimumRole":"","title":"Open Import Test","createAt":1672750481591,"updateAt":1672750481591}}
 {"type":"block","data":{"id":"ckpc3b1dp3pbw7bqntfryy9jbzo","parentId":"bjaqxtbyqz3bu7pgyddpgpms74a","createdBy":"f1tydgc697fcbp8ampr6881jea","modifiedBy":"f1tydgc697fcbp8ampr6881jea","schema":1,"type":"card","title":"Test","fields":{"contentOrder":[],"icon":"","isTemplate":false,"properties":{}},"createAt":1672750481612,"updateAt":1672845003530,"deleteAt":0,"boardId":"bfoi6yy6pa3yzika53spj7pq9ee"}}

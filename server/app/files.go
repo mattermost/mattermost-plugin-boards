@@ -91,7 +91,7 @@ func (a *App) GetFileInfo(filename string) (*mm_model.FileInfo, error) {
 	return fileInfo, nil
 }
 
-// isBoardsFilePath reports whether a normalised file path is under the regular
+// isBoardsFilePath reports whether a normalized file path is under the regular
 // boards storage root (boards/YYYYMMDD/...). Template files (teamID/boardID/filename)
 // return false.
 func isBoardsFilePath(normalizedPath string) bool {
@@ -185,14 +185,12 @@ func (a *App) validateFileOwnershipForBlockWrite(teamID, boardID, filename strin
 	return nil
 }
 
-// blockReferencesFile reports whether a block points at filename. Both field names are
-// checked on either block type: the webapp writes fileId for images and attachments alike,
-// while attachmentId survives in older data and in imported archives.
+// blockReferencesFile reports whether a block points at filename. The webapp writes
+// fileId for images and attachments alike, and legacy attachmentId values are
+// normalized to fileId, so only fileId is checked.
 func blockReferencesFile(block *model.Block, filename string) bool {
-	for _, field := range []string{model.BlockFieldFileId, model.BlockFieldAttachmentId} {
-		if fileID, ok := block.Fields[field].(string); ok && fileID == filename {
-			return true
-		}
+	if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID == filename {
+		return true
 	}
 
 	return false
@@ -461,93 +459,18 @@ func (a *App) processFileIDPatch(block *model.Block, fileID string, newFileNames
 			UpdatedFields: map[string]interface{}{
 				model.BlockFieldFileId: newFileName,
 			},
-			DeletedFields: []string{model.BlockFieldAttachmentId},
 		})
 	} else {
 		// File was skipped (doesn't exist or copy failed)
 		// Remove the file reference from the block so frontend doesn't try to load missing file
 		blockIDs = append(blockIDs, block.ID)
 		blockPatches = append(blockPatches, model.BlockPatch{
-			DeletedFields: []string{model.BlockFieldFileId, model.BlockFieldAttachmentId},
+			DeletedFields: []string{model.BlockFieldFileId},
 		})
 		a.logger.Debug(
 			"CopyAndUpdateCardFiles: Removing file reference from block (file not found/copied)",
 			mlog.String("blockID", block.ID),
 			mlog.String("fileID", fileID),
-		)
-	}
-
-	return blockIDs, blockPatches, nil
-}
-
-// processAttachmentIDPatch handles patching for attachmentID field in a block.
-func (a *App) processAttachmentIDPatch(block *model.Block, attachmentID string, newFileNames map[string]string, blockIDs []string, blockPatches []model.BlockPatch) ([]string, []model.BlockPatch, error) {
-	if err := model.ValidateFileId(attachmentID); err != nil {
-		errMessage := fmt.Sprintf("invalid characters in block with key: %s, %s", block.Fields[model.BlockFieldAttachmentId], err)
-		return nil, nil, model.NewErrBadRequest(errMessage)
-	}
-
-	// Only patch if the file was successfully copied (exists in newFileNames)
-	if newFileName, exists := newFileNames[attachmentID]; exists && newFileName != "" {
-		// Check if this block is already in the patch list (has fileID)
-		blockAlreadyPatched := false
-		for i, bid := range blockIDs {
-			if bid == block.ID {
-				// Block already being patched, update the patch instead
-				blockPatches[i].UpdatedFields[model.BlockFieldAttachmentId] = newFileName
-				// Remove attachmentId from DeletedFields if it's there
-				for j, df := range blockPatches[i].DeletedFields {
-					if df == model.BlockFieldAttachmentId {
-						blockPatches[i].DeletedFields = append(blockPatches[i].DeletedFields[:j], blockPatches[i].DeletedFields[j+1:]...)
-						break
-					}
-				}
-				blockAlreadyPatched = true
-				break
-			}
-		}
-		if !blockAlreadyPatched {
-			blockIDs = append(blockIDs, block.ID)
-			blockPatches = append(blockPatches, model.BlockPatch{
-				UpdatedFields: map[string]interface{}{
-					model.BlockFieldAttachmentId: newFileName,
-				},
-				DeletedFields: []string{model.BlockFieldFileId},
-			})
-		}
-	} else {
-		// File was skipped (doesn't exist or copy failed)
-		// Check if block is already in patch list (might have fileID patch)
-		blockAlreadyInPatch := false
-		for i, bid := range blockIDs {
-			if bid == block.ID {
-				// Block already being patched, just add attachmentId to DeletedFields
-				blockAlreadyInPatch = true
-				// Check if attachmentId is not already in DeletedFields
-				alreadyDeleted := false
-				for _, df := range blockPatches[i].DeletedFields {
-					if df == model.BlockFieldAttachmentId {
-						alreadyDeleted = true
-						break
-					}
-				}
-				if !alreadyDeleted {
-					blockPatches[i].DeletedFields = append(blockPatches[i].DeletedFields, model.BlockFieldAttachmentId)
-				}
-				break
-			}
-		}
-		if !blockAlreadyInPatch {
-			// Remove the attachment reference from the block
-			blockIDs = append(blockIDs, block.ID)
-			blockPatches = append(blockPatches, model.BlockPatch{
-				DeletedFields: []string{model.BlockFieldFileId, model.BlockFieldAttachmentId},
-			})
-		}
-		a.logger.Debug(
-			"CopyAndUpdateCardFiles: Removing attachment reference from block (file not found/copied)",
-			mlog.String("blockID", block.ID),
-			mlog.String("attachmentID", attachmentID),
 		)
 	}
 
@@ -595,14 +518,6 @@ func (a *App) CopyAndUpdateCardFiles(boardID, userID string, blocks []*model.Blo
 					return patchErr
 				}
 			}
-
-			if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok && attachmentID != "" {
-				var patchErr error
-				blockIDs, blockPatches, patchErr = a.processAttachmentIDPatch(block, attachmentID, newFileNames, blockIDs, blockPatches)
-				if patchErr != nil {
-					return patchErr
-				}
-			}
 		}
 	}
 	if len(blockIDs) != 0 {
@@ -646,12 +561,9 @@ func (a *App) CopyCardFiles(sourceBoardID string, copiedBlocks []*model.Block, a
 			continue
 		}
 
-		fileID, isOk := block.Fields["fileId"].(string)
+		fileID, isOk := block.Fields[model.BlockFieldFileId].(string)
 		if !isOk || fileID == "" {
-			fileID, isOk = block.Fields["attachmentId"].(string)
-			if !isOk || fileID == "" {
-				continue
-			}
+			continue
 		}
 
 		// Check if we've already processed this fileID (multiple blocks can reference same file)

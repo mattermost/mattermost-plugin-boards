@@ -366,7 +366,10 @@ func TestValidateBlockPatch(t *testing.T) {
 		require.EqualError(t, err, "Invalid Block ID")
 	})
 
-	t.Run("Should return error for block patch with invalid attachment ID", func(t *testing.T) {
+	t.Run("Should not validate the legacy attachmentId field as a file ID", func(t *testing.T) {
+		// attachmentId is no longer a recognized file field: stored values are
+		// normalized to fileId, so a patch carrying attachmentId is treated as
+		// any other unknown field rather than validated as a file ID.
 		patch := &BlockPatch{
 			ParentID: nil,
 			Schema:   nil,
@@ -380,8 +383,7 @@ func TestValidateBlockPatch(t *testing.T) {
 
 		err := ValidateBlockPatch(patch)
 
-		require.Error(t, err)
-		require.EqualError(t, err, "Invalid Block ID")
+		require.NoError(t, err)
 	})
 
 	t.Run("Should return error for block patch with nested UpdatedFields", func(t *testing.T) {
@@ -557,7 +559,9 @@ func TestBlockIsValid(t *testing.T) {
 		require.EqualError(t, err, "Invalid Block ID")
 	})
 
-	t.Run("Should return error for block with invalid attachment ID in fields", func(t *testing.T) {
+	t.Run("Should not validate the legacy attachmentId field as a file ID", func(t *testing.T) {
+		// The legacy attachmentId field is no longer validated; it is normalized to
+		// fileId on import and for stored data, so a stored value is ignored.
 		block := &Block{
 			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
 			BoardID:    string(utils.IDTypeNone) + mmModel.NewId(),
@@ -571,8 +575,7 @@ func TestBlockIsValid(t *testing.T) {
 			UpdateAt:   1234567890,
 		}
 		err := block.IsValid()
-		require.Error(t, err)
-		require.EqualError(t, err, "Invalid Block ID")
+		require.NoError(t, err)
 	})
 
 	t.Run("Should return error when fields.properties is JSON null", func(t *testing.T) {
@@ -625,7 +628,7 @@ func TestBlockIsValid(t *testing.T) {
 		require.NoError(t, block.IsValid())
 	})
 
-	t.Run("Should accept block with empty attachmentId (no file attached)", func(t *testing.T) {
+	t.Run("Should accept block with empty fileId on an attachment (no file attached)", func(t *testing.T) {
 		block := &Block{
 			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
 			BoardID:    string(utils.IDTypeNone) + mmModel.NewId(),
@@ -633,8 +636,8 @@ func TestBlockIsValid(t *testing.T) {
 			ModifiedBy: string(utils.IDTypeNone) + mmModel.NewId(),
 			Schema:     1,
 			Type:       TypeAttachment,
-			Title:      "Attachment with empty attachmentId",
-			Fields:     map[string]interface{}{BlockFieldAttachmentId: ""},
+			Title:      "Attachment with empty fileId",
+			Fields:     map[string]interface{}{BlockFieldFileId: ""},
 			CreateAt:   1234567890,
 			UpdateAt:   1234567890,
 		}
@@ -756,7 +759,9 @@ func TestBlock_IsValidForImport(t *testing.T) {
 		require.EqualError(t, err, "Invalid Block ID")
 	})
 
-	t.Run("Should return error for block with invalid attachment ID in fields", func(t *testing.T) {
+	t.Run("Should not validate the legacy attachmentId field as a file ID on import", func(t *testing.T) {
+		// Imported blocks are normalized via NormalizeLegacyFileFields before this
+		// runs; IsValidForImport itself no longer treats attachmentId specially.
 		block := &Block{
 			ID:         string(utils.IDTypeNone) + mmModel.NewId(),
 			BoardID:    string(utils.IDTypeNone) + mmModel.NewId(),
@@ -770,7 +775,126 @@ func TestBlock_IsValidForImport(t *testing.T) {
 			UpdateAt:   1234567890,
 		}
 		err := block.IsValidForImport()
-		require.Error(t, err)
-		require.EqualError(t, err, "Invalid Block ID")
+		require.NoError(t, err)
+	})
+}
+
+func TestBlock_NormalizeLegacyFileFields(t *testing.T) {
+	t.Run("Should move a non-empty attachmentId string to fileId", func(t *testing.T) {
+		block := &Block{
+			Type:   TypeAttachment,
+			Fields: map[string]interface{}{BlockFieldAttachmentId: "7abcdefghijklmnopqrstuvwxyz.txt"},
+		}
+		block.NormalizeLegacyFileFields()
+		require.Equal(t, "7abcdefghijklmnopqrstuvwxyz.txt", block.Fields[BlockFieldFileId])
+		_, present := block.Fields[BlockFieldAttachmentId]
+		require.False(t, present)
+	})
+
+	t.Run("Should let a non-empty attachmentId take precedence over an existing fileId", func(t *testing.T) {
+		block := &Block{
+			Type: TypeAttachment,
+			Fields: map[string]interface{}{
+				BlockFieldAttachmentId: "7fromattachment1234567890a.txt",
+				BlockFieldFileId:       "7fromfileid1234567890abcd.txt",
+			},
+		}
+		block.NormalizeLegacyFileFields()
+		require.Equal(t, "7fromattachment1234567890a.txt", block.Fields[BlockFieldFileId])
+		_, present := block.Fields[BlockFieldAttachmentId]
+		require.False(t, present)
+	})
+
+	t.Run("Should drop an empty attachmentId without touching fileId", func(t *testing.T) {
+		block := &Block{
+			Type: TypeAttachment,
+			Fields: map[string]interface{}{
+				BlockFieldAttachmentId: "",
+				BlockFieldFileId:       "7keepthisfileid1234567890.txt",
+			},
+		}
+		block.NormalizeLegacyFileFields()
+		require.Equal(t, "7keepthisfileid1234567890.txt", block.Fields[BlockFieldFileId])
+		_, present := block.Fields[BlockFieldAttachmentId]
+		require.False(t, present)
+	})
+
+	t.Run("Should drop a non-string attachmentId without touching fileId", func(t *testing.T) {
+		block := &Block{
+			Type: TypeAttachment,
+			Fields: map[string]interface{}{
+				BlockFieldAttachmentId: 42,
+				BlockFieldFileId:       "7keepthisfileid1234567890.txt",
+			},
+		}
+		block.NormalizeLegacyFileFields()
+		require.Equal(t, "7keepthisfileid1234567890.txt", block.Fields[BlockFieldFileId])
+		_, present := block.Fields[BlockFieldAttachmentId]
+		require.False(t, present)
+	})
+
+	t.Run("Should leave blocks without attachmentId untouched", func(t *testing.T) {
+		block := &Block{
+			Type:   TypeAttachment,
+			Fields: map[string]interface{}{BlockFieldFileId: "7existingfileid1234567890.txt"},
+		}
+		block.NormalizeLegacyFileFields()
+		require.Equal(t, "7existingfileid1234567890.txt", block.Fields[BlockFieldFileId])
+		_, present := block.Fields[BlockFieldAttachmentId]
+		require.False(t, present)
+	})
+
+	t.Run("Should not panic when Fields is nil", func(t *testing.T) {
+		block := &Block{Type: TypeAttachment}
+		require.NotPanics(t, block.NormalizeLegacyFileFields)
+		require.Nil(t, block.Fields)
+	})
+
+	t.Run("Should preserve sibling fields when moving attachmentId to fileId", func(t *testing.T) {
+		block := &Block{
+			Type: TypeAttachment,
+			Fields: map[string]interface{}{
+				BlockFieldAttachmentId: "7abcdefghijklmnopqrstuvwxyz.txt",
+				"contentOrder":         []interface{}{"a", "b"},
+			},
+		}
+		block.NormalizeLegacyFileFields()
+		require.Equal(t, "7abcdefghijklmnopqrstuvwxyz.txt", block.Fields[BlockFieldFileId])
+		require.Equal(t, []interface{}{"a", "b"}, block.Fields["contentOrder"])
+		_, present := block.Fields[BlockFieldAttachmentId]
+		require.False(t, present)
+	})
+}
+
+func TestBlockPatch_RemoveLegacyFileFields(t *testing.T) {
+	t.Run("Should drop attachmentId from updated fields without touching fileId", func(t *testing.T) {
+		patch := &BlockPatch{
+			UpdatedFields: map[string]interface{}{
+				BlockFieldAttachmentId: "7abcdefghijklmnopqrstuvwxyz.txt",
+				BlockFieldFileId:       "7keepthisfileid1234567890.txt",
+			},
+		}
+		patch.RemoveLegacyFileFields()
+		require.Equal(t, "7keepthisfileid1234567890.txt", patch.UpdatedFields[BlockFieldFileId])
+		_, present := patch.UpdatedFields[BlockFieldAttachmentId]
+		require.False(t, present)
+	})
+
+	t.Run("Should preserve sibling updated fields", func(t *testing.T) {
+		patch := &BlockPatch{
+			UpdatedFields: map[string]interface{}{
+				BlockFieldAttachmentId: "7abcdefghijklmnopqrstuvwxyz.txt",
+				"contentOrder":         []interface{}{"a", "b"},
+			},
+		}
+		patch.RemoveLegacyFileFields()
+		require.Equal(t, []interface{}{"a", "b"}, patch.UpdatedFields["contentOrder"])
+		_, present := patch.UpdatedFields[BlockFieldAttachmentId]
+		require.False(t, present)
+	})
+
+	t.Run("Should not panic when UpdatedFields is nil", func(t *testing.T) {
+		patch := &BlockPatch{}
+		require.NotPanics(t, patch.RemoveLegacyFileFields)
 	})
 }

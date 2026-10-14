@@ -224,12 +224,15 @@ func (a *App) fixImagesAttachments(boardMap map[string]*model.Board, fileMap map
 		for _, block := range newBlocks {
 			if block.Type == "image" || block.Type == "attachment" {
 				fieldName := "fileId"
-				oldID := block.Fields[fieldName]
+				oldID, ok := block.Fields[fieldName].(string)
+				if !ok || oldID == "" {
+					continue
+				}
 				blockIDs = append(blockIDs, block.ID)
 
 				blockPatches = append(blockPatches, model.BlockPatch{
 					UpdatedFields: map[string]interface{}{
-						fieldName: fileMap[oldID.(string)],
+						fieldName: fileMap[oldID],
 					},
 				})
 			}
@@ -326,6 +329,7 @@ func (a *App) parseBoardsAndBlocks(r io.Reader, opt model.ImportArchiveOptions) 
 					if err2 := json.Unmarshal(archiveLine.Data, &block); err2 != nil {
 						return nil, nil, fmt.Errorf("invalid block in archive line %d: %w", lineNum, err2)
 					}
+					block.NormalizeLegacyFileFields()
 					if err := block.IsValidForImport(); err != nil {
 						return nil, nil, err
 					}

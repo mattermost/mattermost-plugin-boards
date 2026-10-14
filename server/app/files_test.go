@@ -675,7 +675,7 @@ func TestCopyAndUpdateCardFiles(t *testing.T) {
 	})
 
 	t.Run("Empty file ID", func(t *testing.T) {
-		// blocks with an empty fileId/attachmentId should be treated
+		// blocks with an empty fileId should be treated
 		// as having no attached file
 		th.Store.EXPECT().GetBoard(validTestBoardID2).Return(&model.Board{ID: validTestBoardID2, TeamID: "validteam12345678901234567", IsTemplate: false}, nil)
 		mockedFileBackend := &mocks.FileBackend{}
@@ -749,6 +749,31 @@ func TestCopyCardFiles(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, newFileNames)
+	})
+
+	t.Run("SkipsBlockThatOnlyHasLegacyAttachmentId", func(t *testing.T) {
+		// Legacy attachmentId is no longer read on the copy path (it is normalized
+		// to fileId), so a block that still carries only attachmentId references no
+		// copyable file and must be skipped without error.
+		sourceBoardID := "bsourceboard123456789012345"
+		copiedBlocks := []*model.Block{
+			{
+				Type:    model.TypeAttachment,
+				Fields:  map[string]interface{}{model.BlockFieldAttachmentId: "7abcdefghijklmnopqrstuvwxyz.png"},
+				BoardID: sourceBoardID,
+			},
+		}
+
+		th.Store.EXPECT().GetBoard(sourceBoardID).Return(&model.Board{
+			ID:         sourceBoardID,
+			TeamID:     "validteam12345678901234567",
+			IsTemplate: false,
+		}, nil)
+
+		newFileNames, err := th.App.CopyCardFiles(sourceBoardID, copiedBlocks, false)
+
+		assert.NoError(t, err)
+		assert.Empty(t, newFileNames)
 	})
 
 	t.Run("RejectsFileOwnedByAnotherBoard", func(t *testing.T) {
@@ -1144,8 +1169,8 @@ func fileRefBlock(blockType model.BlockType, field, filename string) *model.Bloc
 }
 
 // legacyRefCase describes one shape of block reference that the ad-hoc scan has to recognize.
-// Boards has written file references under two field names over time and either can appear on
-// either block type, so all four combinations must resolve to the same answer.
+// File references are now stored only under fileId (legacy attachmentId values are normalized
+// to fileId), so only fileId on either block type resolves; a stale attachmentId does not.
 type legacyRefCase struct {
 	name             string
 	imageBlocks      []*model.Block
@@ -1160,8 +1185,9 @@ func legacyRefCases(filename string) []legacyRefCase {
 			imageBlocks: []*model.Block{fileRefBlock(model.TypeImage, model.BlockFieldFileId, filename)},
 		},
 		{
-			name:        "image block referencing the file through attachmentId",
+			name:        "image block referencing the file through the legacy attachmentId is not resolved",
 			imageBlocks: []*model.Block{fileRefBlock(model.TypeImage, model.BlockFieldAttachmentId, filename)},
+			expectError: true,
 		},
 		{
 			// The shape the webapp actually writes for card attachments.
@@ -1169,11 +1195,12 @@ func legacyRefCases(filename string) []legacyRefCase {
 			attachmentBlocks: []*model.Block{fileRefBlock(model.TypeAttachment, model.BlockFieldFileId, filename)},
 		},
 		{
-			name:             "attachment block referencing the file through attachmentId",
+			name:             "attachment block referencing the file through the legacy attachmentId is not resolved",
 			attachmentBlocks: []*model.Block{fileRefBlock(model.TypeAttachment, model.BlockFieldAttachmentId, filename)},
+			expectError:      true,
 		},
 		{
-			name: "attachment block carrying both field names",
+			name: "attachment block carrying both field names resolves through fileId",
 			attachmentBlocks: []*model.Block{{
 				ID:      "blockid1234567890123456789",
 				BoardID: ownershipBoardID,
@@ -1187,7 +1214,7 @@ func legacyRefCases(filename string) []legacyRefCase {
 		{
 			name:             "blocks referencing a different file",
 			imageBlocks:      []*model.Block{fileRefBlock(model.TypeImage, model.BlockFieldFileId, "7otherfile123456789012345.txt")},
-			attachmentBlocks: []*model.Block{fileRefBlock(model.TypeAttachment, model.BlockFieldAttachmentId, "7otherfile123456789012345.txt")},
+			attachmentBlocks: []*model.Block{fileRefBlock(model.TypeAttachment, model.BlockFieldFileId, "7otherfile123456789012345.txt")},
 			expectError:      true,
 		},
 		{
