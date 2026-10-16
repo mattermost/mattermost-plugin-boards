@@ -196,6 +196,18 @@ class Utils {
         return String(text).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
     }
 
+    // Named entities plus numeric references that include the required
+    // semicolon, so query text like &b=2 is left alone.
+    private static decodeMarkdownHrefEntities(href: string): string {
+        return Utils.htmlDecode(href).replace(/&#(x[0-9A-Fa-f]+|\d+);/g, (_, n: string) => {
+            const code = n[0] === 'x' || n[0] === 'X' ? parseInt(n.slice(1), 16) : parseInt(n, 10)
+            if (!Number.isFinite(code) || code <= 0 || code > 0x10FFFF || (code >= 0xD800 && code <= 0xDFFF)) {
+                return ''
+            }
+            return String.fromCodePoint(code)
+        })
+    }
+
     // re-use canvas object for better performance
     static canvas: HTMLCanvasElement | undefined
     static getTextWidth(displayText: string, fontDescriptor: string): number {
@@ -297,10 +309,26 @@ class Utils {
     static getMarkdownRenderer(): marked.Renderer {
         const renderer = new marked.Renderer()
         renderer.link = (href, title, contents) => {
+            let decodedHref = Utils.decodeMarkdownHrefEntities(href || '')
+            if (Utils.hasUnsafeMarkdownProtocol(decodedHref)) {
+                return contents
+            }
+            try {
+                decodedHref = decodeURI(decodedHref)
+            } catch {
+                // Malformed percent-escape (e.g. trailing "%"); keep the original href.
+            }
+            let encodedHref = decodedHref
+            try {
+                encodedHref = encodeURI(decodedHref)
+            } catch {
+                return contents
+            }
+            const hrefAttr = Utils.htmlEncode(encodedHref)
             return '<a ' +
                 'target="_blank" ' +
                 'rel="noreferrer" ' +
-                `href="${encodeURI(decodeURI(href || ''))}" ` +
+                `href="${hrefAttr}" ` +
                 `title="${title || ''}" ` +
                 `onclick="${(window.openInNewBrowser ? ' openInNewBrowser && openInNewBrowser(event.target.href);' : '')}"` +
             '>' + contents + '</a>'
@@ -315,6 +343,41 @@ class Utils {
     static htmlFromMarkdownWithRenderer(text: string, renderer: marked.Renderer): string {
         const html = marked(text.replace(/</g, '&lt;'), {renderer, breaks: true})
         return html.trim()
+    }
+
+    // marked's default link renderer only strips these schemes when `sanitize` is
+    // true (deprecated / off by default). The custom renderer above must reject
+    // them itself so htmlFromMarkdown never emits an active javascript:/data:/vbscript: href.
+    // Decode HTML character references first so jav&#x61;script: cannot bypass the check.
+    private static unescapeMarkdownHtmlEntities(html: string): string {
+        return html.replace(/&(#(?:\d+)|(?:#x[0-9A-Fa-f]+)|(?:\w+));?/ig, (_, n: string) => {
+            n = n.toLowerCase()
+            if (n === 'colon') {
+                return ':'
+            }
+            if (n.charAt(0) === '#') {
+                return n.charAt(1) === 'x' ?
+                    String.fromCharCode(parseInt(n.substring(2), 16)) :
+                    String.fromCharCode(+n.substring(1))
+            }
+            return ''
+        })
+    }
+
+    private static hasUnsafeMarkdownProtocol(href?: string | null): boolean {
+        const raw = Utils.unescapeMarkdownHtmlEntities(href || '')
+        let decoded = raw
+        try {
+            decoded = decodeURIComponent(raw)
+        } catch {
+            try {
+                decoded = decodeURI(raw)
+            } catch {
+                decoded = raw
+            }
+        }
+        const protocol = decoded.replace(/[^\w:]/g, '').toLowerCase()
+        return protocol.startsWith('javascript:') || protocol.startsWith('vbscript:') || protocol.startsWith('data:')
     }
 
     static countCheckboxesInMarkdown(text: string): {total: number, checked: number} {

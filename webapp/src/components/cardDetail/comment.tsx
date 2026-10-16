@@ -4,10 +4,6 @@
 import React, {FC} from 'react'
 import {useIntl} from 'react-intl'
 
-import {getChannelsNameMapInTeam} from 'mattermost-redux/selectors/entities/channels'
-
-import {Provider} from 'react-redux'
-
 import {Block} from '../../blocks/block'
 import mutator from '../../mutator'
 import {Utils} from '../../utils'
@@ -20,10 +16,9 @@ import {getUser} from '../../store/users'
 import {useAppSelector} from '../../store/hooks'
 import Tooltip from '../../widgets/tooltip'
 import GuestBadge from '../../widgets/guestBadge'
+import MarkdownPreview from '../markdownPreview'
 
 import './comment.scss'
-import {formatText, messageHtmlToComponent} from '../../webapp_globals'
-import {getCurrentTeam} from '../../store/teams'
 
 
 type Props = {
@@ -39,19 +34,7 @@ const Comment: FC<Props> = (props: Props) => {
     const user = useAppSelector(getUser(userId))
     const date = new Date(comment.createAt)
 
-    const selectedTeam = useAppSelector(getCurrentTeam)
-    const channelNamesMap =  getChannelsNameMapInTeam((window as any).store.getState(), selectedTeam!.id)
-
-    const formattedText = 
-    <Provider store={(window as any).store}>
-        {messageHtmlToComponent(formatText(comment.title, {
-            atMentions: true,
-            team: selectedTeam,
-            channelNamesMap,
-        }), {
-            fetchMissingUsers: true, 
-        })}
-    </Provider>
+    const formattedText = <MarkdownPreview text={comment.title}/>
 
     return (
         <div

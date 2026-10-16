@@ -61,13 +61,43 @@ describe('utils', () => {
         })
 
         test('should encode links', () => {
-            expect(Utils.htmlFromMarkdown('https://example.com?title=August<1>2022')).toBe('<p><a target=\"_blank\" rel=\"noreferrer\" href=\"https://example.com?title=August&lt;1%3E2022\" title=\"\" onclick=\"\">https://example.com?title=August&lt;1&gt;2022</a></p>')
+            expect(Utils.htmlFromMarkdown('https://example.com?title=August<1>2022')).toBe('<p><a target=\"_blank\" rel=\"noreferrer\" href=\"https://example.com?title=August%3C1%3E2022\" title=\"\" onclick=\"\">https://example.com?title=August&lt;1&gt;2022</a></p>')
             expect(Utils.htmlFromMarkdown('[Duck Duck Go](https://duckduckgo.com "The best search engine\'s for <privacy>")')).toBe('<p><a target="_blank" rel="noreferrer" href="https://duckduckgo.com" title="The best search engine&#39;s for &lt;privacy&gt;" onclick="">Duck Duck Go</a></p>')
+        })
+
+        test('should not double-encode query ampersands in bare URLs', () => {
+            expect(Utils.htmlFromMarkdown('https://example.com?a=1&b=2')).toBe('<p><a target="_blank" rel="noreferrer" href="https://example.com?a=1&amp;b=2" title="" onclick="">https://example.com?a=1&amp;b=2</a></p>')
+            expect(Utils.htmlFromMarkdown('[x](https://example.com?a=1&amp;b=2)')).toBe('<p><a target="_blank" rel="noreferrer" href="https://example.com?a=1&amp;b=2" title="" onclick="">x</a></p>')
+            expect(Utils.htmlFromMarkdown('[x](https://example.com?a=1&#38;b=2)')).toBe('<p><a target="_blank" rel="noreferrer" href="https://example.com?a=1&amp;b=2" title="" onclick="">x</a></p>')
+            expect(Utils.htmlFromMarkdown('[x](https://example.com?a=1&#x26;b=2)')).toBe('<p><a target="_blank" rel="noreferrer" href="https://example.com?a=1&amp;b=2" title="" onclick="">x</a></p>')
         })
 
         test('should not double encode title and href', () => {
             expect(Utils.htmlFromMarkdown('https://example.com?title=August%201%20-%202022')).toBe('<p><a target="_blank" rel="noreferrer" href="https://example.com?title=August%201%20-%202022" title="" onclick="">https://example.com?title=August%201%20-%202022</a></p>')
             expect(Utils.htmlFromMarkdown('[Duck Duck Go](https://duckduckgo.com "The best search engine#39;s for &lt;privacy&gt;")')).toBe('<p><a target="_blank" rel="noreferrer" href="https://duckduckgo.com" title="The best search engine#39;s for &lt;privacy&gt;" onclick="">Duck Duck Go</a></p>')
+        })
+
+        test('should not emit javascript, data, or vbscript links', () => {
+            expect(Utils.htmlFromMarkdown('[Open](javascript:alert%281%29)')).toBe('<p>Open</p>')
+            expect(Utils.htmlFromMarkdown('[Open](javascript:alert(1))')).toBe('<p>Open</p>')
+            expect(Utils.htmlFromMarkdown('[Open](JAVASCRIPT:alert(1))')).toBe('<p>Open</p>')
+            expect(Utils.htmlFromMarkdown('[Open](data:text/html,alert(1))')).toBe('<p>Open</p>')
+            expect(Utils.htmlFromMarkdown('[Open](vbscript:msgbox(1))')).toBe('<p>Open</p>')
+            expect(Utils.htmlFromMarkdown('[Open](jav&#x61;script:alert%281%29)')).toBe('<p>Open</p>')
+            expect(Utils.htmlFromMarkdown('[Open](&#106;avascript:alert(1))')).toBe('<p>Open</p>')
+            expect(Utils.htmlFromMarkdown('[Open](javascript&colon;alert(1))')).toBe('<p>Open</p>')
+            expect(Utils.htmlFromMarkdown('[Open](&amp;#x6a;avascript:alert(1))')).toBe('<p>Open</p>')
+        })
+
+        test('should not throw on malformed percent escapes in link hrefs', () => {
+            expect(() => Utils.htmlFromMarkdown('[site](https://example.org/100%)')).not.toThrow()
+            expect(() => Utils.htmlFromMarkdown('https://example.org/100%')).not.toThrow()
+            expect(Utils.htmlFromMarkdown('[site](https://example.org/100%)')).toBe('<p><a target="_blank" rel="noreferrer" href="https://example.org/100%25" title="" onclick="">site</a></p>')
+        })
+
+        test('should not throw on unpaired surrogate numeric references in hrefs', () => {
+            expect(() => Utils.htmlFromMarkdown('[site](https://example.org/&#xD800;)')).not.toThrow()
+            expect(Utils.htmlFromMarkdown('[site](https://example.org/&#xD800;)')).toContain('site')
         })
     })
 
