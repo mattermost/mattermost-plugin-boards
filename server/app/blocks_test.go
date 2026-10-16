@@ -47,6 +47,23 @@ func TestInsertBlock(t *testing.T) {
 		err := th.App.InsertBlock(block, "user-id-1")
 		require.Error(t, err, "error")
 	})
+
+	t.Run("strips legacy attachmentId on insert", func(t *testing.T) {
+		boardID := testBoardID
+		block := &model.Block{
+			BoardID: boardID,
+			Type:    model.TypeAttachment,
+			Fields:  map[string]interface{}{model.BlockFieldAttachmentId: ""},
+		}
+		board := &model.Board{ID: boardID}
+		th.Store.EXPECT().GetBoard(boardID).Return(board, nil)
+		th.Store.EXPECT().InsertBlock(block, "user-id-1").Return(nil)
+		th.Store.EXPECT().GetMembersForBoard(boardID).Return([]*model.BoardMember{}, nil)
+		err := th.App.InsertBlock(block, "user-id-1")
+		require.NoError(t, err)
+		_, present := block.Fields[model.BlockFieldAttachmentId]
+		require.False(t, present, "attachmentId must be stripped on insert")
+	})
 }
 
 func TestPatchBlocks(t *testing.T) {
@@ -69,6 +86,32 @@ func TestPatchBlocks(t *testing.T) {
 		th.Store.EXPECT().GetMembersForBoard(gomock.Any()).Times(1)
 		err := th.App.PatchBlocks("team-id", &blockPatches, "user-id-1")
 		require.NoError(t, err)
+	})
+
+	t.Run("strips legacy attachmentId from updated fields", func(t *testing.T) {
+		blockPatches := model.BlockPatchBatch{
+			BlockIDs: []string{"block1"},
+			BlockPatches: []model.BlockPatch{
+				{UpdatedFields: map[string]interface{}{
+					model.BlockFieldAttachmentId: "7legacyattach0000000000001.txt",
+					"custom":                     "value",
+				}},
+			},
+		}
+
+		block1 := &model.Block{ID: "block1", BoardID: "board-id"}
+		board := &model.Board{ID: "board-id", TeamID: "team-id"}
+		th.Store.EXPECT().GetBlocksByIDs([]string{"block1"}).Return([]*model.Block{block1}, nil)
+		th.Store.EXPECT().GetBoard("board-id").Return(board, nil)
+		th.Store.EXPECT().PatchBlocks(gomock.Any(), gomock.Eq("user-id-1")).Return(nil)
+		th.Store.EXPECT().GetBlock("block1").Return(block1, nil)
+		th.Store.EXPECT().GetMembersForBoard(gomock.Any()).Times(1)
+		err := th.App.PatchBlocks("team-id", &blockPatches, "user-id-1")
+		require.NoError(t, err)
+
+		_, present := blockPatches.BlockPatches[0].UpdatedFields[model.BlockFieldAttachmentId]
+		require.False(t, present, "attachmentId must be stripped from the patch")
+		require.Equal(t, "value", blockPatches.BlockPatches[0].UpdatedFields["custom"])
 	})
 
 	t.Run("patchBlocks error scenario", func(t *testing.T) {

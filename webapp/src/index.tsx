@@ -19,10 +19,10 @@ import store from './store'
 import {setTeam} from './store/teams'
 import WithWebSockets from './components/withWebSockets'
 import {setChannel} from './store/channels'
-import {createCurrentChannelSync} from './mattermostChannel'
 import {initialLoad} from './store/initialLoad'
 import {Utils} from './utils'
 import {customHistory} from './desktopHistory'
+import {resolveChannelForBoards} from './resolveChannel'
 import './styles/focalboard-variables.scss'
 import './styles/main.scss'
 import './styles/labels.scss'
@@ -182,12 +182,11 @@ export default class Plugin {
         let lastViewedChannel = mmStore.getState().entities.channels.currentChannelId
         let prevTeamID: string
 
-        const syncCurrentChannel = createCurrentChannelSync(
-            () => mmStore.getState(),
-            (channel) => store.dispatch(setChannel(channel)),
-        )
-
-        syncCurrentChannel()
+        const currentChannel = mmStore.getState().entities.channels.currentChannelId
+        const initialChannelObj = resolveChannelForBoards(mmStore.getState(), currentChannel)
+        if (initialChannelObj) {
+            store.dispatch(setChannel(initialChannelObj))
+        }
 
         mmStore.subscribe(() => {
             const currentUserId = mmStore.getState().entities.users.currentUserId
@@ -196,9 +195,23 @@ export default class Plugin {
                 localStorage.setItem('focalboardLastViewedChannel:' + currentUserId, currentChannel)
                 lastViewedChannel = currentChannel
                 octoClient.channelId = currentChannel
+                const currentChannelObj = resolveChannelForBoards(mmStore.getState(), lastViewedChannel)
+                if (currentChannelObj) {
+                    store.dispatch(setChannel(currentChannelObj))
+                }
+            } else if (currentChannel) {
+                // Member profiles can arrive after the channel is selected.
+                // Refresh the stored name without treating this as a channel switch.
+                const currentChannelObj = resolveChannelForBoards(mmStore.getState(), currentChannel)
+                const storedChannel = store.getState().channels.current
+                if (
+                    currentChannelObj &&
+                    (currentChannelObj.id !== storedChannel?.id ||
+                        currentChannelObj.display_name !== storedChannel?.display_name)
+                ) {
+                    store.dispatch(setChannel(currentChannelObj))
+                }
             }
-
-            syncCurrentChannel()
 
             // Watch for change in active team.
             // This handles the user selecting a team from the team sidebar.

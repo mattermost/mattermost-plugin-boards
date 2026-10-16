@@ -13,6 +13,8 @@ import {Provider as ReduxProvider} from 'react-redux'
 
 import configureStore from 'redux-mock-store'
 
+import {thunk} from 'redux-thunk'
+
 import {mocked} from 'jest-mock'
 
 import {TestBlockFactory} from '../../test/testBlockFactory'
@@ -20,6 +22,8 @@ import {TestBlockFactory} from '../../test/testBlockFactory'
 import {wrapIntl, wrapRBDNDDroppable} from '../../testUtils'
 
 import mutator from '../../mutator'
+import octoClient from '../../octoClient'
+import {Utils} from '../../utils'
 
 import SidebarCategory from './sidebarCategory'
 
@@ -392,6 +396,126 @@ describe('components/sidebarCategory', () => {
             })
 
             expect(testHistory.push).toHaveBeenCalledWith('/team/team-id')
+        })
+
+        const triggerDeleteAndGetAfterUndo = async () => {
+            const menuWrappers = document.querySelectorAll('.SidebarBoardItem div.MenuWrapper')
+            act(() => { userEvent.click(menuWrappers[0] as Element) })
+
+            const deleteOption = await screen.findByText('Delete board')
+            act(() => { userEvent.click(deleteOption) })
+
+            const deleteButton = await screen.findByText('Delete')
+            await act(async () => { userEvent.click(deleteButton) })
+
+            await waitFor(() => expect(mockedMutator.deleteBoard).toHaveBeenCalledTimes(1))
+
+            return mockedMutator.deleteBoard.mock.calls[0][3] as () => Promise<void>
+        }
+
+        test('undo restores the board to its original category and reopens it', async () => {
+            const order: string[] = []
+            const getSidebarCategoriesSpy = jest.spyOn(octoClient, 'getSidebarCategories').mockImplementation(async () => {
+                order.push('fetchCategories')
+                return []
+            })
+
+            const testHistory = createMemoryHistory()
+            testHistory.push('/team/team-id/board_1_id')
+            testHistory.push = jest.fn(() => order.push('navigate'))
+
+            // Use a store that can run the fetchSidebarCategories thunk dispatched
+            // during undo so the sidebar is refreshed before navigation.
+            const mockStore = configureStore([thunk])
+            const store = mockStore(deleteNavState)
+
+            render(
+                wrapRBDNDDroppable(wrapIntl(
+                    <ReduxProvider store={store}>
+                        <Router history={testHistory}>
+                            <Route path='/team/:teamId/:boardId'>
+                                <SidebarCategory
+                                    hideSidebar={jest.fn()}
+                                    activeBoardID={board1.id}
+                                    categoryBoards={categoryBoards1}
+                                    boards={[board1, board2]}
+                                    allCategories={allCategoryBoards}
+                                    index={0}
+                                />
+                            </Route>
+                        </Router>
+                    </ReduxProvider>,
+                )),
+            )
+
+            const afterUndo = await triggerDeleteAndGetAfterUndo()
+
+            await act(async () => {
+                await afterUndo()
+            })
+
+            // The board must be put back into the category it was deleted from
+            // (categoryBoards1), never the default category.
+            expect(mockedMutator.moveBoardToCategory).toHaveBeenCalledWith('team-id', board1.id, categoryBoards1.id, '')
+
+            // The sidebar is refreshed from the server so the restored board's
+            // category is reflected before we navigate to it.
+            expect(getSidebarCategoriesSpy).toHaveBeenCalledWith('team-id')
+
+            // And the restored board is reopened.
+            expect(testHistory.push).toHaveBeenCalledWith('/team/team-id/board_1_id')
+
+            // The sidebar must be refreshed before navigation, otherwise the
+            // auto-assign effect moves the restored board to the default category.
+            expect(order).toEqual(['fetchCategories', 'navigate'])
+
+            getSidebarCategoriesSpy.mockRestore()
+        })
+
+        test('undo still reopens the board if restoring the category fails', async () => {
+            mockedMutator.moveBoardToCategory.mockRejectedValueOnce(new Error('move failed'))
+            const logErrorSpy = jest.spyOn(Utils, 'logError').mockImplementation(() => {})
+
+            const getSidebarCategoriesSpy = jest.spyOn(octoClient, 'getSidebarCategories').mockResolvedValue([])
+
+            const testHistory = createMemoryHistory()
+            testHistory.push('/team/team-id/board_1_id')
+            testHistory.push = jest.fn()
+
+            const mockStore = configureStore([thunk])
+            const store = mockStore(deleteNavState)
+
+            render(
+                wrapRBDNDDroppable(wrapIntl(
+                    <ReduxProvider store={store}>
+                        <Router history={testHistory}>
+                            <Route path='/team/:teamId/:boardId'>
+                                <SidebarCategory
+                                    hideSidebar={jest.fn()}
+                                    activeBoardID={board1.id}
+                                    categoryBoards={categoryBoards1}
+                                    boards={[board1, board2]}
+                                    allCategories={allCategoryBoards}
+                                    index={0}
+                                />
+                            </Route>
+                        </Router>
+                    </ReduxProvider>,
+                )),
+            )
+
+            const afterUndo = await triggerDeleteAndGetAfterUndo()
+
+            await act(async () => {
+                await afterUndo()
+            })
+
+            expect(logErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to restore board category'))
+            expect(getSidebarCategoriesSpy).toHaveBeenCalledWith('team-id')
+            expect(testHistory.push).toHaveBeenCalledWith('/team/team-id/board_1_id')
+
+            logErrorSpy.mockRestore()
+            getSidebarCategoriesSpy.mockRestore()
         })
     })
 })

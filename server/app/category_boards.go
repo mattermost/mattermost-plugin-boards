@@ -205,9 +205,10 @@ func (a *App) ReorderCategoryBoards(userID, teamID, categoryID string, newBoards
 		return nil, err
 	}
 
-	go func() {
+	a.blockChangeNotifier.Enqueue(func() error {
 		a.wsAdapter.BroadcastCategoryBoardsReorder(teamID, userID, categoryID, newOrder)
-	}()
+		return nil
+	})
 
 	return newOrder, nil
 }

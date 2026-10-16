@@ -56,6 +56,12 @@ test('filterConditionValidOrDefault', async () => {
     expect(OctoUtils.filterConditionValidOrDefault('date', 'isSet')).toBe('isSet')
     expect(OctoUtils.filterConditionValidOrDefault('date', 'isNotSet')).toBe('isNotSet')
     expect(OctoUtils.filterConditionValidOrDefault('date', 'isEmpty')).toBe('is')
+
+    expect(OctoUtils.filterConditionValidOrDefault('person', 'includes')).toBe('includes')
+    expect(OctoUtils.filterConditionValidOrDefault('person', 'notIncludes')).toBe('notIncludes')
+    expect(OctoUtils.filterConditionValidOrDefault('person', 'isEmpty')).toBe('isEmpty')
+    expect(OctoUtils.filterConditionValidOrDefault('person', 'isNotEmpty')).toBe('isNotEmpty')
+    expect(OctoUtils.filterConditionValidOrDefault('person', 'is')).toBe('includes')
 })
 
 function createCardTree(): [Block[], Block] {

@@ -423,13 +423,6 @@ func (s *SQLStore) deleteBlockAndChildren(db sq.BaseRunner, blockID string, modi
 		}
 	}
 
-	attachmentIDWithExtention, attachmentIDExists := block.Fields["attachmentId"]
-	if attachmentIDExists {
-		if fileID := utils.RetrieveFileIDFromBlockFieldStorage(attachmentIDWithExtention.(string)); fileID != "" {
-			fileIDs = append(fileIDs, fileID)
-		}
-	}
-
 	if len(fileIDs) > 0 {
 		deleteFileInfoQuery := s.getQueryBuilder(db).
 			Update("FileInfo").
@@ -529,13 +522,6 @@ func (s *SQLStore) undeleteBlock(db sq.BaseRunner, blockID string, modifiedBy st
 	fileIDWithExtention, fileIDExists := block.Fields["fileId"]
 	if fileIDExists {
 		if fileID := utils.RetrieveFileIDFromBlockFieldStorage(fileIDWithExtention.(string)); fileID != "" {
-			fileIDs = append(fileIDs, fileID)
-		}
-	}
-
-	attachmentIDWithExtention, attachmentIDExists := block.Fields["attachmentId"]
-	if attachmentIDExists {
-		if fileID := utils.RetrieveFileIDFromBlockFieldStorage(attachmentIDWithExtention.(string)); fileID != "" {
 			fileIDs = append(fileIDs, fileID)
 		}
 	}
@@ -1006,10 +992,6 @@ func (s *SQLStore) deleteBlockChildren(db sq.BaseRunner, boardID string, parentI
 		if fileIDExists {
 			fileIDs = append(fileIDs, utils.RetrieveFileIDFromBlockFieldStorage(fileIDWithExtention.(string)))
 		}
-		attachmentIDWithExtention, attachmentIDExists := block.Fields["attachmentId"]
-		if attachmentIDExists {
-			fileIDs = append(fileIDs, utils.RetrieveFileIDFromBlockFieldStorage(attachmentIDWithExtention.(string)))
-		}
 	}
 
 	if len(fileIDs) > 0 {
@@ -1193,12 +1175,6 @@ func (s *SQLStore) undeleteBlockChildren(db sq.BaseRunner, boardID string, paren
 		fileIDWithExtention, fileIDExists := block.Fields["fileId"]
 		if fileIDExists {
 			if fileID := utils.RetrieveFileIDFromBlockFieldStorage(fileIDWithExtention.(string)); fileID != "" {
-				fileIDs = append(fileIDs, fileID)
-			}
-		}
-		attachmentIDWithExtention, attachmentIDExists := block.Fields["attachmentId"]
-		if attachmentIDExists {
-			if fileID := utils.RetrieveFileIDFromBlockFieldStorage(attachmentIDWithExtention.(string)); fileID != "" {
 				fileIDs = append(fileIDs, fileID)
 			}
 		}

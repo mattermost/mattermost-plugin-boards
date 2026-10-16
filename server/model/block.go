@@ -194,12 +194,6 @@ func (b *Block) baseValidations() error {
 		}
 	}
 
-	if attachmentId, ok := b.Fields[BlockFieldAttachmentId].(string); ok && attachmentId != "" {
-		if err = ValidateFileId(attachmentId); err != nil {
-			return err
-		}
-	}
-
 	if propsIface, present := b.Fields[BlockFieldProperties]; present {
 		if _, ok := propsIface.(map[string]interface{}); !ok {
 			return ErrBlockPropertiesInvalidType
@@ -207,6 +201,37 @@ func (b *Block) baseValidations() error {
 	}
 
 	return nil
+}
+
+// NormalizeLegacyFileFields rewrites the deprecated attachmentId field to fileId.
+// Archives exported by older Boards releases still carry attachmentId, and older
+// clients may still send it, so this keeps stored data on the current field name.
+// A non-empty string value is moved to fileId (taking precedence over any existing
+// fileId, matching the legacy read order); any other attachmentId value is dropped
+// without touching fileId. This mirrors the normalization applied to already-stored data.
+func (b *Block) NormalizeLegacyFileFields() {
+	if b.Fields == nil {
+		return
+	}
+
+	attachmentID, present := b.Fields[BlockFieldAttachmentId]
+	if !present {
+		return
+	}
+
+	delete(b.Fields, BlockFieldAttachmentId)
+
+	if fileID, ok := attachmentID.(string); ok && fileID != "" {
+		b.Fields[BlockFieldFileId] = fileID
+	}
+}
+
+// RemoveLegacyFileFields drops the deprecated attachmentId key from a patch's
+// updated fields so it is never written back into storage. Clients write fileId,
+// and the stored field name is fileId everywhere; a patch carrying attachmentId
+// would otherwise reintroduce the legacy key into a block's fields.
+func (p *BlockPatch) RemoveLegacyFileFields() {
+	delete(p.UpdatedFields, BlockFieldAttachmentId)
 }
 
 var safeInputPattern = regexp.MustCompile(`^[a-zA-Z0-9 _-]+$`)
@@ -264,14 +289,6 @@ func validateUpdatedFields(fields map[string]interface{}) error {
 		}
 
 		if key == BlockFieldFileId {
-			if strVal, ok := value.(string); ok {
-				if err := ValidateFileId(strVal); err != nil {
-					return err
-				}
-			}
-		}
-
-		if key == BlockFieldAttachmentId {
 			if strVal, ok := value.(string); ok {
 				if err := ValidateFileId(strVal); err != nil {
 					return err
