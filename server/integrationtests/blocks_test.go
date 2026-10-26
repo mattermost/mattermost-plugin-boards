@@ -576,3 +576,86 @@ func TestUndeleteBlock_CommentAuthorOrAdmin(t *testing.T) {
 		})
 	}
 }
+
+// TestUndeleteBlock_CardRestoreCommentDeletionTimes exercises the ticket repro
+// at the API level: restoring a card brings back the comments deleted with it
+// but leaves comments that were deleted earlier deleted.
+func TestUndeleteBlock_CardRestoreCommentDeletionTimes(t *testing.T) {
+	th := SetupTestHelperPluginMode(t)
+	defer th.TearDown()
+
+	clients := setupClients(th)
+	th.Client = clients.Admin
+
+	teamID := mmModel.NewId()
+	board := th.CreateBoard(teamID, model.BoardTypeOpen)
+
+	_, err := th.Server.App().AddMemberToBoard(&model.BoardMember{
+		BoardID:      board.ID,
+		UserID:       userEditor,
+		SchemeEditor: true,
+	})
+	require.NoError(t, err)
+	_, err = th.Server.App().AddMemberToBoard(&model.BoardMember{
+		BoardID:      board.ID,
+		UserID:       userTeamMember,
+		SchemeEditor: true,
+	})
+	require.NoError(t, err)
+
+	cards, resp := clients.Editor.InsertBlocks(board.ID, []*model.Block{{
+		ID:       utils.NewID(utils.IDTypeBlock),
+		BoardID:  board.ID,
+		CreateAt: 1,
+		UpdateAt: 1,
+		Type:     model.TypeCard,
+		Title:    "card",
+	}}, false)
+	th.CheckOK(resp)
+	require.Len(t, cards, 1)
+	cardID := cards[0].ID
+
+	insertComment := func(title string) string {
+		newBlocks, insertResp := clients.TeamMember.InsertBlocks(board.ID, []*model.Block{{
+			ID:       utils.NewID(utils.IDTypeBlock),
+			BoardID:  board.ID,
+			ParentID: cardID,
+			CreateAt: 1,
+			UpdateAt: 1,
+			Type:     model.TypeComment,
+			Title:    title,
+		}}, false)
+		th.CheckOK(insertResp)
+		require.Len(t, newBlocks, 1)
+		require.Equal(t, userTeamMember, newBlocks[0].CreatedBy)
+		return newBlocks[0].ID
+	}
+
+	earlyCommentID := insertComment("comment deleted before card")
+	withCardCommentID := insertComment("comment deleted with card")
+
+	// user B deletes their own comment before the card is deleted
+	time.Sleep(10 * time.Millisecond)
+	_, resp = clients.TeamMember.DeleteBlock(board.ID, earlyCommentID, false)
+	th.CheckOK(resp)
+
+	// user A deletes and then restores the card
+	time.Sleep(10 * time.Millisecond)
+	_, resp = clients.Editor.DeleteBlock(board.ID, cardID, false)
+	th.CheckOK(resp)
+
+	time.Sleep(10 * time.Millisecond)
+	_, resp = clients.Editor.UndeleteBlock(board.ID, cardID)
+	th.CheckOK(resp)
+
+	// the comment deleted before the card stays deleted
+	_, getErr := th.Server.App().GetBlockByID(earlyCommentID)
+	require.Error(t, getErr)
+	require.True(t, model.IsErrNotFound(getErr))
+
+	// the comment deleted together with the card is restored
+	restored, getErr := th.Server.App().GetBlockByID(withCardCommentID)
+	require.NoError(t, getErr)
+	require.NotNil(t, restored)
+	require.Equal(t, "comment deleted with card", restored.Title)
+}
