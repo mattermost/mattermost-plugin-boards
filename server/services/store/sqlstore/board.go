@@ -913,7 +913,7 @@ func (s *SQLStore) undeleteBoard(db sq.BaseRunner, boardID string, modifiedBy st
 		return err
 	}
 
-	return s.undeleteBlockChildren(db, board.ID, "", modifiedBy)
+	return s.undeleteBlockChildren(db, board.ID, "", modifiedBy, 0)
 }
 
 func (s *SQLStore) getBoardMemberHistory(db sq.BaseRunner, boardID, userID string, limit uint64) ([]*model.BoardMemberHistoryEntry, error) {

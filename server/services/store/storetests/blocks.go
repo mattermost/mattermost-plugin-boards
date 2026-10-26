@@ -1447,6 +1447,137 @@ func testUndeleteBlockChildren(t *testing.T, store store.Store) {
 		require.NoError(t, err)
 		assert.Len(t, blocks, len(blocksDelete)+len(cardsDelete))
 	})
+
+	t.Run("undelete card restores comments deleted with the card", func(t *testing.T) {
+		cards := createTestCards(t, store, userID, boardKeep.ID, 1)
+		card := cards[0]
+
+		comment := &model.Block{
+			ID:        utils.NewID(utils.IDTypeBlock),
+			BoardID:   card.BoardID,
+			ParentID:  card.ID,
+			Type:      model.TypeComment,
+			CreatedBy: userID,
+			Title:     "comment deleted with card",
+		}
+		require.NoError(t, store.InsertBlock(comment, userID))
+
+		time.Sleep(10 * time.Millisecond)
+		require.NoError(t, store.DeleteBlock(card.ID, userID))
+
+		time.Sleep(10 * time.Millisecond)
+		require.NoError(t, store.UndeleteBlock(card.ID, userID))
+
+		restored, err := store.GetBlock(comment.ID)
+		require.NoError(t, err)
+		require.NotNil(t, restored)
+		require.Equal(t, comment.Title, restored.Title)
+	})
+
+	t.Run("undelete card leaves comments deleted before the card deleted", func(t *testing.T) {
+		cards := createTestCards(t, store, userID, boardKeep.ID, 1)
+		card := cards[0]
+
+		comment := &model.Block{
+			ID:        utils.NewID(utils.IDTypeBlock),
+			BoardID:   card.BoardID,
+			ParentID:  card.ID,
+			Type:      model.TypeComment,
+			CreatedBy: userID,
+			Title:     "comment deleted before card",
+		}
+		require.NoError(t, store.InsertBlock(comment, userID))
+
+		time.Sleep(10 * time.Millisecond)
+		require.NoError(t, store.DeleteBlock(comment.ID, userID))
+
+		time.Sleep(10 * time.Millisecond)
+		require.NoError(t, store.DeleteBlock(card.ID, userID))
+
+		time.Sleep(10 * time.Millisecond)
+		require.NoError(t, store.UndeleteBlock(card.ID, userID))
+
+		// stays deleted when the comment was deleted before the card
+		restored, err := store.GetBlock(comment.ID)
+		require.Error(t, err)
+		require.True(t, model.IsErrNotFound(err))
+		require.Nil(t, restored)
+	})
+
+	t.Run("undelete card with comments deleted at different times", func(t *testing.T) {
+		cards := createTestCards(t, store, userID, boardKeep.ID, 1)
+		card := cards[0]
+
+		earlier := &model.Block{
+			ID:        utils.NewID(utils.IDTypeBlock),
+			BoardID:   card.BoardID,
+			ParentID:  card.ID,
+			Type:      model.TypeComment,
+			CreatedBy: userID,
+			Title:     "comment deleted before card",
+		}
+		require.NoError(t, store.InsertBlock(earlier, userID))
+
+		withCard := &model.Block{
+			ID:        utils.NewID(utils.IDTypeBlock),
+			BoardID:   card.BoardID,
+			ParentID:  card.ID,
+			Type:      model.TypeComment,
+			CreatedBy: userID,
+			Title:     "comment deleted with card",
+		}
+		require.NoError(t, store.InsertBlock(withCard, userID))
+
+		time.Sleep(10 * time.Millisecond)
+		require.NoError(t, store.DeleteBlock(earlier.ID, userID))
+
+		time.Sleep(10 * time.Millisecond)
+		require.NoError(t, store.DeleteBlock(card.ID, userID))
+
+		time.Sleep(10 * time.Millisecond)
+		require.NoError(t, store.UndeleteBlock(card.ID, userID))
+
+		// keeps the earlier-deleted comment deleted and restores the one deleted with the card
+		stayedDeleted, err := store.GetBlock(earlier.ID)
+		require.Error(t, err)
+		require.True(t, model.IsErrNotFound(err))
+		require.Nil(t, stayedDeleted)
+
+		restored, err := store.GetBlock(withCard.ID)
+		require.NoError(t, err)
+		require.NotNil(t, restored)
+		require.Equal(t, withCard.Title, restored.Title)
+	})
+
+	t.Run("undelete card restores text deleted before the card", func(t *testing.T) {
+		cards := createTestCards(t, store, userID, boardKeep.ID, 1)
+		card := cards[0]
+
+		text := &model.Block{
+			ID:        utils.NewID(utils.IDTypeBlock),
+			BoardID:   card.BoardID,
+			ParentID:  card.ID,
+			Type:      model.TypeText,
+			CreatedBy: userID,
+			Title:     "text deleted before card",
+		}
+		require.NoError(t, store.InsertBlock(text, userID))
+
+		time.Sleep(10 * time.Millisecond)
+		require.NoError(t, store.DeleteBlock(text.ID, userID))
+
+		time.Sleep(10 * time.Millisecond)
+		require.NoError(t, store.DeleteBlock(card.ID, userID))
+
+		time.Sleep(10 * time.Millisecond)
+		require.NoError(t, store.UndeleteBlock(card.ID, userID))
+
+		// restores a text child even when it was deleted before the card
+		restored, err := store.GetBlock(text.ID)
+		require.NoError(t, err)
+		require.NotNil(t, restored)
+		require.Equal(t, text.Title, restored.Title)
+	})
 }
 
 func testGetBlockHistoryNewestChildren(t *testing.T, store store.Store) {

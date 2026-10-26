@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mattermost/mattermost-plugin-boards/server/client"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 
@@ -460,4 +461,118 @@ func TestUndeleteBlock(t *testing.T) {
 		require.NoError(t, resp.Error)
 		require.Len(t, blocks, initialCount)
 	})
+}
+
+func TestUndeleteBlock_CommentAuthorOrAdmin(t *testing.T) {
+	th := SetupTestHelperPluginMode(t)
+	defer th.TearDown()
+
+	clients := setupClients(th)
+	th.Client = clients.Admin
+
+	teamID := mmModel.NewId()
+	board := th.CreateBoard(teamID, model.BoardTypeOpen)
+
+	_, err := th.Server.App().AddMemberToBoard(&model.BoardMember{
+		BoardID:      board.ID,
+		UserID:       userEditor,
+		SchemeEditor: true,
+	})
+	require.NoError(t, err)
+	_, err = th.Server.App().AddMemberToBoard(&model.BoardMember{
+		BoardID:      board.ID,
+		UserID:       userTeamMember,
+		SchemeEditor: true,
+	})
+	require.NoError(t, err)
+
+	cards, resp := clients.Editor.InsertBlocks(board.ID, []*model.Block{{
+		ID:       utils.NewID(utils.IDTypeBlock),
+		BoardID:  board.ID,
+		CreateAt: 1,
+		UpdateAt: 1,
+		Type:     model.TypeCard,
+		Title:    "card",
+	}}, false)
+	th.CheckOK(resp)
+	require.Len(t, cards, 1)
+	cardID := cards[0].ID
+
+	insertAndDeleteComment := func(t *testing.T, emptyCreatedBy bool) string {
+		t.Helper()
+		if emptyCreatedBy {
+			comment := &model.Block{
+				ID:       utils.NewID(utils.IDTypeBlock),
+				BoardID:  board.ID,
+				ParentID: cardID,
+				CreateAt: 1,
+				UpdateAt: 1,
+				Type:     model.TypeComment,
+				Title:    "comment with empty created_by",
+			}
+			require.NoError(t, th.Server.App().InsertBlock(comment, ""))
+			require.Equal(t, "", comment.CreatedBy)
+
+			time.Sleep(10 * time.Millisecond)
+			_, deleteResp := clients.Admin.DeleteBlock(board.ID, comment.ID, false)
+			th.CheckOK(deleteResp)
+			return comment.ID
+		}
+
+		newBlocks, insertResp := clients.Editor.InsertBlocks(board.ID, []*model.Block{{
+			ID:       utils.NewID(utils.IDTypeBlock),
+			BoardID:  board.ID,
+			ParentID: cardID,
+			CreateAt: 1,
+			UpdateAt: 1,
+			Type:     model.TypeComment,
+			Title:    "comment from editor",
+		}}, false)
+		th.CheckOK(insertResp)
+		require.Len(t, newBlocks, 1)
+		require.Equal(t, userEditor, newBlocks[0].CreatedBy)
+		commentID := newBlocks[0].ID
+
+		time.Sleep(10 * time.Millisecond)
+		_, deleteResp := clients.Editor.DeleteBlock(board.ID, commentID, false)
+		th.CheckOK(deleteResp)
+		return commentID
+	}
+
+	cases := []struct {
+		name           string
+		requester      *client.Client
+		emptyCreatedBy bool
+		wantOK         bool
+	}{
+		{name: "another editor", requester: clients.TeamMember, wantOK: false},
+		{name: "comment author", requester: clients.Editor, wantOK: true},
+		{name: "board admin", requester: clients.Admin, wantOK: true},
+		{name: "empty created_by another editor", requester: clients.TeamMember, emptyCreatedBy: true, wantOK: false},
+		{name: "empty created_by board admin", requester: clients.Admin, emptyCreatedBy: true, wantOK: true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			commentID := insertAndDeleteComment(t, tc.emptyCreatedBy)
+			time.Sleep(10 * time.Millisecond)
+
+			_, undeleteResp := tc.requester.UndeleteBlock(board.ID, commentID)
+			if tc.wantOK {
+				require.Equal(t, http.StatusOK, undeleteResp.StatusCode)
+				require.NoError(t, undeleteResp.Error)
+				block, getErr := th.Server.App().GetBlockByID(commentID)
+				require.NoError(t, getErr)
+				require.NotNil(t, block)
+				return
+			}
+
+			// returns 403 when the requester is not the comment author and is not a board admin
+			require.Equal(t, http.StatusForbidden, undeleteResp.StatusCode)
+			require.Error(t, undeleteResp.Error)
+			_, getErr := th.Server.App().GetBlockByID(commentID)
+			require.Error(t, getErr)
+			require.True(t, model.IsErrNotFound(getErr))
+		})
+	}
 }
