@@ -136,7 +136,7 @@ exports[`components/boardTemplateSelector/boardTemplateSelectorPreview should ma
           />
           <input
             class="Editable "
-            placeholder="Search cards"
+            placeholder="Search cards or ticket codes"
             title=""
             value=""
           />

@@ -38,6 +38,19 @@ describe('Mutator', () => {
         expect(FetchMock.fn).toHaveBeenCalledTimes(1)
     })
 
+    test('changeBoardCardPrefix fails when the server rejects the prefix', async () => {
+        const patchBoard = jest.spyOn(octoClient, 'patchBoard').mockResolvedValueOnce({ok: false, status: 400} as Response)
+        const undoDescription = undoManager.undoDescription
+
+        await expect(mutator.changeBoardCardPrefix('board-id', '', 'TAKEN')).rejects.toThrow()
+        expect(patchBoard).toHaveBeenCalledWith('board-id', {cardPrefix: 'TAKEN'})
+
+        // the failed change must not be added to the undo stack
+        expect(undoManager.undoDescription).toBe(undoDescription)
+
+        patchBoard.mockRestore()
+    })
+
     test('duplicateCard', async () => {
         const board = TestBlockFactory.createBoard()
         const card = TestBlockFactory.createCard(board)

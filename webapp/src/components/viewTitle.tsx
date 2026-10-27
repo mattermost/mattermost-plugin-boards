@@ -5,15 +5,17 @@ import React, {useState, useCallback} from 'react'
 import {FormattedMessage, useIntl} from 'react-intl'
 
 import {BlockIcons} from '../blockIcons'
-import {Board} from '../blocks/board'
+import {Board, normalizeCardPrefix} from '../blocks/board'
 import mutator from '../mutator'
 import Button from '../widgets/buttons/button'
 import Editable from '../widgets/editable'
 import CompassIcon from '../widgets/icons/compassIcon'
 import {Permission} from '../constants'
 import {useHasCurrentBoardPermissions} from '../hooks/permissions'
+import {Utils} from '../utils'
 
 import BoardIconSelector from './boardIconSelector'
+import {sendFlashMessage} from './flashMessages'
 import {MarkdownEditor} from './markdownEditor'
 import './viewTitle.scss'
 
@@ -24,8 +26,10 @@ type Props = {
 
 const ViewTitle = (props: Props) => {
     const {board} = props
+    const intl = useIntl()
 
     const [title, setTitle] = useState(board.title)
+    const [cardPrefix, setCardPrefix] = useState(board.cardPrefix || '')
     const onEditTitleSave = useCallback(() => mutator.changeBoardTitle(board.id, board.title, title), [board.id, board.title, title])
     const onEditTitleCancel = useCallback(() => setTitle(board.title), [board.title])
     const onDescriptionBlur = useCallback((text: string) => mutator.changeBoardDescription(board.id, board.id, board.description, text), [board.id, board.description])
@@ -35,11 +39,26 @@ const ViewTitle = (props: Props) => {
     }, [board.id, board.icon])
     const onShowDescription = useCallback(() => mutator.showBoardDescription(board.id, Boolean(board.showDescription), true), [board.id, board.showDescription])
     const onHideDescription = useCallback(() => mutator.showBoardDescription(board.id, Boolean(board.showDescription), false), [board.id, board.showDescription])
+    const onCardPrefixSave = useCallback(async () => {
+        const previousPrefix = board.cardPrefix || ''
+        const normalized = normalizeCardPrefix(cardPrefix)
+        setCardPrefix(normalized)
+        try {
+            await mutator.changeBoardCardPrefix(board.id, previousPrefix, normalized)
+        } catch (e) {
+            Utils.logError(`ERROR saving card prefix: ${e}`)
+            setCardPrefix(previousPrefix)
+            sendFlashMessage({
+                content: intl.formatMessage({id: 'ViewTitle.ticket-prefix-save-failed', defaultMessage: 'Could not save the ticket prefix. It may already be used by another board in this team.'}),
+                severity: 'high',
+            })
+        }
+    }, [board.id, board.cardPrefix, cardPrefix, intl])
+    const onCardPrefixCancel = useCallback(() => setCardPrefix(board.cardPrefix || ''), [board.cardPrefix])
     const canEditBoardProperties = useHasCurrentBoardPermissions([Permission.ManageBoardProperties])
 
     const readonly = props.readonly || !canEditBoardProperties
 
-    const intl = useIntl()
 
     return (
         <div className='ViewTitle'>
@@ -111,6 +130,37 @@ const ViewTitle = (props: Props) => {
                     spellCheck={true}
                 />
             </div>
+
+            {!readonly &&
+                <div className='card-prefix-row'>
+                    <span className='card-prefix-label'>
+                        <CompassIcon icon='ticket-outline'/>
+                        <FormattedMessage
+                            id='ViewTitle.ticket-prefix'
+                            defaultMessage='Ticket prefix'
+                        />
+                    </span>
+                    <Editable
+                        className='card-prefix-input'
+                        value={cardPrefix}
+                        placeholderText={intl.formatMessage({id: 'ViewTitle.ticket-prefix-placeholder', defaultMessage: 'e.g. PROJ'})}
+                        onChange={(newPrefix) => setCardPrefix(normalizeCardPrefix(newPrefix))}
+                        saveOnEsc={true}
+                        onSave={onCardPrefixSave}
+                        onCancel={onCardPrefixCancel}
+                        readonly={readonly}
+                    />
+                    {board.cardPrefix &&
+                        <span className='card-prefix-example'>
+                            <FormattedMessage
+                                id='ViewTitle.ticket-prefix-example'
+                                defaultMessage='Cards will be numbered {example}'
+                                values={{example: `${board.cardPrefix}-1, ${board.cardPrefix}-2, ...`}}
+                            />
+                        </span>
+                    }
+                </div>
+            }
 
             {board.showDescription &&
                 <div className='description'>

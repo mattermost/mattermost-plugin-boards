@@ -24,6 +24,9 @@ const (
 	BlockFieldFileId       = "fileId"
 	BlockFieldAttachmentId = "attachmentId"
 	BlockFieldProperties   = "properties"
+	// BlockFieldCardNumber is assigned by the server when a card is created
+	// and cannot be changed through block patches.
+	BlockFieldCardNumber = "cardNumber"
 )
 
 var (
@@ -350,10 +353,16 @@ func (p *BlockPatch) Patch(block *Block) *Block {
 	}
 
 	for key, field := range p.UpdatedFields {
+		if key == BlockFieldCardNumber {
+			continue
+		}
 		block.Fields[key] = field
 	}
 
 	for _, key := range p.DeletedFields {
+		if key == BlockFieldCardNumber {
+			continue
+		}
 		delete(block.Fields, key)
 	}
 

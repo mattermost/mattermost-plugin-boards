@@ -293,6 +293,71 @@ func TestInsertBlocks(t *testing.T) {
 		require.Error(t, err, "error")
 	})
 
+	t.Run("new card gets the next card number, ignoring the client's", func(t *testing.T) {
+		boardID := testBoardID
+		block := &model.Block{
+			ID:      "new-card",
+			BoardID: boardID,
+			Type:    model.TypeCard,
+			Fields:  map[string]interface{}{model.BlockFieldCardNumber: float64(3)},
+		}
+		th.Store.EXPECT().GetBoard(boardID).Return(&model.Board{ID: boardID}, nil)
+		th.Store.EXPECT().GetBlock("new-card").Return(nil, model.NewErrNotFound("block not found"))
+		th.Store.EXPECT().IncrementBoardCardCount(boardID).Return(int64(12), nil)
+		th.Store.EXPECT().InsertBlock(block, "user-id-1").Return(nil)
+		th.Store.EXPECT().GetMembersForBoard(boardID).Return([]*model.BoardMember{}, nil)
+
+		blocks, err := th.App.InsertBlocks([]*model.Block{block}, "user-id-1")
+		require.NoError(t, err)
+		require.EqualValues(t, 12, blocks[0].Fields[model.BlockFieldCardNumber])
+	})
+
+	t.Run("existing card keeps its stored card number", func(t *testing.T) {
+		boardID := testBoardID
+		block := &model.Block{
+			ID:      "existing-card",
+			BoardID: boardID,
+			Type:    model.TypeCard,
+			Fields:  map[string]interface{}{model.BlockFieldCardNumber: float64(99)},
+		}
+		existing := &model.Block{
+			ID:      "existing-card",
+			BoardID: boardID,
+			Type:    model.TypeCard,
+			Fields:  map[string]interface{}{model.BlockFieldCardNumber: float64(5)},
+		}
+		th.Store.EXPECT().GetBoard(boardID).Return(&model.Board{ID: boardID}, nil)
+		th.Store.EXPECT().GetBlock("existing-card").Return(existing, nil)
+		th.Store.EXPECT().InsertBlock(block, "user-id-1").Return(nil)
+		th.Store.EXPECT().GetMembersForBoard(boardID).Return([]*model.BoardMember{}, nil)
+
+		blocks, err := th.App.InsertBlocks([]*model.Block{block}, "user-id-1")
+		require.NoError(t, err)
+		require.EqualValues(t, 5, blocks[0].Fields[model.BlockFieldCardNumber])
+	})
+
+	t.Run("card template gets no card number", func(t *testing.T) {
+		boardID := testBoardID
+		block := &model.Block{
+			ID:      "new-template",
+			BoardID: boardID,
+			Type:    model.TypeCard,
+			Fields: map[string]interface{}{
+				"isTemplate":               true,
+				model.BlockFieldCardNumber: float64(3),
+			},
+		}
+		th.Store.EXPECT().GetBoard(boardID).Return(&model.Board{ID: boardID}, nil)
+		th.Store.EXPECT().GetBlock("new-template").Return(nil, model.NewErrNotFound("block not found"))
+		th.Store.EXPECT().InsertBlock(block, "user-id-1").Return(nil)
+		th.Store.EXPECT().GetMembersForBoard(boardID).Return([]*model.BoardMember{}, nil)
+
+		blocks, err := th.App.InsertBlocks([]*model.Block{block}, "user-id-1")
+		require.NoError(t, err)
+		_, present := blocks[0].Fields[model.BlockFieldCardNumber]
+		require.False(t, present)
+	})
+
 	t.Run("create view within limits", func(t *testing.T) {
 		t.Skipf("The Cloud Limits feature has been disabled")
 

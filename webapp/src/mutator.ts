@@ -285,6 +285,23 @@ class Mutator {
         )
     }
 
+    async changeBoardCardPrefix(boardId: string, oldPrefix: string, newPrefix: string, description = 'change board card prefix') {
+        await undoManager.perform(
+            async () => {
+                // e.g. the prefix is already used by another board in the team
+                const response = await octoClient.patchBoard(boardId, {cardPrefix: newPrefix})
+                if (!response.ok) {
+                    throw new Error(`changeBoardCardPrefix failed with status ${response.status}`)
+                }
+            },
+            async () => {
+                await octoClient.patchBoard(boardId, {cardPrefix: oldPrefix})
+            },
+            description,
+            this.undoGroupId,
+        )
+    }
+
     async changeBoardIcon(boardId: string, oldIcon: string|undefined, icon: string, description = 'change board icon') {
         await undoManager.perform(
             async () => {
