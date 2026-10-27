@@ -181,6 +181,50 @@ func TestPatchCard(t *testing.T) {
 		require.Error(t, err, "error")
 		require.Nil(t, patchedCard)
 	})
+
+	t.Run("numbered card keeps its ticket code", func(t *testing.T) {
+		prefixedBoard := &model.Board{ID: board.ID, CardPrefix: "PROJ"}
+		numberedCard := *card
+		numberedCard.ID = utils.NewID(utils.IDTypeCard)
+		numberedCard.CardNumber = 4
+		patchedBlock := model.Card2Block(cardPatch.Patch(&numberedCard))
+
+		var blockPatch *model.BlockPatch
+		th.Store.EXPECT().GetBoard(board.ID).Return(prefixedBoard, nil).Times(2)
+		th.Store.EXPECT().PatchBlock(numberedCard.ID, gomock.AssignableToTypeOf(reflect.TypeOf(blockPatch)), userID).Return(nil)
+		th.Store.EXPECT().GetMembersForBoard(board.ID).Return([]*model.BoardMember{}, nil)
+		th.Store.EXPECT().GetBlock(numberedCard.ID).Return(patchedBlock, nil).AnyTimes()
+
+		patchedCard, err := th.App.PatchCard(cardPatch, numberedCard.ID, userID, false)
+
+		require.NoError(t, err)
+		require.Equal(t, "PROJ-4", patchedCard.TicketCode)
+	})
+}
+
+func TestGetCardByTicketCode(t *testing.T) {
+	th, tearDown := SetupTestHelper(t)
+	defer tearDown()
+
+	t.Run("malformed ticket code is a bad request", func(t *testing.T) {
+		card, err := th.App.GetCardByTicketCode("abc", "team-id")
+		require.True(t, model.IsErrBadRequest(err), "expected bad request, got %v", err)
+		require.Nil(t, card)
+	})
+
+	t.Run("ticket code is normalized", func(t *testing.T) {
+		block := model.Card2Block(&model.Card{
+			ID:         utils.NewID(utils.IDTypeCard),
+			BoardID:    utils.NewID(utils.IDTypeBoard),
+			CardNumber: 7,
+		})
+		th.Store.EXPECT().GetCardByTicketCode("PROJ", int64(7), "team-id").Return(block, nil)
+
+		card, err := th.App.GetCardByTicketCode("proj-7", "team-id")
+
+		require.NoError(t, err)
+		require.Equal(t, "PROJ-7", card.TicketCode)
+	})
 }
 
 func TestGetCard(t *testing.T) {

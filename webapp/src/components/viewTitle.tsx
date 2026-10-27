@@ -12,8 +12,10 @@ import Editable from '../widgets/editable'
 import CompassIcon from '../widgets/icons/compassIcon'
 import {Permission} from '../constants'
 import {useHasCurrentBoardPermissions} from '../hooks/permissions'
+import {Utils} from '../utils'
 
 import BoardIconSelector from './boardIconSelector'
+import {sendFlashMessage} from './flashMessages'
 import {MarkdownEditor} from './markdownEditor'
 import './viewTitle.scss'
 
@@ -24,6 +26,7 @@ type Props = {
 
 const ViewTitle = (props: Props) => {
     const {board} = props
+    const intl = useIntl()
 
     const [title, setTitle] = useState(board.title)
     const [cardPrefix, setCardPrefix] = useState(board.cardPrefix || '')
@@ -36,17 +39,26 @@ const ViewTitle = (props: Props) => {
     }, [board.id, board.icon])
     const onShowDescription = useCallback(() => mutator.showBoardDescription(board.id, Boolean(board.showDescription), true), [board.id, board.showDescription])
     const onHideDescription = useCallback(() => mutator.showBoardDescription(board.id, Boolean(board.showDescription), false), [board.id, board.showDescription])
-    const onCardPrefixSave = useCallback(() => {
+    const onCardPrefixSave = useCallback(async () => {
+        const previousPrefix = board.cardPrefix || ''
         const normalized = normalizeCardPrefix(cardPrefix)
         setCardPrefix(normalized)
-        mutator.changeBoardCardPrefix(board.id, board.cardPrefix || '', normalized)
-    }, [board.id, board.cardPrefix, cardPrefix])
+        try {
+            await mutator.changeBoardCardPrefix(board.id, previousPrefix, normalized)
+        } catch (e) {
+            Utils.logError(`ERROR saving card prefix: ${e}`)
+            setCardPrefix(previousPrefix)
+            sendFlashMessage({
+                content: intl.formatMessage({id: 'ViewTitle.ticket-prefix-save-failed', defaultMessage: 'Could not save the ticket prefix. It may already be used by another board in this team.'}),
+                severity: 'high',
+            })
+        }
+    }, [board.id, board.cardPrefix, cardPrefix, intl])
     const onCardPrefixCancel = useCallback(() => setCardPrefix(board.cardPrefix || ''), [board.cardPrefix])
     const canEditBoardProperties = useHasCurrentBoardPermissions([Permission.ManageBoardProperties])
 
     const readonly = props.readonly || !canEditBoardProperties
 
-    const intl = useIntl()
 
     return (
         <div className='ViewTitle'>

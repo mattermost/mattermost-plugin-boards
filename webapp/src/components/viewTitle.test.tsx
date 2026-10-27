@@ -156,6 +156,30 @@ describe('components/viewTitle', () => {
         expect(mockedMutator.changeBoardIcon).toHaveBeenCalledTimes(1)
     })
 
+    test('restores the ticket prefix when saving it fails', async () => {
+        mockedMutator.changeBoardCardPrefix.mockRejectedValueOnce(new Error('prefix already in use'))
+        await act(async () => {
+            render(wrapIntl(
+                <ReduxProvider store={store}>
+                    <ViewTitle
+                        board={board}
+                        readonly={false}
+                    />
+                </ReduxProvider>,
+            ))
+        })
+        const prefixInput = screen.getByPlaceholderText('e.g. PROJ')
+        userEvent.type(prefixInput, 'taken')
+        expect(prefixInput).toHaveValue('TAKEN')
+
+        await act(async () => {
+            fireEvent.blur(prefixInput)
+        })
+
+        expect(mockedMutator.changeBoardCardPrefix).toHaveBeenCalledWith(board.id, '', 'TAKEN')
+        expect(prefixInput).toHaveValue('')
+    })
+
     test('change title', async () => {
         await act(async () => {
             render(wrapIntl(

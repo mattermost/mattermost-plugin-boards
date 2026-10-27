@@ -87,6 +87,8 @@ func (a *App) PatchCard(cardPatch *model.CardPatch, cardID string, userID string
 		return nil, err
 	}
 
+	a.populateTicketCode(newCard)
+
 	return newCard, nil
 }
 
@@ -121,7 +123,7 @@ func (a *App) populateTicketCode(card *model.Card) {
 func (a *App) GetCardByTicketCode(ticketCode string, teamID string) (*model.Card, error) {
 	prefix, number, err := model.ParseTicketCode(ticketCode)
 	if err != nil {
-		return nil, err
+		return nil, model.NewErrBadRequest(err.Error())
 	}
 
 	block, err := a.store.GetCardByTicketCode(prefix, number, teamID)
