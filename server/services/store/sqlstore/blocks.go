@@ -1066,14 +1066,12 @@ func (s *SQLStore) undeleteBlockChildren(db sq.BaseRunner, boardID string, paren
 		InnerJoin("("+subQuerySQL+") AS sub ON bh.id=sub.id AND bh.insert_at=sub.max_insert_at", joinArgs...).
 		Where(sq.NotEq{"bh.delete_at": 0})
 
-	// When restoring a card's children, comments whose latest history
-	// delete_at is older than the card's are left deleted.
-	if parentID != "" {
-		selectQuery = selectQuery.Where(sq.Or{
-			sq.NotEq{"bh.type": model.TypeComment},
-			sq.GtOrEq{"bh.delete_at": parentDeleteAt},
-		})
-	}
+	// Comments whose latest history delete_at is older than the parent's
+	// (card or board) are left deleted.
+	selectQuery = selectQuery.Where(sq.Or{
+		sq.NotEq{"bh.type": model.TypeComment},
+		sq.GtOrEq{"bh.delete_at": parentDeleteAt},
+	})
 
 	columns := []string{
 		"board_id",

@@ -1578,6 +1578,83 @@ func testUndeleteBlockChildren(t *testing.T, store store.Store) {
 		require.NotNil(t, restored)
 		require.Equal(t, text.Title, restored.Title)
 	})
+
+	t.Run("undelete board leaves comments deleted before the board deleted", func(t *testing.T) {
+		board := createTestBoards(t, store, testTeamID, userID, 1)[0]
+		card := createTestCards(t, store, userID, board.ID, 1)[0]
+
+		comment := &model.Block{
+			ID:        utils.NewID(utils.IDTypeBlock),
+			BoardID:   board.ID,
+			ParentID:  card.ID,
+			Type:      model.TypeComment,
+			CreatedBy: userID,
+			Title:     "comment deleted before board",
+		}
+		require.NoError(t, store.InsertBlock(comment, userID))
+
+		time.Sleep(10 * time.Millisecond)
+		require.NoError(t, store.DeleteBlock(comment.ID, userID))
+
+		time.Sleep(10 * time.Millisecond)
+		require.NoError(t, store.DeleteBoard(board.ID, userID))
+
+		time.Sleep(10 * time.Millisecond)
+		require.NoError(t, store.UndeleteBoard(board.ID, userID))
+
+		restoredCard, err := store.GetBlock(card.ID)
+		require.NoError(t, err)
+		require.NotNil(t, restoredCard)
+
+		stayedDeleted, err := store.GetBlock(comment.ID)
+		require.Error(t, err)
+		require.True(t, model.IsErrNotFound(err))
+		require.Nil(t, stayedDeleted)
+	})
+
+	t.Run("undelete board restores comments deleted with the board", func(t *testing.T) {
+		board := createTestBoards(t, store, testTeamID, userID, 1)[0]
+		card := createTestCards(t, store, userID, board.ID, 1)[0]
+
+		earlier := &model.Block{
+			ID:        utils.NewID(utils.IDTypeBlock),
+			BoardID:   board.ID,
+			ParentID:  card.ID,
+			Type:      model.TypeComment,
+			CreatedBy: userID,
+			Title:     "comment deleted before board",
+		}
+		require.NoError(t, store.InsertBlock(earlier, userID))
+
+		withBoard := &model.Block{
+			ID:        utils.NewID(utils.IDTypeBlock),
+			BoardID:   board.ID,
+			ParentID:  card.ID,
+			Type:      model.TypeComment,
+			CreatedBy: userID,
+			Title:     "comment deleted with board",
+		}
+		require.NoError(t, store.InsertBlock(withBoard, userID))
+
+		time.Sleep(10 * time.Millisecond)
+		require.NoError(t, store.DeleteBlock(earlier.ID, userID))
+
+		time.Sleep(10 * time.Millisecond)
+		require.NoError(t, store.DeleteBoard(board.ID, userID))
+
+		time.Sleep(10 * time.Millisecond)
+		require.NoError(t, store.UndeleteBoard(board.ID, userID))
+
+		restored, err := store.GetBlock(withBoard.ID)
+		require.NoError(t, err)
+		require.NotNil(t, restored)
+		require.Equal(t, withBoard.Title, restored.Title)
+
+		stayedDeleted, err := store.GetBlock(earlier.ID)
+		require.Error(t, err)
+		require.True(t, model.IsErrNotFound(err))
+		require.Nil(t, stayedDeleted)
+	})
 }
 
 func testGetBlockHistoryNewestChildren(t *testing.T, store store.Store) {
