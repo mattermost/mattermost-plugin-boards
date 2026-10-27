@@ -5,7 +5,7 @@ import React, {useState, useCallback} from 'react'
 import {FormattedMessage, useIntl} from 'react-intl'
 
 import {BlockIcons} from '../blockIcons'
-import {Board} from '../blocks/board'
+import {Board, normalizeCardPrefix} from '../blocks/board'
 import mutator from '../mutator'
 import Button from '../widgets/buttons/button'
 import Editable from '../widgets/editable'
@@ -37,7 +37,7 @@ const ViewTitle = (props: Props) => {
     const onShowDescription = useCallback(() => mutator.showBoardDescription(board.id, Boolean(board.showDescription), true), [board.id, board.showDescription])
     const onHideDescription = useCallback(() => mutator.showBoardDescription(board.id, Boolean(board.showDescription), false), [board.id, board.showDescription])
     const onCardPrefixSave = useCallback(() => {
-        const normalized = cardPrefix.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 10)
+        const normalized = normalizeCardPrefix(cardPrefix)
         setCardPrefix(normalized)
         mutator.changeBoardCardPrefix(board.id, board.cardPrefix || '', normalized)
     }, [board.id, board.cardPrefix, cardPrefix])
@@ -132,7 +132,7 @@ const ViewTitle = (props: Props) => {
                         className='card-prefix-input'
                         value={cardPrefix}
                         placeholderText={intl.formatMessage({id: 'ViewTitle.ticket-prefix-placeholder', defaultMessage: 'e.g. PROJ'})}
-                        onChange={(newPrefix) => setCardPrefix(newPrefix.toUpperCase())}
+                        onChange={(newPrefix) => setCardPrefix(normalizeCardPrefix(newPrefix))}
                         saveOnEsc={true}
                         onSave={onCardPrefixSave}
                         onCancel={onCardPrefixCancel}

@@ -6,6 +6,8 @@ package model
 import (
 	"encoding/json"
 	"io"
+	"regexp"
+	"strings"
 	"time"
 
 	mmModel "github.com/mattermost/mattermost/server/public/model"
@@ -34,6 +36,9 @@ const (
 	BoardSearchFieldPropertyName BoardSearchField = "property_name"
 	BoardSearchFieldCardPrefix   BoardSearchField = "card_prefix"
 )
+
+// cardPrefixRegex matches a valid ticket code prefix: 1-10 uppercase letters or digits.
+var cardPrefixRegex = regexp.MustCompile(`^[A-Z0-9]{1,10}$`)
 
 // Board groups a set of blocks and its layout
 // swagger:model
@@ -311,7 +316,7 @@ func (p *BoardPatch) Patch(board *Board) *Board {
 	}
 
 	if p.CardPrefix != nil {
-		board.CardPrefix = *p.CardPrefix
+		board.CardPrefix = NormalizeCardPrefix(*p.CardPrefix)
 	}
 
 	for key, property := range p.UpdatedProperties {
@@ -381,6 +386,17 @@ func IsBoardMinimumRoleValid(r BoardRole) bool {
 	return r == BoardRoleNone || r == BoardRoleAdmin || r == BoardRoleEditor || r == BoardRoleCommenter || r == BoardRoleViewer
 }
 
+// NormalizeCardPrefix trims and uppercases a ticket code prefix.
+func NormalizeCardPrefix(prefix string) string {
+	return strings.ToUpper(strings.TrimSpace(prefix))
+}
+
+// IsCardPrefixValid reports whether prefix is empty (no ticket codes) or
+// consists of 1-10 uppercase letters or digits.
+func IsCardPrefixValid(prefix string) bool {
+	return prefix == "" || cardPrefixRegex.MatchString(prefix)
+}
+
 func (p *BoardPatch) IsValid() error {
 	if p.Type != nil && !IsBoardTypeValid(*p.Type) {
 		return InvalidBoardErr{"invalid-board-type"}
@@ -394,8 +410,8 @@ func (p *BoardPatch) IsValid() error {
 		return InvalidBoardErr{"invalid-channel-id"}
 	}
 
-	if p.CardPrefix != nil && len(*p.CardPrefix) > 10 {
-		return InvalidBoardErr{"invalid-card-prefix-too-long"}
+	if p.CardPrefix != nil && !IsCardPrefixValid(NormalizeCardPrefix(*p.CardPrefix)) {
+		return InvalidBoardErr{"invalid-card-prefix"}
 	}
 
 	return nil
@@ -437,6 +453,10 @@ func (b *Board) baseValidation() error {
 
 	if !IsBoardMinimumRoleValid(b.MinimumRole) {
 		return InvalidBoardErr{"invalid-board-minimum-role"}
+	}
+
+	if !IsCardPrefixValid(b.CardPrefix) {
+		return InvalidBoardErr{"invalid-card-prefix"}
 	}
 
 	return nil

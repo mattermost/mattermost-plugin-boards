@@ -398,6 +398,11 @@ func (s *SQLStore) GetBoardsInTeamByIds(boardIDs []string, teamID string) ([]*mo
 
 }
 
+func (s *SQLStore) GetCardByTicketCode(boardPrefix string, cardNumber int64, teamID string) (*model.Block, error) {
+	return s.getCardByTicketCode(s.db, boardPrefix, cardNumber, teamID)
+
+}
+
 func (s *SQLStore) GetCardLimitTimestamp() (int64, error) {
 	return s.getCardLimitTimestamp(s.db)
 
@@ -565,6 +570,30 @@ func (s *SQLStore) GetUsersByTeam(teamID string, asGuestID string, showEmail boo
 
 func (s *SQLStore) GetUsersList(userIDs []string, showEmail bool, showName bool) ([]*model.User, error) {
 	return s.getUsersList(s.db, userIDs, showEmail, showName)
+
+}
+
+func (s *SQLStore) IncrementBoardCardCount(boardID string) (int64, error) {
+	if s.dbType == model.SqliteDBType {
+		return s.incrementBoardCardCount(s.db, boardID)
+	}
+	tx, txErr := s.db.BeginTx(context.Background(), nil)
+	if txErr != nil {
+		return 0, txErr
+	}
+	result, err := s.incrementBoardCardCount(tx, boardID)
+	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			s.logger.Error("transaction rollback error", mlog.Err(rollbackErr), mlog.String("methodName", "IncrementBoardCardCount"))
+		}
+		return 0, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return 0, err
+	}
+
+	return result, nil
 
 }
 
@@ -766,6 +795,11 @@ func (s *SQLStore) ReorderCategoryBoards(categoryID string, newBoardsOrder []str
 
 }
 
+func (s *SQLStore) RestoreFiles(fileIDs []string) error {
+	return s.restoreFiles(s.db, fileIDs)
+
+}
+
 func (s *SQLStore) RunDataRetention(globalRetentionDate int64, batchSize int64) (int64, error) {
 	if s.dbType == model.SqliteDBType {
 		return s.runDataRetention(s.db, globalRetentionDate, batchSize)
@@ -792,11 +826,6 @@ func (s *SQLStore) RunDataRetention(globalRetentionDate int64, batchSize int64) 
 
 func (s *SQLStore) SaveFileInfo(fileInfo *mmModel.FileInfo) error {
 	return s.saveFileInfo(s.db, fileInfo)
-
-}
-
-func (s *SQLStore) RestoreFiles(fileIDs []string) error {
-	return s.restoreFiles(s.db, fileIDs)
 
 }
 
@@ -920,15 +949,5 @@ func (s *SQLStore) UpsertTeamSettings(team model.Team) error {
 
 func (s *SQLStore) UpsertTeamSignupToken(team model.Team) error {
 	return s.upsertTeamSignupToken(s.db, team)
-
-}
-
-func (s *SQLStore) IncrementBoardCardCount(boardID string) (int64, error) {
-	return s.incrementBoardCardCount(s.db, boardID)
-
-}
-
-func (s *SQLStore) GetCardByTicketCode(boardPrefix string, cardNumber int64, teamID string) (*model.Block, error) {
-	return s.getCardByTicketCode(s.db, boardPrefix, cardNumber, teamID)
 
 }

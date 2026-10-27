@@ -20,7 +20,8 @@ func TestCreateCard(t *testing.T) {
 	defer tearDown()
 
 	board := &model.Board{
-		ID: utils.NewID(utils.IDTypeBoard),
+		ID:         utils.NewID(utils.IDTypeBoard),
+		CardPrefix: "PROJ",
 	}
 	userID := utils.NewID(utils.IDTypeUser)
 
@@ -37,7 +38,8 @@ func TestCreateCard(t *testing.T) {
 	block := model.Card2Block(card)
 
 	t.Run("success scenario", func(t *testing.T) {
-		th.Store.EXPECT().GetBoard(board.ID).Return(board, nil)
+		th.Store.EXPECT().IncrementBoardCardCount(board.ID).Return(int64(7), nil)
+		th.Store.EXPECT().GetBoard(board.ID).Return(board, nil).Times(2)
 		th.Store.EXPECT().InsertBlock(gomock.AssignableToTypeOf(reflect.TypeOf(block)), userID).Return(nil)
 		th.Store.EXPECT().GetMembersForBoard(board.ID).Return([]*model.BoardMember{}, nil)
 
@@ -48,10 +50,13 @@ func TestCreateCard(t *testing.T) {
 		require.Equal(t, card.Title, newCard.Title)
 		require.Equal(t, card.ContentOrder, newCard.ContentOrder)
 		require.EqualValues(t, card.Properties, newCard.Properties)
+		require.EqualValues(t, 7, newCard.CardNumber)
+		require.Equal(t, "PROJ-7", newCard.TicketCode)
 	})
 
 	t.Run("error scenario", func(t *testing.T) {
-		th.Store.EXPECT().GetBoard(board.ID).Return(board, nil)
+		th.Store.EXPECT().IncrementBoardCardCount(board.ID).Return(int64(8), nil)
+		th.Store.EXPECT().GetBoard(board.ID).Return(board, nil).Times(2)
 		th.Store.EXPECT().InsertBlock(gomock.AssignableToTypeOf(reflect.TypeOf(block)), userID).Return(blockError{"error"})
 
 		newCard, err := th.App.CreateCard(card, board.ID, userID, false)
@@ -92,6 +97,7 @@ func TestGetCards(t *testing.T) {
 		}
 
 		th.Store.EXPECT().GetBlocks(opts).Return(blocks, nil)
+		th.Store.EXPECT().GetBoard(board.ID).Return(board, nil)
 
 		cards, err := th.App.GetCardsForBoard(board.ID, 0, 0)
 		require.NoError(t, err)

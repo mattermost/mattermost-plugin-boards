@@ -355,7 +355,6 @@ func (s *SQLStore) insertBoard(db sq.BaseRunner, board *model.Board, userID stri
 			Set("properties", propertiesBytes).
 			Set("card_properties", cardPropertiesBytes).
 			Set("card_prefix", board.CardPrefix).
-			Set("card_count", board.CardCount).
 			Set("update_at", board.UpdateAt).
 			Set("delete_at", board.DeleteAt)
 
@@ -392,7 +391,37 @@ func (s *SQLStore) patchBoard(db sq.BaseRunner, boardID string, boardPatch *mode
 	}
 
 	board := boardPatch.Patch(existingBoard)
+
+	if boardPatch.CardPrefix != nil && board.CardPrefix != "" {
+		inUse, err := s.isCardPrefixInUse(db, board.TeamID, board.CardPrefix, board.ID)
+		if err != nil {
+			return nil, err
+		}
+		if inUse {
+			return nil, model.NewErrBadRequest(fmt.Sprintf("card prefix %s is already used by another board in this team", board.CardPrefix))
+		}
+	}
+
 	return s.insertBoard(db, board, userID)
+}
+
+// isCardPrefixInUse reports whether a board other than excludeBoardID in the
+// given team already uses prefix for its ticket codes.
+func (s *SQLStore) isCardPrefixInUse(db sq.BaseRunner, teamID, prefix, excludeBoardID string) (bool, error) {
+	row := s.getQueryBuilder(db).
+		Select("COUNT(*)").
+		From(s.tablePrefix + "boards").
+		Where(sq.Eq{"team_id": teamID}).
+		Where(sq.Eq{"card_prefix": prefix}).
+		Where(sq.NotEq{"id": excludeBoardID}).
+		QueryRow()
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return false, fmt.Errorf("isCardPrefixInUse error for team %s: %w", teamID, err)
+	}
+
+	return count > 0, nil
 }
 
 func (s *SQLStore) deleteBoard(db sq.BaseRunner, boardID, userID string) error {
@@ -876,6 +905,8 @@ func (s *SQLStore) undeleteBoard(db sq.BaseRunner, boardID string, modifiedBy st
 		"template_version",
 		"properties",
 		"card_properties",
+		"card_prefix",
+		"card_count",
 		"create_at",
 		"update_at",
 		"delete_at",
@@ -897,6 +928,8 @@ func (s *SQLStore) undeleteBoard(db sq.BaseRunner, boardID string, modifiedBy st
 		board.TemplateVersion,
 		propertiesJSON,
 		cardPropertiesJSON,
+		board.CardPrefix,
+		board.CardCount,
 		board.CreateAt,
 		now,
 		0,
@@ -1207,6 +1240,10 @@ func (s *SQLStore) searchBoardsForUser(db sq.BaseRunner, term string, searchFiel
 	return s.boardsFromRows(rows)
 }
 
+// incrementBoardCardCount must run inside a transaction (see the
+// @withTransaction annotation on the store interface): the UPDATE holds the
+// board row lock until commit, so the following SELECT reads this caller's
+// increment and concurrent callers can't observe the same value.
 func (s *SQLStore) incrementBoardCardCount(db sq.BaseRunner, boardID string) (int64, error) {
 	query := s.getQueryBuilder(db).
 		Update(s.tablePrefix+"boards").
@@ -1253,7 +1290,8 @@ func (s *SQLStore) getCardByTicketCode(db sq.BaseRunner, boardPrefix string, car
 		return nil, err
 	}
 
-	// Find the block whose fields.cardNumber matches
+	// Find the blocks whose fields.cardNumber matches
+	var matches []*model.Block
 	for _, block := range blocks {
 		if cn, ok := block.Fields["cardNumber"]; ok {
 			var num int64
@@ -1264,10 +1302,19 @@ func (s *SQLStore) getCardByTicketCode(db sq.BaseRunner, boardPrefix string, car
 				num = v
 			}
 			if num == cardNumber {
-				return block, nil
+				matches = append(matches, block)
 			}
 		}
 	}
 
-	return nil, model.NewErrNotFound("card with ticket code")
+	switch len(matches) {
+	case 0:
+		return nil, model.NewErrNotFound("card with ticket code")
+	case 1:
+		return matches[0], nil
+	default:
+		// card_prefix uniqueness is enforced on patch, but boards created before
+		// that (or via import) may still share a prefix within a team.
+		return nil, model.NewErrBadRequest(fmt.Sprintf("ticket code %s-%d is ambiguous: multiple boards in this team use the prefix", boardPrefix, cardNumber))
+	}
 }

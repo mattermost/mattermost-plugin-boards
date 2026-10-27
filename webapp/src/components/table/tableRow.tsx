@@ -4,7 +4,7 @@
 import React, {useEffect, useRef, useState, useMemo, useCallback} from 'react'
 import {FormattedMessage, useIntl} from 'react-intl'
 
-import {Card} from '../../blocks/card'
+import {Card, formatTicketCode} from '../../blocks/card'
 import {Board, IPropertyTemplate} from '../../blocks/board'
 import {Constants} from '../../constants'
 import mutator from '../../mutator'
@@ -49,6 +49,7 @@ type Props = {
 const TableRow = (props: Props) => {
     const intl = useIntl()
     const {board, card, isManualSort, groupById, visiblePropertyIds, collapsedOptionIds} = props
+    const ticketCode = formatTicketCode(board.cardPrefix, card.fields.cardNumber)
 
     const titleRef = useRef<{ focus(selectAll?: boolean): void }>(null)
     const [title, setTitle] = useState(props.card.title || '')
@@ -169,9 +170,9 @@ const TableRow = (props: Props) => {
             >
                 <div className='octo-icontitle'>
                     <div className='octo-icon'>{card.fields.icon}</div>
-                    {props.board.cardPrefix && card.fields.cardNumber ? (
+                    {ticketCode ? (
                         <span className='octo-ticket-code'>
-                            {`${props.board.cardPrefix}-${card.fields.cardNumber}`}
+                            {ticketCode}
                         </span>
                     ) : null}
                     <Editable

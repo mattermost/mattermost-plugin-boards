@@ -18,7 +18,7 @@ type Card = Block & {
     ticketCode?: string
 }
 
-function createCard(block?: Block): Card {
+function createCard(block?: Block | Card): Card {
     const contentOrder: Array<string|string[]> = []
     const contentIds = block?.fields?.contentOrder?.filter((id: any) => id !== null)
 
@@ -31,7 +31,7 @@ function createCard(block?: Block): Card {
             }
         }
     }
-    return {
+    const card: Card = {
         ...createBlock(block),
         type: 'card',
         fields: {
@@ -43,6 +43,19 @@ function createCard(block?: Block): Card {
         },
         cardNumber: block?.fields.cardNumber || 0,
     }
+    if (block && 'ticketCode' in block && block.ticketCode) {
+        card.ticketCode = block.ticketCode
+    }
+    return card
 }
 
-export {Card, createCard}
+// formatTicketCode builds a card's ticket code (e.g. PROJ-42), or returns ''
+// when the board has no prefix or the card has no number yet.
+function formatTicketCode(cardPrefix?: string, cardNumber?: number): string {
+    if (!cardPrefix || !cardNumber) {
+        return ''
+    }
+    return `${cardPrefix}-${cardNumber}`
+}
+
+export {Card, createCard, formatTicketCode}

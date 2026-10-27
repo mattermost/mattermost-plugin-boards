@@ -100,6 +100,11 @@ func StoreTestBoardStore(t *testing.T, setup func(t *testing.T) (store.Store, fu
 		defer tearDown()
 		testGetBoardCount(t, store)
 	})
+	t.Run("TicketCodes", func(t *testing.T) {
+		store, tearDown := setup(t)
+		defer tearDown()
+		testTicketCodes(t, store)
+	})
 }
 
 func testGetBoard(t *testing.T, store store.Store) {
@@ -1228,5 +1233,116 @@ func testGetBoardCount(t *testing.T, store store.Store) {
 		newCount, err = store.GetBoardCount(true)
 		require.NoError(t, err)
 		require.Equal(t, originalCount+1, newCount)
+	})
+}
+
+func testTicketCodes(t *testing.T, store store.Store) {
+	userID := testUserID
+
+	insertBoard := func(t *testing.T, teamID, prefix string) *model.Board {
+		board, err := store.InsertBoard(&model.Board{
+			ID:         utils.NewID(utils.IDTypeBoard),
+			TeamID:     teamID,
+			Type:       model.BoardTypeOpen,
+			CardPrefix: prefix,
+		}, userID)
+		require.NoError(t, err)
+		return board
+	}
+
+	insertCard := func(t *testing.T, boardID string, cardNumber int64) *model.Block {
+		block := &model.Block{
+			ID:         utils.NewID(utils.IDTypeCard),
+			BoardID:    boardID,
+			ParentID:   boardID,
+			Type:       model.TypeCard,
+			ModifiedBy: userID,
+			Fields:     map[string]interface{}{"cardNumber": cardNumber},
+		}
+		require.NoError(t, store.InsertBlock(block, userID))
+		return block
+	}
+
+	t.Run("card count increments and is not reset by a board update", func(t *testing.T) {
+		board := insertBoard(t, testTeamID, "")
+
+		n, err := store.IncrementBoardCardCount(board.ID)
+		require.NoError(t, err)
+		require.EqualValues(t, 1, n)
+
+		// updating with a stale board (card_count 0) must not reset the counter
+		board.Title = "renamed"
+		_, err = store.InsertBoard(board, userID)
+		require.NoError(t, err)
+
+		n, err = store.IncrementBoardCardCount(board.ID)
+		require.NoError(t, err)
+		require.EqualValues(t, 2, n)
+	})
+
+	t.Run("undelete keeps card prefix and count", func(t *testing.T) {
+		board := insertBoard(t, testTeamID, "UNDEL")
+		_, err := store.IncrementBoardCardCount(board.ID)
+		require.NoError(t, err)
+
+		time.Sleep(1 * time.Millisecond)
+		require.NoError(t, store.DeleteBoard(board.ID, userID))
+		time.Sleep(1 * time.Millisecond)
+		require.NoError(t, store.UndeleteBoard(board.ID, userID))
+
+		restored, err := store.GetBoard(board.ID)
+		require.NoError(t, err)
+		require.Equal(t, "UNDEL", restored.CardPrefix)
+		require.EqualValues(t, 1, restored.CardCount)
+	})
+
+	t.Run("patch rejects a prefix already used in the same team", func(t *testing.T) {
+		insertBoard(t, testTeamID, "TAKEN")
+		other := insertBoard(t, testTeamID, "")
+
+		prefix := "TAKEN"
+		_, err := store.PatchBoard(other.ID, &model.BoardPatch{CardPrefix: &prefix}, userID)
+		require.True(t, model.IsErrBadRequest(err), "expected bad request, got %v", err)
+
+		// the same prefix is fine in another team
+		otherTeam := insertBoard(t, "other-team-id", "")
+		_, err = store.PatchBoard(otherTeam.ID, &model.BoardPatch{CardPrefix: &prefix}, userID)
+		require.NoError(t, err)
+
+		// re-saving a board's own prefix is fine
+		_, err = store.PatchBoard(otherTeam.ID, &model.BoardPatch{CardPrefix: &prefix}, userID)
+		require.NoError(t, err)
+	})
+
+	t.Run("duplicating a board clears its prefix", func(t *testing.T) {
+		board := insertBoard(t, testTeamID, "DUPE")
+		bab, _, err := store.DuplicateBoard(board.ID, userID, testTeamID, false)
+		require.NoError(t, err)
+		require.Len(t, bab.Boards, 1)
+		require.Empty(t, bab.Boards[0].CardPrefix)
+	})
+
+	t.Run("lookup by ticket code", func(t *testing.T) {
+		board := insertBoard(t, testTeamID, "FIND")
+		insertCard(t, board.ID, 1)
+		card := insertCard(t, board.ID, 2)
+
+		block, err := store.GetCardByTicketCode("FIND", 2, testTeamID)
+		require.NoError(t, err)
+		require.Equal(t, card.ID, block.ID)
+
+		_, err = store.GetCardByTicketCode("FIND", 3, testTeamID)
+		require.True(t, model.IsErrNotFound(err), "expected not found, got %v", err)
+	})
+
+	t.Run("lookup fails when the prefix is ambiguous", func(t *testing.T) {
+		// InsertBoard does not enforce uniqueness, mirroring legacy/imported data
+		board1 := insertBoard(t, testTeamID, "AMBIG")
+		board2 := insertBoard(t, testTeamID, "AMBIG")
+		insertCard(t, board1.ID, 1)
+		insertCard(t, board2.ID, 1)
+
+		_, err := store.GetCardByTicketCode("AMBIG", 1, testTeamID)
+		require.True(t, model.IsErrBadRequest(err), "expected bad request, got %v", err)
 	})
 }

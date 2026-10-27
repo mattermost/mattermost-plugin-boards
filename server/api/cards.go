@@ -433,8 +433,10 @@ func (a *API) handleGetCardByTicketCode(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Ticket codes are predictable, so report cards on boards the user cannot
+	// view as not found to avoid leaking their existence.
 	if !a.permissions.HasPermissionToBoard(userID, card.BoardID, model.PermissionViewBoard) {
-		a.errorResponse(w, r, model.NewErrPermission("access denied to fetch card"))
+		a.errorResponse(w, r, model.NewErrNotFound("card with ticket code"))
 		return
 	}
 

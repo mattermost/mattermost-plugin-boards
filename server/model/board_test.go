@@ -218,3 +218,48 @@ func TestBoardPatchIsValid(t *testing.T) {
 		require.NoError(t, err)
 	})
 }
+
+func TestBoardPatchCardPrefix(t *testing.T) {
+	t.Run("Should accept and normalize a lowercase prefix with surrounding spaces", func(t *testing.T) {
+		prefix := " proj1 "
+		patch := &BoardPatch{CardPrefix: &prefix}
+		require.NoError(t, patch.IsValid())
+
+		board := patch.Patch(&Board{Properties: map[string]any{}})
+		require.Equal(t, "PROJ1", board.CardPrefix)
+	})
+
+	t.Run("Should accept an empty prefix (clearing it)", func(t *testing.T) {
+		prefix := ""
+		patch := &BoardPatch{CardPrefix: &prefix}
+		require.NoError(t, patch.IsValid())
+
+		board := patch.Patch(&Board{CardPrefix: "PROJ", Properties: map[string]any{}})
+		require.Equal(t, "", board.CardPrefix)
+	})
+
+	for _, prefix := range []string{"PR-OJ", "PR OJ", "PRÖJ", "ABCDEFGHIJK"} {
+		t.Run("Should reject invalid prefix "+prefix, func(t *testing.T) {
+			p := prefix
+			patch := &BoardPatch{CardPrefix: &p}
+			require.EqualError(t, patch.IsValid(), "invalid-card-prefix")
+		})
+	}
+}
+
+func TestBoardIsValidCardPrefix(t *testing.T) {
+	newBoard := func(prefix string) *Board {
+		return &Board{
+			ID:          model.NewId(),
+			TeamID:      model.NewId(),
+			Type:        BoardTypeOpen,
+			MinimumRole: BoardRoleViewer,
+			CardPrefix:  prefix,
+		}
+	}
+
+	require.NoError(t, newBoard("").IsValid())
+	require.NoError(t, newBoard("PROJ42").IsValid())
+	require.EqualError(t, newBoard("proj").IsValid(), "invalid-card-prefix")
+	require.EqualError(t, newBoard("PR-OJ").IsValidForImport(), "invalid-card-prefix")
+}

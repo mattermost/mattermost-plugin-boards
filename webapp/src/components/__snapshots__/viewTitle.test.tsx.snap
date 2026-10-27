@@ -40,6 +40,25 @@ exports[`components/viewTitle add random icon 1`] = `
         value="board title"
       />
     </div>
+    <div
+      class="card-prefix-row"
+    >
+      <span
+        class="card-prefix-label"
+      >
+        <i
+          class="CompassIcon icon-ticket-outline"
+        />
+        Ticket prefix
+      </span>
+      <input
+        class="Editable card-prefix-input"
+        placeholder="e.g. PROJ"
+        title=""
+        value=""
+      />
+      
+    </div>
   </div>
 </div>
 `;
@@ -90,6 +109,25 @@ exports[`components/viewTitle hide description 1`] = `
         title="board title"
         value="board title"
       />
+    </div>
+    <div
+      class="card-prefix-row"
+    >
+      <span
+        class="card-prefix-label"
+      >
+        <i
+          class="CompassIcon icon-ticket-outline"
+        />
+        Ticket prefix
+      </span>
+      <input
+        class="Editable card-prefix-input"
+        placeholder="e.g. PROJ"
+        title=""
+        value=""
+      />
+      
     </div>
   </div>
 </div>

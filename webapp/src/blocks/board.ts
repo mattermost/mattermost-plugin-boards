@@ -39,8 +39,8 @@ type Board = {
     templateVersion: number
     properties: Record<string, string | string[]>
     cardProperties: IPropertyTemplate[]
-    cardPrefix: string
-    cardCount: number
+    cardPrefix?: string
+    cardCount?: number
 
     createAt: number
     updateAt: number
@@ -101,6 +101,14 @@ interface IPropertyTemplate {
     name: string
     type: PropertyTypeEnum
     options: IPropertyOption[]
+}
+
+const maxCardPrefixLength = 10
+
+// normalizeCardPrefix uppercases a ticket code prefix and drops anything the
+// server would reject: only A-Z and 0-9, at most 10 characters.
+function normalizeCardPrefix(prefix: string): string {
+    return prefix.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, maxCardPrefixLength)
 }
 
 function createBoard(board?: Board): Board {
@@ -337,4 +345,5 @@ export {
     createPatchesFromBoards,
     createPatchesFromBoardsAndBlocks,
     createCardPropertiesPatches,
+    normalizeCardPrefix,
 }

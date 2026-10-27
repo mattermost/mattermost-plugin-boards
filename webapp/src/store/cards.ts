@@ -4,7 +4,7 @@
 
 import {createSlice, PayloadAction, createSelector, createAsyncThunk} from '@reduxjs/toolkit'
 
-import {Card} from '../blocks/card'
+import {Card, formatTicketCode} from '../blocks/card'
 import {IUser} from '../user'
 import {Board} from '../blocks/board'
 import {Block} from '../blocks/block'
@@ -344,11 +344,9 @@ function searchFilterCards(cards: Card[], board: Board, searchTextRaw: string): 
         }
 
         // Match against ticket code (e.g. "PROJ-42")
-        if (board.cardPrefix && card.fields.cardNumber) {
-            const ticketCode = `${board.cardPrefix}-${card.fields.cardNumber}`.toLowerCase()
-            if (ticketCode.includes(searchText)) {
-                return true
-            }
+        const ticketCode = formatTicketCode(board.cardPrefix, card.fields.cardNumber).toLowerCase()
+        if (ticketCode && ticketCode.includes(searchText)) {
+            return true
         }
 
         for (const [propertyId, propertyValue] of Object.entries(card.fields.properties)) {
