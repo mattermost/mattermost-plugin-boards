@@ -17,7 +17,7 @@ import {wrapIntl} from '../testUtils'
 import BoardSelector from './boardSelector'
 
 jest.mock('../octoClient')
-const mockedOctoClient = mocked(octoClient, true)
+const mockedOctoClient = mocked(octoClient)
 
 const wait = (ms: number) => {
     return new Promise<void>((resolve) => {

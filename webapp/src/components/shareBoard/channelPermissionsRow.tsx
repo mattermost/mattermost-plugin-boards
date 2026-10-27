@@ -30,7 +30,7 @@ type Props = {
     teammateNameDisplay?: string
 }
 
-const ChannelPermissionsRow = (props: Props): JSX.Element => {
+const ChannelPermissionsRow = (props: Props): React.JSX.Element => {
     const intl = useIntl()
     const board = useAppSelector(getCurrentBoard)
     const users = useAppSelector(getBoardUsers)

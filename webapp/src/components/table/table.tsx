@@ -44,7 +44,7 @@ type Props = {
     showHiddenCardCountNotification: (show: boolean) => void
 }
 
-const Table = (props: Props): JSX.Element => {
+const Table = (props: Props): React.JSX.Element => {
     const {board, cards, activeView, visibleGroups, groupByProperty, views, hiddenCardsCount} = props
     const isManualSort = activeView.fields.sortOptions?.length === 0
     const canEditBoardProperties = useHasCurrentBoardPermissions([Permission.ManageBoardProperties])

@@ -7,7 +7,7 @@ import {generatePath, useHistory, useRouteMatch} from 'react-router-dom'
 
 import {debounce} from 'lodash'
 
-import {Draggable, Droppable} from 'react-beautiful-dnd'
+import {Draggable, Droppable} from '@hello-pangea/dnd'
 
 import {HandRightIcon} from '@mattermost/compass-icons/components'
 
@@ -21,12 +21,12 @@ import Menu from '../../widgets/menu'
 import MenuWrapper from '../../widgets/menuWrapper'
 
 import './sidebarCategory.scss'
-import {Category, CategoryBoardMetadata, CategoryBoards} from '../../store/sidebar'
+import {Category, CategoryBoardMetadata, CategoryBoards, fetchSidebarCategories} from '../../store/sidebar'
 import ChevronDown from '../../widgets/icons/chevronDown'
 import ChevronRight from '../../widgets/icons/chevronRight'
 import CreateNewFolder from '../../widgets/icons/newFolder'
 import CreateCategory from '../createCategory/createCategory'
-import {useAppSelector} from '../../store/hooks'
+import {useAppDispatch, useAppSelector} from '../../store/hooks'
 import {
     getOnboardingTourCategory,
     getOnboardingTourStep,
@@ -39,6 +39,7 @@ import {TOUR_SIDEBAR, SidebarTourSteps, TOUR_BOARD, FINISHED} from '../../compon
 import telemetryClient, {TelemetryActions, TelemetryCategory} from '../../telemetry/telemetryClient'
 
 import {getCurrentTeam} from '../../store/teams'
+import {getMySortedBoards} from '../../store/boards'
 
 import ConfirmationDialogBox, {ConfirmationDialogBoxProps} from '../confirmationDialogBox'
 
@@ -68,6 +69,7 @@ const SidebarCategory = (props: Props) => {
     const [collapsed, setCollapsed] = useState(props.categoryBoards.collapsed)
     const intl = useIntl()
     const history = useHistory()
+    const dispatch = useAppDispatch()
 
     const [deleteBoard, setDeleteBoard] = useState<Board|null>()
     const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] = useState<boolean>(false)
@@ -83,6 +85,7 @@ const SidebarCategory = (props: Props) => {
     const noCardOpen = !currentCard
     const team = useAppSelector(getCurrentTeam)
     const teamID = team?.id || ''
+    const allMyBoards = useAppSelector(getMySortedBoards)
 
     const menuWrapperRef = useRef<HTMLDivElement>(null)
 
@@ -104,7 +107,7 @@ const SidebarCategory = (props: Props) => {
         }
     }, [shouldViewManageCatergoriesTour])
 
-    const showBoard = useCallback((boardId) => {
+    const showBoard = useCallback((boardId: string) => {
         if (boardId === props.activeBoardID && props.onBoardTemplateSelectorClose) {
             props.onBoardTemplateSelectorClose()
         }
@@ -112,7 +115,7 @@ const SidebarCategory = (props: Props) => {
         props.hideSidebar()
     }, [match, history])
 
-    const showView = useCallback((viewId, boardId) => {
+    const showView = useCallback((viewId: string, boardId: string) => {
         if (viewId === props.activeViewID && props.onBoardTemplateSelectorClose) {
             props.onBoardTemplateSelectorClose()
         }
@@ -187,26 +190,71 @@ const SidebarCategory = (props: Props) => {
             deleteBoard,
             intl.formatMessage({id: 'Sidebar.delete-board', defaultMessage: 'Delete board'}),
             async () => {
-                let nextBoardId: number | undefined
+                let targetBoardId: string | undefined
                 if (props.boards.length > 1) {
-                    const deleteBoardIndex = props.boards.findIndex((board) => board.id === deleteBoard.id)
-                    nextBoardId = deleteBoardIndex + 1 === props.boards.length ? deleteBoardIndex - 1 : deleteBoardIndex + 1
+                    const deleteIndex = props.boards.findIndex((board) => board.id === deleteBoard.id)
+                    for (let i = deleteIndex + 1; i < props.boards.length && !targetBoardId; i++) {
+                        if (isBoardVisible(props.boards[i].id) && !props.boards[i].isTemplate) {
+                            targetBoardId = props.boards[i].id
+                        }
+                    }
+                    for (let i = deleteIndex - 1; i >= 0 && !targetBoardId; i--) {
+                        if (isBoardVisible(props.boards[i].id) && !props.boards[i].isTemplate) {
+                            targetBoardId = props.boards[i].id
+                        }
+                    }
                 }
 
-                if (nextBoardId) {
-                // This delay is needed because WSClient has a default 100 ms notification delay before updates
-                    setTimeout(() => {
-                        showBoard(props.boards[nextBoardId as number].id)
-                    }, 120)
+                if (!targetBoardId) {
+                    for (const category of props.allCategories) {
+                        for (const m of category.boardMetadata) {
+                            if (m.boardID === deleteBoard.id) {
+                                continue
+                            }
+                            if (!isBoardVisible(m.boardID, m)) {
+                                continue
+                            }
+                            const board = allMyBoards.find((b) => b.id === m.boardID)
+                            if (board && !board.isTemplate) {
+                                targetBoardId = m.boardID
+                                break
+                            }
+                        }
+                        if (targetBoardId) {
+                            break
+                        }
+                    }
                 }
+
+                // This delay is needed because WSClient has a default 100 ms notification delay before updates
+                setTimeout(() => {
+                    if (targetBoardId) {
+                        showBoard(targetBoardId)
+                    } else {
+                        // No boards left — navigate to the template selector
+                        const teamBasePath = match.path.split('/:boardId')[0]
+                        history.push(generatePath(teamBasePath, {teamId: teamID}))
+                    }
+                }, 120)
             },
             async () => {
-                // Restore the board to the category it was deleted from
-                await mutator.moveBoardToCategory(teamID, deleteBoard.id, deletedFromCategoryID, '')
+                // Restore the board to the category it was deleted from. The
+                // board (now undeleted) retains its original category on the
+                // server, but the client removed it from the sidebar on delete.
+                // Re-assert the mapping and refresh the sidebar from the server
+                // before navigating, otherwise the sidebar's auto-assign effect
+                // treats the board as uncategorized and moves it to the default
+                // "Boards" category.
+                try {
+                    await mutator.moveBoardToCategory(teamID, deleteBoard.id, deletedFromCategoryID, '')
+                } catch (e) {
+                    Utils.logError(`Failed to restore board category: ${e}`)
+                }
+                await dispatch(fetchSidebarCategories(teamID))
                 showBoard(deleteBoard.id)
             },
         )
-    }, [showBoard, deleteBoard, props.boards, props.categoryBoards.id, teamID])
+    }, [showBoard, deleteBoard, props.boards, props.allCategories, props.categoryBoards.id, teamID, allMyBoards, intl, isBoardVisible, match.path, history, dispatch])
 
     const updateCategory = useCallback(async (value: boolean) => {
         const updatedCategory: Category = {

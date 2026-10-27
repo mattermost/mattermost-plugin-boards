@@ -104,7 +104,7 @@ describe('components/cardDetail/CommentsList', () => {
         expect(container).toMatchSnapshot()
 
         // Comments show up
-        const comments = container!.querySelectorAll('.mocked-message-html')
+        const comments = container!.querySelectorAll('.comment-markdown .mocked-message-html')
         expect(comments.length).toBe(2)
 
         // Add comment option visible when readonly mode is off
@@ -163,7 +163,7 @@ describe('components/cardDetail/CommentsList', () => {
         expect(container).toMatchSnapshot()
 
         // Comments show up
-        const comments = container!.querySelectorAll('.mocked-message-html')
+        const comments = container!.querySelectorAll('.comment-markdown .mocked-message-html')
         expect(comments.length).toBe(2)
 
         // Add comment option visible when readonly mode is off

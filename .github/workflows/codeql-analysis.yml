@@ -36,6 +36,9 @@ jobs:
         debug: false
         config-file: ./.github/codeql/codeql-config.yml              
     
+    - name: Generate plugin manifest
+      run: mkdir -p build/bin && make apply
+
     # Autobuild attempts to build any compiled languages
     - name: Autobuild
       uses: github/codeql-action/autobuild@v3.28.9

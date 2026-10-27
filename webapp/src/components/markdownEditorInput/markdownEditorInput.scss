@@ -2,12 +2,44 @@
     div[role=option] {
         display: flex;
         align-items: center;
+
+        // The emoji suggestions plugin hardcodes a light highlight on the focused
+        // entry, which hides its label on a dark theme. Theme it here so both the
+        // emoji and mention popovers highlight consistently regardless of nesting.
+        &[aria-selected='true'] {
+            background: rgba(var(--center-channel-color-rgb), 0.08);
+        }
+
+        &:active {
+            background: rgba(var(--button-bg-rgb), 0.08);
+        }
     }
 
     span[data-testid='mentionText'] {
         background: rgba(var(--button-bg-rgb), 0.16);
         border-radius: 4px;
         color: inherit;
+    }
+
+    .EmojiSuggestions {
+        background: rgba(var(--center-channel-bg-rgb), 1);
+        box-shadow: var(--elevation-1);
+        border: 1px solid rgba(var(--center-channel-color-rgb), 0.16);
+        border-radius: 4px;
+    }
+
+    .EmojiSuggestions__entry {
+        color: rgba(var(--center-channel-color-rgb), 0.9);
+        background: transparent;
+
+        &--focused,
+        &:hover {
+            background: rgba(var(--center-channel-color-rgb), 0.08);
+        }
+
+        &:active {
+            background: rgba(var(--button-bg-rgb), 0.08);
+        }
     }
 }
 

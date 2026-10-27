@@ -44,7 +44,7 @@ describe('/components/confirmAddUserForNotifications', () => {
             ),
         )
         userEvent.click(result.getByTitle('Add to board'))
-        expect(onConfirm).toBeCalledTimes(1)
+        expect(onConfirm).toHaveBeenCalledTimes(1)
     })
 
     it('cancel button click runs onClose function', () => {
@@ -62,6 +62,6 @@ describe('/components/confirmAddUserForNotifications', () => {
             ),
         )
         userEvent.click(result.getByTitle('Cancel'))
-        expect(onClose).toBeCalledTimes(1)
+        expect(onClose).toHaveBeenCalledTimes(1)
     })
 })

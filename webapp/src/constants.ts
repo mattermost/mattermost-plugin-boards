@@ -162,6 +162,11 @@ class Constants {
             name: 'swedish',
             displayName: 'Svenska',
         },
+        {
+            code: 'ko',
+            name: 'korean',
+            displayName: '한국어',
+        }
     ]
 
     static readonly keyCodes: {[key: string]: [string, number]} = {
@@ -202,6 +207,9 @@ class Constants {
     static readonly noChannelID = '0'
 
     static readonly SystemUserID = 'system'
+
+    // SessionStorage key to skip board auto-redirects after error
+    static readonly sessionStorageSkipBoardRedirectKey = 'skip_board_redirect'
 }
 
 export {Constants, Permission}

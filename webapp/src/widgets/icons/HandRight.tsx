@@ -6,7 +6,7 @@ import React from 'react'
 
 import CompassIcon from './compassIcon'
 
-export default function HandRight(): JSX.Element {
+export default function HandRight(): React.JSX.Element {
     return (
         <CompassIcon
             icon='hand-right'

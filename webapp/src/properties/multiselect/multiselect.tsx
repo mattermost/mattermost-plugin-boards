@@ -15,7 +15,7 @@ import ValueSelector from '../../widgets/valueSelector'
 
 import {PropertyProps} from '../types'
 
-const MultiSelectProperty = (props: PropertyProps): JSX.Element => {
+const MultiSelectProperty = (props: PropertyProps): React.JSX.Element => {
     const {propertyTemplate, propertyValue, board, card} = props
     const isEditable = !props.readOnly && Boolean(board)
     const [open, setOpen] = useState(false)
@@ -23,7 +23,7 @@ const MultiSelectProperty = (props: PropertyProps): JSX.Element => {
 
     const emptyDisplayValue = props.showEmptyPlaceholder ? intl.formatMessage({id: 'PropertyValueElement.empty', defaultMessage: 'Empty'}) : ''
 
-    const onChange = useCallback((newValue) => mutator.changePropertyValue(board.id, card, propertyTemplate.id, newValue), [board.id, card, propertyTemplate])
+    const onChange = useCallback((newValue: string | string[]) => mutator.changePropertyValue(board.id, card, propertyTemplate.id, newValue), [board.id, card, propertyTemplate])
     const onChangeColor = useCallback((option: IPropertyOption, colorId: string) => mutator.changePropertyOptionColor(board.id, board.cardProperties, propertyTemplate, option, colorId), [board, propertyTemplate])
     const onDeleteOption = useCallback((option: IPropertyOption) => mutator.deletePropertyOption(board.id, board.cardProperties, propertyTemplate, option), [board, propertyTemplate])
 

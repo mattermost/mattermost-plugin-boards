@@ -14,7 +14,7 @@ import shareBoard from '../../../../static/share.gif'
 import {BoardTourSteps, TOUR_BOARD} from '../index'
 import TourTipRenderer from '../tourTipRenderer/tourTipRenderer'
 
-const ShareBoardTourStep = (): JSX.Element | null => {
+const ShareBoardTourStep = (): React.JSX.Element | null => {
     const title = (
         <FormattedMessage
             id='OnboardingTour.ShareBoard.Title'

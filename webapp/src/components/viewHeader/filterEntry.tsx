@@ -27,7 +27,7 @@ type Props = {
     filter: FilterClause
 }
 
-const FilterEntry = (props: Props): JSX.Element => {
+const FilterEntry = (props: Props): React.JSX.Element => {
     const {board, view, filter} = props
     const intl = useIntl()
 
@@ -45,7 +45,7 @@ const FilterEntry = (props: Props): JSX.Element => {
             key={key}
         >
             <MenuWrapper>
-                <Button>{propertyName}</Button>
+                <Button title={propertyName}>{propertyName}</Button>
                 <Menu>
                     <Menu.Text
                         key={'title'}

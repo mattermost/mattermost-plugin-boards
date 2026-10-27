@@ -121,12 +121,15 @@ function CenterContent(props: Props) {
     if (board && !isBoardHidden() && activeView) {
         let property = groupByProperty
         if ((!property || !propsRegistry.get(property.type).canGroup) && activeView.fields.viewType === 'board') {
-            property = board?.cardProperties.find((o) => propsRegistry.get(o.type).canGroup)
+            // cardProperties can be null when a board arrives from the API without that field
+            // (Go nil slice serialises as JSON null; the client stores boards as-is).
+            property = (board?.cardProperties || []).find((o) => propsRegistry.get(o.type).canGroup)
         }
 
         let displayProperty = dateDisplayProperty
         if (!displayProperty && activeView.fields.viewType === 'calendar') {
-            displayProperty = board.cardProperties.find((o) => propsRegistry.get(o.type) instanceof DatePropertyType)
+            // Same null-guard as above.
+            displayProperty = (board?.cardProperties || []).find((o) => propsRegistry.get(o.type) instanceof DatePropertyType)
         }
 
         return (

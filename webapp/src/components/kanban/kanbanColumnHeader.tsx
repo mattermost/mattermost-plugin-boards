@@ -45,7 +45,7 @@ const defaultProperty: IPropertyTemplate = {
     id: Constants.titleColumnId,
 } as IPropertyTemplate
 
-export default function KanbanColumnHeader(props: Props): JSX.Element {
+export default function KanbanColumnHeader(props: Props): React.JSX.Element {
     const {board, activeView, intl, group, groupByProperty} = props
     const [groupTitle, setGroupTitle] = useState(group.option.value)
     const canEditBoardProperties = useHasCurrentBoardPermissions([Permission.ManageBoardProperties])

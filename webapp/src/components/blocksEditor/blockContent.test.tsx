@@ -106,9 +106,9 @@ describe('components/blocksEditor/blockContent', () => {
             ))
         })
         const item = screen.getByTestId('block-content')
-        expect(setEditing).not.toBeCalled()
+        expect(setEditing).not.toHaveBeenCalled()
         fireEvent.click(item)
-        expect(setEditing).toBeCalledWith(block)
+        expect(setEditing).toHaveBeenCalledWith(block)
     })
 
     test('should call setEditing on click the content', async () => {
@@ -130,9 +130,9 @@ describe('components/blocksEditor/blockContent', () => {
             ))
         })
         const item = screen.getByTestId('add-action')
-        expect(setAfterBlock).not.toBeCalled()
+        expect(setAfterBlock).not.toHaveBeenCalled()
         fireEvent.click(item)
-        expect(setAfterBlock).toBeCalledWith(block)
+        expect(setAfterBlock).toHaveBeenCalledWith(block)
     })
 
     test('should call onSave on hit enter in the input', async () => {
@@ -154,10 +154,10 @@ describe('components/blocksEditor/blockContent', () => {
             ))
         })
         const input = screen.getByDisplayValue('Title')
-        expect(onSave).not.toBeCalled()
+        expect(onSave).not.toHaveBeenCalled()
         fireEvent.change(input, {target: {value: 'test'}})
         fireEvent.keyDown(input, {key: 'Enter'})
 
-        expect(onSave).toBeCalledWith(expect.objectContaining({value: 'test'}))
+        expect(onSave).toHaveBeenCalledWith(expect.objectContaining({value: 'test'}))
     })
 })

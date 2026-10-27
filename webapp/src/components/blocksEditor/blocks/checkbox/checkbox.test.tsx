@@ -71,11 +71,11 @@ describe('components/blocksEditor/blocks/checkbox', () => {
                 onSave={onSave}
             />,
         )
-        expect(onSave).not.toBeCalled()
+        expect(onSave).not.toHaveBeenCalled()
 
         const input = screen.getByTestId('checkbox-check')
         fireEvent.click(input)
-        expect(onSave).toBeCalledWith({value: 'test-value', checked: false})
+        expect(onSave).toHaveBeenCalledWith({value: 'test-value', checked: false})
     })
 
     test('should emit onChange event on input change', async () => {
@@ -90,11 +90,11 @@ describe('components/blocksEditor/blocks/checkbox', () => {
             />,
         )
 
-        expect(onChange).not.toBeCalled()
+        expect(onChange).not.toHaveBeenCalled()
 
         const input = screen.getByTestId('checkbox-input')
         fireEvent.change(input, {target: {value: 'test-value-'}})
-        expect(onChange).toBeCalledWith({value: 'test-value-', checked: true})
+        expect(onChange).toHaveBeenCalledWith({value: 'test-value-', checked: true})
     })
 
     test('should emit onChange event on checkbox click', async () => {
@@ -109,11 +109,11 @@ describe('components/blocksEditor/blocks/checkbox', () => {
             />,
         )
 
-        expect(onChange).not.toBeCalled()
+        expect(onChange).not.toHaveBeenCalled()
 
         const input = screen.getByTestId('checkbox-check')
         fireEvent.click(input)
-        expect(onChange).toBeCalledWith({value: 'test-value', checked: false})
+        expect(onChange).toHaveBeenCalledWith({value: 'test-value', checked: false})
     })
 
     test('should not emit onCancel event when value is not empty and hit backspace', async () => {
@@ -128,10 +128,10 @@ describe('components/blocksEditor/blocks/checkbox', () => {
             />,
         )
 
-        expect(onCancel).not.toBeCalled()
+        expect(onCancel).not.toHaveBeenCalled()
         const input = screen.getByTestId('checkbox-input')
         fireEvent.keyDown(input, {key: 'Backspace'})
-        expect(onCancel).not.toBeCalled()
+        expect(onCancel).not.toHaveBeenCalled()
     })
 
     test('should emit onCancel event when value is empty and hit backspace', async () => {
@@ -146,11 +146,11 @@ describe('components/blocksEditor/blocks/checkbox', () => {
             />,
         )
 
-        expect(onCancel).not.toBeCalled()
+        expect(onCancel).not.toHaveBeenCalled()
 
         const input = screen.getByTestId('checkbox-input')
         fireEvent.keyDown(input, {key: 'Backspace'})
-        expect(onCancel).toBeCalled()
+        expect(onCancel).toHaveBeenCalled()
     })
 
     test('should emit onSave event hit enter', async () => {
@@ -165,9 +165,9 @@ describe('components/blocksEditor/blocks/checkbox', () => {
             />,
         )
 
-        expect(onSave).not.toBeCalled()
+        expect(onSave).not.toHaveBeenCalled()
         const input = screen.getByTestId('checkbox-input')
         fireEvent.keyDown(input, {key: 'Enter'})
-        expect(onSave).toBeCalledWith({value: 'test-value', checked: true})
+        expect(onSave).toHaveBeenCalledWith({value: 'test-value', checked: true})
     })
 })

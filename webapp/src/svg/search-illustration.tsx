@@ -4,7 +4,7 @@
 
 import React from 'react'
 
-export default function SearchIllustration(): JSX.Element {
+export default function SearchIllustration(): React.JSX.Element {
     return (
         <span>
             <svg

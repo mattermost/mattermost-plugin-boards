@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`src/components/shareBoard/shareBoard confirm unlinking linked channel 1`] = `
 <div>
@@ -60,24 +60,26 @@ exports[`src/components/shareBoard/shareBoard confirm unlinking linked channel 1
                 aria-live="polite"
                 aria-relevant="additions text"
                 class="css-1f43avz-a11yText-A11yText"
+                role="log"
               />
               <div
-                class=" css-1wmrr75-Control"
+                class="css-1lxuy2a"
               >
                 <div
-                  class=" css-b2z5qd-ValueContainer"
+                  class="css-1neafsd"
                 >
                   <div
-                    class=" css-1jqq78o-placeholder"
+                    class="css-1jqq78o-placeholder"
                     id="react-select-12-placeholder"
                   >
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-189c2ni-Input"
+                    class="css-85xuox"
                     data-value=""
                   >
                     <input
+                      aria-activedescendant=""
                       aria-autocomplete="list"
                       aria-describedby="react-select-12-placeholder"
                       aria-expanded="false"
@@ -89,7 +91,7 @@ exports[`src/components/shareBoard/shareBoard confirm unlinking linked channel 1
                       id="react-select-12-input"
                       role="combobox"
                       spellcheck="false"
-                      style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                      style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                       tabindex="0"
                       type="text"
                       value=""
@@ -97,7 +99,7 @@ exports[`src/components/shareBoard/shareBoard confirm unlinking linked channel 1
                   </div>
                 </div>
                 <div
-                  class=" css-1hb7zxy-IndicatorsContainer"
+                  class="css-1wy0on6"
                 />
               </div>
             </div>
@@ -310,24 +312,26 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Copy l
                 aria-live="polite"
                 aria-relevant="additions text"
                 class="css-1f43avz-a11yText-A11yText"
+                role="log"
               />
               <div
-                class=" css-1wmrr75-Control"
+                class="css-1lxuy2a"
               >
                 <div
-                  class=" css-b2z5qd-ValueContainer"
+                  class="css-1neafsd"
                 >
                   <div
-                    class=" css-1jqq78o-placeholder"
+                    class="css-1jqq78o-placeholder"
                     id="react-select-4-placeholder"
                   >
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-189c2ni-Input"
+                    class="css-85xuox"
                     data-value=""
                   >
                     <input
+                      aria-activedescendant=""
                       aria-autocomplete="list"
                       aria-describedby="react-select-4-placeholder"
                       aria-expanded="false"
@@ -339,7 +343,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Copy l
                       id="react-select-4-input"
                       role="combobox"
                       spellcheck="false"
-                      style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                      style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                       tabindex="0"
                       type="text"
                       value=""
@@ -347,7 +351,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Copy l
                   </div>
                 </div>
                 <div
-                  class=" css-1hb7zxy-IndicatorsContainer"
+                  class="css-1wy0on6"
                 />
               </div>
             </div>
@@ -519,24 +523,26 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Copy l
                 aria-live="polite"
                 aria-relevant="additions text"
                 class="css-1f43avz-a11yText-A11yText"
+                role="log"
               />
               <div
-                class=" css-1wmrr75-Control"
+                class="css-1lxuy2a"
               >
                 <div
-                  class=" css-b2z5qd-ValueContainer"
+                  class="css-1neafsd"
                 >
                   <div
-                    class=" css-1jqq78o-placeholder"
+                    class="css-1jqq78o-placeholder"
                     id="react-select-4-placeholder"
                   >
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-189c2ni-Input"
+                    class="css-85xuox"
                     data-value=""
                   >
                     <input
+                      aria-activedescendant=""
                       aria-autocomplete="list"
                       aria-describedby="react-select-4-placeholder"
                       aria-expanded="false"
@@ -548,7 +554,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Copy l
                       id="react-select-4-input"
                       role="combobox"
                       spellcheck="false"
-                      style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                      style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                       tabindex="0"
                       type="text"
                       value=""
@@ -556,7 +562,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Copy l
                   </div>
                 </div>
                 <div
-                  class=" css-1hb7zxy-IndicatorsContainer"
+                  class="css-1wy0on6"
                 />
               </div>
             </div>
@@ -728,24 +734,26 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Regene
                 aria-live="polite"
                 aria-relevant="additions text"
                 class="css-1f43avz-a11yText-A11yText"
+                role="log"
               />
               <div
-                class=" css-1wmrr75-Control"
+                class="css-1lxuy2a"
               >
                 <div
-                  class=" css-b2z5qd-ValueContainer"
+                  class="css-1neafsd"
                 >
                   <div
-                    class=" css-1jqq78o-placeholder"
+                    class="css-1jqq78o-placeholder"
                     id="react-select-5-placeholder"
                   >
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-189c2ni-Input"
+                    class="css-85xuox"
                     data-value=""
                   >
                     <input
+                      aria-activedescendant=""
                       aria-autocomplete="list"
                       aria-describedby="react-select-5-placeholder"
                       aria-expanded="false"
@@ -757,7 +765,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Regene
                       id="react-select-5-input"
                       role="combobox"
                       spellcheck="false"
-                      style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                      style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                       tabindex="0"
                       type="text"
                       value=""
@@ -765,7 +773,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Regene
                   </div>
                 </div>
                 <div
-                  class=" css-1hb7zxy-IndicatorsContainer"
+                  class="css-1wy0on6"
                 />
               </div>
             </div>
@@ -960,24 +968,26 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                 aria-live="polite"
                 aria-relevant="additions text"
                 class="css-1f43avz-a11yText-A11yText"
+                role="log"
               />
               <div
-                class=" css-1wmrr75-Control"
+                class="css-1lxuy2a"
               >
                 <div
-                  class=" css-b2z5qd-ValueContainer"
+                  class="css-1neafsd"
                 >
                   <div
-                    class=" css-1jqq78o-placeholder"
+                    class="css-1jqq78o-placeholder"
                     id="react-select-10-placeholder"
                   >
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-189c2ni-Input"
+                    class="css-85xuox"
                     data-value=""
                   >
                     <input
+                      aria-activedescendant=""
                       aria-autocomplete="list"
                       aria-describedby="react-select-10-placeholder"
                       aria-expanded="false"
@@ -989,7 +999,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                       id="react-select-10-input"
                       role="combobox"
                       spellcheck="false"
-                      style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                      style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                       tabindex="0"
                       type="text"
                       value=""
@@ -997,7 +1007,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                   </div>
                 </div>
                 <div
-                  class=" css-1hb7zxy-IndicatorsContainer"
+                  class="css-1wy0on6"
                 />
               </div>
             </div>
@@ -1196,39 +1206,48 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                 aria-live="polite"
                 aria-relevant="additions text"
                 class="css-1f43avz-a11yText-A11yText"
+                role="log"
               >
                 <span
                   id="aria-selection"
                 />
                 <span
-                  id="aria-context"
+                  id="aria-focused"
+                />
+                <span
+                  id="aria-results"
                 >
-                  option username_1 focused, 1 of 8. 8 results available. Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.
+                  8 results available.
+                </span>
+                <span
+                  id="aria-guidance"
+                >
+                  Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.
                 </span>
               </span>
               <div
-                class=" css-1wmrr75-Control"
+                class="css-1lxuy2a"
               >
                 <div
-                  class=" css-b2z5qd-ValueContainer"
+                  class="css-1neafsd"
                 >
                   <div
-                    class=" css-1jqq78o-placeholder"
+                    class="css-1jqq78o-placeholder"
                     id="react-select-10-placeholder"
                   >
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-189c2ni-Input"
+                    class="css-85xuox"
                     data-value=""
                   >
                     <input
+                      aria-activedescendant="react-select-10-option-0-0"
                       aria-autocomplete="list"
                       aria-controls="react-select-10-listbox"
                       aria-describedby="react-select-10-placeholder"
                       aria-expanded="true"
                       aria-haspopup="true"
-                      aria-owns="react-select-10-listbox"
                       autocapitalize="none"
                       autocomplete="off"
                       autocorrect="off"
@@ -1236,7 +1255,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                       id="react-select-10-input"
                       role="combobox"
                       spellcheck="false"
-                      style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                      style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                       tabindex="0"
                       type="text"
                       value=""
@@ -1244,21 +1263,23 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                   </div>
                 </div>
                 <div
-                  class=" css-1hb7zxy-IndicatorsContainer"
+                  class="css-1wy0on6"
                 />
               </div>
               <div
-                class=" css-45h7mv-menu"
-                id="react-select-10-listbox"
+                class="css-45h7mv-menu"
               >
                 <div
-                  class=" css-1d1qzc4-MenuList"
+                  aria-multiselectable="false"
+                  class="css-1fmksep"
+                  id="react-select-10-listbox"
+                  role="listbox"
                 >
                   <div
-                    class=" css-syji7d-Group"
+                    class="css-1s9izoc"
                   >
                     <div
-                      class=" css-jtaw72-group"
+                      class="css-jtaw72-group"
                       id="react-select-10-group-0-heading"
                     >
                       Members
@@ -1266,8 +1287,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                     <div>
                       <div
                         aria-disabled="false"
-                        class=" css-8e5kjb-option"
+                        aria-selected="false"
+                        class="css-8e5kjb-option"
                         id="react-select-10-option-0-0"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -1292,8 +1315,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                       </div>
                       <div
                         aria-disabled="false"
-                        class=" css-x3yilo-option"
+                        aria-selected="false"
+                        class="css-x3yilo-option"
                         id="react-select-10-option-0-1"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -1318,8 +1343,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                       </div>
                       <div
                         aria-disabled="false"
-                        class=" css-x3yilo-option"
+                        aria-selected="false"
+                        class="css-x3yilo-option"
                         id="react-select-10-option-0-2"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -1344,8 +1371,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                       </div>
                       <div
                         aria-disabled="false"
-                        class=" css-x3yilo-option"
+                        aria-selected="false"
+                        class="css-x3yilo-option"
                         id="react-select-10-option-0-3"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -1371,10 +1400,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                     </div>
                   </div>
                   <div
-                    class=" css-syji7d-Group"
+                    class="css-1s9izoc"
                   >
                     <div
-                      class=" css-jtaw72-group"
+                      class="css-jtaw72-group"
                       id="react-select-10-group-1-heading"
                     >
                       Channels
@@ -1382,8 +1411,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                     <div>
                       <div
                         aria-disabled="false"
-                        class=" css-x3yilo-option"
+                        aria-selected="false"
+                        class="css-x3yilo-option"
                         id="react-select-10-option-1-0"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -1403,8 +1434,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                       </div>
                       <div
                         aria-disabled="false"
-                        class=" css-x3yilo-option"
+                        aria-selected="false"
+                        class="css-x3yilo-option"
                         id="react-select-10-option-1-1"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -1424,8 +1457,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                       </div>
                       <div
                         aria-disabled="false"
-                        class=" css-x3yilo-option"
+                        aria-selected="false"
+                        class="css-x3yilo-option"
                         id="react-select-10-option-1-2"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -1445,8 +1480,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                       </div>
                       <div
                         aria-disabled="false"
-                        class=" css-x3yilo-option"
+                        aria-selected="false"
+                        class="css-x3yilo-option"
                         id="react-select-10-option-1-3"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -1664,24 +1701,26 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                 aria-live="polite"
                 aria-relevant="additions text"
                 class="css-1f43avz-a11yText-A11yText"
+                role="log"
               />
               <div
-                class=" css-1wmrr75-Control"
+                class="css-1lxuy2a"
               >
                 <div
-                  class=" css-b2z5qd-ValueContainer"
+                  class="css-1neafsd"
                 >
                   <div
-                    class=" css-1jqq78o-placeholder"
+                    class="css-1jqq78o-placeholder"
                     id="react-select-11-placeholder"
                   >
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-189c2ni-Input"
+                    class="css-85xuox"
                     data-value=""
                   >
                     <input
+                      aria-activedescendant=""
                       aria-autocomplete="list"
                       aria-describedby="react-select-11-placeholder"
                       aria-expanded="false"
@@ -1693,7 +1732,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                       id="react-select-11-input"
                       role="combobox"
                       spellcheck="false"
-                      style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                      style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                       tabindex="0"
                       type="text"
                       value=""
@@ -1701,7 +1740,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                   </div>
                 </div>
                 <div
-                  class=" css-1hb7zxy-IndicatorsContainer"
+                  class="css-1wy0on6"
                 />
               </div>
             </div>
@@ -1900,39 +1939,48 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                 aria-live="polite"
                 aria-relevant="additions text"
                 class="css-1f43avz-a11yText-A11yText"
+                role="log"
               >
                 <span
                   id="aria-selection"
                 />
                 <span
-                  id="aria-context"
+                  id="aria-focused"
+                />
+                <span
+                  id="aria-results"
                 >
-                  option username_1 focused, 1 of 8. 8 results available. Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.
+                  8 results available.
+                </span>
+                <span
+                  id="aria-guidance"
+                >
+                  Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.
                 </span>
               </span>
               <div
-                class=" css-1wmrr75-Control"
+                class="css-1lxuy2a"
               >
                 <div
-                  class=" css-b2z5qd-ValueContainer"
+                  class="css-1neafsd"
                 >
                   <div
-                    class=" css-1jqq78o-placeholder"
+                    class="css-1jqq78o-placeholder"
                     id="react-select-11-placeholder"
                   >
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-189c2ni-Input"
+                    class="css-85xuox"
                     data-value=""
                   >
                     <input
+                      aria-activedescendant="react-select-11-option-0-0"
                       aria-autocomplete="list"
                       aria-controls="react-select-11-listbox"
                       aria-describedby="react-select-11-placeholder"
                       aria-expanded="true"
                       aria-haspopup="true"
-                      aria-owns="react-select-11-listbox"
                       autocapitalize="none"
                       autocomplete="off"
                       autocorrect="off"
@@ -1940,7 +1988,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                       id="react-select-11-input"
                       role="combobox"
                       spellcheck="false"
-                      style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                      style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                       tabindex="0"
                       type="text"
                       value=""
@@ -1948,21 +1996,23 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                   </div>
                 </div>
                 <div
-                  class=" css-1hb7zxy-IndicatorsContainer"
+                  class="css-1wy0on6"
                 />
               </div>
               <div
-                class=" css-45h7mv-menu"
-                id="react-select-11-listbox"
+                class="css-45h7mv-menu"
               >
                 <div
-                  class=" css-1d1qzc4-MenuList"
+                  aria-multiselectable="false"
+                  class="css-1fmksep"
+                  id="react-select-11-listbox"
+                  role="listbox"
                 >
                   <div
-                    class=" css-syji7d-Group"
+                    class="css-1s9izoc"
                   >
                     <div
-                      class=" css-jtaw72-group"
+                      class="css-jtaw72-group"
                       id="react-select-11-group-0-heading"
                     >
                       Members
@@ -1970,8 +2020,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                     <div>
                       <div
                         aria-disabled="false"
-                        class=" css-8e5kjb-option"
+                        aria-selected="false"
+                        class="css-8e5kjb-option"
                         id="react-select-11-option-0-0"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -2005,8 +2057,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                       </div>
                       <div
                         aria-disabled="false"
-                        class=" css-x3yilo-option"
+                        aria-selected="false"
+                        class="css-x3yilo-option"
                         id="react-select-11-option-0-1"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -2040,8 +2094,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                       </div>
                       <div
                         aria-disabled="false"
-                        class=" css-x3yilo-option"
+                        aria-selected="false"
+                        class="css-x3yilo-option"
                         id="react-select-11-option-0-2"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -2066,8 +2122,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                       </div>
                       <div
                         aria-disabled="false"
-                        class=" css-x3yilo-option"
+                        aria-selected="false"
+                        class="css-x3yilo-option"
                         id="react-select-11-option-0-3"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -2093,10 +2151,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                     </div>
                   </div>
                   <div
-                    class=" css-syji7d-Group"
+                    class="css-1s9izoc"
                   >
                     <div
-                      class=" css-jtaw72-group"
+                      class="css-jtaw72-group"
                       id="react-select-11-group-1-heading"
                     >
                       Channels
@@ -2104,8 +2162,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                     <div>
                       <div
                         aria-disabled="false"
-                        class=" css-x3yilo-option"
+                        aria-selected="false"
+                        class="css-x3yilo-option"
                         id="react-select-11-option-1-0"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -2125,8 +2185,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                       </div>
                       <div
                         aria-disabled="false"
-                        class=" css-x3yilo-option"
+                        aria-selected="false"
+                        class="css-x3yilo-option"
                         id="react-select-11-option-1-1"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -2146,8 +2208,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                       </div>
                       <div
                         aria-disabled="false"
-                        class=" css-x3yilo-option"
+                        aria-selected="false"
+                        class="css-x3yilo-option"
                         id="react-select-11-option-1-2"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -2167,8 +2231,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard and click Select
                       </div>
                       <div
                         aria-disabled="false"
-                        class=" css-x3yilo-option"
+                        aria-selected="false"
+                        class="css-x3yilo-option"
                         id="react-select-11-option-1-3"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -2386,24 +2452,26 @@ exports[`src/components/shareBoard/shareBoard return shareBoard template and cli
                 aria-live="polite"
                 aria-relevant="additions text"
                 class="css-1f43avz-a11yText-A11yText"
+                role="log"
               />
               <div
-                class=" css-1wmrr75-Control"
+                class="css-1lxuy2a"
               >
                 <div
-                  class=" css-b2z5qd-ValueContainer"
+                  class="css-1neafsd"
                 >
                   <div
-                    class=" css-1jqq78o-placeholder"
+                    class="css-1jqq78o-placeholder"
                     id="react-select-14-placeholder"
                   >
                     Search for people
                   </div>
                   <div
-                    class=" css-189c2ni-Input"
+                    class="css-85xuox"
                     data-value=""
                   >
                     <input
+                      aria-activedescendant=""
                       aria-autocomplete="list"
                       aria-describedby="react-select-14-placeholder"
                       aria-expanded="false"
@@ -2415,7 +2483,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard template and cli
                       id="react-select-14-input"
                       role="combobox"
                       spellcheck="false"
-                      style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                      style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                       tabindex="0"
                       type="text"
                       value=""
@@ -2423,7 +2491,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard template and cli
                   </div>
                 </div>
                 <div
-                  class=" css-1hb7zxy-IndicatorsContainer"
+                  class="css-1wy0on6"
                 />
               </div>
             </div>
@@ -2571,39 +2639,48 @@ exports[`src/components/shareBoard/shareBoard return shareBoard template and cli
                 aria-live="polite"
                 aria-relevant="additions text"
                 class="css-1f43avz-a11yText-A11yText"
+                role="log"
               >
                 <span
                   id="aria-selection"
                 />
                 <span
-                  id="aria-context"
+                  id="aria-focused"
+                />
+                <span
+                  id="aria-results"
                 >
-                  option username_1 focused, 1 of 4. 4 results available. Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.
+                  4 results available.
+                </span>
+                <span
+                  id="aria-guidance"
+                >
+                  Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.
                 </span>
               </span>
               <div
-                class=" css-1wmrr75-Control"
+                class="css-1lxuy2a"
               >
                 <div
-                  class=" css-b2z5qd-ValueContainer"
+                  class="css-1neafsd"
                 >
                   <div
-                    class=" css-1jqq78o-placeholder"
+                    class="css-1jqq78o-placeholder"
                     id="react-select-14-placeholder"
                   >
                     Search for people
                   </div>
                   <div
-                    class=" css-189c2ni-Input"
+                    class="css-85xuox"
                     data-value=""
                   >
                     <input
+                      aria-activedescendant="react-select-14-option-0-0"
                       aria-autocomplete="list"
                       aria-controls="react-select-14-listbox"
                       aria-describedby="react-select-14-placeholder"
                       aria-expanded="true"
                       aria-haspopup="true"
-                      aria-owns="react-select-14-listbox"
                       autocapitalize="none"
                       autocomplete="off"
                       autocorrect="off"
@@ -2611,7 +2688,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard template and cli
                       id="react-select-14-input"
                       role="combobox"
                       spellcheck="false"
-                      style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                      style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                       tabindex="0"
                       type="text"
                       value=""
@@ -2619,21 +2696,23 @@ exports[`src/components/shareBoard/shareBoard return shareBoard template and cli
                   </div>
                 </div>
                 <div
-                  class=" css-1hb7zxy-IndicatorsContainer"
+                  class="css-1wy0on6"
                 />
               </div>
               <div
-                class=" css-45h7mv-menu"
-                id="react-select-14-listbox"
+                class="css-45h7mv-menu"
               >
                 <div
-                  class=" css-1d1qzc4-MenuList"
+                  aria-multiselectable="false"
+                  class="css-1fmksep"
+                  id="react-select-14-listbox"
+                  role="listbox"
                 >
                   <div
-                    class=" css-syji7d-Group"
+                    class="css-1s9izoc"
                   >
                     <div
-                      class=" css-jtaw72-group"
+                      class="css-jtaw72-group"
                       id="react-select-14-group-0-heading"
                     >
                       Members
@@ -2641,8 +2720,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard template and cli
                     <div>
                       <div
                         aria-disabled="false"
-                        class=" css-8e5kjb-option"
+                        aria-selected="false"
+                        class="css-8e5kjb-option"
                         id="react-select-14-option-0-0"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -2667,8 +2748,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard template and cli
                       </div>
                       <div
                         aria-disabled="false"
-                        class=" css-x3yilo-option"
+                        aria-selected="false"
+                        class="css-x3yilo-option"
                         id="react-select-14-option-0-1"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -2693,8 +2776,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard template and cli
                       </div>
                       <div
                         aria-disabled="false"
-                        class=" css-x3yilo-option"
+                        aria-selected="false"
+                        class="css-x3yilo-option"
                         id="react-select-14-option-0-2"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -2719,8 +2804,10 @@ exports[`src/components/shareBoard/shareBoard return shareBoard template and cli
                       </div>
                       <div
                         aria-disabled="false"
-                        class=" css-x3yilo-option"
+                        aria-selected="false"
+                        class="css-x3yilo-option"
                         id="react-select-14-option-0-3"
+                        role="option"
                         tabindex="-1"
                       >
                         <div
@@ -2892,24 +2979,26 @@ exports[`src/components/shareBoard/shareBoard return shareBoard, and click switc
                 aria-live="polite"
                 aria-relevant="additions text"
                 class="css-1f43avz-a11yText-A11yText"
+                role="log"
               />
               <div
-                class=" css-1wmrr75-Control"
+                class="css-1lxuy2a"
               >
                 <div
-                  class=" css-b2z5qd-ValueContainer"
+                  class="css-1neafsd"
                 >
                   <div
-                    class=" css-1jqq78o-placeholder"
+                    class="css-1jqq78o-placeholder"
                     id="react-select-6-placeholder"
                   >
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-189c2ni-Input"
+                    class="css-85xuox"
                     data-value=""
                   >
                     <input
+                      aria-activedescendant=""
                       aria-autocomplete="list"
                       aria-describedby="react-select-6-placeholder"
                       aria-expanded="false"
@@ -2921,7 +3010,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard, and click switc
                       id="react-select-6-input"
                       role="combobox"
                       spellcheck="false"
-                      style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                      style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                       tabindex="0"
                       type="text"
                       value=""
@@ -2929,7 +3018,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoard, and click switc
                   </div>
                 </div>
                 <div
-                  class=" css-1hb7zxy-IndicatorsContainer"
+                  class="css-1wy0on6"
                 />
               </div>
             </div>
@@ -3124,24 +3213,26 @@ exports[`src/components/shareBoard/shareBoard return shareBoardComponent and cli
                 aria-live="polite"
                 aria-relevant="additions text"
                 class="css-1f43avz-a11yText-A11yText"
+                role="log"
               />
               <div
-                class=" css-1wmrr75-Control"
+                class="css-1lxuy2a"
               >
                 <div
-                  class=" css-b2z5qd-ValueContainer"
+                  class="css-1neafsd"
                 >
                   <div
-                    class=" css-1jqq78o-placeholder"
+                    class="css-1jqq78o-placeholder"
                     id="react-select-7-placeholder"
                   >
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-189c2ni-Input"
+                    class="css-85xuox"
                     data-value=""
                   >
                     <input
+                      aria-activedescendant=""
                       aria-autocomplete="list"
                       aria-describedby="react-select-7-placeholder"
                       aria-expanded="false"
@@ -3153,7 +3244,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoardComponent and cli
                       id="react-select-7-input"
                       role="combobox"
                       spellcheck="false"
-                      style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                      style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                       tabindex="0"
                       type="text"
                       value=""
@@ -3161,7 +3252,7 @@ exports[`src/components/shareBoard/shareBoard return shareBoardComponent and cli
                   </div>
                 </div>
                 <div
-                  class=" css-1hb7zxy-IndicatorsContainer"
+                  class="css-1wy0on6"
                 />
               </div>
             </div>
@@ -3356,24 +3447,26 @@ exports[`src/components/shareBoard/shareBoard should match snapshot 1`] = `
                 aria-live="polite"
                 aria-relevant="additions text"
                 class="css-1f43avz-a11yText-A11yText"
+                role="log"
               />
               <div
-                class=" css-1wmrr75-Control"
+                class="css-1lxuy2a"
               >
                 <div
-                  class=" css-b2z5qd-ValueContainer"
+                  class="css-1neafsd"
                 >
                   <div
-                    class=" css-1jqq78o-placeholder"
+                    class="css-1jqq78o-placeholder"
                     id="react-select-2-placeholder"
                   >
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-189c2ni-Input"
+                    class="css-85xuox"
                     data-value=""
                   >
                     <input
+                      aria-activedescendant=""
                       aria-autocomplete="list"
                       aria-describedby="react-select-2-placeholder"
                       aria-expanded="false"
@@ -3385,7 +3478,7 @@ exports[`src/components/shareBoard/shareBoard should match snapshot 1`] = `
                       id="react-select-2-input"
                       role="combobox"
                       spellcheck="false"
-                      style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                      style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                       tabindex="0"
                       type="text"
                       value=""
@@ -3393,7 +3486,7 @@ exports[`src/components/shareBoard/shareBoard should match snapshot 1`] = `
                   </div>
                 </div>
                 <div
-                  class=" css-1hb7zxy-IndicatorsContainer"
+                  class="css-1wy0on6"
                 />
               </div>
             </div>
@@ -3565,24 +3658,26 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
                 aria-live="polite"
                 aria-relevant="additions text"
                 class="css-1f43avz-a11yText-A11yText"
+                role="log"
               />
               <div
-                class=" css-1wmrr75-Control"
+                class="css-1lxuy2a"
               >
                 <div
-                  class=" css-b2z5qd-ValueContainer"
+                  class="css-1neafsd"
                 >
                   <div
-                    class=" css-1jqq78o-placeholder"
+                    class="css-1jqq78o-placeholder"
                     id="react-select-3-placeholder"
                   >
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-189c2ni-Input"
+                    class="css-85xuox"
                     data-value=""
                   >
                     <input
+                      aria-activedescendant=""
                       aria-autocomplete="list"
                       aria-describedby="react-select-3-placeholder"
                       aria-expanded="false"
@@ -3594,7 +3689,7 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
                       id="react-select-3-input"
                       role="combobox"
                       spellcheck="false"
-                      style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                      style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                       tabindex="0"
                       type="text"
                       value=""
@@ -3602,7 +3697,7 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
                   </div>
                 </div>
                 <div
-                  class=" css-1hb7zxy-IndicatorsContainer"
+                  class="css-1wy0on6"
                 />
               </div>
             </div>
@@ -3774,24 +3869,26 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
                 aria-live="polite"
                 aria-relevant="additions text"
                 class="css-1f43avz-a11yText-A11yText"
+                role="log"
               />
               <div
-                class=" css-1wmrr75-Control"
+                class="css-1lxuy2a"
               >
                 <div
-                  class=" css-b2z5qd-ValueContainer"
+                  class="css-1neafsd"
                 >
                   <div
-                    class=" css-1jqq78o-placeholder"
+                    class="css-1jqq78o-placeholder"
                     id="react-select-9-placeholder"
                   >
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-189c2ni-Input"
+                    class="css-85xuox"
                     data-value=""
                   >
                     <input
+                      aria-activedescendant=""
                       aria-autocomplete="list"
                       aria-describedby="react-select-9-placeholder"
                       aria-expanded="false"
@@ -3803,7 +3900,7 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
                       id="react-select-9-input"
                       role="combobox"
                       spellcheck="false"
-                      style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                      style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                       tabindex="0"
                       type="text"
                       value=""
@@ -3811,7 +3908,7 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
                   </div>
                 </div>
                 <div
-                  class=" css-1hb7zxy-IndicatorsContainer"
+                  class="css-1wy0on6"
                 />
               </div>
             </div>
@@ -3983,24 +4080,26 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
                 aria-live="polite"
                 aria-relevant="additions text"
                 class="css-1f43avz-a11yText-A11yText"
+                role="log"
               />
               <div
-                class=" css-1wmrr75-Control"
+                class="css-1lxuy2a"
               >
                 <div
-                  class=" css-b2z5qd-ValueContainer"
+                  class="css-1neafsd"
                 >
                   <div
-                    class=" css-1jqq78o-placeholder"
+                    class="css-1jqq78o-placeholder"
                     id="react-select-8-placeholder"
                   >
                     Search for people and channels
                   </div>
                   <div
-                    class=" css-189c2ni-Input"
+                    class="css-85xuox"
                     data-value=""
                   >
                     <input
+                      aria-activedescendant=""
                       aria-autocomplete="list"
                       aria-describedby="react-select-8-placeholder"
                       aria-expanded="false"
@@ -4012,7 +4111,7 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
                       id="react-select-8-input"
                       role="combobox"
                       spellcheck="false"
-                      style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                      style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                       tabindex="0"
                       type="text"
                       value=""
@@ -4020,7 +4119,7 @@ exports[`src/components/shareBoard/shareBoard should match snapshot with sharing
                   </div>
                 </div>
                 <div
-                  class=" css-1hb7zxy-IndicatorsContainer"
+                  class="css-1wy0on6"
                 />
               </div>
             </div>
@@ -4192,24 +4291,26 @@ exports[`src/components/shareBoard/shareBoard should match snapshot, with templa
                 aria-live="polite"
                 aria-relevant="additions text"
                 class="css-1f43avz-a11yText-A11yText"
+                role="log"
               />
               <div
-                class=" css-1wmrr75-Control"
+                class="css-1lxuy2a"
               >
                 <div
-                  class=" css-b2z5qd-ValueContainer"
+                  class="css-1neafsd"
                 >
                   <div
-                    class=" css-1jqq78o-placeholder"
+                    class="css-1jqq78o-placeholder"
                     id="react-select-13-placeholder"
                   >
                     Search for people
                   </div>
                   <div
-                    class=" css-189c2ni-Input"
+                    class="css-85xuox"
                     data-value=""
                   >
                     <input
+                      aria-activedescendant=""
                       aria-autocomplete="list"
                       aria-describedby="react-select-13-placeholder"
                       aria-expanded="false"
@@ -4221,7 +4322,7 @@ exports[`src/components/shareBoard/shareBoard should match snapshot, with templa
                       id="react-select-13-input"
                       role="combobox"
                       spellcheck="false"
-                      style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                      style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                       tabindex="0"
                       type="text"
                       value=""
@@ -4229,7 +4330,7 @@ exports[`src/components/shareBoard/shareBoard should match snapshot, with templa
                   </div>
                 </div>
                 <div
-                  class=" css-1hb7zxy-IndicatorsContainer"
+                  class="css-1wy0on6"
                 />
               </div>
             </div>

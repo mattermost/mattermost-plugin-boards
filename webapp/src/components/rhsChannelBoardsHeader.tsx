@@ -36,7 +36,10 @@ const RHSChannelBoardsHeader = () => {
                         defaultMessage='Boards'
                     />
                 </span>
-                <span className='style--none sidebar--right__title__subtitle'>{currentChannel.display_name}</span>
+                <span
+                    title={currentChannel.display_name}
+                    className='style--none sidebar--right__title__subtitle'
+                >{currentChannel.display_name}</span>
             </div>
         </IntlProvider>
     )

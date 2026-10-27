@@ -351,7 +351,7 @@ func (p *BoardPatch) Patch(board *Board) *Board {
 		// existing ones or add them
 		for _, newprop := range p.UpdatedCardProperties {
 			id, ok := newprop["id"].(string)
-			if !ok {
+			if !ok || ValidateCardPropertyTemplate(newprop) != nil {
 				// bad new property, skipping
 				continue
 			}
@@ -414,7 +414,7 @@ func (p *BoardPatch) IsValid() error {
 		return InvalidBoardErr{"invalid-card-prefix"}
 	}
 
-	return nil
+	return ValidateCardPropertyTemplates(p.UpdatedCardProperties)
 }
 
 type InvalidBoardErr struct {
@@ -426,13 +426,22 @@ func (ibe InvalidBoardErr) Error() string {
 }
 
 func (b *Board) IsValid() error {
-	if !mmModel.IsValidId(b.TeamID) {
+	// GlobalTeamID ("0") is only valid for template boards.
+	if b.TeamID == GlobalTeamID {
+		if !b.IsTemplate {
+			return InvalidBoardErr{"invalid-team-id"}
+		}
+	} else if !mmModel.IsValidId(b.TeamID) {
 		return InvalidBoardErr{"invalid-team-id"}
 	}
 
 	// Empty channel ID is fine as not every board is associated with a channel.
 	if b.ChannelID != "" && !mmModel.IsValidId(b.ChannelID) {
 		return InvalidBoardErr{"invalid-channel-id"}
+	}
+
+	if err := ValidateCardPropertyTemplates(b.CardProperties); err != nil {
+		return err
 	}
 
 	return b.baseValidation()

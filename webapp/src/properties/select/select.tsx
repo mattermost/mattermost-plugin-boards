@@ -21,7 +21,7 @@ const SelectProperty = (props: PropertyProps) => {
     const [open, setOpen] = useState(false)
     const isEditable = !props.readOnly && Boolean(board)
 
-    const onCreate = useCallback((newValue) => {
+    const onCreate = useCallback((newValue: string) => {
         const option: IPropertyOption = {
             id: Utils.createGuid(IDType.BlockID),
             value: newValue,
@@ -34,7 +34,7 @@ const SelectProperty = (props: PropertyProps) => {
 
     const emptyDisplayValue = props.showEmptyPlaceholder ? intl.formatMessage({id: 'PropertyValueElement.empty', defaultMessage: 'Empty'}) : ''
 
-    const onChange = useCallback((newValue) => mutator.changePropertyValue(board.id, card, propertyTemplate.id, newValue), [board.id, card, propertyTemplate])
+    const onChange = useCallback((newValue: string | string[]) => mutator.changePropertyValue(board.id, card, propertyTemplate.id, newValue), [board.id, card, propertyTemplate])
     const onChangeColor = useCallback((option: IPropertyOption, colorId: string) => mutator.changePropertyOptionColor(board.id, board.cardProperties, propertyTemplate, option, colorId), [board, propertyTemplate])
     const onDeleteOption = useCallback((option: IPropertyOption) => mutator.deletePropertyOption(board.id, board.cardProperties, propertyTemplate, option), [board, propertyTemplate])
     const onDeleteValue = useCallback(() => mutator.changePropertyValue(board.id, card, propertyTemplate.id, ''), [card, propertyTemplate.id])

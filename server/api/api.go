@@ -31,6 +31,7 @@ const (
 
 var (
 	ErrHandlerPanic = errors.New("http handler panic")
+	ErrUnknownError = errors.New("unknown error")
 )
 
 // ----------------------------------------------------------------------------------------------------
@@ -167,6 +168,9 @@ func (a *API) userIsGuest(userID string) (bool, error) {
 // Response helpers
 
 func (a *API) errorResponse(w http.ResponseWriter, r *http.Request, err error) {
+	if err == nil {
+		err = ErrUnknownError
+	}
 	errorResponse := model.ErrorResponse{Error: err.Error()}
 
 	switch {

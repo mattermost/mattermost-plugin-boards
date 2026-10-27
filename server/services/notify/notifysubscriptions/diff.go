@@ -296,7 +296,7 @@ func (dg *diffGenerator) generatePropDiffs(oldBlock, newBlock *model.Block, sche
 	oldProps, err := model.ParseProperties(oldBlock, schema, dg.store)
 	if err != nil {
 		dg.logger.Error("Cannot parse properties for old block",
-			mlog.String("block_id", oldBlock.ID),
+			mlog.String("block_id", safeBlockID(oldBlock)),
 			mlog.Err(err),
 		)
 	}
@@ -304,7 +304,7 @@ func (dg *diffGenerator) generatePropDiffs(oldBlock, newBlock *model.Block, sche
 	newProps, err := model.ParseProperties(newBlock, schema, dg.store)
 	if err != nil {
 		dg.logger.Error("Cannot parse properties for new block",
-			mlog.String("block_id", oldBlock.ID),
+			mlog.String("block_id", safeBlockID(newBlock)),
 			mlog.Err(err),
 		)
 	}
@@ -350,6 +350,13 @@ func (dg *diffGenerator) generatePropDiffs(oldBlock, newBlock *model.Block, sche
 		}
 	}
 	return sortPropDiffs(propDiffs)
+}
+
+func safeBlockID(b *model.Block) string {
+	if b == nil {
+		return ""
+	}
+	return b.ID
 }
 
 func sortPropDiffs(propDiffs []PropDiff) []PropDiff {

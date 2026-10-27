@@ -31,7 +31,7 @@ type Props = {
     onUpdateBoardMember: (member: BoardMember, permission: string) => void
 }
 
-const UserPermissionsRow = (props: Props): JSX.Element => {
+const UserPermissionsRow = (props: Props): React.JSX.Element => {
     const intl = useIntl()
     const board = useAppSelector(getCurrentBoard)
     const {user, member, isMe, teammateNameDisplay} = props

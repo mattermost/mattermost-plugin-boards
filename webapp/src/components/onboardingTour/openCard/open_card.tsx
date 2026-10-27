@@ -15,7 +15,7 @@ import './open_card.scss'
 import {OnboardingCardClassName} from '../../kanban/kanbanCard'
 import TourTipRenderer from '../tourTipRenderer/tourTipRenderer'
 
-const OpenCardTourStep = (): JSX.Element | null => {
+const OpenCardTourStep = (): React.JSX.Element | null => {
     const title = (
         <FormattedMessage
             id='OnboardingTour.OpenACard.Title'

@@ -10,7 +10,7 @@ import {Utils} from '../../utils'
 import {PropertyProps} from '../types'
 import './createdTime.scss'
 
-const CreatedTime = (props: PropertyProps): JSX.Element => {
+const CreatedTime = (props: PropertyProps): React.JSX.Element => {
     const intl = useIntl()
     return (
         <div className={`CreatedTime ${props.property.valueClassName(true)}`}>

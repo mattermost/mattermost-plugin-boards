@@ -44,7 +44,7 @@ function renderClose(onClose?: () => void, closeTooltip?: string) {
     )
 }
 
-function NotificationBox(props: Props): JSX.Element {
+function NotificationBox(props: Props): React.JSX.Element {
     const className = Utils.generateClassName({
         NotificationBox: true,
         [props.className || '']: Boolean(props.className),

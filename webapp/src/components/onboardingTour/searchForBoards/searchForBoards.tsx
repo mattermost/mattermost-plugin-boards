@@ -13,7 +13,7 @@ import TourTipRenderer from '../tourTipRenderer/tourTipRenderer'
 
 import './searchForBoards.scss'
 
-const SearchForBoardsTourStep = (): JSX.Element | null => {
+const SearchForBoardsTourStep = (): React.JSX.Element | null => {
     const title = (
         <FormattedMessage
             id='SidebarTour.SearchForBoards.Title'

@@ -6,7 +6,7 @@ import React from 'react'
 
 import './submenuTriangle.scss'
 
-export default function SubmenuTriangleIcon(): JSX.Element {
+export default function SubmenuTriangleIcon(): React.JSX.Element {
     return (
         <svg
             xmlns='http://www.w3.org/2000/svg'

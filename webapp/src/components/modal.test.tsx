@@ -33,7 +33,7 @@ describe('components/modal', () => {
         ))
         const buttonClose = screen.getByRole('button', {name: 'Close'})
         userEvent.click(buttonClose)
-        expect(onMockedClose).toBeCalledTimes(1)
+        expect(onMockedClose).toHaveBeenCalledTimes(1)
     })
     test('return Modal on position top', () => {
         const {container} = render(wrapDNDIntl(

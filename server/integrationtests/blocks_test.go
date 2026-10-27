@@ -4,20 +4,27 @@
 package integrationtests
 
 import (
+	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetBlocks(t *testing.T) {
-	th := SetupTestHelperWithToken(t).Start()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
-	board := th.CreateBoard("team-id", model.BoardTypeOpen)
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
+
+	teamID := mmModel.NewId()
+	board := th.CreateBoard(teamID, model.BoardTypeOpen)
 
 	initialID1 := utils.NewID(utils.IDTypeBlock)
 	initialID2 := utils.NewID(utils.IDTypeBlock)
@@ -56,10 +63,14 @@ func TestGetBlocks(t *testing.T) {
 }
 
 func TestPostBlock(t *testing.T) {
-	th := SetupTestHelperWithToken(t).Start()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
-	board := th.CreateBoard("team-id", model.BoardTypeOpen)
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
+
+	teamID := mmModel.NewId()
+	board := th.CreateBoard(teamID, model.BoardTypeOpen)
 
 	var blockID1 string
 	var blockID2 string
@@ -162,15 +173,37 @@ func TestPostBlock(t *testing.T) {
 		require.NotNil(t, block4)
 		require.Equal(t, "Updated title", block4.Title)
 	})
+
+	t.Run("Create a block with a malformed card property", func(t *testing.T) {
+		block := &model.Block{
+			ID:       utils.NewID(utils.IDTypeBlock),
+			BoardID:  board.ID,
+			CreateAt: 1,
+			UpdateAt: 1,
+			Type:     model.TypeCard,
+			Fields: map[string]interface{}{
+				"properties": map[string]interface{}{"property-id": map[string]interface{}{}},
+			},
+		}
+
+		newBlocks, resp := th.Client.InsertBlocks(board.ID, []*model.Block{block}, false)
+		require.Error(t, resp.Error)
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		require.Empty(t, newBlocks)
+	})
 }
 
 func TestPatchBlock(t *testing.T) {
-	th := SetupTestHelperWithToken(t).Start()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
+
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
 
 	initialID := utils.NewID(utils.IDTypeBlock)
 
-	board := th.CreateBoard("team-id", model.BoardTypeOpen)
+	teamID := mmModel.NewId()
+	board := th.CreateBoard(teamID, model.BoardTypeOpen)
 	time.Sleep(10 * time.Millisecond)
 
 	block := &model.Block{
@@ -260,13 +293,41 @@ func TestPatchBlock(t *testing.T) {
 		require.Equal(t, "test value 2", updatedBlock.Fields["test2"])
 		require.Equal(t, nil, updatedBlock.Fields["test3"])
 	})
+
+	t.Run("Patch a block with a malformed card property", func(t *testing.T) {
+		blockPatch := &model.BlockPatch{
+			UpdatedFields: map[string]interface{}{
+				"properties": map[string]interface{}{"property-id": map[string]interface{}{}},
+			},
+		}
+
+		_, resp := th.Client.PatchBlock(board.ID, blockID, blockPatch, false)
+		require.Error(t, resp.Error)
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("Patch a batch of blocks with a malformed card property", func(t *testing.T) {
+		batch := fmt.Sprintf(
+			`{"block_ids":["%s"],"block_patches":[{"updatedFields":{"properties":{"property-id":{}}}}]}`,
+			blockID,
+		)
+
+		res, err := th.Client.DoAPIPatch("/boards/"+board.ID+"/blocks", batch)
+		require.Error(t, err)
+		require.NotNil(t, res)
+		require.Equal(t, http.StatusBadRequest, res.StatusCode)
+	})
 }
 
 func TestDeleteBlock(t *testing.T) {
-	th := SetupTestHelperWithToken(t).Start()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
-	board := th.CreateBoard("team-id", model.BoardTypeOpen)
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
+
+	teamID := mmModel.NewId()
+	board := th.CreateBoard(teamID, model.BoardTypeOpen)
 	time.Sleep(10 * time.Millisecond)
 
 	var blockID string
@@ -314,10 +375,15 @@ func TestDeleteBlock(t *testing.T) {
 }
 
 func TestUndeleteBlock(t *testing.T) {
-	th := SetupTestHelper(t).InitBasic()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
 
-	board := th.CreateBoard("team-id", model.BoardTypeOpen)
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
+	th.Client2 = clients.Viewer
+
+	teamID := mmModel.NewId()
+	board := th.CreateBoard(teamID, model.BoardTypeOpen)
 
 	blocks, resp := th.Client.GetBlocksForBoard(board.ID)
 	require.NoError(t, resp.Error)

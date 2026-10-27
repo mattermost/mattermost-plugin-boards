@@ -7,7 +7,7 @@ import React from 'react'
 import Person from '../person/person'
 import {PropertyProps} from '../types'
 
-const CreatedBy = (props: PropertyProps): JSX.Element => {
+const CreatedBy = (props: PropertyProps): React.JSX.Element => {
     return (
         <Person
             {...props}

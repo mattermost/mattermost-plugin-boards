@@ -30,11 +30,11 @@ type Props = {
     onDropToGroup: (srcCard: Card, groupID: string, dstCardID: string) => void
 }
 
-const TableGroup = (props: Props): JSX.Element => {
+const TableGroup = (props: Props): React.JSX.Element => {
     const {board, activeView, group, onDropToGroup, groupByProperty} = props
     const groupId = group.option.id
 
-    const [{isOver}, drop] = useDrop(() => ({
+    const [{isOver}, drop] = useDrop<Card, void, {isOver: boolean}>(() => ({
         accept: 'card',
         collect: (monitor) => ({
             isOver: monitor.isOver(),
@@ -53,7 +53,9 @@ const TableGroup = (props: Props): JSX.Element => {
 
     return (
         <div
-            ref={drop}
+            ref={(node) => {
+                drop(node)
+            }}
             className={className}
             key={group.option.id}
         >

@@ -1,10 +1,10 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useEffect, useState, useMemo, useCallback} from 'react'
+import React, {useEffect, useRef, useState, useMemo, useCallback} from 'react'
 import {batch} from 'react-redux'
 import {FormattedMessage, useIntl} from 'react-intl'
-import {useRouteMatch, useHistory} from 'react-router-dom'
+import {generatePath, useRouteMatch, useHistory} from 'react-router-dom'
 
 import Workspace from '../../components/workspace'
 import VersionMessage from '../../components/messages/versionMessage'
@@ -70,7 +70,7 @@ type Props = {
     new?: boolean
 }
 
-const BoardPage = (props: Props): JSX.Element => {
+const BoardPage = (props: Props): React.JSX.Element => {
     const intl = useIntl()
     const activeBoardId = useAppSelector(getCurrentBoardId)
     const activeViewId = useAppSelector(getCurrentViewId)
@@ -86,6 +86,9 @@ const BoardPage = (props: Props): JSX.Element => {
     const [showJoinBoardDialog, setShowJoinBoardDialog] = useState<boolean>(false)
     const [boardWasLoaded, setBoardWasLoaded] = useState(false)
     const history = useHistory()
+    // Tracks board IDs that were deleted via WS so the re-verify-access effect
+    // doesn't call loadOrJoinBoard on a board that no longer exists.
+    const deletedBoardIdsRef = useRef<Set<string>>(new Set())
     const globalError = useAppSelector<string>(getGlobalError)
 
     // if we're in a legacy route and not showing a shared board,
@@ -116,7 +119,7 @@ const BoardPage = (props: Props): JSX.Element => {
         if (props.readonly) {
             return initialReadOnlyLoad
         }
-        return initialLoad
+        return () => initialLoad()
     }, [props.readonly])
 
     useWebsockets(teamId, (wsClient) => {
@@ -148,7 +151,18 @@ const BoardPage = (props: Props): JSX.Element => {
             // remove boards from all categories if they are deleted
             const deletedBoardIds = teamBoards.filter((b: Board) => b.deleteAt && b.deleteAt !== 0).map((b) => b.id)
             if (deletedBoardIds.length > 0) {
+                deletedBoardIds.forEach((id) => deletedBoardIdsRef.current.add(id))
                 dispatch(removeBoardsFromAllCategories(deletedBoardIds))
+
+                // If the currently viewed board was deleted, navigate to the team page so
+                // TeamToBoardAndViewRedirect can redirect to the next available board or
+                // show the template selector. Clear lastBoardId first so it doesn't
+                // redirect back to the now-deleted board.
+                if (activeBoardId && deletedBoardIds.includes(activeBoardId)) {
+                    UserSettings.setLastBoardID(teamId, null)
+                    const teamBasePath = match.path.split('/:boardId')[0]
+                    history.push(generatePath(teamBasePath, {teamId}))
+                }
             }
         }
 
@@ -162,6 +176,7 @@ const BoardPage = (props: Props): JSX.Element => {
         }
 
         const dispatchLoadAction = () => {
+            if (!match.params.boardId) return
             dispatch(loadAction(match.params.boardId))
         }
 
@@ -189,7 +204,7 @@ const BoardPage = (props: Props): JSX.Element => {
             wsClient.removeOnChange(incrementalBoardMemberUpdate, 'boardMembers')
             wsClient.removeOnReconnect(dispatchLoadAction)
         }
-    }, [me?.id, activeBoardId])
+    }, [me?.id, activeBoardId, match.params.boardId])
 
     const onConfirmJoin = async () => {
         if (me) {
@@ -253,8 +268,25 @@ const BoardPage = (props: Props): JSX.Element => {
             return
         }
         if (result.payload?.blocks?.length === 0 && myUser.id) {
+            // getAllBlocks returns [] for both a deleted board (404) and a private board
+            // the user hasn't joined yet. Verify the board actually exists before trying
+            // to join — otherwise a deleted board triggers the "join private board" dialog
+            // (admin) or "something went wrong" page (regular user).
             try {
-                await joinBoard(myUser, boardTeamId, boardId, false)
+                const status = await octoClient.probeBoard(boardId)
+                if (status === 404) {
+                    // Board was deleted — show the "Board not found" error page.
+                    UserSettings.setLastBoardID(boardTeamId, null)
+                    UserSettings.setLastViewId(boardId, null)
+                    dispatch(setGlobalError(ErrorId.BoardNotFound))
+                    return
+                }
+                if (status === 200 || status === 403) {
+                    await joinBoard(myUser, boardTeamId, boardId, false)
+                } else {
+                    dispatch(setGlobalError(status === 401 ? ErrorId.NotLoggedIn : 'unknown'))
+                    return
+                }
             } catch (error: unknown) {
                 // Error already handled in joinBoard
             }
@@ -270,27 +302,24 @@ const BoardPage = (props: Props): JSX.Element => {
     }, [])
 
     useEffect(() => {
+        if (!match.params.boardId) return
+
         dispatch(loadAction(match.params.boardId))
+        dispatch(setCurrentBoard(match.params.boardId))
 
-        if (match.params.boardId) {
-            // set the active board
-            dispatch(setCurrentBoard(match.params.boardId))
-
-            if (viewId !== Constants.globalTeamId) {
-                // reset current, even if empty string
-                dispatch(setCurrentView(viewId))
-                if (viewId) {
-                    // don't reset per board if empty string
-                    UserSettings.setLastViewId(match.params.boardId, viewId)
-                }
+        if (viewId !== Constants.globalTeamId) {
+            // reset current, even if empty string
+            dispatch(setCurrentView(viewId))
+            if (viewId) {
+                // don't reset per board if empty string
+                UserSettings.setLastViewId(match.params.boardId, viewId)
             }
         }
     }, [teamId, match.params.boardId, viewId, me?.id])
 
     useEffect(() => {
-        if (match.params.boardId && !props.readonly && me) {
-            loadOrJoinBoard(me, teamId, match.params.boardId)
-        }
+        if (!match.params.boardId || props.readonly || !me) return
+        loadOrJoinBoard(me, teamId, match.params.boardId)
     }, [teamId, match.params.boardId, me?.id])
 
     // Track when board has been loaded at least once
@@ -301,11 +330,12 @@ const BoardPage = (props: Props): JSX.Element => {
     }, [currentBoard])
 
     // When the board is removed from the store while viewing (e.g. user was removed via websocket),
-    // re-verify access so we show access-denied instead of the template picker
+    // re-verify access so we show access-denied instead of the template picker.
+    // Skip if the board was deleted (WS deletion event already triggered navigation away).
     useEffect(() => {
-        if (match.params.boardId && !props.readonly && me && !currentBoard && boardWasLoaded) {
-            loadOrJoinBoard(me, teamId, match.params.boardId)
-        }
+        if (!match.params.boardId || props.readonly || !me || currentBoard || !boardWasLoaded) return
+        if (deletedBoardIdsRef.current.has(match.params.boardId)) return
+        loadOrJoinBoard(me, teamId, match.params.boardId)
     }, [teamId, match.params.boardId, me?.id, currentBoard, loadOrJoinBoard, boardWasLoaded])
 
     const handleUnhideBoard = async (boardID: string) => {
@@ -317,10 +347,7 @@ const BoardPage = (props: Props): JSX.Element => {
     }
 
     useEffect(() => {
-        if (!teamId || !match.params.boardId) {
-            return
-        }
-
+        if (!teamId || !match.params.boardId) return
         if (hiddenBoardIDs.indexOf(match.params.boardId) >= 0) {
             handleUnhideBoard(match.params.boardId)
         }

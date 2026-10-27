@@ -15,7 +15,7 @@ type Props = {
 }
 
 // Switch is an on-off style switch / checkbox
-function Label(props: Props): JSX.Element {
+function Label(props: Props): React.JSX.Element {
     let color = 'empty'
     if (props.color && props.color in Constants.menuColors) {
         color = props.color

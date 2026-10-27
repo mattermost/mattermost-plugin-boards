@@ -6,7 +6,7 @@ import React from 'react'
 
 import CompassIcon from './compassIcon'
 
-export default function EditIcon(): JSX.Element {
+export default function EditIcon(): React.JSX.Element {
     return (
         <CompassIcon
             className='EditIcon'

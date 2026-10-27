@@ -29,8 +29,9 @@ const (
 )
 
 var (
-	errBlockIsNotABoard  = errors.New("block is not a board")
-	errSizeLimitExceeded = errors.New("size limit exceeded")
+	errBlockIsNotABoard   = errors.New("block is not a board")
+	errSizeLimitExceeded  = errors.New("size limit exceeded")
+	errArchiveNotSeekable = errors.New("cannot import archive: reader must support seeking to validate boards")
 )
 
 // ImportArchive imports an archive containing zero or more boards, plus all
@@ -39,6 +40,66 @@ var (
 // Archives are ZIP files containing a `version.json` file and zero or more
 // directories, each containing a `board.jsonl` and zero or more image files.
 func (a *App) ImportArchive(r io.Reader, opt model.ImportArchiveOptions) error {
+	// When a board validator is provided, authorize every board in the archive
+	// before persisting anything. The archive is imported as a stream that
+	// commits board-by-board, so validation runs as a dedicated first pass and
+	// the reader is rewound before the real import.
+	if opt.BoardValidator != nil {
+		if err := a.validateArchiveBoards(r, opt); err != nil {
+			return err
+		}
+		seeker, ok := r.(io.Seeker)
+		if !ok {
+			return errArchiveNotSeekable
+		}
+		if _, err := seeker.Seek(0, io.SeekStart); err != nil {
+			return fmt.Errorf("cannot rewind archive after board validation: %w", err)
+		}
+	}
+
+	return a.importArchive(r, opt)
+}
+
+// validateArchiveBoards authorizes every board contained in the archive without
+// persisting anything, so a single rejected board aborts the whole import
+// before any board is created.
+func (a *App) validateArchiveBoards(r io.Reader, opt model.ImportArchiveOptions) error {
+	br := bufio.NewReader(r)
+	peek, err := br.Peek(len(legacyFileBegin))
+	if err == nil && string(peek) == legacyFileBegin {
+		bab, _, parseErr := a.parseBoardsAndBlocks(br, opt)
+		if parseErr != nil {
+			return parseErr
+		}
+		return validateImportedBoards(bab.Boards, opt.BoardValidator)
+	}
+
+	zr := zipstream.NewReader(br)
+	for {
+		hdr, err := zr.Next()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil
+			}
+			return err
+		}
+
+		dir, filename := filepath.Split(hdr.Name)
+		if filename != "board.jsonl" {
+			continue
+		}
+
+		bab, _, parseErr := a.parseBoardsAndBlocks(zr, opt)
+		if parseErr != nil {
+			return fmt.Errorf("cannot import board %s: %w", path.Clean(dir), parseErr)
+		}
+		if err := validateImportedBoards(bab.Boards, opt.BoardValidator); err != nil {
+			return err
+		}
+	}
+}
+
+func (a *App) importArchive(r io.Reader, opt model.ImportArchiveOptions) error {
 	// peek at the first bytes to see if this is a legacy archive format
 	br := bufio.NewReader(r)
 	peek, err := br.Peek(len(legacyFileBegin))
@@ -68,9 +129,11 @@ func (a *App) ImportArchive(r io.Reader, opt model.ImportArchiveOptions) error {
 		dir, filename := filepath.Split(hdr.Name)
 		dir = path.Clean(dir)
 
+		maxEntry := a.effectiveArchiveEntryMaxSize()
+
 		switch filename {
 		case "version.json":
-			ver, errVer := parseVersionFile(zr)
+			ver, errVer := parseVersionFile(zr, maxEntry)
 			if errVer != nil {
 				return errVer
 			}
@@ -92,11 +155,27 @@ func (a *App) ImportArchive(r io.Reader, opt model.ImportArchiveOptions) error {
 					mlog.String("dir", dir),
 					mlog.String("filename", filename),
 				)
+				if err := discardLimited(zr, maxEntry); err != nil {
+					return fmt.Errorf("cannot skip orphan file %s: %w", filename, err)
+				}
 				continue
 			}
-			newFileName, err := a.SaveFile(zr, opt.TeamID, board.ID, filename, board.IsTemplate)
+			fileReader := newLimitedReader(zr, maxEntry)
+			newFileName, err := a.SaveFile(fileReader, opt.TeamID, board.ID, filename, board.IsTemplate)
 			if err != nil {
 				return fmt.Errorf("cannot import file %s for board %s: %w", filename, dir, err)
+			}
+			if limitedReaderExceeded(fileReader) {
+				filePath, pathErr := getDestinationFilePath(board.IsTemplate, opt.TeamID, board.ID, newFileName)
+				if pathErr == nil {
+					if removeErr := a.filesBackend.RemoveFile(filePath); removeErr != nil {
+						a.logger.Warn("failed to remove oversized import file",
+							mlog.String("path", filePath),
+							mlog.Err(removeErr),
+						)
+					}
+				}
+				return fmt.Errorf("cannot import file %s for board %s: %w", filename, dir, errSizeLimitExceeded)
 			}
 			fileMap[filename] = newFileName
 
@@ -110,10 +189,22 @@ func (a *App) ImportArchive(r io.Reader, opt model.ImportArchiveOptions) error {
 	}
 }
 
+// validateImportedBoards runs the optional authorization callback against every
+// board parsed from an archive, aborting the import if any board is rejected.
+func validateImportedBoards(boards []*model.Board, validator model.BoardValidator) error {
+	if validator == nil {
+		return nil
+	}
+	for _, board := range boards {
+		if err := validator(board); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Update image and attachment blocks.
 func (a *App) fixImagesAttachments(boardMap map[string]*model.Board, fileMap map[string]string, teamID string, userID string) {
-	blockIDs := make([]string, 0)
-	blockPatches := make([]model.BlockPatch, 0)
 	for _, board := range boardMap {
 		if board.IsTemplate {
 			continue
@@ -128,31 +219,38 @@ func (a *App) fixImagesAttachments(boardMap map[string]*model.Board, fileMap map
 			return
 		}
 
+		blockIDs := make([]string, 0)
+		blockPatches := make([]model.BlockPatch, 0)
 		for _, block := range newBlocks {
 			if block.Type == "image" || block.Type == "attachment" {
 				fieldName := "fileId"
-				oldID := block.Fields[fieldName]
+				oldID, ok := block.Fields[fieldName].(string)
+				if !ok || oldID == "" {
+					continue
+				}
 				blockIDs = append(blockIDs, block.ID)
 
 				blockPatches = append(blockPatches, model.BlockPatch{
 					UpdatedFields: map[string]interface{}{
-						fieldName: fileMap[oldID.(string)],
+						fieldName: fileMap[oldID],
 					},
 				})
 			}
 		}
 
-		blockPatchBatch := model.BlockPatchBatch{BlockIDs: blockIDs, BlockPatches: blockPatches}
-		err = a.PatchBlocks(teamID, &blockPatchBatch, userID)
-		if err != nil {
-			a.logger.Info("Error patching blocks for image import", mlog.Err(err))
+		if len(blockIDs) > 0 {
+			blockPatchBatch := model.BlockPatchBatch{BlockIDs: blockIDs, BlockPatches: blockPatches}
+			err = a.PatchBlocks(teamID, &blockPatchBatch, userID)
+			if err != nil {
+				a.logger.Info("Error patching blocks for image import", mlog.Err(err))
+			}
 		}
 	}
 }
 
-// ImportBoardJSONL imports a JSONL file containing blocks for one board. The resulting
-// board id is returned.
-func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*model.Board, error) {
+// parseBoardsAndBlocks parses a JSONL file describing one board into its boards,
+// blocks, and members without persisting anything.
+func (a *App) parseBoardsAndBlocks(r io.Reader, opt model.ImportArchiveOptions) (*model.BoardsAndBlocks, []*model.BoardMember, error) {
 	// TODO: Stream this once `model.GenerateBlockIDs` can take a stream of blocks.
 	//       We don't want to load the whole file in memory, even though it's a single board.
 	boardsAndBlocks := &model.BoardsAndBlocks{
@@ -171,7 +269,7 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 	firstLine := true
 	for scanner.Scan() {
 		if lineReader.N <= 0 {
-			return nil, fmt.Errorf("error parsing archive line %d: %w", lineNum, errSizeLimitExceeded)
+			return nil, nil, fmt.Errorf("error parsing archive line %d: %w", lineNum, errSizeLimitExceeded)
 		}
 
 		line := bytes.TrimSpace(scanner.Bytes())
@@ -187,7 +285,7 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 			if !skip {
 				var archiveLine model.ArchiveLine
 				if err := json.Unmarshal(line, &archiveLine); err != nil {
-					return nil, fmt.Errorf("error parsing archive line %d: %w", lineNum, err)
+					return nil, nil, fmt.Errorf("error parsing archive line %d: %w", lineNum, err)
 				}
 
 				// first line must be a board
@@ -199,37 +297,41 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 				case "board":
 					var board model.Board
 					if err2 := json.Unmarshal(archiveLine.Data, &board); err2 != nil {
-						return nil, fmt.Errorf("invalid board in archive line %d: %w", lineNum, err2)
+						return nil, nil, fmt.Errorf("invalid board in archive line %d: %w", lineNum, err2)
 					}
 					board.ModifiedBy = userID
 					board.UpdateAt = now
 					board.TeamID = opt.TeamID
+					if err := a.validateBoardForImport(userID, opt.TeamID, &board); err != nil {
+						return nil, nil, err
+					}
 					boardsAndBlocks.Boards = append(boardsAndBlocks.Boards, &board)
 					boardID = board.ID
 				case "board_block":
 					// legacy archives encoded boards as blocks; we need to convert them to real boards.
 					var block *model.Block
 					if err2 := json.Unmarshal(archiveLine.Data, &block); err2 != nil {
-						return nil, fmt.Errorf("invalid board block in archive line %d: %w", lineNum, err2)
+						return nil, nil, fmt.Errorf("invalid board block in archive line %d: %w", lineNum, err2)
 					}
 					block.ModifiedBy = userID
 					block.UpdateAt = now
 					board, err := a.blockToBoard(block, opt)
 					if err != nil {
-						return nil, fmt.Errorf("cannot convert archive line %d to block: %w", lineNum, err)
+						return nil, nil, fmt.Errorf("cannot convert archive line %d to board: %w", lineNum, err)
 					}
-					if err := board.IsValidForImport(); err != nil {
-						return nil, err
+					if err := a.validateBoardForImport(userID, opt.TeamID, board); err != nil {
+						return nil, nil, err
 					}
 					boardsAndBlocks.Boards = append(boardsAndBlocks.Boards, board)
 					boardID = board.ID
 				case "block":
 					var block *model.Block
 					if err2 := json.Unmarshal(archiveLine.Data, &block); err2 != nil {
-						return nil, fmt.Errorf("invalid block in archive line %d: %w", lineNum, err2)
+						return nil, nil, fmt.Errorf("invalid block in archive line %d: %w", lineNum, err2)
 					}
+					block.NormalizeLegacyFileFields()
 					if err := block.IsValidForImport(); err != nil {
-						return nil, err
+						return nil, nil, err
 					}
 					block.ModifiedBy = userID
 					block.UpdateAt = now
@@ -238,11 +340,11 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 				case "boardMember":
 					var boardMember *model.BoardMember
 					if err2 := json.Unmarshal(archiveLine.Data, &boardMember); err2 != nil {
-						return nil, fmt.Errorf("invalid board Member in archive line %d: %w", lineNum, err2)
+						return nil, nil, fmt.Errorf("invalid board Member in archive line %d: %w", lineNum, err2)
 					}
 					boardMembers = append(boardMembers, boardMember)
 				default:
-					return nil, model.NewErrUnsupportedArchiveLineType(lineNum, archiveLine.Type)
+					return nil, nil, model.NewErrUnsupportedArchiveLineType(lineNum, archiveLine.Type)
 				}
 				firstLine = false
 			}
@@ -250,19 +352,30 @@ func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*mo
 	}
 
 	if errRead := scanner.Err(); errRead != nil {
-		return nil, fmt.Errorf("error reading archive line %d: %w", lineNum, errRead)
+		return nil, nil, fmt.Errorf("error reading archive line %d: %w", lineNum, errRead)
+	}
+
+	return boardsAndBlocks, boardMembers, nil
+}
+
+// ImportBoardJSONL imports a JSONL file containing blocks for one board. The resulting
+// board id is returned. Board authorization is expected to have already run via
+// ImportArchive; this persists the parsed board without re-validating it.
+func (a *App) ImportBoardJSONL(r io.Reader, opt model.ImportArchiveOptions) (*model.Board, error) {
+	boardsAndBlocks, boardMembers, err := a.parseBoardsAndBlocks(r, opt)
+	if err != nil {
+		return nil, err
 	}
 
 	// loop to remove the people how are not part of the team and system
 	for i := len(boardMembers) - 1; i >= 0; i-- {
-		if _, err := a.GetUser(boardMembers[i].UserID); err != nil {
+		if _, getErr := a.GetUser(boardMembers[i].UserID); getErr != nil {
 			boardMembers = append(boardMembers[:i], boardMembers[i+1:]...)
 		}
 	}
 
 	a.fixBoardsandBlocks(boardsAndBlocks, opt)
 
-	var err error
 	boardsAndBlocks, err = model.GenerateBoardsAndBlocksIDs(boardsAndBlocks, a.logger)
 	if err != nil {
 		return nil, fmt.Errorf("error generating archive block IDs: %w", err)
@@ -302,7 +415,7 @@ func (a *App) addUserToNewBoard(boardsAndBlocks *model.BoardsAndBlocks, opt mode
 				UserID:          boardMember.UserID,
 				Roles:           boardMember.Roles,
 				MinimumRole:     boardMember.MinimumRole,
-				SchemeAdmin:     boardMember.SchemeAdmin,
+				SchemeAdmin:     false,
 				SchemeEditor:    boardMember.SchemeEditor,
 				SchemeCommenter: boardMember.SchemeCommenter,
 				SchemeViewer:    boardMember.SchemeViewer,
@@ -467,10 +580,32 @@ func arrayMapsValue(m map[string]interface{}, key string) ([]map[string]interfac
 	return arr, true
 }
 
-func parseVersionFile(r io.Reader) (int, error) {
-	file, err := io.ReadAll(r)
+func newLimitedReader(r io.Reader, limit int64) *io.LimitedReader {
+	return &io.LimitedReader{R: r, N: limit + 1}
+}
+
+func limitedReaderExceeded(lr *io.LimitedReader) bool {
+	return lr.N <= 0
+}
+
+func (a *App) effectiveArchiveEntryMaxSize() int64 {
+	maxEntry := int64(importMaxFileSize)
+	if a.config != nil {
+		if cfgMax := a.config.MaxFileSize; cfgMax > 0 && cfgMax < maxEntry {
+			maxEntry = cfgMax
+		}
+	}
+	return maxEntry
+}
+
+func parseVersionFile(r io.Reader, maxSize int64) (int, error) {
+	lr := newLimitedReader(r, maxSize)
+	file, err := io.ReadAll(lr)
 	if err != nil {
 		return 0, fmt.Errorf("cannot read version.json: %w", err)
+	}
+	if limitedReaderExceeded(lr) {
+		return 0, fmt.Errorf("cannot read version.json: %w", errSizeLimitExceeded)
 	}
 
 	var header model.ArchiveHeader
@@ -478,4 +613,15 @@ func parseVersionFile(r io.Reader) (int, error) {
 		return 0, fmt.Errorf("cannot parse version.json: %w", err)
 	}
 	return header.Version, nil
+}
+
+func discardLimited(r io.Reader, limit int64) error {
+	lr := newLimitedReader(r, limit)
+	if _, err := io.Copy(io.Discard, lr); err != nil {
+		return err
+	}
+	if limitedReaderExceeded(lr) {
+		return errSizeLimitExceeded
+	}
+	return nil
 }

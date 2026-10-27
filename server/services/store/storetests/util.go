@@ -4,6 +4,7 @@
 package storetests
 
 import (
+	"database/sql"
 	"fmt"
 	"sort"
 	"testing"
@@ -14,6 +15,37 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// dbHandle is an interface to access the underlying database connection from a store.
+type dbHandle interface {
+	DBHandle() *sql.DB
+}
+
+// insertTestUser inserts a user row directly into the Mattermost users table.
+// This is necessary because the store interface doesn't expose user creation —
+// users are managed by Mattermost and only read by Boards.
+func insertTestUser(t *testing.T, store store.Store, userID, username, email string) {
+	t.Helper()
+	dbStore, ok := store.(dbHandle)
+	require.True(t, ok, "store must implement dbHandle interface")
+	_, err := dbStore.DBHandle().Exec(
+		`INSERT INTO users (id, username, email, createat, updateat, deleteat) VALUES ($1, $2, $3, $4, $5, $6)`,
+		userID, username, email, utils.GetMillis(), utils.GetMillis(), 0,
+	)
+	require.NoError(t, err)
+}
+
+// insertTestTeamMember inserts a team membership row directly into the Mattermost teammembers table.
+func insertTestTeamMember(t *testing.T, store store.Store, teamID, userID string) {
+	t.Helper()
+	dbStore, ok := store.(dbHandle)
+	require.True(t, ok, "store must implement dbHandle interface")
+	_, err := dbStore.DBHandle().Exec(
+		`INSERT INTO teammembers (teamid, userid, roles, deleteat) VALUES ($1, $2, $3, $4)`,
+		teamID, userID, "", 0,
+	)
+	require.NoError(t, err)
+}
 
 func createTestBlocksForCard(t *testing.T, store store.Store, cardID string, num int) []*model.Block {
 	card, err := store.GetBlock(cardID)
@@ -38,7 +70,6 @@ func createTestBlocksForCard(t *testing.T, store store.Store, cardID string, num
 	return blocks
 }
 
-//nolint:unparam
 func createTestCards(t *testing.T, store store.Store, userID string, boardID string, num int) []*model.Block {
 	var blocks []*model.Block
 	for i := 0; i < num; i++ {
@@ -58,7 +89,6 @@ func createTestCards(t *testing.T, store store.Store, userID string, boardID str
 	return blocks
 }
 
-//nolint:unparam
 func createTestBoards(t *testing.T, store store.Store, teamID string, userID string, num int) []*model.Board {
 	var boards []*model.Board
 	for i := 0; i < num; i++ {
@@ -77,7 +107,6 @@ func createTestBoards(t *testing.T, store store.Store, teamID string, userID str
 	return boards
 }
 
-//nolint:unparam
 func deleteTestBoard(t *testing.T, store store.Store, boardID string, userID string) {
 	err := store.DeleteBoard(boardID, userID)
 	require.NoError(t, err)

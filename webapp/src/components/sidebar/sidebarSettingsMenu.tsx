@@ -96,7 +96,7 @@ const SidebarSettingsMenu = (props: Props) => {
                             name={intl.formatMessage({id: 'Sidebar.import-archive', defaultMessage: 'Import archive'})}
                             onClick={async () => {
                                 TelemetryClient.trackEvent(TelemetryCategory, TelemetryActions.ImportArchive)
-                                Archiver.importFullArchive()
+                                Archiver.importFullArchive(intl)
                             }}
                         />
                         {

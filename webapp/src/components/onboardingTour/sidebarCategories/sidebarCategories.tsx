@@ -23,7 +23,7 @@ import {Constants} from '../../../constants'
 
 import './sidebarCategories.scss'
 
-const SidebarCategoriesTourStep = (): JSX.Element | null => {
+const SidebarCategoriesTourStep = (): React.JSX.Element | null => {
     const title = (
         <FormattedMessage
             id='SidebarTour.SidebarCategories.Title'

@@ -52,10 +52,17 @@ default: all
 include build/setup.mk
 
 BUNDLE_NAME ?= $(PLUGIN_NAME)-$(PLUGIN_VERSION).tar.gz
+BUNDLE_DIR ?= dist
+SERVER_DIST_SRC ?= server/dist
 
 # Include custom makefile, if present
 ifneq ($(wildcard build/custom.mk),)
 	include build/custom.mk
+endif
+
+# Presence of build/fips.mk is the per-plugin FIPS opt-in marker.
+ifneq ($(wildcard build/fips.mk),)
+	include build/fips.mk
 endif
 
 ## Checks the code style, tests, builds and bundles the plugin.
@@ -69,7 +76,7 @@ apply:
 
 ## Runs eslint and golangci-lint
 .PHONY: check-style
-check-style: webapp/node_modules
+check-style: apply webapp/node_modules
 	@echo Checking for style guide compliance
 
 ifneq ($(HAS_WEBAPP),)
@@ -94,7 +101,7 @@ templates-archive: ## Build templates archive file
 
 ## Builds the server, if it exists, for all supported architectures.
 .PHONY: server
-server: templates-archive
+server: apply templates-archive
 ifneq ($(HAS_SERVER),)
 	mkdir -p server/dist;
 ifeq ($(MM_DEBUG),)
@@ -116,7 +123,7 @@ endif
 
 ## Builds the server, if it exists, for Linux architectures only.
 .PHONY: server-linux
-server-linux: templates-archive
+server-linux: apply templates-archive
 ifneq ($(HAS_SERVER),)
 	mkdir -p server/dist;
 ifeq ($(MM_DEBUG),)
@@ -137,7 +144,7 @@ endif
 
 ## Generate dist and pack files for the webapp.
 .PHONY: webapp
-webapp: webapp/node_modules
+webapp: apply webapp/node_modules
 ifneq ($(HAS_WEBAPP),)
 ifeq ($(MM_DEBUG),)
 	cd webapp && $(NPM) run build;
@@ -150,33 +157,33 @@ endif
 ## Generates a tar bundle of the plugin for install.
 .PHONY: bundle
 bundle:
-	rm -rf dist/
-	mkdir -p dist/$(PLUGIN_NAME)
-	cp $(MANIFEST_FILE) dist/$(PLUGIN_NAME)/
-	cp -r webapp/pack dist/$(PLUGIN_NAME)/
+	rm -rf $(BUNDLE_DIR)/
+	mkdir -p $(BUNDLE_DIR)/$(PLUGIN_NAME)
+	./build/bin/manifest dist $(BUNDLE_DIR)/$(PLUGIN_NAME)
+	cp -r webapp/pack $(BUNDLE_DIR)/$(PLUGIN_NAME)/
 ifneq ($(wildcard LICENSE.txt),)
-	cp -r LICENSE.txt dist/$(PLUGIN_NAME)/
+	cp -r LICENSE.txt $(BUNDLE_DIR)/$(PLUGIN_NAME)/
 endif
 ifneq ($(wildcard NOTICE.txt),)
-	cp -r NOTICE.txt dist/$(PLUGIN_NAME)/
+	cp -r NOTICE.txt $(BUNDLE_DIR)/$(PLUGIN_NAME)/
 endif
 ifneq ($(wildcard $(ASSETS_DIR)/.),)
-	cp -r $(ASSETS_DIR) dist/$(PLUGIN_NAME)/
+	cp -r $(ASSETS_DIR) $(BUNDLE_DIR)/$(PLUGIN_NAME)/
 endif
 ifneq ($(HAS_PUBLIC),)
-	cp -r public dist/$(PLUGIN_NAME)/public/
+	cp -r public $(BUNDLE_DIR)/$(PLUGIN_NAME)/public/
 endif
 ifneq ($(HAS_SERVER),)
-	mkdir -p dist/$(PLUGIN_NAME)/server
-	cp -r server/dist dist/$(PLUGIN_NAME)/server/
+	mkdir -p $(BUNDLE_DIR)/$(PLUGIN_NAME)/server/dist
+	cp -r $(SERVER_DIST_SRC)/. $(BUNDLE_DIR)/$(PLUGIN_NAME)/server/dist/
 endif
 ifneq ($(HAS_WEBAPP),)
-	mkdir -p dist/$(PLUGIN_NAME)/webapp
-	cp -r webapp/dist dist/$(PLUGIN_NAME)/webapp/
+	mkdir -p $(BUNDLE_DIR)/$(PLUGIN_NAME)/webapp
+	cp -r webapp/dist $(BUNDLE_DIR)/$(PLUGIN_NAME)/webapp/
 endif
-	cd dist && tar -cvzf $(BUNDLE_NAME) $(PLUGIN_NAME)
+	cd $(BUNDLE_DIR) && tar -cvzf $(BUNDLE_NAME) $(PLUGIN_NAME)
 
-	@echo plugin built at: dist/$(BUNDLE_NAME)
+	@echo plugin built at: $(BUNDLE_DIR)/$(BUNDLE_NAME)
 
 info: ## Display build information
 	@echo "Build Number: $(BUILD_NUMBER)"
@@ -256,7 +263,7 @@ detach: setup-attach
 ## Runs any lints and unit tests defined for the server and webapp, if they exist.
 .PHONY: test
 test: export FOCALBOARD_UNIT_TESTING=1
-test: webapp/node_modules
+test: apply webapp/node_modules
 ifneq ($(HAS_SERVER),)
 	$(GO) test -v $(GO_TEST_FLAGS) ./server/...
 endif
@@ -267,9 +274,33 @@ ifneq ($(wildcard ./build/sync/plan/.),)
 	cd ./build/sync && $(GO) test -v $(GO_TEST_FLAGS) ./...
 endif
 
+## Runs e2e tests using Playwright. Requires dist/ to be built first.
+e2e/node_modules: e2e/package.json
+	cd e2e && $(NPM) install
+	touch $@
+
+.PHONY: e2e
+e2e: e2e/node_modules
+	cd e2e && npx playwright test
+
+## Installs Playwright browser binaries (Chromium + system deps).
+.PHONY: e2e-install-browsers
+e2e-install-browsers: e2e/node_modules
+	cd e2e && npx playwright install chromium --with-deps
+
+## Validates that all e2e spec files are assigned to a CI shard.
+.PHONY: e2e-validate-shards
+e2e-validate-shards: e2e/node_modules
+	cd e2e && node scripts/ci-test-groups.mjs validate
+
+## Installs deps, validates shards, and runs e2e tests (Chromium only). Used in CI.
+.PHONY: e2e-ci
+e2e-ci: e2e-install-browsers e2e-validate-shards
+	cd e2e && npx playwright test --project=chromium
+
 ## Creates a coverage report for the server code.
 .PHONY: coverage
-coverage: webapp/node_modules
+coverage: apply webapp/node_modules
 ifneq ($(HAS_SERVER),)
 	$(GO) test $(GO_TEST_FLAGS) -coverprofile=server/coverage.txt ./server/...
 	$(GO) tool cover -html=server/coverage.txt
@@ -316,10 +347,13 @@ kill: detach
 clean:
 	rm -rf bin
 	rm -rf dist
+	rm -rf dist-fips
 	rm -rf webapp/pack
 ifneq ($(HAS_SERVER),)
 	rm -fr server/coverage.txt
 	rm -fr server/dist
+	rm -fr server/dist-fips
+	rm -fr server/dist-fips-staged
 endif
 ifneq ($(HAS_WEBAPP),)
 	rm -fr webapp/junit.xml
@@ -393,9 +427,9 @@ generate: ## Install and run code generators.
 	cd server; go install github.com/golang/mock/mockgen@v1.6.0
 	cd server; go generate ./...
 
-server-ci: server-lint
+server-ci: server-lint server-test ## Run linters and tests on server code.
 
-server-lint: ## Run linters on server code.
+server-lint: apply ## Run linters on server code.
 	@if ! [ -x "$$(command -v golangci-lint)" ]; then \
 		echo "golangci-lint is not installed. Please see https://github.com/golangci/golangci-lint#install-golangci-lint for installation instructions."; \
 		exit 1; \
@@ -408,12 +442,12 @@ modd-precheck:
 		exit 1; \
 	fi; \
 
-webapp-ci: ## Webapp CI: linting & testing.
+webapp-ci: apply ## Webapp CI: linting & testing.
 	cd webapp; npm run check
 	cd webapp; npm run test
 	cd webapp; npm run check-types
 
-webapp-test: ## jest tests for webapp
+webapp-test: apply ## jest tests for webapp
 	cd webapp; npm run test
 
 watch-plugin: modd-precheck ## Run and upload the plugin to a development server
@@ -422,7 +456,7 @@ watch-plugin: modd-precheck ## Run and upload the plugin to a development server
 live-watch-plugin: modd-precheck ## Run and update locally the plugin in the development server
 	make live-watch
 
-server-test: ## Run server tests
+server-test: apply ## Run server tests
 	@echo Starting tests for server
 	cd server; go test -tags '$(BUILD_TAGS)' -race -v -coverpkg=./... -coverprofile=plugin-profile.coverage -count=1 -timeout=30m ./...
 
@@ -442,7 +476,14 @@ swagger: ## Generate swagger API spec and clients based on it.
 # Used for semver bumping
 PROTECTED_BRANCH := main
 APP_NAME    := $(shell basename -s .git `git config --get remote.origin.url`)
-CURRENT_VERSION := $(shell git describe --abbrev=0 --tags)
+CURRENT_VERSION := $(strip $(shell git describe --abbrev=0 --tags))
+# --merged keeps the base tag on this branch's history, so a patch cut from
+# release-9.4 counts from v9.4.0 rather than whatever main has since tagged.
+LATEST_RELEASE_TAG_RAW := $(shell git tag -l "v*" --sort=-v:refname --merged HEAD | grep -v '\-rc' | head -n 1 || true)
+LATEST_RELEASE_TAG := $(strip $(LATEST_RELEASE_TAG_RAW))
+ifeq ($(LATEST_RELEASE_TAG),)
+LATEST_RELEASE_TAG := $(CURRENT_VERSION)
+endif
 VERSION_PARTS := $(subst ., ,$(subst v,,$(subst -rc, ,$(CURRENT_VERSION))))
 MAJOR := $(word 1,$(VERSION_PARTS))
 MINOR := $(word 2,$(VERSION_PARTS))
@@ -480,6 +521,11 @@ endef
 patch: ## to bump patch version (semver)
 	$(call check_protected_branch)
 	$(call check_pending_pulls)
+	@$(eval BASE_VERSION := $(strip $(LATEST_RELEASE_TAG)))
+	@$(eval BASE_VERSION_PARTS := $(subst ., ,$(subst v,,$(subst -rc, ,$(BASE_VERSION)))))
+	@$(eval MAJOR := $(word 1,$(BASE_VERSION_PARTS)))
+	@$(eval MINOR := $(word 2,$(BASE_VERSION_PARTS)))
+	@$(eval PATCH := $(word 3,$(BASE_VERSION_PARTS)))
 	@$(eval PATCH := $(shell echo $$(($(PATCH)+1))))
 	$(call prompt_approval,$(MAJOR).$(MINOR).$(PATCH))
 	@echo Bumping $(APP_NAME) to Patch version $(MAJOR).$(MINOR).$(PATCH)
@@ -490,6 +536,11 @@ patch: ## to bump patch version (semver)
 minor: ## to bump minor version (semver)
 	$(call check_protected_branch)
 	$(call check_pending_pulls)
+	@$(eval BASE_VERSION := $(strip $(LATEST_RELEASE_TAG)))
+	@$(eval BASE_VERSION_PARTS := $(subst ., ,$(subst v,,$(subst -rc, ,$(BASE_VERSION)))))
+	@$(eval MAJOR := $(word 1,$(BASE_VERSION_PARTS)))
+	@$(eval MINOR := $(word 2,$(BASE_VERSION_PARTS)))
+	@$(eval PATCH := $(word 3,$(BASE_VERSION_PARTS)))
 	@$(eval MINOR := $(shell echo $$(($(MINOR)+1))))
 	@$(eval PATCH := 0)
 	$(call prompt_approval,$(MAJOR).$(MINOR).$(PATCH))
@@ -501,6 +552,11 @@ minor: ## to bump minor version (semver)
 major: ## to bump major version (semver)
 	$(call check_protected_branch)
 	$(call check_pending_pulls)
+	@$(eval BASE_VERSION := $(strip $(LATEST_RELEASE_TAG)))
+	@$(eval BASE_VERSION_PARTS := $(subst ., ,$(subst v,,$(subst -rc, ,$(BASE_VERSION)))))
+	@$(eval MAJOR := $(word 1,$(BASE_VERSION_PARTS)))
+	@$(eval MINOR := $(word 2,$(BASE_VERSION_PARTS)))
+	@$(eval PATCH := $(word 3,$(BASE_VERSION_PARTS)))
 	$(eval MAJOR := $(shell echo $$(($(MAJOR)+1))))
 	$(eval MINOR := 0)
 	$(eval PATCH := 0)

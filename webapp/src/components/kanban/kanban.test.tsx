@@ -20,7 +20,7 @@ import Kanban from './kanban'
 
 global.fetch = jest.fn()
 jest.mock('../../utils')
-const mockedUtils = mocked(Utils, true)
+const mockedUtils = mocked(Utils)
 const mockedchangePropertyOptionValue = jest.spyOn(mutator, 'changePropertyOptionValue')
 const mockedChangeViewCardOrder = jest.spyOn(mutator, 'changeViewCardOrder')
 const mockedinsertPropertyOption = jest.spyOn(mutator, 'insertPropertyOption')
@@ -215,7 +215,7 @@ describe('src/component/kanban/kanban', () => {
             </ReduxProvider>,
         ), {wrapper: MemoryRouter})
 
-        expect(mockedUtils.assertFailure).toBeCalled()
+        expect(mockedUtils.assertFailure).toHaveBeenCalled()
         expect(container).toMatchSnapshot()
     })
     test('return kanban and drag card to other card ', async () => {
@@ -260,10 +260,10 @@ describe('src/component/kanban/kanban', () => {
         fireEvent.dragEnter(cardsElement[1])
         fireEvent.dragOver(cardsElement[1])
         fireEvent.drop(cardsElement[1])
-        expect(mockedUtils.log).toBeCalled()
+        expect(mockedUtils.log).toHaveBeenCalled()
 
         await waitFor(async () => {
-            expect(mockedChangeViewCardOrder).toBeCalled()
+            expect(mockedChangeViewCardOrder).toHaveBeenCalled()
         })
     })
     test('return kanban and change card column', async () => {
@@ -311,7 +311,7 @@ describe('src/component/kanban/kanban', () => {
         fireEvent.dragOver(columnQ2Element!)
         fireEvent.drop(columnQ2Element!)
         await waitFor(async () => {
-            expect(mockedChangeViewCardOrder).toBeCalled()
+            expect(mockedChangeViewCardOrder).toHaveBeenCalled()
         })
     })
     test('return kanban and change card column to hidden column', async () => {
@@ -359,7 +359,7 @@ describe('src/component/kanban/kanban', () => {
         fireEvent.dragOver(columnQ3Element!)
         fireEvent.drop(columnQ3Element!)
         await waitFor(async () => {
-            expect(mockedChangeViewCardOrder).toBeCalled()
+            expect(mockedChangeViewCardOrder).toHaveBeenCalled()
         })
     })
     test('return kanban and click on New', () => {
@@ -400,7 +400,7 @@ describe('src/component/kanban/kanban', () => {
         const allButtonsNew = screen.getAllByRole('button', {name: '+ New'})
         expect(allButtonsNew).not.toBeNull()
         userEvent.click(allButtonsNew[0])
-        expect(mockedAddCard).toBeCalledTimes(1)
+        expect(mockedAddCard).toHaveBeenCalledTimes(1)
     })
 
     test('return kanban and click on KanbanCalculationMenu', () => {
@@ -485,7 +485,7 @@ describe('src/component/kanban/kanban', () => {
         fireEvent.blur(inputTitle)
 
         await waitFor(async () => {
-            expect(mockedchangePropertyOptionValue).toBeCalledWith(board.id, board.cardProperties, groupProperty, optionQ1, 'New Q1')
+            expect(mockedchangePropertyOptionValue).toHaveBeenCalledWith(board.id, board.cardProperties, groupProperty, optionQ1, 'New Q1')
         })
 
         expect(container).toMatchSnapshot()
@@ -528,7 +528,7 @@ describe('src/component/kanban/kanban', () => {
         expect(buttonAddGroup).toBeDefined()
         userEvent.click(buttonAddGroup)
         await waitFor(() => {
-            expect(mockedinsertPropertyOption).toBeCalled()
+            expect(mockedinsertPropertyOption).toHaveBeenCalled()
         })
     })
 })
@@ -655,6 +655,6 @@ describe('src/component/kanban/kanban', () => {
         const allButtonsNew = screen.getAllByRole('button', {name: '+ New'})
         expect(allButtonsNew).not.toBeNull()
         userEvent.click(allButtonsNew[0])
-        expect(mockedAddCard).toBeCalledTimes(1)
+        expect(mockedAddCard).toHaveBeenCalledTimes(1)
     })
 })

@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`components/viewTitle add random icon 1`] = `
 <div>
@@ -57,7 +57,6 @@ exports[`components/viewTitle add random icon 1`] = `
         title=""
         value=""
       />
-      
     </div>
   </div>
 </div>
@@ -127,7 +126,6 @@ exports[`components/viewTitle hide description 1`] = `
         title=""
         value=""
       />
-      
     </div>
   </div>
 </div>
@@ -181,6 +179,24 @@ exports[`components/viewTitle should match snapshot 1`] = `
       />
     </div>
     <div
+      class="card-prefix-row"
+    >
+      <span
+        class="card-prefix-label"
+      >
+        <i
+          class="CompassIcon icon-ticket-outline"
+        />
+        Ticket prefix
+      </span>
+      <input
+        class="Editable card-prefix-input"
+        placeholder="e.g. PROJ"
+        title=""
+        value=""
+      />
+    </div>
+    <div
       class="description"
     >
       <div
@@ -189,7 +205,13 @@ exports[`components/viewTitle should match snapshot 1`] = `
         <div
           class="octo-editor-preview"
           data-testid="preview-element"
-        />
+        >
+          <div
+            class="mocked-message-html"
+          >
+            Test Comment
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -236,7 +258,13 @@ exports[`components/viewTitle should match snapshot readonly 1`] = `
         <div
           class="octo-editor-preview"
           data-testid="preview-element"
-        />
+        >
+          <div
+            class="mocked-message-html"
+          >
+            Test Comment
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -291,6 +319,24 @@ exports[`components/viewTitle show description 1`] = `
       />
     </div>
     <div
+      class="card-prefix-row"
+    >
+      <span
+        class="card-prefix-label"
+      >
+        <i
+          class="CompassIcon icon-ticket-outline"
+        />
+        Ticket prefix
+      </span>
+      <input
+        class="Editable card-prefix-input"
+        placeholder="e.g. PROJ"
+        title=""
+        value=""
+      />
+    </div>
+    <div
       class="description"
     >
       <div
@@ -299,7 +345,13 @@ exports[`components/viewTitle show description 1`] = `
         <div
           class="octo-editor-preview"
           data-testid="preview-element"
-        />
+        >
+          <div
+            class="mocked-message-html"
+          >
+            Test Comment
+          </div>
+        </div>
       </div>
     </div>
   </div>

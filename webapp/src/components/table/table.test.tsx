@@ -35,7 +35,7 @@ beforeEach(() => {
 jest.mock('../../mutator')
 jest.mock('../../utils')
 jest.mock('../../telemetry/telemetryClient')
-const mockedMutator = mocked(Mutator, true)
+const mockedMutator = mocked(Mutator)
 
 describe('components/table/Table', () => {
     const board = TestBlockFactory.createBoard()
@@ -684,7 +684,7 @@ describe('components/table/Table extended', () => {
         userEvents.click(deleteBtn)
         const dailogDeleteBtn = screen.getByRole('button', {name: 'Delete'})
         userEvents.click(dailogDeleteBtn)
-        expect(mockedMutator.deleteBlock).toBeCalledTimes(1)
+        expect(mockedMutator.deleteBlock).toHaveBeenCalledTimes(1)
     })
 
     test('should have Duplicate Button', async () => {
@@ -744,7 +744,7 @@ describe('components/table/Table extended', () => {
         const duplicateBtn = getByRole('button', {name: 'Duplicate'})
         expect(duplicateBtn).not.toBe(null)
         userEvents.click(duplicateBtn)
-        expect(mockedMutator.duplicateCard).toBeCalledTimes(1)
+        expect(mockedMutator.duplicateCard).toHaveBeenCalledTimes(1)
         expect(container).toMatchSnapshot()
     })
 })

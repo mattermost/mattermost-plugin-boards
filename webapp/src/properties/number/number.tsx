@@ -7,7 +7,7 @@ import React from 'react'
 import {PropertyProps} from '../types'
 import BaseTextEditor from '../baseTextEditor'
 
-const Number = (props: PropertyProps): JSX.Element => {
+const Number = (props: PropertyProps): React.JSX.Element => {
     return (
         <BaseTextEditor
             {...props}

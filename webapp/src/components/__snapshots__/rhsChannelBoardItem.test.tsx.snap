@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`components/rhsChannelBoardItem render board 1`] = `
 <div>
@@ -8,7 +8,6 @@ exports[`components/rhsChannelBoardItem render board 1`] = `
     <div
       class="board-info"
     >
-      
       <span
         class="title"
       >

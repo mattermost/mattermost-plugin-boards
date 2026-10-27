@@ -6,25 +6,33 @@ package integrationtests
 import (
 	"testing"
 
+	"github.com/mattermost/mattermost-plugin-boards/server/client"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSharing(t *testing.T) {
-	th := SetupTestHelper(t).InitBasic()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
+
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
 
 	var boardID string
 	token := utils.NewID(utils.IDTypeToken)
 
 	t.Run("an unauthenticated client should not be able to get a sharing", func(t *testing.T) {
-		sharing, resp := th.Client.GetSharing("board-id")
+		// Use unauthenticated client
+		unauthClient := client.NewClient(th.Server.Config().ServerRoot, "")
+		sharing, resp := unauthClient.GetSharing("board-id")
 		th.CheckUnauthorized(resp)
 		require.Nil(t, sharing)
 	})
 
 	t.Run("Check no initial sharing", func(t *testing.T) {
+		// Restore authenticated client
+		th.Client = clients.TeamMember
 		teamID := "0"
 		newBoard := &model.Board{
 			TeamID: teamID,
@@ -47,6 +55,10 @@ func TestSharing(t *testing.T) {
 	})
 
 	t.Run("POST sharing, config = false", func(t *testing.T) {
+		// Explicitly set config to false for this test
+		th.Server.Config().EnablePublicSharedBoards = false
+		th.Server.UpdateAppConfig()
+
 		sharing := model.Sharing{
 			ID:       boardID,
 			Token:    token,

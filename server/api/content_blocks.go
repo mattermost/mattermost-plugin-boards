@@ -61,6 +61,11 @@ func (a *API) handleMoveBlockTo(w http.ResponseWriter, r *http.Request) {
 	where := mux.Vars(r)["where"]
 	userID := getUserID(r)
 
+	if where != "after" && where != "before" {
+		a.errorResponse(w, r, model.NewErrBadRequest("invalid where parameter, use before or after"))
+		return
+	}
+
 	block, err := a.app.GetBlockByID(blockID)
 	if err != nil {
 		a.errorResponse(w, r, err)
@@ -70,16 +75,6 @@ func (a *API) handleMoveBlockTo(w http.ResponseWriter, r *http.Request) {
 	dstBlock, err := a.app.GetBlockByID(dstBlockID)
 	if err != nil {
 		a.errorResponse(w, r, err)
-		return
-	}
-
-	if where != "after" && where != "before" {
-		a.errorResponse(w, r, model.NewErrBadRequest("invalid where parameter, use before or after"))
-		return
-	}
-
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to board"))
 		return
 	}
 

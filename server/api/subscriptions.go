@@ -52,6 +52,7 @@ func (a *API) handleCreateSubscription(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 
+	userID := getUserID(r)
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		a.errorResponse(w, r, err)
@@ -70,11 +71,8 @@ func (a *API) handleCreateSubscription(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
-
 	// User can only create subscriptions for themselves (for now)
-	if session.UserID != sub.SubscriberID {
+	if userID != sub.SubscriberID {
 		a.errorResponse(w, r, model.NewErrBadRequest("userID and subscriberID mismatch"))
 		return
 	}
@@ -147,20 +145,18 @@ func (a *API) handleDeleteSubscription(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
-
 	vars := mux.Vars(r)
 	blockID := vars["blockID"]
 	subscriberID := vars["subscriberID"]
 
+	userID := getUserID(r)
 	auditRec := a.makeAuditRecord(r, "deleteSubscription", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)
 	auditRec.AddMeta("block_id", blockID)
 	auditRec.AddMeta("subscriber_id", subscriberID)
 
 	// User can only delete subscriptions for themselves
-	if session.UserID != subscriberID {
+	if userID != subscriberID {
 		a.errorResponse(w, r, model.NewErrPermission("access denied"))
 		return
 	}
@@ -206,18 +202,16 @@ func (a *API) handleGetSubscriptions(w http.ResponseWriter, r *http.Request) {
 	//     description: internal error
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
-
 	vars := mux.Vars(r)
 	subscriberID := vars["subscriberID"]
 
+	userID := getUserID(r)
 	auditRec := a.makeAuditRecord(r, "getSubscriptions", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelRead, auditRec)
 	auditRec.AddMeta("subscriber_id", subscriberID)
 
 	// User can only get subscriptions for themselves (for now)
-	if session.UserID != subscriberID {
+	if userID != subscriberID {
 		a.errorResponse(w, r, model.NewErrPermission("access denied"))
 		return
 	}

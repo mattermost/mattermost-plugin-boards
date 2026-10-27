@@ -8,6 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	mmModel "github.com/mattermost/mattermost/server/public/model"
+
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/store"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
@@ -24,10 +26,14 @@ func StoreTestUserStore(t *testing.T, setup func(t *testing.T) (store.Store, fun
 
 func testCreateAndGetUser(t *testing.T, store store.Store) {
 	user := &model.User{
-		ID:       utils.NewID(utils.IDTypeUser),
+		ID:       mmModel.NewId(),
 		Username: "damao",
 		Email:    "mock@email.com",
+		CreateAt: utils.GetMillis(),
+		UpdateAt: utils.GetMillis(),
 	}
+
+	insertTestUser(t, store, user.ID, user.Username, user.Email)
 
 	t.Run("GetUserByID", func(t *testing.T) {
 		got, err := store.GetUserByID(user.ID)

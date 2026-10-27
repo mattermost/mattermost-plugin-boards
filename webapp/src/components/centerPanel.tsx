@@ -137,7 +137,7 @@ const CenterPanel = (props: Props) => {
         }
     }, [selectedCardIds, props.readonly, props.cards, props.board.id])
 
-    useHotkeys('del,backspace', (e: KeyboardEvent) => {
+    useHotkeys('delete,backspace', (e: KeyboardEvent) => {
         if (e.target !== document.body || props.readonly) {
             return
         }

@@ -8,7 +8,7 @@ import CompassIcon from './compassIcon'
 
 import './duplicate.scss'
 
-export default function DuplicateIcon(): JSX.Element {
+export default function DuplicateIcon(): React.JSX.Element {
     return (
         <CompassIcon
             icon='content-copy'

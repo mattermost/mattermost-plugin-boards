@@ -4,7 +4,7 @@
 import React, {useEffect, useState} from 'react'
 import {FormattedMessage, useIntl} from 'react-intl'
 
-import {Board, IPropertyTemplate} from '../../blocks/board'
+import {Board, IPropertyTemplate, safePropertyString} from '../../blocks/board'
 import {Card} from '../../blocks/card'
 import {BoardView} from '../../blocks/boardView'
 
@@ -79,7 +79,7 @@ const CardDetailProperties = (props: Props) => {
                 defaultMessage: 'Are you sure you want to change property "{propertyName}" {customText}? This will affect value(s) across {numOfCards} card(s) in this board, and can result in data loss.',
             },
             {
-                propertyName: propertyTemplate.name,
+                propertyName: safePropertyString(propertyTemplate.name),
                 customText: subTextString,
                 numOfCards: affectsNumOfCards,
             }),
@@ -109,10 +109,10 @@ const CardDetailProperties = (props: Props) => {
                 id: 'CardDetailProperty.confirm-delete-subtext',
                 defaultMessage: 'Are you sure you want to delete the property "{propertyName}"? Deleting it will delete the property from all cards in this board.',
             },
-            {propertyName: propertyTemplate.name}),
+            {propertyName: safePropertyString(propertyTemplate.name)}),
             confirmButtonText: intl.formatMessage({id: 'CardDetailProperty.delete-action-button', defaultMessage: 'Delete'}),
             onConfirm: async () => {
-                const deletingPropName = propertyTemplate.name
+                const deletingPropName = safePropertyString(propertyTemplate.name)
                 setShowConfirmationDialog(false)
                 try {
                     await mutator.deleteProperty(board, views, cards, propertyTemplate.id)
@@ -132,18 +132,19 @@ const CardDetailProperties = (props: Props) => {
     return (
         <div className='octo-propertylist CardDetailProperties'>
             {board.cardProperties.map((propertyTemplate: IPropertyTemplate) => {
+                const propertyName = safePropertyString(propertyTemplate.name)
                 return (
                     <div
                         key={propertyTemplate.id + '-' + propertyTemplate.type}
                         className='octo-propertyrow'
                     >
-                        {(props.readonly || !canEditBoardProperties) && <div className='octo-propertyname octo-propertyname--readonly'>{propertyTemplate.name}</div>}
+                        {(props.readonly || !canEditBoardProperties) && <div className='octo-propertyname octo-propertyname--readonly'>{propertyName}</div>}
                         {!props.readonly && canEditBoardProperties &&
                             <MenuWrapper isOpen={propertyTemplate.id === newTemplateId}>
-                                <div className='octo-propertyname'><Button>{propertyTemplate.name}</Button></div>
+                                <div className='octo-propertyname'><Button>{propertyName}</Button></div>
                                 <PropertyMenu
                                     propertyId={propertyTemplate.id}
-                                    propertyName={propertyTemplate.name}
+                                    propertyName={propertyName}
                                     propertyType={propRegistry.get(propertyTemplate.type)}
                                     onTypeAndNameChanged={(newType: PropertyType, newName: string) => onPropertyChangeSetAndOpenConfirmationDialog(newType, newName, propertyTemplate)}
                                     onDelete={() => onPropertyDeleteSetAndOpenConfirmationDialog(propertyTemplate)}

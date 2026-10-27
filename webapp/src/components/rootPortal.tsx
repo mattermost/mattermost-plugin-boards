@@ -9,7 +9,7 @@ type Props = {
     children: React.ReactNode
 }
 
-const RootPortal = (props: Props): JSX.Element => {
+const RootPortal = (props: Props): React.JSX.Element => {
     const [el] = useState(document.createElement('div'))
     const rootPortal = document.getElementById('focalboard-root-portal')
 

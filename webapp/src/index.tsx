@@ -5,7 +5,7 @@ import React, {useEffect} from 'react'
 import {createIntl, createIntlCache} from 'react-intl'
 import {Store, Action} from 'redux'
 import {Provider as ReduxProvider} from 'react-redux'
-import {createBrowserHistory, History} from 'history'
+import {History} from 'history'
 import {GlobalState} from '@mattermost/types/store'
 import {selectTeam} from 'mattermost-redux/actions/teams'
 
@@ -21,6 +21,8 @@ import WithWebSockets from './components/withWebSockets'
 import {setChannel} from './store/channels'
 import {initialLoad} from './store/initialLoad'
 import {Utils} from './utils'
+import {customHistory} from './desktopHistory'
+import {resolveChannelForBoards} from './resolveChannel'
 import './styles/focalboard-variables.scss'
 import './styles/main.scss'
 import './styles/labels.scss'
@@ -68,64 +70,12 @@ type Props = {
     webSocketClient: MMWebSocketClient
 }
 
-const doBrowserHistoryPush = (path: string) => {
-    if (windowAny.desktopAPI?.sendBrowserHistoryPush) {
-        windowAny.desktopAPI.sendBrowserHistoryPush(path)
-    } else {
-        window.postMessage(
-            {
-                type: 'browser-history-push',
-                message: { path },
-            },
-            window.location.origin,
-        )
-    }
-}
-
-const handleBrowserHistoryPush = (pathName: string, history: ReturnType<typeof createBrowserHistory>) => {
-    if (!pathName || !pathName.startsWith('/boards')) {
-        return
-    }
-
-    Utils.log(`Navigating Boards to ${pathName}`)
-    history.replace(pathName.replace('/boards', ''))
-}
-
-function customHistory() {
-    const history = createBrowserHistory({ basename: Utils.getFrontendBaseURL() })
-
-    if (Utils.isDesktop()) {
-        if (windowAny.desktopAPI?.onBrowserHistoryPush) {
-            windowAny.desktopAPI.onBrowserHistoryPush((pathName) => handleBrowserHistoryPush(pathName, history))
-        } else {
-            window.addEventListener('message', (event: MessageEvent) => {
-                if (event.origin !== windowAny.location.origin) {
-                    return
-                }
-
-                handleBrowserHistoryPush(event.data.message?.pathName, history)
-            })
-        }
-    }
-
-    return {
-        ...history,
-        push: (path: string, state?: unknown) => {
-            if (Utils.isDesktop()) {
-                doBrowserHistoryPush(`${windowAny.frontendBaseURL}${path}`)
-            } else {
-                history.push(path, state as Record<string, never>)
-            }
-        },
-    }
-}
-
 let browserHistory: History<unknown>
 
 const MainApp = (props: Props) => {
     useEffect(() => {
+        // Note: the host webapp owns the `app__body` class on `document.body` across product navigation.
         document.body.classList.add('focalboard-body')
-        document.body.classList.add('app__body')
         const root = document.getElementById('root')
         if (root) {
             root.classList.add('focalboard-plugin-root')
@@ -133,7 +83,6 @@ const MainApp = (props: Props) => {
 
         return () => {
             document.body.classList.remove('focalboard-body')
-            document.body.classList.remove('app__body')
             if (root) {
                 root.classList.remove('focalboard-plugin-root')
             }
@@ -169,7 +118,7 @@ export default class Plugin {
     registry?: PluginRegistry
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
-    async initialize(registry: PluginRegistry, mmStore: Store<GlobalState, Action<Record<string, unknown>>>): Promise<void> {
+    async initialize(registry: PluginRegistry, mmStore: Store<GlobalState, Action>): Promise<void> {
         const siteURL = mmStore.getState().entities.general.config.SiteURL
         const subpath = siteURL ? getSubpath(siteURL) : ''
         windowAny.frontendBaseURL = subpath + windowAny.frontendBaseURL
@@ -234,8 +183,10 @@ export default class Plugin {
         let prevTeamID: string
 
         const currentChannel = mmStore.getState().entities.channels.currentChannelId
-        const currentChannelObj = mmStore.getState().entities.channels.channels[currentChannel]
-        store.dispatch(setChannel(currentChannelObj))
+        const initialChannelObj = resolveChannelForBoards(mmStore.getState(), currentChannel)
+        if (initialChannelObj) {
+            store.dispatch(setChannel(initialChannelObj))
+        }
 
         mmStore.subscribe(() => {
             const currentUserId = mmStore.getState().entities.users.currentUserId
@@ -244,8 +195,22 @@ export default class Plugin {
                 localStorage.setItem('focalboardLastViewedChannel:' + currentUserId, currentChannel)
                 lastViewedChannel = currentChannel
                 octoClient.channelId = currentChannel
-                const currentChannelObj = mmStore.getState().entities.channels.channels[lastViewedChannel]
-                store.dispatch(setChannel(currentChannelObj))
+                const currentChannelObj = resolveChannelForBoards(mmStore.getState(), lastViewedChannel)
+                if (currentChannelObj) {
+                    store.dispatch(setChannel(currentChannelObj))
+                }
+            } else if (currentChannel) {
+                // Member profiles can arrive after the channel is selected.
+                // Refresh the stored name without treating this as a channel switch.
+                const currentChannelObj = resolveChannelForBoards(mmStore.getState(), currentChannel)
+                const storedChannel = store.getState().channels.current
+                if (
+                    currentChannelObj &&
+                    (currentChannelObj.id !== storedChannel?.id ||
+                        currentChannelObj.display_name !== storedChannel?.display_name)
+                ) {
+                    store.dispatch(setChannel(currentChannelObj))
+                }
             }
 
             // Watch for change in active team.

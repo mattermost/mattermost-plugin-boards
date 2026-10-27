@@ -18,7 +18,7 @@ import octoClient from '../../octoClient'
 import ImageElement from './imageElement'
 
 jest.mock('../../octoClient')
-const mockedOcto = mocked(octoClient, true)
+const mockedOcto = mocked(octoClient)
 mockedOcto.getFileAsDataUrl.mockResolvedValue({url: 'test.jpg'})
 
 describe('components/content/ImageElement', () => {

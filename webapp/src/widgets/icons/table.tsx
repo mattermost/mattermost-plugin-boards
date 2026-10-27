@@ -6,7 +6,7 @@ import React from 'react'
 
 import './table.scss'
 
-export default function TableIcon(): JSX.Element {
+export default function TableIcon(): React.JSX.Element {
     return (
         <svg
             width='24'

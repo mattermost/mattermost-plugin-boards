@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`components/boardSelector escape button should unmount the component 1`] = `
 <div>
@@ -78,8 +78,6 @@ exports[`components/boardSelector escape button should unmount the component 1`]
             <div
               class="searchResults"
             >
-              
-              
               <div
                 class="noResults introScreen"
               >
@@ -493,8 +491,6 @@ exports[`components/boardSelector renders without start searching 1`] = `
             <div
               class="searchResults"
             >
-              
-              
               <div
                 class="noResults introScreen"
               >

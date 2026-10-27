@@ -22,8 +22,12 @@ import (
 const emptyString = "empty"
 
 var errEmptyFilename = errors.New("IsFileArchived: empty filename not allowed")
-var ErrFileNotFound = errors.New("file not found")
-var ErrFileNotReferencedByBoard = errors.New("file not referenced by board")
+
+var (
+	ErrFileNotFound             = errors.New("file not found")
+	ErrFileNotReferencedByBoard = errors.New("file not referenced by board")
+	ErrBoardIsNil               = errors.New("board is nil")
+)
 
 func (a *App) SaveFile(reader io.Reader, teamID, boardID, filename string, asTemplate bool) (string, error) {
 	// NOTE: File extension includes the dot
@@ -87,31 +91,114 @@ func (a *App) GetFileInfo(filename string) (*mm_model.FileInfo, error) {
 	return fileInfo, nil
 }
 
+// isBoardsFilePath reports whether a normalized file path is under the regular
+// boards storage root (boards/YYYYMMDD/...). Template files (teamID/boardID/filename)
+// return false.
+func isBoardsFilePath(normalizedPath string) bool {
+	return strings.HasPrefix(normalizedPath, utils.BoardsFilePathPrefix)
+}
+
 // ValidateFileOwnership checks if a file belongs to the specified board and team.
 func (a *App) ValidateFileOwnership(teamID, boardID, filename string) error {
 	fileInfo, err := a.GetFileInfo(filename)
 	if err != nil {
 		return err
 	}
-	if fileInfo != nil && fileInfo.Path != "" && fileInfo.Path != emptyString {
-		expectedPath := filepath.Join(teamID, boardID, filename)
-		if fileInfo.Path == expectedPath {
-			return nil
+	if fileInfo != nil {
+		normalizedPath := filepath.ToSlash(fileInfo.Path)
+		if !isBoardsFilePath(normalizedPath) {
+			// Template path: teamID/boardID/filename
+			expectedPath := filepath.ToSlash(filepath.Join(teamID, boardID, filename))
+			if normalizedPath == expectedPath {
+				return nil
+			}
+			// Template path exists but doesn't match this board — fall through to block-scan.
+		} else {
+			// Regular file: boards/YYYYMMDD/{boardID}/{filename} (new) or
+			// boards/YYYYMMDD/{filename} (old, no boardID in path).
+			parts := strings.SplitN(normalizedPath, "/", 4)
+			if len(parts) == 4 {
+				if parts[2] == boardID {
+					return nil
+				}
+				return model.NewErrPermission("file does not belong to the specified board")
+			}
+			// Old 3-part path has no board info — fall through to block-scan.
 		}
-		if err := a.validateFileReferencedByBoard(boardID, filename); err != nil {
+	}
+	if err := a.validateFileReferencedByBoard(boardID, filename); err != nil {
+		if errors.Is(err, ErrFileNotReferencedByBoard) {
 			return model.NewErrPermission("file does not belong to the specified board")
 		}
-	} else {
-		if err := a.validateFileReferencedByBoard(boardID, filename); err != nil {
-			return model.NewErrPermission("file does not belong to the specified board")
-		}
+		return err
 	}
 	return nil
 }
 
+// validateFileOwnershipForBlockWrite verifies that a file belongs to the given board
+// before a block reference to it is persisted. Three path formats are handled:
+//
+//   - teamID/boardID/filename  (template)       → ownership from path
+//   - boards/YYYYMMDD/boardID/filename  (new)   → ownership from path
+//   - boards/YYYYMMDD/filename  (legacy)         → ad-hoc block scan
+func (a *App) validateFileOwnershipForBlockWrite(teamID, boardID, filename string) error {
+	fileInfo, err := a.GetFileInfo(filename)
+	if err != nil {
+		if model.IsErrNotFound(err) {
+			return nil // no FileInfo record, allow for backward compatibility
+		}
+		return err
+	}
+
+	if fileInfo == nil {
+		return nil
+	}
+
+	normalizedPath := filepath.ToSlash(fileInfo.Path)
+	if !isBoardsFilePath(normalizedPath) {
+		// Template path: teamID/boardID/filename
+		expectedPath := filepath.ToSlash(filepath.Join(teamID, boardID, filename))
+		if normalizedPath == expectedPath {
+			return nil
+		}
+		return model.NewErrPermission("file does not belong to the specified board")
+	}
+
+	parts := strings.SplitN(normalizedPath, "/", 4)
+	if len(parts) == 4 {
+		// New format: boards/YYYYMMDD/boardID/filename — ownership from path.
+		if parts[2] == boardID {
+			return nil
+		}
+		return model.NewErrPermission("file does not belong to the specified board")
+	}
+
+	// Legacy 3-part path: boards/YYYYMMDD/filename — no boardID in path.
+	// Fall back to a block scan to verify the file is already referenced by
+	// this board. This is the same check used on the read path.
+	if err := a.validateFileReferencedByBoard(boardID, filename); err != nil {
+		if errors.Is(err, ErrFileNotReferencedByBoard) {
+			return model.NewErrPermission("file does not belong to the specified board")
+		}
+		return err
+	}
+	return nil
+}
+
+// blockReferencesFile reports whether a block points at filename. The webapp writes
+// fileId for images and attachments alike, and legacy attachmentId values are
+// normalized to fileId, so only fileId is checked.
+func blockReferencesFile(block *model.Block, filename string) bool {
+	if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID == filename {
+		return true
+	}
+
+	return false
+}
+
 // validateFileReferencedByBoard checks if a file is referenced by blocks in the specified board.
-// Files use different storage patterns (teamID/boardID/filename for templates, boards/YYYYMMDD/filename for regular files).
-// Path mismatches don't indicate malicious files, just different storage patterns.
+// This is the ownership proof for legacy files stored at boards/YYYYMMDD/filename, whose path
+// carries no board ID. Blocks are already scoped to boardID, so a match means the board owns the file.
 func (a *App) validateFileReferencedByBoard(boardID, filename string) error {
 	imageBlocks, err := a.store.GetBlocksWithType(boardID, model.TypeImage)
 	if err != nil {
@@ -123,22 +210,14 @@ func (a *App) validateFileReferencedByBoard(boardID, filename string) error {
 		return err
 	}
 
-	// Check image blocks
 	for _, block := range imageBlocks {
-		if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID == filename {
-			return nil
-		}
-		if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok && attachmentID == filename {
+		if blockReferencesFile(block, filename) {
 			return nil
 		}
 	}
 
-	// Check attachment blocks
 	for _, block := range attachmentBlocks {
-		if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID == filename {
-			return nil
-		}
-		if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok && attachmentID == filename {
+		if blockReferencesFile(block, filename) {
 			return nil
 		}
 	}
@@ -200,6 +279,9 @@ func (a *App) GetFilePath(teamID, boardID, fileName string) (*mm_model.FileInfo,
 			if err != nil {
 				return nil, "", fmt.Errorf("GetFilePath: cannot validate board for GlobalTeamID: %w", err)
 			}
+			if board == nil {
+				return nil, "", fmt.Errorf("GetFilePath: %w for GlobalTeamID", ErrBoardIsNil)
+			}
 			isTemplate = board.IsTemplate
 		}
 
@@ -243,13 +325,14 @@ func getDestinationFilePath(isTemplate bool, teamID, boardID, filename string) (
 		return "", fmt.Errorf("invalid filename: %w", err)
 	}
 
-	// if saving a file for a template, save using the "old method" that is /teamID/boardID/fileName
-	// this will prevent template files from being deleted by DataRetention,
-	// which deletes all files inside the "date" subdirectory
+	// Template files are stored at teamID/boardID/filename (no "boards/" prefix)
+	// so they can be identified by path alone and are not affected by DataRetention.
 	if isTemplate {
 		return filepath.Join(teamID, boardID, filename), nil
 	}
-	return filepath.Join(utils.GetBaseFilePath(), filename), nil
+	// Regular files: boards/YYYYMMDD/{boardID}/{filename}
+	// The boardID in the path makes ownership verifiable without extra DB lookups.
+	return filepath.Join(utils.GetBaseFilePath(), boardID, filename), nil
 }
 
 // validatePathComponent ensures a path component contains only valid characters.
@@ -278,6 +361,9 @@ func (a *App) GetFileReader(teamID, boardID, filename string) (filestore.ReadClo
 		board, err := a.GetBoard(boardID)
 		if err != nil {
 			return nil, fmt.Errorf("GetFileReader: cannot validate board for GlobalTeamID: %w", err)
+		}
+		if board == nil {
+			return nil, fmt.Errorf("GetFileReader: %w for GlobalTeamID", ErrBoardIsNil)
 		}
 		isTemplate = board.IsTemplate
 	}
@@ -373,93 +459,18 @@ func (a *App) processFileIDPatch(block *model.Block, fileID string, newFileNames
 			UpdatedFields: map[string]interface{}{
 				model.BlockFieldFileId: newFileName,
 			},
-			DeletedFields: []string{model.BlockFieldAttachmentId},
 		})
 	} else {
 		// File was skipped (doesn't exist or copy failed)
 		// Remove the file reference from the block so frontend doesn't try to load missing file
 		blockIDs = append(blockIDs, block.ID)
 		blockPatches = append(blockPatches, model.BlockPatch{
-			DeletedFields: []string{model.BlockFieldFileId, model.BlockFieldAttachmentId},
+			DeletedFields: []string{model.BlockFieldFileId},
 		})
 		a.logger.Debug(
 			"CopyAndUpdateCardFiles: Removing file reference from block (file not found/copied)",
 			mlog.String("blockID", block.ID),
 			mlog.String("fileID", fileID),
-		)
-	}
-
-	return blockIDs, blockPatches, nil
-}
-
-// processAttachmentIDPatch handles patching for attachmentID field in a block.
-func (a *App) processAttachmentIDPatch(block *model.Block, attachmentID string, newFileNames map[string]string, blockIDs []string, blockPatches []model.BlockPatch) ([]string, []model.BlockPatch, error) {
-	if err := model.ValidateFileId(attachmentID); err != nil {
-		errMessage := fmt.Sprintf("invalid characters in block with key: %s, %s", block.Fields[model.BlockFieldAttachmentId], err)
-		return nil, nil, model.NewErrBadRequest(errMessage)
-	}
-
-	// Only patch if the file was successfully copied (exists in newFileNames)
-	if newFileName, exists := newFileNames[attachmentID]; exists && newFileName != "" {
-		// Check if this block is already in the patch list (has fileID)
-		blockAlreadyPatched := false
-		for i, bid := range blockIDs {
-			if bid == block.ID {
-				// Block already being patched, update the patch instead
-				blockPatches[i].UpdatedFields[model.BlockFieldAttachmentId] = newFileName
-				// Remove attachmentId from DeletedFields if it's there
-				for j, df := range blockPatches[i].DeletedFields {
-					if df == model.BlockFieldAttachmentId {
-						blockPatches[i].DeletedFields = append(blockPatches[i].DeletedFields[:j], blockPatches[i].DeletedFields[j+1:]...)
-						break
-					}
-				}
-				blockAlreadyPatched = true
-				break
-			}
-		}
-		if !blockAlreadyPatched {
-			blockIDs = append(blockIDs, block.ID)
-			blockPatches = append(blockPatches, model.BlockPatch{
-				UpdatedFields: map[string]interface{}{
-					model.BlockFieldAttachmentId: newFileName,
-				},
-				DeletedFields: []string{model.BlockFieldFileId},
-			})
-		}
-	} else {
-		// File was skipped (doesn't exist or copy failed)
-		// Check if block is already in patch list (might have fileID patch)
-		blockAlreadyInPatch := false
-		for i, bid := range blockIDs {
-			if bid == block.ID {
-				// Block already being patched, just add attachmentId to DeletedFields
-				blockAlreadyInPatch = true
-				// Check if attachmentId is not already in DeletedFields
-				alreadyDeleted := false
-				for _, df := range blockPatches[i].DeletedFields {
-					if df == model.BlockFieldAttachmentId {
-						alreadyDeleted = true
-						break
-					}
-				}
-				if !alreadyDeleted {
-					blockPatches[i].DeletedFields = append(blockPatches[i].DeletedFields, model.BlockFieldAttachmentId)
-				}
-				break
-			}
-		}
-		if !blockAlreadyInPatch {
-			// Remove the attachment reference from the block
-			blockIDs = append(blockIDs, block.ID)
-			blockPatches = append(blockPatches, model.BlockPatch{
-				DeletedFields: []string{model.BlockFieldFileId, model.BlockFieldAttachmentId},
-			})
-		}
-		a.logger.Debug(
-			"CopyAndUpdateCardFiles: Removing attachment reference from block (file not found/copied)",
-			mlog.String("blockID", block.ID),
-			mlog.String("attachmentID", attachmentID),
 		)
 	}
 
@@ -491,6 +502,7 @@ func (a *App) CopyAndUpdateCardFiles(boardID, userID string, blocks []*model.Blo
 	newFileNames, err := a.CopyCardFiles(boardID, blocks, asTemplate)
 	if err != nil {
 		a.logger.Error("Could not copy files while duplicating board", mlog.String("BoardID", boardID), mlog.Err(err))
+		return err
 	}
 
 	// blocks now has updated file ids for any blocks containing files.  We need to update the database for them.
@@ -502,14 +514,6 @@ func (a *App) CopyAndUpdateCardFiles(boardID, userID string, blocks []*model.Blo
 			if fileID, ok := block.Fields[model.BlockFieldFileId].(string); ok && fileID != "" {
 				var patchErr error
 				blockIDs, blockPatches, patchErr = a.processFileIDPatch(block, fileID, newFileNames, blockIDs, blockPatches)
-				if patchErr != nil {
-					return patchErr
-				}
-			}
-
-			if attachmentID, ok := block.Fields[model.BlockFieldAttachmentId].(string); ok && attachmentID != "" {
-				var patchErr error
-				blockIDs, blockPatches, patchErr = a.processAttachmentIDPatch(block, attachmentID, newFileNames, blockIDs, blockPatches)
 				if patchErr != nil {
 					return patchErr
 				}
@@ -557,12 +561,9 @@ func (a *App) CopyCardFiles(sourceBoardID string, copiedBlocks []*model.Block, a
 			continue
 		}
 
-		fileID, isOk := block.Fields["fileId"].(string)
-		if !isOk {
-			fileID, isOk = block.Fields["attachmentId"].(string)
-			if !isOk {
-				continue
-			}
+		fileID, isOk := block.Fields[model.BlockFieldFileId].(string)
+		if !isOk || fileID == "" {
+			continue
 		}
 
 		// Check if we've already processed this fileID (multiple blocks can reference same file)
@@ -573,6 +574,20 @@ func (a *App) CopyCardFiles(sourceBoardID string, copiedBlocks []*model.Block, a
 		if err = model.ValidateFileId(fileID); err != nil {
 			errMessage := fmt.Sprintf("Could not validate file ID while duplicating board with fileId: %s", fileID)
 			return nil, model.NewErrBadRequest(errMessage)
+		}
+
+		// Defense in depth: fileID can be attacker-controlled on the copy path.
+		// Ensure the referenced file actually belongs to the source board before its
+		// bytes are read or copied, so a foreign FileInfo cannot be pulled into this
+		// board's storage.
+		if err = a.validateFileOwnershipForBlockWrite(sourceBoard.TeamID, sourceBoard.ID, fileID); err != nil {
+			a.logger.Warn(
+				"CopyCardFiles: refusing to copy file that does not belong to the source board",
+				mlog.String("sourceBoardID", sourceBoard.ID),
+				mlog.String("fileID", fileID),
+				mlog.Err(err),
+			)
+			return nil, err
 		}
 
 		// create unique filename

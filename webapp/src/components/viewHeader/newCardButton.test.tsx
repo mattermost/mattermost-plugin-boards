@@ -80,7 +80,7 @@ describe('components/viewHeader/newCardButton', () => {
         expect(container).toMatchSnapshot()
         const buttonAdd = screen.getByRole('button', {name: 'Empty card'})
         userEvent.click(buttonAdd)
-        expect(mockFunction).toBeCalledTimes(1)
+        expect(mockFunction).toHaveBeenCalledTimes(1)
     })
     test('return NewCardButton and addCardTemplate', () => {
         const {container} = render(
@@ -100,6 +100,6 @@ describe('components/viewHeader/newCardButton', () => {
         expect(container).toMatchSnapshot()
         const buttonAddTemplate = screen.getByRole('button', {name: 'New template'})
         userEvent.click(buttonAddTemplate)
-        expect(mockFunction).toBeCalledTimes(1)
+        expect(mockFunction).toHaveBeenCalledTimes(1)
     })
 })

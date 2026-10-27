@@ -1,20 +1,20 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`components/sidebarBoardItem renders default icon if no custom icon set 1`] = `
 <div>
   <div
-    data-rbd-droppable-context-id="1"
-    data-rbd-droppable-id="droppable_id"
+    data-rfd-droppable-context-id="_r_4_"
+    data-rfd-droppable-id="droppable_id"
   >
     <div
-      data-rbd-draggable-context-id="1"
-      data-rbd-draggable-id="board_id_1"
+      data-rfd-draggable-context-id="_r_4_"
+      data-rfd-draggable-id="board_id_1"
     >
       <div
-        aria-describedby="rbd-hidden-text-1-hidden-text-3"
+        aria-describedby="rfd-hidden-text-_r_4_-hidden-text-_r_5_"
         class="SidebarBoardItem subitem active"
-        data-rbd-drag-handle-context-id="1"
-        data-rbd-drag-handle-draggable-id="board_id_1"
+        data-rfd-drag-handle-context-id="_r_4_"
+        data-rfd-drag-handle-draggable-id="board_id_1"
         draggable="false"
         role="button"
         tabindex="0"
@@ -86,18 +86,18 @@ exports[`components/sidebarBoardItem renders default icon if no custom icon set 
 exports[`components/sidebarBoardItem sidebar board item 1`] = `
 <div>
   <div
-    data-rbd-droppable-context-id="0"
-    data-rbd-droppable-id="droppable_id"
+    data-rfd-droppable-context-id="_r_0_"
+    data-rfd-droppable-id="droppable_id"
   >
     <div
-      data-rbd-draggable-context-id="0"
-      data-rbd-draggable-id="board_id_1"
+      data-rfd-draggable-context-id="_r_0_"
+      data-rfd-draggable-id="board_id_1"
     >
       <div
-        aria-describedby="rbd-hidden-text-0-hidden-text-0"
+        aria-describedby="rfd-hidden-text-_r_0_-hidden-text-_r_1_"
         class="SidebarBoardItem subitem active"
-        data-rbd-drag-handle-context-id="0"
-        data-rbd-drag-handle-draggable-id="board_id_1"
+        data-rfd-drag-handle-context-id="_r_0_"
+        data-rfd-drag-handle-draggable-id="board_id_1"
         draggable="false"
         role="button"
         tabindex="0"
@@ -389,18 +389,18 @@ exports[`components/sidebarBoardItem sidebar board item 1`] = `
 exports[`components/sidebarBoardItem sidebar board item for guest 1`] = `
 <div>
   <div
-    data-rbd-droppable-context-id="2"
-    data-rbd-droppable-id="droppable_id"
+    data-rfd-droppable-context-id="_r_8_"
+    data-rfd-droppable-id="droppable_id"
   >
     <div
-      data-rbd-draggable-context-id="2"
-      data-rbd-draggable-id="board_id_1"
+      data-rfd-draggable-context-id="_r_8_"
+      data-rfd-draggable-id="board_id_1"
     >
       <div
-        aria-describedby="rbd-hidden-text-2-hidden-text-6"
+        aria-describedby="rfd-hidden-text-_r_8_-hidden-text-_r_9_"
         class="SidebarBoardItem subitem active"
-        data-rbd-drag-handle-context-id="2"
-        data-rbd-drag-handle-draggable-id="board_id_1"
+        data-rfd-drag-handle-context-id="_r_8_"
+        data-rfd-drag-handle-draggable-id="board_id_1"
         draggable="false"
         role="button"
         tabindex="0"

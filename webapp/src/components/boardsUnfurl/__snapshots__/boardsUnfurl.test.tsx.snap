@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`components/boardsUnfurl/BoardsUnfurl renders normally 1`] = `
 <div>
@@ -39,9 +39,7 @@ exports[`components/boardsUnfurl/BoardsUnfurl renders normally 1`] = `
     >
       <div
         class="avatar"
-      >
-        
-      </div>
+      />
       <div
         class="timestamp_properties"
       >

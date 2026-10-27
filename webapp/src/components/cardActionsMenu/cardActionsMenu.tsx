@@ -26,7 +26,7 @@ type Props = {
     children?: ReactNode
 }
 
-export const CardActionsMenu = (props: Props): JSX.Element => {
+export const CardActionsMenu = (props: Props): React.JSX.Element => {
     const {cardId} = props
 
     const me = useAppSelector<IUser|null>(getMe)

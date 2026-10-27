@@ -32,7 +32,7 @@ type Props = {
     onDelete?: (block: Block) => void
 }
 
-const AttachmentElement = (props: Props): JSX.Element|null => {
+const AttachmentElement = (props: Props): React.JSX.Element|null => {
     const {block, onDelete} = props
     const [fileInfo, setFileInfo] = useState<FileInfo>({})
     const [fileSize, setFileSize] = useState<string>()

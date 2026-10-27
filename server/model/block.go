@@ -23,12 +23,14 @@ const (
 	BlockFieldsMaxRunes    = 800000
 	BlockFieldFileId       = "fileId"
 	BlockFieldAttachmentId = "attachmentId"
+	BlockFieldProperties   = "properties"
 )
 
 var (
 	ErrBlockEmptyBoardID            = errors.New("boardID is empty")
 	ErrBlockTitleSizeLimitExceeded  = errors.New("block title size limit exceeded")
 	ErrBlockFieldsSizeLimitExceeded = errors.New("block fields size limit exceeded")
+	ErrBlockPropertiesInvalidType   = errors.New("block fields.properties must be a JSON object")
 )
 
 // Block is the basic data unit
@@ -141,6 +143,11 @@ type BoardModifier func(board *Board, cache map[string]interface{}) bool
 // Return true to import the block or false to skip import.
 type BlockModifier func(block *Block, cache map[string]interface{}) bool
 
+// BoardValidator is a callback invoked for each board during an import to
+// enforce authorization before any board is created. Returning a non-nil
+// error aborts the import.
+type BoardValidator func(board *Board) error
+
 func BlocksFromJSON(data io.Reader) []*Block {
 	var blocks []*Block
 	_ = json.NewDecoder(data).Decode(&blocks)
@@ -181,19 +188,50 @@ func (b *Block) baseValidations() error {
 		return ErrBlockFieldsSizeLimitExceeded
 	}
 
-	if fileID, ok := b.Fields[BlockFieldFileId].(string); ok {
+	if fileID, ok := b.Fields[BlockFieldFileId].(string); ok && fileID != "" {
 		if err = ValidateFileId(fileID); err != nil {
 			return err
 		}
 	}
 
-	if attachmentId, ok := b.Fields[BlockFieldAttachmentId].(string); ok {
-		if err = ValidateFileId(attachmentId); err != nil {
-			return err
+	if propsIface, present := b.Fields[BlockFieldProperties]; present {
+		if _, ok := propsIface.(map[string]interface{}); !ok {
+			return ErrBlockPropertiesInvalidType
 		}
 	}
 
 	return nil
+}
+
+// NormalizeLegacyFileFields rewrites the deprecated attachmentId field to fileId.
+// Archives exported by older Boards releases still carry attachmentId, and older
+// clients may still send it, so this keeps stored data on the current field name.
+// A non-empty string value is moved to fileId (taking precedence over any existing
+// fileId, matching the legacy read order); any other attachmentId value is dropped
+// without touching fileId. This mirrors the normalization applied to already-stored data.
+func (b *Block) NormalizeLegacyFileFields() {
+	if b.Fields == nil {
+		return
+	}
+
+	attachmentID, present := b.Fields[BlockFieldAttachmentId]
+	if !present {
+		return
+	}
+
+	delete(b.Fields, BlockFieldAttachmentId)
+
+	if fileID, ok := attachmentID.(string); ok && fileID != "" {
+		b.Fields[BlockFieldFileId] = fileID
+	}
+}
+
+// RemoveLegacyFileFields drops the deprecated attachmentId key from a patch's
+// updated fields so it is never written back into storage. Clients write fileId,
+// and the stored field name is fileId everywhere; a patch carrying attachmentId
+// would otherwise reintroduce the legacy key into a block's fields.
+func (p *BlockPatch) RemoveLegacyFileFields() {
+	delete(p.UpdatedFields, BlockFieldAttachmentId)
 }
 
 var safeInputPattern = regexp.MustCompile(`^[a-zA-Z0-9 _-]+$`)
@@ -215,6 +253,20 @@ func ValidateFileId(id string) error {
 	} else {
 		return errInvalidId
 	}
+}
+
+func ValidateBlockProperties(block *Block) error {
+	propsIface, present := block.Fields[BlockFieldProperties]
+	if !present {
+		return nil
+	}
+
+	props, ok := propsIface.(map[string]interface{})
+	if !ok {
+		return ErrBlockPropertiesInvalidType
+	}
+
+	return ValidateCardPropertyValues(props)
 }
 
 func ValidateBlockPatch(patch *BlockPatch) error {
@@ -244,11 +296,14 @@ func validateUpdatedFields(fields map[string]interface{}) error {
 			}
 		}
 
-		if key == BlockFieldAttachmentId {
-			if strVal, ok := value.(string); ok {
-				if err := ValidateFileId(strVal); err != nil {
-					return err
-				}
+		if key == BlockFieldProperties {
+			props, ok := value.(map[string]interface{})
+			if !ok {
+				return NewErrBadRequest(ErrBlockPropertiesInvalidType.Error())
+			}
+
+			if err := ValidateCardPropertyValues(props); err != nil {
+				return NewErrBadRequest(err.Error())
 			}
 		}
 

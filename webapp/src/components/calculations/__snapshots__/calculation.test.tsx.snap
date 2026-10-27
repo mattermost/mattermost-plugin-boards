@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`components/calculations/Calculation should match snapshot - count 1`] = `
 <div>
@@ -102,12 +102,13 @@ exports[`components/calculations/Calculation should match snapshot - option chan
           aria-live="polite"
           aria-relevant="additions text"
           class="css-1f43avz-a11yText-A11yText"
+          role="log"
         />
         <div
-          class="CalculationOptions__control css-1s59geg-Control"
+          class="CalculationOptions__control css-1oxo8ox"
         >
           <div
-            class="CalculationOptions__value-container CalculationOptions__value-container--has-value css-1kliayw-ValueContainer"
+            class="CalculationOptions__value-container CalculationOptions__value-container--has-value css-5t68vv"
           >
             <div
               class="CalculationOptions__single-value css-3hkq9s-singleValue"
@@ -115,11 +116,12 @@ exports[`components/calculations/Calculation should match snapshot - option chan
               Calculate
             </div>
             <input
+              aria-activedescendant=""
               aria-autocomplete="list"
               aria-expanded="false"
               aria-haspopup="true"
               aria-readonly="true"
-              class="css-mohuvp-dummyInput-DummyInput"
+              class="css-1s80ejz-dummyInput-DummyInput"
               id="react-select-2-input"
               inputmode="none"
               role="combobox"
@@ -128,7 +130,7 @@ exports[`components/calculations/Calculation should match snapshot - option chan
             />
           </div>
           <div
-            class="CalculationOptions__indicators css-1hb7zxy-IndicatorsContainer"
+            class="CalculationOptions__indicators css-1wy0on6"
           >
             <div
               aria-hidden="true"

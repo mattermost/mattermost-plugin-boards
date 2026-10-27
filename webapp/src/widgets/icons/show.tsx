@@ -6,7 +6,7 @@ import React from 'react'
 
 import './show.scss'
 
-export default function ShowIcon(): JSX.Element {
+export default function ShowIcon(): React.JSX.Element {
     return (
         <svg
             xmlns='http://www.w3.org/2000/svg'

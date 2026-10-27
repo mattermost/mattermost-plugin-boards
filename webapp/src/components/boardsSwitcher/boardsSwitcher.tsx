@@ -33,7 +33,7 @@ type Props = {
     userIsGuest?: boolean
 }
 
-const BoardsSwitcher = (props: Props): JSX.Element => {
+const BoardsSwitcher = (props: Props): React.JSX.Element => {
     const intl = useIntl()
 
     const [showSwitcher, setShowSwitcher] = useState<boolean>(false)

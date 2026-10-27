@@ -8,7 +8,7 @@ import CompassIcon from './compassIcon'
 
 import './add.scss'
 
-export default function AddIcon(): JSX.Element {
+export default function AddIcon(): React.JSX.Element {
     return (
         <CompassIcon
             icon='plus'

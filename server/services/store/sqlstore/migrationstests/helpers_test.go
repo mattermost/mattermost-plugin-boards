@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mgdelacroix/foundation"
 )
 
@@ -29,21 +28,31 @@ func (th *TestHelper) IsSQLite() bool {
 	return th.f.DB().DriverName() == "sqlite3"
 }
 
+// SetupPluginTestHelper sets up a test helper in plugin mode (with Mattermost
+// migrations), which makes migration templates use Mattermost core tables
+// (e.g. Preferences instead of focalboard_preferences).
 func SetupPluginTestHelper(t *testing.T) (*TestHelper, func()) {
-	dbType := strings.TrimSpace(os.Getenv("FOCALBOARD_STORE_TEST_DB_TYPE"))
-	if dbType == "" || dbType == model.SqliteDBType {
-		t.Skip("Skipping plugin mode test for SQLite")
+	driverName := strings.TrimSpace(os.Getenv("TEST_DATABASE_DRIVERNAME"))
+	if driverName == "" {
+		t.Skip("Skipping plugin mode test: no database configured")
 	}
 
-	return setupTestHelper(t)
+	return setupTestHelper(t, true)
 }
 
+// SetupTestHelper sets up a test helper in standalone mode (without Mattermost
+// migrations), which makes migration templates use focalboard_* tables.
 func SetupTestHelper(t *testing.T) (*TestHelper, func()) {
-	return setupTestHelper(t)
+	driverName := strings.TrimSpace(os.Getenv("TEST_DATABASE_DRIVERNAME"))
+	if driverName == "" {
+		t.Skip("Skipping standalone mode test: no database configured")
+	}
+
+	return setupTestHelper(t, false)
 }
 
-func setupTestHelper(t *testing.T) (*TestHelper, func()) {
-	f := foundation.New(t, NewBoardsMigrator(true))
+func setupTestHelper(t *testing.T, withMattermostMigrations bool) (*TestHelper, func()) {
+	f := foundation.New(t, NewBoardsMigrator(withMattermostMigrations))
 
 	th := &TestHelper{
 		t: t,

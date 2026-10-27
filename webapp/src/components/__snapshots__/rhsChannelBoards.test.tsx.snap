@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`components/rhsChannelBoards renders the RHS for channel boards 1`] = `
 <div>
@@ -37,7 +37,6 @@ exports[`components/rhsChannelBoards renders the RHS for channel boards 1`] = `
           <div
             class="board-info"
           >
-            
             <span
               class="title"
             >
@@ -73,7 +72,6 @@ exports[`components/rhsChannelBoards renders the RHS for channel boards 1`] = `
           <div
             class="board-info"
           >
-            
             <span
               class="title"
             >
@@ -135,7 +133,6 @@ exports[`components/rhsChannelBoards renders the RHS for channel boards, no add 
           <div
             class="board-info"
           >
-            
             <span
               class="title"
             >
@@ -171,7 +168,6 @@ exports[`components/rhsChannelBoards renders the RHS for channel boards, no add 
           <div
             class="board-info"
           >
-            
             <span
               class="title"
             >

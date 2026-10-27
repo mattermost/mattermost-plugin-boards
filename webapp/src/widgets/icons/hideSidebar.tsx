@@ -6,7 +6,7 @@ import React from 'react'
 
 import './hideSidebar.scss'
 
-export default function HideSidebarIcon(): JSX.Element {
+export default function HideSidebarIcon(): React.JSX.Element {
     return (
         <svg
             xmlns='http://www.w3.org/2000/svg'

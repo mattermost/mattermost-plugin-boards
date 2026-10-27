@@ -6,7 +6,7 @@ import React from 'react'
 
 import CompassIcon from './compassIcon'
 
-export default function ChevronDown(): JSX.Element {
+export default function ChevronDown(): React.JSX.Element {
     return (
         <CompassIcon
             icon='chevron-down'

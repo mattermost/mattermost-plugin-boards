@@ -19,7 +19,7 @@ import mutator from '../../mutator'
 import ViewHeaderSortMenu from './viewHeaderSortMenu'
 
 jest.mock('../../mutator')
-const mockedMutator = mocked(mutator, true)
+const mockedMutator = mocked(mutator)
 
 const board = TestBlockFactory.createBoard()
 const activeView = TestBlockFactory.createBoardView(board)
@@ -70,7 +70,7 @@ describe('components/viewHeader/viewHeaderSortMenu', () => {
         const buttonManual = screen.getByRole('button', {name: 'Manual'})
         userEvent.click(buttonManual)
         expect(container).toMatchSnapshot()
-        expect(mockedMutator.updateBlock).toBeCalledTimes(1)
+        expect(mockedMutator.updateBlock).toHaveBeenCalledTimes(1)
     })
     test('return sort menu and do revert', () => {
         const {container} = render(
@@ -89,8 +89,8 @@ describe('components/viewHeader/viewHeaderSortMenu', () => {
         const buttonRevert = screen.getByRole('button', {name: 'Revert'})
         userEvent.click(buttonRevert)
         expect(container).toMatchSnapshot()
-        expect(mockedMutator.changeViewSortOptions).toBeCalledTimes(1)
-        expect(mockedMutator.changeViewSortOptions).toBeCalledWith(activeView.boardId, activeView.id, activeView.fields.sortOptions, [])
+        expect(mockedMutator.changeViewSortOptions).toHaveBeenCalledTimes(1)
+        expect(mockedMutator.changeViewSortOptions).toHaveBeenCalledWith(activeView.boardId, activeView.id, activeView.fields.sortOptions, [])
     })
     test('return sort menu and do Name sort', () => {
         const {container} = render(
@@ -109,7 +109,7 @@ describe('components/viewHeader/viewHeaderSortMenu', () => {
         const buttonName = screen.getByRole('button', {name: 'Name'})
         userEvent.click(buttonName)
         expect(container).toMatchSnapshot()
-        expect(mockedMutator.changeViewSortOptions).toBeCalledTimes(1)
-        expect(mockedMutator.changeViewSortOptions).toBeCalledWith(activeView.boardId, activeView.id, activeView.fields.sortOptions, [{propertyId: '__title', reversed: false}])
+        expect(mockedMutator.changeViewSortOptions).toHaveBeenCalledTimes(1)
+        expect(mockedMutator.changeViewSortOptions).toHaveBeenCalledWith(activeView.boardId, activeView.id, activeView.fields.sortOptions, [{propertyId: '__title', reversed: false}])
     })
 })

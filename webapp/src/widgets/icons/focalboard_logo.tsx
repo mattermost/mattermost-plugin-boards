@@ -6,7 +6,7 @@ import React from 'react'
 
 import './focalboard_logo.scss'
 
-export default function FocalboardLogoIcon(): JSX.Element {
+export default function FocalboardLogoIcon(): React.JSX.Element {
     return (
         <svg
             className='FocalboardLogoIcon Icon'

@@ -7,7 +7,7 @@ import CompassIcon from './compassIcon'
 
 import './help.scss'
 
-export default function HelpIcon(): JSX.Element {
+export default function HelpIcon(): React.JSX.Element {
     return (
         <CompassIcon
             icon='help-circle-outline'

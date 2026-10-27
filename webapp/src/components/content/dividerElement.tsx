@@ -9,7 +9,7 @@ import DividerIcon from '../../widgets/icons/divider'
 import {contentRegistry} from './contentRegistry'
 import './dividerElement.scss'
 
-const DividerElement = (): JSX.Element => <div className='DividerElement'/>
+const DividerElement = (): React.JSX.Element => <div className='DividerElement'/>
 
 contentRegistry.registerContentType({
     type: 'divider',

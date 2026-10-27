@@ -8,7 +8,7 @@ type Props = {
     className?: string
 }
 
-export default function CardSkeleton(props: Props): JSX.Element {
+export default function CardSkeleton(props: Props): React.JSX.Element {
     return (
         <span className={props.className}>
             <svg

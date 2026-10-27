@@ -139,13 +139,16 @@ const boardsSlice = createSlice({
         },
         updateBoards: (state, action: PayloadAction<Board[]>) => {
             for (const board of action.payload) {
+                // Normalize cardProperties: the Go nil slice serialises as JSON null,
+                // so coerce to [] here so selectors can always assume an array.
+                const normalized = {...board, cardProperties: board.cardProperties ?? []}
                 if (board.deleteAt !== 0) {
                     delete state.boards[board.id]
                     delete state.templates[board.id]
                 } else if (board.isTemplate) {
-                    state.templates[board.id] = board
+                    state.templates[board.id] = normalized
                 } else {
-                    state.boards[board.id] = board
+                    state.boards[board.id] = normalized
                 }
             }
         },

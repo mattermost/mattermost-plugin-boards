@@ -26,6 +26,44 @@ func (a *API) registerBoardsRoutes(r *mux.Router) {
 	r.HandleFunc("/boards/{boardID}/metadata", a.sessionRequired(a.handleGetBoardMetadata)).Methods("GET")
 }
 
+// authorizeBoardCreate enforces the per-type board creation policy: creating a
+// public board requires the create_public_channel team permission, and creating
+// any other board type requires create_private_channel. It is shared across all
+// board creation paths so the policy is enforced consistently.
+func (a *API) authorizeBoardCreate(userID, teamID string, boardType model.BoardType) error {
+	if boardType == model.BoardTypeOpen {
+		if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionCreatePublicChannel) {
+			return model.NewErrPermission("access denied to create public boards")
+		}
+	} else {
+		if !a.permissions.HasPermissionToTeam(userID, teamID, model.PermissionCreatePrivateChannel) {
+			return model.NewErrPermission("access denied to create private boards")
+		}
+	}
+
+	return nil
+}
+
+func (a *API) authorizeBoardPatch(userID, boardID string, patch *model.BoardPatch) error {
+	if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardProperties) {
+		return model.NewErrPermission("access denied to modifying board properties")
+	}
+
+	if patch.Type != nil || patch.MinimumRole != nil {
+		if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardType) {
+			return model.NewErrPermission("access denied to modifying board type")
+		}
+	}
+
+	if patch.ChannelID != nil {
+		if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardRoles) {
+			return model.NewErrPermission("access denied to modifying board access")
+		}
+	}
+
+	return nil
+}
+
 func (a *API) handleGetBoards(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation GET /teams/{teamID}/boards getBoards
 	//
@@ -143,16 +181,9 @@ func (a *API) handleCreateBoard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if newBoard.Type == model.BoardTypeOpen {
-		if !a.permissions.HasPermissionToTeam(userID, newBoard.TeamID, model.PermissionCreatePublicChannel) {
-			a.errorResponse(w, r, model.NewErrPermission("access denied to create public boards"))
-			return
-		}
-	} else {
-		if !a.permissions.HasPermissionToTeam(userID, newBoard.TeamID, model.PermissionCreatePrivateChannel) {
-			a.errorResponse(w, r, model.NewErrPermission("access denied to create private boards"))
-			return
-		}
+	if err = a.authorizeBoardCreate(userID, newBoard.TeamID, newBoard.Type); err != nil {
+		a.errorResponse(w, r, err)
+		return
 	}
 
 	isGuest, err := a.userIsGuest(userID)
@@ -257,6 +288,10 @@ func (a *API) handleGetBoard(w http.ResponseWriter, r *http.Request) {
 				a.errorResponse(w, r, err)
 				return
 			}
+			if board.IsTemplate && isGuest {
+				a.errorResponse(w, r, model.NewErrPermission("guests are not allowed to get board templates"))
+				return
+			}
 			if isGuest {
 				if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard) {
 					a.errorResponse(w, r, model.NewErrPermission("access denied to board"))
@@ -325,12 +360,12 @@ func (a *API) handlePatchBoard(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	boardID := mux.Vars(r)["boardID"]
+	userID := getUserID(r)
+
 	if _, err := a.app.GetBoard(boardID); err != nil {
 		a.errorResponse(w, r, err)
 		return
 	}
-
-	userID := getUserID(r)
 
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -344,27 +379,19 @@ func (a *API) handlePatchBoard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if patch == nil {
+		a.errorResponse(w, r, model.NewErrBadRequest("missing board patch"))
+		return
+	}
+
 	if err = patch.IsValid(); err != nil {
 		a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
 		return
 	}
 
-	if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardProperties) {
-		a.errorResponse(w, r, model.NewErrPermission("access denied to modifying board properties"))
+	if err = a.authorizeBoardPatch(userID, boardID, patch); err != nil {
+		a.errorResponse(w, r, err)
 		return
-	}
-
-	if patch.Type != nil || patch.MinimumRole != nil {
-		if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardType) {
-			a.errorResponse(w, r, model.NewErrPermission("access denied to modifying board type"))
-			return
-		}
-	}
-	if patch.ChannelID != nil {
-		if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardRoles) {
-			a.errorResponse(w, r, model.NewErrPermission("access denied to modifying board access"))
-			return
-		}
 	}
 
 	auditRec := a.makeAuditRecord(r, "patchBoard", audit.Fail)
@@ -485,11 +512,6 @@ func (a *API) handleDuplicateBoard(w http.ResponseWriter, r *http.Request) {
 	asTemplate := query.Get("asTemplate")
 	toTeam := query.Get("toTeam")
 
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrUnauthorized("access denied to board"))
-		return
-	}
-
 	board, err := a.app.GetBoard(boardID)
 	if err != nil {
 		a.errorResponse(w, r, err)
@@ -529,6 +551,11 @@ func (a *API) handleDuplicateBoard(w http.ResponseWriter, r *http.Request) {
 	}
 	if isGuest {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to create board"))
+		return
+	}
+
+	if err = a.authorizeBoardCreate(userID, toTeam, model.BoardTypePrivate); err != nil {
+		a.errorResponse(w, r, err)
 		return
 	}
 
@@ -582,12 +609,9 @@ func (a *API) handleUndeleteBoard(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/definitions/ErrorResponse"
 
-	ctx := r.Context()
-	session := ctx.Value(sessionContextKey).(*model.Session)
-	userID := session.UserID
-
 	vars := mux.Vars(r)
 	boardID := vars["boardID"]
+	userID := getUserID(r)
 
 	auditRec := a.makeAuditRecord(r, "undeleteBoard", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelModify, auditRec)

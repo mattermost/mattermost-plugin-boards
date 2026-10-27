@@ -5,7 +5,7 @@
 import React from 'react'
 import {Post} from '@mattermost/types/posts'
 
-const PostTypeCloudUpgradeNudge = (props: {post: Post}): JSX.Element => {
+const PostTypeCloudUpgradeNudge = (props: {post: Post}): React.JSX.Element => {
     const ctaHandler = (e: React.MouseEvent) => {
         e.preventDefault()
         const windowAny = (window as any)

@@ -4,20 +4,31 @@
 import React from 'react'
 
 import {createMemoryHistory} from 'history'
-import {Router} from 'react-router-dom'
+import {Route, Router} from 'react-router-dom'
 
-import {render} from '@testing-library/react'
+import {act, render, screen, waitFor} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import {Provider as ReduxProvider} from 'react-redux'
 
 import configureStore from 'redux-mock-store'
 
+import {thunk} from 'redux-thunk'
+
+import {mocked} from 'jest-mock'
+
 import {TestBlockFactory} from '../../test/testBlockFactory'
 
 import {wrapIntl, wrapRBDNDDroppable} from '../../testUtils'
 
+import mutator from '../../mutator'
+import octoClient from '../../octoClient'
+import {Utils} from '../../utils'
+
 import SidebarCategory from './sidebarCategory'
+
+jest.mock('../../mutator')
+const mockedMutator = mocked(mutator)
 
 describe('components/sidebarCategory', () => {
     const board = TestBlockFactory.createBoard()
@@ -191,7 +202,7 @@ describe('components/sidebarCategory', () => {
         const subItems = container.querySelectorAll('.subitem')
         expect(subItems).toBeDefined()
         userEvent.click(subItems[0] as Element)
-        expect(mockTemplateClose).toBeCalled()
+        expect(mockTemplateClose).toHaveBeenCalled()
     })
 
     test('sidebar template close other', () => {
@@ -222,6 +233,289 @@ describe('components/sidebarCategory', () => {
         const subItems = container.querySelectorAll('.category-title')
         expect(subItems).toBeDefined()
         userEvent.click(subItems[0] as Element)
-        expect(mockTemplateClose).not.toBeCalled()
+        expect(mockTemplateClose).not.toHaveBeenCalled()
+    })
+
+    describe('onDeleteBoard navigation', () => {
+        // State that includes board memberships so the Delete option is visible
+        const deleteNavState = {
+            users: {
+                me: {
+                    id: 'user_id_1',
+                    props: {},
+                },
+                myConfig: {},
+            },
+            boards: {
+                current: board1.id,
+                boards: {
+                    [board1.id]: board1,
+                    [board2.id]: board2,
+                },
+                templates: {},
+                myBoardMemberships: {
+                    [board1.id]: {userId: 'user_id_1', schemeAdmin: true},
+                    [board2.id]: {userId: 'user_id_1', schemeAdmin: true},
+                },
+            },
+            cards: {
+                cards: {},
+                current: '',
+            },
+            views: {
+                current: '',
+                views: {},
+            },
+            teams: {
+                current: {
+                    id: 'team-id',
+                },
+            },
+        }
+
+        let portalEl: HTMLElement
+
+        beforeEach(() => {
+            jest.useFakeTimers()
+            portalEl = document.createElement('div')
+            portalEl.id = 'focalboard-root-portal'
+            document.body.appendChild(portalEl)
+        })
+
+        afterEach(() => {
+            jest.useRealTimers()
+            document.body.removeChild(portalEl)
+            mockedMutator.deleteBoard.mockReset()
+        })
+
+        const renderForDelete = (
+            testHistory: ReturnType<typeof createMemoryHistory>,
+            categoryBoarsdProps: typeof categoryBoards1,
+            boardsList: typeof boards,
+            allCats: typeof allCategoryBoards,
+        ) => {
+            const mockStore = configureStore([])
+            const store = mockStore(deleteNavState)
+
+            return render(
+                wrapRBDNDDroppable(wrapIntl(
+                    <ReduxProvider store={store}>
+                        <Router history={testHistory}>
+                            <Route path='/team/:teamId/:boardId'>
+                                <SidebarCategory
+                                    hideSidebar={jest.fn()}
+                                    activeBoardID={board1.id}
+                                    categoryBoards={categoryBoarsdProps}
+                                    boards={boardsList}
+                                    allCategories={allCats}
+                                    index={0}
+                                />
+                            </Route>
+                        </Router>
+                    </ReduxProvider>,
+                )),
+            )
+        }
+
+        const triggerDeleteAndGetAfterRedo = async () => {
+            // Open the first board item's options menu
+            const menuWrappers = document.querySelectorAll('.SidebarBoardItem div.MenuWrapper')
+            act(() => { userEvent.click(menuWrappers[0] as Element) })
+
+            // Click "Delete board"
+            const deleteOption = await screen.findByText('Delete board')
+            act(() => { userEvent.click(deleteOption) })
+
+            // Click "Delete" in the confirmation dialog
+            const deleteButton = await screen.findByText('Delete')
+            await act(async () => { userEvent.click(deleteButton) })
+
+            await waitFor(() => expect(mockedMutator.deleteBoard).toHaveBeenCalledTimes(1))
+
+            return mockedMutator.deleteBoard.mock.calls[0][2] as () => Promise<void>
+        }
+
+        test('navigates to adjacent board when multiple boards are in the category', async () => {
+            const testHistory = createMemoryHistory()
+            testHistory.push('/team/team-id/board_1_id')
+            testHistory.push = jest.fn()
+
+            // categoryBoards1 has board1 and board2 in boardMetadata
+            renderForDelete(testHistory, categoryBoards1, [board1, board2], allCategoryBoards)
+
+            const afterRedo = await triggerDeleteAndGetAfterRedo()
+
+            await act(async () => {
+                await afterRedo()
+                jest.advanceTimersByTime(200)
+            })
+
+            // board1 is at index 0 of [board1, board2] → nextIndex = 1 → board2
+            expect(testHistory.push).toHaveBeenCalledWith('/team/team-id/board_2_id')
+        })
+
+        test('falls back to a board in another category when no adjacent board exists', async () => {
+            const testHistory = createMemoryHistory()
+            testHistory.push('/team/team-id/board_1_id')
+            testHistory.push = jest.fn()
+
+            // Only board1 is in the current category
+            const singleBoardCat = {...categoryBoards1, boardMetadata: [{boardID: board1.id, hidden: false}]}
+            // Another category has board2
+            const otherCatWithBoard2 = {...categoryBoards2, boardMetadata: [{boardID: board2.id, hidden: false}]}
+            const allCatsForTest = [singleBoardCat, otherCatWithBoard2, categoryBoards3]
+
+            renderForDelete(testHistory, singleBoardCat, [board1], allCatsForTest)
+
+            const afterRedo = await triggerDeleteAndGetAfterRedo()
+
+            await act(async () => {
+                await afterRedo()
+                jest.advanceTimersByTime(200)
+            })
+
+            expect(testHistory.push).toHaveBeenCalledWith('/team/team-id/board_2_id')
+        })
+
+        test('navigates to team page when no boards remain after deletion', async () => {
+            const testHistory = createMemoryHistory()
+            testHistory.push('/team/team-id/board_1_id')
+            testHistory.push = jest.fn()
+
+            // Only board1 in the only category
+            const singleBoardCat = {...categoryBoards1, boardMetadata: [{boardID: board1.id, hidden: false}]}
+            const allCatsForTest = [singleBoardCat]
+
+            renderForDelete(testHistory, singleBoardCat, [board1], allCatsForTest)
+
+            const afterRedo = await triggerDeleteAndGetAfterRedo()
+
+            await act(async () => {
+                await afterRedo()
+                jest.advanceTimersByTime(200)
+            })
+
+            expect(testHistory.push).toHaveBeenCalledWith('/team/team-id')
+        })
+
+        const triggerDeleteAndGetAfterUndo = async () => {
+            const menuWrappers = document.querySelectorAll('.SidebarBoardItem div.MenuWrapper')
+            act(() => { userEvent.click(menuWrappers[0] as Element) })
+
+            const deleteOption = await screen.findByText('Delete board')
+            act(() => { userEvent.click(deleteOption) })
+
+            const deleteButton = await screen.findByText('Delete')
+            await act(async () => { userEvent.click(deleteButton) })
+
+            await waitFor(() => expect(mockedMutator.deleteBoard).toHaveBeenCalledTimes(1))
+
+            return mockedMutator.deleteBoard.mock.calls[0][3] as () => Promise<void>
+        }
+
+        test('undo restores the board to its original category and reopens it', async () => {
+            const order: string[] = []
+            const getSidebarCategoriesSpy = jest.spyOn(octoClient, 'getSidebarCategories').mockImplementation(async () => {
+                order.push('fetchCategories')
+                return []
+            })
+
+            const testHistory = createMemoryHistory()
+            testHistory.push('/team/team-id/board_1_id')
+            testHistory.push = jest.fn(() => order.push('navigate'))
+
+            // Use a store that can run the fetchSidebarCategories thunk dispatched
+            // during undo so the sidebar is refreshed before navigation.
+            const mockStore = configureStore([thunk])
+            const store = mockStore(deleteNavState)
+
+            render(
+                wrapRBDNDDroppable(wrapIntl(
+                    <ReduxProvider store={store}>
+                        <Router history={testHistory}>
+                            <Route path='/team/:teamId/:boardId'>
+                                <SidebarCategory
+                                    hideSidebar={jest.fn()}
+                                    activeBoardID={board1.id}
+                                    categoryBoards={categoryBoards1}
+                                    boards={[board1, board2]}
+                                    allCategories={allCategoryBoards}
+                                    index={0}
+                                />
+                            </Route>
+                        </Router>
+                    </ReduxProvider>,
+                )),
+            )
+
+            const afterUndo = await triggerDeleteAndGetAfterUndo()
+
+            await act(async () => {
+                await afterUndo()
+            })
+
+            // The board must be put back into the category it was deleted from
+            // (categoryBoards1), never the default category.
+            expect(mockedMutator.moveBoardToCategory).toHaveBeenCalledWith('team-id', board1.id, categoryBoards1.id, '')
+
+            // The sidebar is refreshed from the server so the restored board's
+            // category is reflected before we navigate to it.
+            expect(getSidebarCategoriesSpy).toHaveBeenCalledWith('team-id')
+
+            // And the restored board is reopened.
+            expect(testHistory.push).toHaveBeenCalledWith('/team/team-id/board_1_id')
+
+            // The sidebar must be refreshed before navigation, otherwise the
+            // auto-assign effect moves the restored board to the default category.
+            expect(order).toEqual(['fetchCategories', 'navigate'])
+
+            getSidebarCategoriesSpy.mockRestore()
+        })
+
+        test('undo still reopens the board if restoring the category fails', async () => {
+            mockedMutator.moveBoardToCategory.mockRejectedValueOnce(new Error('move failed'))
+            const logErrorSpy = jest.spyOn(Utils, 'logError').mockImplementation(() => {})
+
+            const getSidebarCategoriesSpy = jest.spyOn(octoClient, 'getSidebarCategories').mockResolvedValue([])
+
+            const testHistory = createMemoryHistory()
+            testHistory.push('/team/team-id/board_1_id')
+            testHistory.push = jest.fn()
+
+            const mockStore = configureStore([thunk])
+            const store = mockStore(deleteNavState)
+
+            render(
+                wrapRBDNDDroppable(wrapIntl(
+                    <ReduxProvider store={store}>
+                        <Router history={testHistory}>
+                            <Route path='/team/:teamId/:boardId'>
+                                <SidebarCategory
+                                    hideSidebar={jest.fn()}
+                                    activeBoardID={board1.id}
+                                    categoryBoards={categoryBoards1}
+                                    boards={[board1, board2]}
+                                    allCategories={allCategoryBoards}
+                                    index={0}
+                                />
+                            </Route>
+                        </Router>
+                    </ReduxProvider>,
+                )),
+            )
+
+            const afterUndo = await triggerDeleteAndGetAfterUndo()
+
+            await act(async () => {
+                await afterUndo()
+            })
+
+            expect(logErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to restore board category'))
+            expect(getSidebarCategoriesSpy).toHaveBeenCalledWith('team-id')
+            expect(testHistory.push).toHaveBeenCalledWith('/team/team-id/board_1_id')
+
+            logErrorSpy.mockRestore()
+            getSidebarCategoriesSpy.mockRestore()
+        })
     })
 })

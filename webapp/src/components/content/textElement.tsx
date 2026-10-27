@@ -17,7 +17,7 @@ type Props = {
     readonly: boolean
 }
 
-const TextElement = (props: Props): JSX.Element => {
+const TextElement = (props: Props): React.JSX.Element => {
     const {block, readonly} = props
     const intl = useIntl()
 

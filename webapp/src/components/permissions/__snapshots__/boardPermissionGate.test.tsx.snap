@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`components/permission/boardPermissionGate match snapshot when the user doesnt have the permissions 1`] = `<div />`;
 

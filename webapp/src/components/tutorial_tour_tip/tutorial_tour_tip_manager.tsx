@@ -13,6 +13,7 @@ import {UserConfigPatch} from '../../user'
 import octoClient from '../../octoClient'
 import {Utils, KeyCodes} from '../../utils'
 import TelemetryClient, {TelemetryCategory} from '../../telemetry/telemetryClient'
+import type {IEventProps} from '../../telemetry/telemetryClient'
 
 export interface TutorialTourTipManager {
     show: boolean
@@ -81,7 +82,7 @@ const useTutorialTourTipManager = ({
         [dispatch],
     )
 
-    const trackEvent = useCallback((category, event, props?) => {
+    const trackEvent = useCallback((category: string, event: string, props?: IEventProps) => {
         TelemetryClient.trackEvent(category, event, props)
     }, [])
 

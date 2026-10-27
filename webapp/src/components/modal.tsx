@@ -13,7 +13,7 @@ type Props = {
     children: React.ReactNode
 }
 
-const Modal = (props: Props): JSX.Element => {
+const Modal = (props: Props): React.JSX.Element => {
     const node = useRef<HTMLDivElement>(null)
 
     const {position, onClose, children} = props

@@ -6,7 +6,7 @@ import React from 'react'
 
 import './disclosureTriangle.scss'
 
-export default function DisclosureTriangle(): JSX.Element {
+export default function DisclosureTriangle(): React.JSX.Element {
     return (
         <svg
             xmlns='http://www.w3.org/2000/svg'

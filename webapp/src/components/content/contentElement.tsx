@@ -3,6 +3,7 @@
 
 
 import {useCallback} from 'react'
+import type {JSX} from 'react'
 
 import {ContentBlock} from '../../blocks/contentBlock'
 import {Utils} from '../../utils'

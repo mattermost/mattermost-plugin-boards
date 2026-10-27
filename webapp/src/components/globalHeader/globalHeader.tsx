@@ -51,7 +51,7 @@ type Props = {
     history: History<unknown>
 }
 
-const GlobalHeader = (props: Props): JSX.Element => {
+const GlobalHeader = (props: Props): React.JSX.Element => {
     return (
         <ReduxProvider store={store}>
             <HeaderItems history={props.history}/>

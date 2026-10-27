@@ -6,7 +6,7 @@ import React from 'react'
 
 import CompassIcon from './compassIcon'
 
-export default function Apps(): JSX.Element {
+export default function Apps(): React.JSX.Element {
     return (
         <CompassIcon
             icon='apps'

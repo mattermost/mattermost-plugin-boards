@@ -110,6 +110,13 @@ func (a *API) handleCreateBoardsAndBlocks(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	for _, board := range newBab.Boards {
+		if err = a.authorizeBoardCreate(userID, board.TeamID, board.Type); err != nil {
+			a.errorResponse(w, r, err)
+			return
+		}
+	}
+
 	for _, block := range newBab.Blocks {
 		// Error checking
 		if len(block.Type) < 1 {
@@ -133,6 +140,11 @@ func (a *API) handleCreateBoardsAndBlocks(w http.ResponseWriter, r *http.Request
 		if !boardIDs[block.BoardID] {
 			message := fmt.Sprintf("invalid BoardID %s (not exists in the created boards)", block.BoardID)
 			a.errorResponse(w, r, model.NewErrBadRequest(message))
+			return
+		}
+
+		if err = model.ValidateBlockProperties(block); err != nil {
+			a.errorResponse(w, r, model.NewErrBadRequest(err.Error()))
 			return
 		}
 	}
@@ -235,16 +247,9 @@ func (a *API) handlePatchBoardsAndBlocks(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardProperties) {
-			a.errorResponse(w, r, model.NewErrPermission("access denied to modifying board properties"))
+		if err = a.authorizeBoardPatch(userID, boardID, patch); err != nil {
+			a.errorResponse(w, r, err)
 			return
-		}
-
-		if patch.Type != nil || patch.MinimumRole != nil {
-			if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardType) {
-				a.errorResponse(w, r, model.NewErrPermission("access denied to modifying board type"))
-				return
-			}
 		}
 
 		board, err2 := a.app.GetBoard(boardID)

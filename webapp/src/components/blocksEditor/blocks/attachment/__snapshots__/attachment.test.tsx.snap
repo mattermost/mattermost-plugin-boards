@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`components/blocksEditor/blocks/attachment should match Display snapshot 1`] = `
 <div>
@@ -8,7 +8,7 @@ exports[`components/blocksEditor/blocks/attachment should match Display snapshot
   >
     <a
       download="test-filename"
-      href="test.jpg"
+      href="#"
     >
       📎
        
@@ -30,7 +30,6 @@ exports[`components/blocksEditor/blocks/attachment should match Display snapshot
     >
       📎
        
-      
     </a>
   </div>
 </div>

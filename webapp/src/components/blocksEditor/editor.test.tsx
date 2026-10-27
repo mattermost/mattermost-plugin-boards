@@ -38,6 +38,11 @@ describe('components/blocksEditor/editor', () => {
         clientConfig: {
             value: {},
         },
+        teams: {
+            current: null,
+            currentId: '',
+            allTeams: [],
+        },
     }
     const store = mockStateStore([], state)
 
@@ -89,15 +94,15 @@ describe('components/blocksEditor/editor', () => {
             ))
         })
         let input = screen.getByDisplayValue('')
-        expect(onSave).not.toBeCalled()
+        expect(onSave).not.toHaveBeenCalled()
         fireEvent.change(input, {target: {value: '/title'}})
         fireEvent.keyDown(input, {key: 'Enter'})
-        expect(onSave).not.toBeCalled()
+        expect(onSave).not.toHaveBeenCalled()
 
         input = screen.getByDisplayValue('')
         fireEvent.change(input, {target: {value: 'test'}})
         fireEvent.keyDown(input, {key: 'Enter'})
 
-        expect(onSave).toBeCalledWith(expect.objectContaining({value: 'test'}))
+        expect(onSave).toHaveBeenCalledWith(expect.objectContaining({value: 'test'}))
     })
 })

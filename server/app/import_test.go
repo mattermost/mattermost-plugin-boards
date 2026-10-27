@@ -4,24 +4,33 @@
 package app
 
 import (
+	"archive/zip"
 	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"strings"
 	"testing"
-
-	"github.com/mattermost/mattermost-plugin-boards/server/utils"
 
 	"github.com/golang/mock/gomock"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/utils"
+	"github.com/mattermost/mattermost/server/public/plugin/plugintest/mock"
+	"github.com/mattermost/mattermost/server/v8/platform/shared/filestore/mocks"
 	"github.com/stretchr/testify/require"
 )
+
+const importTestTeamID = "y5tuzz9yb3y99gmobyc4hg5wnr"
 
 func TestApp_ImportArchive(t *testing.T) {
 	th, tearDown := SetupTestHelper(t)
 	defer tearDown()
 
 	board := &model.Board{
-		ID:     "d14b9df9-1f31-4732-8a64-92bc7162cd28",
-		TeamID: "test-team",
-		Title:  "Cross-Functional Project Plan",
+		ID:         "d14b9df9-1f31-4732-8a64-92bc7162cd28",
+		TeamID:     importTestTeamID,
+		Title:      "Cross-Functional Project Plan",
+		IsTemplate: false,
 	}
 
 	block := &model.Block{
@@ -48,11 +57,13 @@ func TestApp_ImportArchive(t *testing.T) {
 			ModifiedBy: "user",
 		}
 
+		th.expectBoardImportPermissions("user", opts.TeamID, model.BoardTypePrivate)
+
 		th.Store.EXPECT().CreateBoardsAndBlocks(gomock.AssignableToTypeOf(&model.BoardsAndBlocks{}), "user").Return(babs, nil)
 		th.Store.EXPECT().GetMembersForBoard(board.ID).AnyTimes().Return([]*model.BoardMember{boardMember}, nil)
 		th.Store.EXPECT().GetBoard(board.ID).Return(board, nil)
 		th.Store.EXPECT().GetMemberForBoard(board.ID, "user").Return(boardMember, nil)
-		th.Store.EXPECT().GetUserCategoryBoards("user", "test-team").Return([]model.CategoryBoards{
+		th.Store.EXPECT().GetUserCategoryBoards("user", opts.TeamID).Return([]model.CategoryBoards{
 			{
 				Category: model.Category{
 					Type: "default",
@@ -61,13 +72,13 @@ func TestApp_ImportArchive(t *testing.T) {
 				},
 			},
 		}, nil)
-		th.Store.EXPECT().GetUserCategoryBoards("user", "test-team")
+		th.Store.EXPECT().GetUserCategoryBoards("user", opts.TeamID)
 		th.Store.EXPECT().CreateCategory(utils.Anything).Return(nil)
 		th.Store.EXPECT().GetCategory(utils.Anything).Return(&model.Category{
 			ID:   "boards_category_id",
 			Name: "Boards",
 		}, nil)
-		th.Store.EXPECT().GetBoardsForUserAndTeam("user", "test-team", false).Return([]*model.Board{}, nil)
+		th.Store.EXPECT().GetBoardsForUserAndTeam("user", opts.TeamID, false).Return([]*model.Board{}, nil)
 		th.Store.EXPECT().GetMembersForUser("user").Return([]*model.BoardMember{}, nil)
 		th.Store.EXPECT().AddUpdateCategoryBoard("user", utils.Anything, utils.Anything).Return(nil)
 
@@ -78,9 +89,11 @@ func TestApp_ImportArchive(t *testing.T) {
 	t.Run("import board archive", func(t *testing.T) {
 		r := bytes.NewReader([]byte(boardArchive))
 		opts := model.ImportArchiveOptions{
-			TeamID:     "test-team",
+			TeamID:     importTestTeamID,
 			ModifiedBy: "f1tydgc697fcbp8ampr6881jea",
 		}
+
+		th.expectBoardImportPermissions(opts.ModifiedBy, opts.TeamID, model.BoardTypePrivate)
 
 		bm1 := &model.BoardMember{
 			BoardID: board.ID,
@@ -111,8 +124,8 @@ func TestApp_ImportArchive(t *testing.T) {
 
 		th.Store.EXPECT().CreateBoardsAndBlocks(gomock.AssignableToTypeOf(&model.BoardsAndBlocks{}), "f1tydgc697fcbp8ampr6881jea").Return(babs, nil)
 		th.Store.EXPECT().GetMembersForBoard(board.ID).AnyTimes().Return([]*model.BoardMember{bm1, bm2, bm3}, nil)
-		th.Store.EXPECT().GetUserCategoryBoards("f1tydgc697fcbp8ampr6881jea", "test-team").Return([]model.CategoryBoards{}, nil)
-		th.Store.EXPECT().GetUserCategoryBoards("f1tydgc697fcbp8ampr6881jea", "test-team").Return([]model.CategoryBoards{
+		th.Store.EXPECT().GetUserCategoryBoards("f1tydgc697fcbp8ampr6881jea", importTestTeamID).Return([]model.CategoryBoards{}, nil)
+		th.Store.EXPECT().GetUserCategoryBoards("f1tydgc697fcbp8ampr6881jea", importTestTeamID).Return([]model.CategoryBoards{
 			{
 				Category: model.Category{
 					ID:   "boards_category_id",
@@ -127,7 +140,7 @@ func TestApp_ImportArchive(t *testing.T) {
 			Name: "Boards",
 		}, nil)
 		th.Store.EXPECT().GetMembersForUser("f1tydgc697fcbp8ampr6881jea").Return([]*model.BoardMember{}, nil)
-		th.Store.EXPECT().GetBoardsForUserAndTeam("f1tydgc697fcbp8ampr6881jea", "test-team", false).Return([]*model.Board{}, nil)
+		th.Store.EXPECT().GetBoardsForUserAndTeam("f1tydgc697fcbp8ampr6881jea", importTestTeamID, false).Return([]*model.Board{}, nil)
 		th.Store.EXPECT().AddUpdateCategoryBoard("f1tydgc697fcbp8ampr6881jea", utils.Anything, utils.Anything).Return(nil)
 		th.Store.EXPECT().GetBoard(board.ID).AnyTimes().Return(board, nil)
 		th.Store.EXPECT().GetMemberForBoard(board.ID, "f1tydgc697fcbp8ampr6881jea").AnyTimes().Return(bm1, nil)
@@ -142,14 +155,147 @@ func TestApp_ImportArchive(t *testing.T) {
 		require.Equal(t, board.ID, newBoard.ID, "Board ID should be same")
 	})
 
+	t.Run("archive boardMember SchemeAdmin is stripped", func(t *testing.T) {
+		const importerID = "f1tydgc697fcbp8ampr6881jea"
+		const attackerTargetID = "nto73edn5ir6ifimo5a53y1dwa"
+
+		r := bytes.NewReader([]byte(boardArchive))
+		opts := model.ImportArchiveOptions{
+			TeamID:     importTestTeamID,
+			ModifiedBy: importerID,
+		}
+
+		th.expectBoardImportPermissions(importerID, opts.TeamID, model.BoardTypePrivate)
+
+		th.Store.EXPECT().CreateBoardsAndBlocks(gomock.AssignableToTypeOf(&model.BoardsAndBlocks{}), importerID).Return(babs, nil)
+		th.Store.EXPECT().GetMembersForBoard(board.ID).AnyTimes().Return([]*model.BoardMember{}, nil)
+		th.Store.EXPECT().GetUserCategoryBoards(importerID, importTestTeamID).AnyTimes().Return([]model.CategoryBoards{
+			{
+				Category: model.Category{
+					ID:   "boards_category_id",
+					Name: "Boards",
+					Type: model.CategoryTypeSystem,
+				},
+			},
+		}, nil)
+		th.Store.EXPECT().GetMembersForUser(importerID).AnyTimes().Return([]*model.BoardMember{}, nil)
+		th.Store.EXPECT().GetBoardsForUserAndTeam(importerID, importTestTeamID, false).AnyTimes().Return([]*model.Board{}, nil)
+		th.Store.EXPECT().AddUpdateCategoryBoard(importerID, utils.Anything, utils.Anything).AnyTimes().Return(nil)
+		th.Store.EXPECT().GetBoard(board.ID).AnyTimes().Return(board, nil)
+		th.Store.EXPECT().GetMemberForBoard(board.ID, gomock.Any()).AnyTimes().Return(nil, nil)
+		th.Store.EXPECT().GetUserByID(gomock.Any()).AnyTimes().DoAndReturn(func(id string) (*model.User, error) {
+			return &model.User{ID: id, IsGuest: false}, nil
+		})
+
+		th.Store.EXPECT().SaveMember(gomock.Any()).AnyTimes().DoAndReturn(func(i interface{}) (*model.BoardMember, error) {
+			m := i.(*model.BoardMember)
+			require.False(t, m.UserID == attackerTargetID && m.SchemeAdmin)
+			return m, nil
+		})
+
+		newBoard, err := th.App.ImportBoardJSONL(r, opts)
+		require.NoError(t, err)
+		require.Equal(t, board.ID, newBoard.ID)
+	})
+
+	t.Run("board validator aborts import before any board is created", func(t *testing.T) {
+		r := bytes.NewReader([]byte(asana))
+
+		validatorErr := model.NewErrPermission("access denied to create private boards")
+		var validated []*model.Board
+		opts := model.ImportArchiveOptions{
+			TeamID:     "y5tuzz9yb3y99gmobyc4hg5wnr",
+			ModifiedBy: "user",
+			BoardValidator: func(board *model.Board) error {
+				validated = append(validated, board)
+				return validatorErr
+			},
+		}
+
+		// Inline import validation runs during the pre-pass parse; allow it so
+		// the BoardValidator is the check under test.
+		th.expectBoardImportPermissions("user", opts.TeamID, model.BoardTypePrivate)
+
+		// No store mutations should be expected: the validator runs during the
+		// dedicated pre-pass in ImportArchive and must fail the import before
+		// CreateBoardsAndBlocks is ever reached.
+		err := th.App.ImportArchive(r, opts)
+		require.ErrorIs(t, err, validatorErr)
+		require.Len(t, validated, 1)
+		require.Equal(t, model.BoardTypePrivate, validated[0].Type)
+	})
+
+	t.Run("board validator with non-seekable reader fails before import", func(t *testing.T) {
+		// The validator passes, but the reader cannot be rewound for the real
+		// import pass, so the import must abort with errArchiveNotSeekable and
+		// never persist anything (no CreateBoardsAndBlocks on the mock store).
+		var validated []*model.Board
+		opts := model.ImportArchiveOptions{
+			TeamID:     "y5tuzz9yb3y99gmobyc4hg5wnr",
+			ModifiedBy: "user",
+			BoardValidator: func(board *model.Board) error {
+				validated = append(validated, board)
+				return nil
+			},
+		}
+
+		th.expectBoardImportPermissions("user", opts.TeamID, model.BoardTypePrivate)
+
+		// struct{ io.Reader } hides bytes.Reader's Seek method.
+		r := struct{ io.Reader }{bytes.NewReader([]byte(asana))}
+
+		err := th.App.ImportArchive(r, opts)
+		require.ErrorIs(t, err, errArchiveNotSeekable)
+		require.Len(t, validated, 1)
+	})
+
+	t.Run("multi-board archive is not partially imported when a later board is denied", func(t *testing.T) {
+		// The archive contains an allowed public board followed by a denied
+		// private board. Validation happens up front for the whole archive, so
+		// neither board must be persisted (no CreateBoardsAndBlocks is expected
+		// on the mock store).
+		archive := buildBoardArchive(t,
+			&model.Board{ID: "board-open", Title: "Open", Type: model.BoardTypeOpen},
+			&model.Board{ID: "board-private", Title: "Private", Type: model.BoardTypePrivate},
+		)
+
+		validatorErr := model.NewErrPermission("access denied to create private boards")
+		var validated []model.BoardType
+		opts := model.ImportArchiveOptions{
+			TeamID:     importTestTeamID,
+			ModifiedBy: "user",
+			BoardValidator: func(board *model.Board) error {
+				validated = append(validated, board.Type)
+				if board.Type != model.BoardTypeOpen {
+					return validatorErr
+				}
+				return nil
+			},
+		}
+
+		// Inline import validation runs during the pre-pass parse for each board;
+		// allow it so the BoardValidator is the check under test.
+		th.expectBoardImportPermissions("user", opts.TeamID, model.BoardTypeOpen)
+		th.expectBoardImportPermissions("user", opts.TeamID, model.BoardTypePrivate)
+
+		err := th.App.ImportArchive(bytes.NewReader(archive), opts)
+		require.ErrorIs(t, err, validatorErr)
+		require.Equal(t, []model.BoardType{model.BoardTypeOpen, model.BoardTypePrivate}, validated)
+	})
+
 	t.Run("fix image and attachment", func(t *testing.T) {
 		boardMap := map[string]*model.Board{
 			"test": board,
 		}
 
+		oldFileID1 := "7xhwgf5r15fr3dryfozf1dmy41r.jpg"
+		newFileID1 := "7xhwgf5r15fr3dryfozf1dmy42r.jpg"
+		oldFileID2 := "7xhwgf5r15fr3dryfozf1dmy43r.jpg"
+		newFileID2 := "7xhwgf5r15fr3dryfozf1dmy44r.jpg"
+
 		fileMap := map[string]string{
-			"oldFileName1.jpg": "newFileName1.jpg",
-			"oldFileName2.jpg": "newFileName2.jpg",
+			oldFileID1: newFileID1,
+			oldFileID2: newFileID2,
 		}
 
 		imageBlock := &model.Block{
@@ -160,11 +306,11 @@ func TestApp_ImportArchive(t *testing.T) {
 			Schema:     1,
 			Type:       "image",
 			Title:      "",
-			Fields:     map[string]interface{}{"fileId": "oldFileName1.jpg"},
+			Fields:     map[string]interface{}{"fileId": oldFileID1},
 			CreateAt:   1680725585250,
 			UpdateAt:   1680725585250,
 			DeleteAt:   0,
-			BoardID:    "board-id",
+			BoardID:    board.ID, // Use the same board ID as the board in boardMap
 		}
 
 		attachmentBlock := &model.Block{
@@ -175,40 +321,373 @@ func TestApp_ImportArchive(t *testing.T) {
 			Schema:     1,
 			Type:       "attachment",
 			Title:      "",
-			Fields:     map[string]interface{}{"fileId": "oldFileName2.jpg"},
+			Fields:     map[string]interface{}{"fileId": oldFileID2},
 			CreateAt:   1680725585250,
 			UpdateAt:   1680725585250,
 			DeleteAt:   0,
-			BoardID:    "board-id",
+			BoardID:    board.ID, // Use the same board ID as the board in boardMap
 		}
 
 		blockIDs := []string{"blockID-1", "blockID-2"}
-
-		blockPatch := model.BlockPatch{
-			UpdatedFields: map[string]interface{}{"fileId": "newFileName1.jpg"},
-		}
-
-		blockPatch2 := model.BlockPatch{
-			UpdatedFields: map[string]interface{}{"fileId": "newFileName2.jpg"},
-		}
-
-		blockPatches := []model.BlockPatch{blockPatch, blockPatch2}
-
-		blockPatchesBatch := model.BlockPatchBatch{BlockIDs: blockIDs, BlockPatches: blockPatches}
 
 		opts := model.QueryBlocksOptions{
 			BoardID: board.ID,
 		}
 		th.Store.EXPECT().GetBlocks(opts).Return([]*model.Block{imageBlock, attachmentBlock}, nil)
 		th.Store.EXPECT().GetBlocksByIDs(blockIDs).Return([]*model.Block{imageBlock, attachmentBlock}, nil)
-		th.Store.EXPECT().GetBlock(blockIDs[0]).Return(imageBlock, nil)
-		th.Store.EXPECT().GetBlock(blockIDs[1]).Return(attachmentBlock, nil)
-		th.Store.EXPECT().GetMembersForBoard("board-id").AnyTimes().Return([]*model.BoardMember{}, nil)
+		th.Store.EXPECT().GetBlock(blockIDs[0]).Return(imageBlock, nil).AnyTimes()
+		th.Store.EXPECT().GetBlock(blockIDs[1]).Return(attachmentBlock, nil).AnyTimes()
+		th.Store.EXPECT().GetMembersForBoard(board.ID).AnyTimes().Return([]*model.BoardMember{}, nil)
+		th.Store.EXPECT().GetFileInfo("xhwgf5r15fr3dryfozf1dmy42r").Return(nil, model.NewErrNotFound("file"))
+		th.Store.EXPECT().GetFileInfo("xhwgf5r15fr3dryfozf1dmy44r").Return(nil, model.NewErrNotFound("file"))
 
-		th.Store.EXPECT().PatchBlocks(&blockPatchesBatch, "my-userid")
+		th.Store.EXPECT().PatchBlocks(gomock.Any(), "my-userid").Return(nil)
 		th.App.fixImagesAttachments(boardMap, fileMap, "test-team", "my-userid")
 	})
+
+	t.Run("import private board archive requires create private channel permission", func(t *testing.T) {
+		const importerID = "f1tydgc697fcbp8ampr6881jea"
+
+		r := bytes.NewReader([]byte(boardArchive))
+		opts := model.ImportArchiveOptions{
+			TeamID:     importTestTeamID,
+			ModifiedBy: importerID,
+		}
+
+		th.API.EXPECT().HasPermissionToTeam(importerID, opts.TeamID, model.PermissionCreatePrivateChannel).Return(false)
+
+		_, err := th.App.ImportBoardJSONL(r, opts)
+		require.Error(t, err)
+		var permErr *model.ErrPermission
+		require.ErrorAs(t, err, &permErr)
+	})
+
+	t.Run("import open board archive requires create public channel permission", func(t *testing.T) {
+		const importerID = "f1tydgc697fcbp8ampr6881jea"
+
+		r := bytes.NewReader([]byte(openBoardArchive))
+		opts := model.ImportArchiveOptions{
+			TeamID:     importTestTeamID,
+			ModifiedBy: importerID,
+		}
+
+		th.API.EXPECT().HasPermissionToTeam(importerID, opts.TeamID, model.PermissionCreatePublicChannel).Return(false)
+
+		_, err := th.App.ImportBoardJSONL(r, opts)
+		require.Error(t, err)
+		var permErr *model.ErrPermission
+		require.ErrorAs(t, err, &permErr)
+	})
+
+	t.Run("import open board archive succeeds with create public channel permission", func(t *testing.T) {
+		const importerID = "f1tydgc697fcbp8ampr6881jea"
+
+		r := bytes.NewReader([]byte(openBoardArchive))
+		opts := model.ImportArchiveOptions{
+			TeamID:     importTestTeamID,
+			ModifiedBy: importerID,
+		}
+
+		th.expectBoardImportPermissions(importerID, opts.TeamID, model.BoardTypeOpen)
+		th.Store.EXPECT().CreateBoardsAndBlocks(gomock.AssignableToTypeOf(&model.BoardsAndBlocks{}), importerID).Return(babs, nil)
+		th.Store.EXPECT().GetMembersForBoard(board.ID).AnyTimes().Return([]*model.BoardMember{}, nil)
+		th.Store.EXPECT().GetUserCategoryBoards(importerID, importTestTeamID).AnyTimes().Return([]model.CategoryBoards{
+			{
+				Category: model.Category{
+					ID:   "boards_category_id",
+					Name: "Boards",
+					Type: model.CategoryTypeSystem,
+				},
+			},
+		}, nil)
+		th.Store.EXPECT().GetMembersForUser(importerID).AnyTimes().Return([]*model.BoardMember{}, nil)
+		th.Store.EXPECT().GetBoardsForUserAndTeam(importerID, importTestTeamID, false).AnyTimes().Return([]*model.Board{}, nil)
+		th.Store.EXPECT().AddUpdateCategoryBoard(importerID, utils.Anything, utils.Anything).AnyTimes().Return(nil)
+		th.Store.EXPECT().GetBoard(board.ID).AnyTimes().Return(board, nil)
+		th.Store.EXPECT().GetMemberForBoard(board.ID, gomock.Any()).AnyTimes().Return(nil, nil)
+		th.Store.EXPECT().GetUserByID(gomock.Any()).AnyTimes().DoAndReturn(func(id string) (*model.User, error) {
+			return &model.User{ID: id, IsGuest: false}, nil
+		})
+
+		newBoard, err := th.App.ImportBoardJSONL(r, opts)
+		require.NoError(t, err)
+		require.Equal(t, board.ID, newBoard.ID)
+	})
 }
+
+// buildBoardArchive builds an in-memory .boardarchive zip containing a
+// version.json and one board.jsonl entry per board, in order.
+func buildBoardArchive(t *testing.T, boards ...*model.Board) []byte {
+	t.Helper()
+
+	buf := &bytes.Buffer{}
+	zw := zip.NewWriter(buf)
+
+	header, err := json.Marshal(model.ArchiveHeader{Version: archiveVersion, Date: utils.GetMillis()})
+	require.NoError(t, err)
+	versionWriter, err := zw.Create("version.json")
+	require.NoError(t, err)
+	_, err = versionWriter.Write(header)
+	require.NoError(t, err)
+
+	for i, board := range boards {
+		line, err := json.Marshal(model.ArchiveLine{Type: "board", Data: mustMarshal(t, board)})
+		require.NoError(t, err)
+
+		boardWriter, err := zw.Create(fmt.Sprintf("board-%d/board.jsonl", i))
+		require.NoError(t, err)
+		_, err = boardWriter.Write(append(line, '\n'))
+		require.NoError(t, err)
+	}
+
+	require.NoError(t, zw.Close())
+	return buf.Bytes()
+}
+
+func mustMarshal(t *testing.T, v interface{}) json.RawMessage {
+	t.Helper()
+	data, err := json.Marshal(v)
+	require.NoError(t, err)
+	return data
+}
+
+func TestEffectiveArchiveEntryMaxSize(t *testing.T) {
+	th, tearDown := SetupTestHelper(t)
+	defer tearDown()
+
+	t.Run("returns importMaxFileSize when config is unset or larger", func(t *testing.T) {
+		th.App.config.MaxFileSize = 0
+		require.Equal(t, int64(importMaxFileSize), th.App.effectiveArchiveEntryMaxSize())
+
+		th.App.config.MaxFileSize = int64(importMaxFileSize) * 2
+		require.Equal(t, int64(importMaxFileSize), th.App.effectiveArchiveEntryMaxSize())
+	})
+
+	t.Run("honors configured MaxFileSize when stricter", func(t *testing.T) {
+		th.App.config.MaxFileSize = 1024
+		require.Equal(t, int64(1024), th.App.effectiveArchiveEntryMaxSize())
+	})
+}
+
+func TestParseVersionFile(t *testing.T) {
+	t.Run("valid version", func(t *testing.T) {
+		ver, err := parseVersionFile(strings.NewReader(`{"version":2}`), importMaxFileSize)
+		require.NoError(t, err)
+		require.Equal(t, 2, ver)
+	})
+
+	t.Run("size limit exceeded", func(t *testing.T) {
+		payload := []byte(`{"version":2,"padding":"` + strings.Repeat("x", int(importMaxFileSize)) + `"}`)
+		_, err := parseVersionFile(bytes.NewReader(payload), importMaxFileSize)
+		require.Error(t, err)
+		require.ErrorIs(t, err, errSizeLimitExceeded)
+	})
+}
+
+func TestImportArchiveVersionFileSizeLimit(t *testing.T) {
+	t.Run("valid archive with version.json only", func(t *testing.T) {
+		var buf bytes.Buffer
+		zw := zip.NewWriter(&buf)
+		w, err := zw.Create("version.json")
+		require.NoError(t, err)
+		_, err = w.Write([]byte(`{"version":2}`))
+		require.NoError(t, err)
+		require.NoError(t, zw.Close())
+
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
+		err = th.App.ImportArchive(bytes.NewReader(buf.Bytes()), model.ImportArchiveOptions{
+			TeamID:     "test-team",
+			ModifiedBy: "user",
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("rejects oversized version.json", func(t *testing.T) {
+		var buf bytes.Buffer
+		zw := zip.NewWriter(&buf)
+		w, err := zw.Create("version.json")
+		require.NoError(t, err)
+		payload := []byte(`{"version":2,"padding":"` + strings.Repeat("x", int(importMaxFileSize)) + `"}`)
+		_, err = w.Write(payload)
+		require.NoError(t, err)
+		require.NoError(t, zw.Close())
+
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
+		err = th.App.ImportArchive(bytes.NewReader(buf.Bytes()), model.ImportArchiveOptions{
+			TeamID:     "test-team",
+			ModifiedBy: "user",
+		})
+		require.Error(t, err)
+		require.ErrorIs(t, err, errSizeLimitExceeded)
+	})
+}
+
+func TestImportArchiveImageFileSizeLimit(t *testing.T) {
+	const (
+		boardDir = "testboard"
+		teamID   = "abcdefghijklmnopqrstuvwxyz"
+	)
+	minimalBoardJSONL := `{"type":"board","data":{"id":"bfoi6yy6pa3yzika53spj7pq9ee","teamId":"` + teamID + `","createdBy":"user","modifiedBy":"user","type":"P","title":"Test","createAt":1,"updateAt":1}}
+{"type":"block","data":{"id":"ckpc3b1dp3pbw7bqntfryy9jbzo","parentId":"bfoi6yy6pa3yzika53spj7pq9ee","createdBy":"user","modifiedBy":"user","schema":1,"type":"card","title":"Test","fields":{},"createAt":1,"updateAt":1,"boardId":"bfoi6yy6pa3yzika53spj7pq9ee"}}
+`
+
+	t.Run("rejects oversized image file and removes partial save", func(t *testing.T) {
+		var buf bytes.Buffer
+		zw := zip.NewWriter(&buf)
+		writeZipEntry(t, zw, "version.json", []byte(`{"version":2}`))
+		writeZipEntry(t, zw, boardDir+"/board.jsonl", []byte(minimalBoardJSONL))
+		writeZipEntry(t, zw, boardDir+"/image.jpg", bytes.Repeat([]byte("x"), int(importMaxFileSize)+1))
+		require.NoError(t, zw.Close())
+
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
+		board := &model.Board{
+			ID:     "bfoi6yy6pa3yzika53spj7pq9ee",
+			TeamID: teamID,
+			Title:  "Test",
+		}
+		block := &model.Block{
+			ID:       "ckpc3b1dp3pbw7bqntfryy9jbzo",
+			ParentID: board.ID,
+			Type:     model.TypeCard,
+			BoardID:  board.ID,
+		}
+		babs := &model.BoardsAndBlocks{
+			Boards: []*model.Board{board},
+			Blocks: []*model.Block{block},
+		}
+
+		th.API.EXPECT().HasPermissionToTeam("user", teamID, model.PermissionCreatePrivateChannel).Return(true).AnyTimes()
+		th.API.EXPECT().HasPermissionToTeam("user", teamID, model.PermissionCreatePublicChannel).Return(true).AnyTimes()
+
+		th.Store.EXPECT().CreateBoardsAndBlocks(gomock.AssignableToTypeOf(&model.BoardsAndBlocks{}), "user").Return(babs, nil)
+		th.Store.EXPECT().GetMembersForBoard(board.ID).AnyTimes().Return([]*model.BoardMember{}, nil)
+		th.Store.EXPECT().GetBoard(board.ID).AnyTimes().Return(board, nil)
+		th.Store.EXPECT().GetMemberForBoard(board.ID, "user").AnyTimes().Return(&model.BoardMember{
+			BoardID: board.ID,
+			UserID:  "user",
+		}, nil)
+		th.Store.EXPECT().GetUserCategoryBoards("user", teamID).Return([]model.CategoryBoards{
+			{
+				Category: model.Category{
+					Type: "default",
+					Name: "Boards",
+					ID:   "boards_category_id",
+				},
+			},
+		}, nil)
+		th.Store.EXPECT().GetUserCategoryBoards("user", teamID)
+		th.Store.EXPECT().CreateCategory(utils.Anything).Return(nil)
+		th.Store.EXPECT().GetCategory(utils.Anything).Return(&model.Category{
+			ID:   "boards_category_id",
+			Name: "Boards",
+		}, nil)
+		th.Store.EXPECT().GetBoardsForUserAndTeam("user", teamID, false).Return([]*model.Board{}, nil)
+		th.Store.EXPECT().GetMembersForUser("user").Return([]*model.BoardMember{}, nil)
+		th.Store.EXPECT().AddUpdateCategoryBoard("user", utils.Anything, utils.Anything).Return(nil)
+		th.Store.EXPECT().SaveFileInfo(gomock.Any()).Return(nil)
+
+		mockedFileBackend := &mocks.FileBackend{}
+		th.App.filesBackend = mockedFileBackend
+		writeFileFunc := func(reader io.Reader, path string) int64 {
+			n, _ := io.Copy(io.Discard, reader)
+			return n
+		}
+		writeFileErrorFunc := func(reader io.Reader, filePath string) error { return nil }
+		mockedFileBackend.On("WriteFile", mock.Anything, mock.Anything).Return(writeFileFunc, writeFileErrorFunc)
+		mockedFileBackend.On("RemoveFile", mock.Anything).Return(nil)
+
+		err := th.App.ImportArchive(bytes.NewReader(buf.Bytes()), model.ImportArchiveOptions{
+			TeamID:     teamID,
+			ModifiedBy: "user",
+		})
+		require.Error(t, err)
+		require.ErrorIs(t, err, errSizeLimitExceeded)
+		mockedFileBackend.AssertCalled(t, "RemoveFile", mock.Anything)
+	})
+}
+
+func TestImportArchiveOrphanFileSizeLimit(t *testing.T) {
+	t.Run("rejects oversized orphan file", func(t *testing.T) {
+		var buf bytes.Buffer
+		zw := zip.NewWriter(&buf)
+		writeZipEntry(t, zw, "version.json", []byte(`{"version":2}`))
+		writeZipEntry(t, zw, "orphan/image.jpg", bytes.Repeat([]byte("x"), int(importMaxFileSize)+1))
+		require.NoError(t, zw.Close())
+
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
+		err := th.App.ImportArchive(bytes.NewReader(buf.Bytes()), model.ImportArchiveOptions{
+			TeamID:     "test-team",
+			ModifiedBy: "user",
+		})
+		require.Error(t, err)
+		require.ErrorIs(t, err, errSizeLimitExceeded)
+	})
+}
+
+func writeZipEntry(t *testing.T, zw *zip.Writer, name string, content []byte) {
+	t.Helper()
+	w, err := zw.Create(name)
+	require.NoError(t, err)
+	_, err = w.Write(content)
+	require.NoError(t, err)
+}
+
+func TestParseBoardsAndBlocksNormalizesLegacyFileFields(t *testing.T) {
+	const (
+		teamID  = "abcdefghijklmnopqrstuvwxyz"
+		boardID = "bfoi6yy6pa3yzika53spj7pq9ee"
+	)
+	//nolint:lll
+	boardLine := `{"type":"board","data":{"id":"` + boardID + `","teamId":"` + teamID + `","createdBy":"user","modifiedBy":"user","type":"P","title":"Test","createAt":1,"updateAt":1}}`
+
+	t.Run("moves a legacy attachmentId to fileId", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+		th.expectBoardImportPermissions("user", teamID, model.BoardTypePrivate)
+
+		//nolint:lll
+		jsonl := boardLine + "\n" +
+			`{"type":"block","data":{"id":"ckpc3b1dp3pbw7bqntfryy9jbzo","parentId":"` + boardID + `","createdBy":"user","modifiedBy":"user","schema":1,"type":"attachment","title":"A","fields":{"attachmentId":"7abcdefghijklmnopqrstuvwxyz.txt"},"createAt":1,"updateAt":1}}` + "\n"
+
+		bab, _, err := th.App.parseBoardsAndBlocks(bytes.NewReader([]byte(jsonl)), model.ImportArchiveOptions{TeamID: teamID, ModifiedBy: "user"})
+		require.NoError(t, err)
+		require.Len(t, bab.Blocks, 1)
+
+		block := bab.Blocks[0]
+		require.Equal(t, "7abcdefghijklmnopqrstuvwxyz.txt", block.Fields["fileId"])
+		_, hasAttachment := block.Fields["attachmentId"]
+		require.False(t, hasAttachment)
+	})
+
+	t.Run("normalizes before validating so a traversal attachmentId is rejected as a file id", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+		th.expectBoardImportPermissions("user", teamID, model.BoardTypePrivate)
+
+		//nolint:lll
+		jsonl := boardLine + "\n" +
+			`{"type":"block","data":{"id":"ckpc3b1dp3pbw7bqntfryy9jbzo","parentId":"` + boardID + `","createdBy":"user","modifiedBy":"user","schema":1,"type":"attachment","title":"A","fields":{"attachmentId":"../../../.../../././././././././filePath"},"createAt":1,"updateAt":1}}` + "\n"
+
+		_, _, err := th.App.parseBoardsAndBlocks(bytes.NewReader([]byte(jsonl)), model.ImportArchiveOptions{TeamID: teamID, ModifiedBy: "user"})
+		require.Error(t, err)
+		// The error must come from validating the promoted fileId, proving normalize
+		// ran before validation rather than the block being rejected for another reason.
+		require.ErrorContains(t, err, "Invalid Block ID")
+	})
+}
+
+//nolint:lll
+const openBoardArchive = `{"type":"board","data":{"id":"bfoi6yy6pa3yzika53spj7pq9ee","teamId":"wsmqbtwb5jb35jb3mtp85c8a9h","createdBy":"f1tydgc697fcbp8ampr6881jea","modifiedBy":"f1tydgc697fcbp8ampr6881jea","type":"O","minimumRole":"","title":"Open Import Test","createAt":1672750481591,"updateAt":1672750481591}}
+{"type":"block","data":{"id":"ckpc3b1dp3pbw7bqntfryy9jbzo","parentId":"bjaqxtbyqz3bu7pgyddpgpms74a","createdBy":"f1tydgc697fcbp8ampr6881jea","modifiedBy":"f1tydgc697fcbp8ampr6881jea","schema":1,"type":"card","title":"Test","fields":{"contentOrder":[],"icon":"","isTemplate":false,"properties":{}},"createAt":1672750481612,"updateAt":1672845003530,"deleteAt":0,"boardId":"bfoi6yy6pa3yzika53spj7pq9ee"}}
+`
 
 //nolint:lll
 const asana = `{"version":1,"date":1614714686842}

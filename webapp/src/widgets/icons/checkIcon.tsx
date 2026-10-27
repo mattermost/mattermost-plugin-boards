@@ -7,7 +7,7 @@ import React from 'react'
 import CompassIcon from './compassIcon'
 
 // TODO use this icon instead of check.tsx
-export default function Check(): JSX.Element {
+export default function Check(): React.JSX.Element {
     return (
         <CompassIcon
             icon='check'

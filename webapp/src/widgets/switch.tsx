@@ -13,7 +13,7 @@ type Props = {
 }
 
 // Switch is an on-off style switch / checkbox
-function Switch(props: Props): JSX.Element {
+function Switch(props: Props): React.JSX.Element {
     const switchSize = `size--${props.size === 'medium' ? 'medium' : 'small'}`
     const switchIsOn = props.isOn ? ' on' : ''
     const switchIsReadonly = props.readOnly ? ' readonly' : ''

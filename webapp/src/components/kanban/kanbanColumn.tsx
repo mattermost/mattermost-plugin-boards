@@ -13,7 +13,7 @@ type Props = {
 }
 
 const KanbanColumn = (props: Props) => {
-    const [{isOver}, drop] = useDrop(() => ({
+    const [{isOver}, drop] = useDrop<Card, void, {isOver: boolean}>(() => ({
         accept: 'card',
         collect: (monitor) => ({
             isOver: monitor.isOver(),
@@ -31,7 +31,9 @@ const KanbanColumn = (props: Props) => {
     }
     return (
         <div
-            ref={drop}
+            ref={(node) => {
+                drop(node)
+            }}
             className={className}
         >
             {props.children}

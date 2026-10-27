@@ -14,7 +14,7 @@ jest.mock('../../../../octoClient')
 
 describe('components/blocksEditor/blocks/attachment', () => {
     test('should match Display snapshot', async () => {
-        const mockedOcto = mocked(octoClient, true)
+        const mockedOcto = mocked(octoClient)
         mockedOcto.getFileAsDataUrl.mockResolvedValue({url: 'test.jpg'})
         const Component = AttachmentBlock.Display
         const {container} = render(
@@ -81,9 +81,9 @@ describe('components/blocksEditor/blocks/attachment', () => {
             />,
         )
 
-        expect(onSave).not.toBeCalled()
+        expect(onSave).not.toHaveBeenCalled()
         const input = screen.getByTestId('attachment-input')
         fireEvent.change(input, {target: {files: {length: 1, item: () => new File([], 'test-file', {type: 'text/plain'})}}})
-        expect(onSave).toBeCalledWith({file: new File([], 'test-file', {type: 'text/plain'}), filename: 'test-file'})
+        expect(onSave).toHaveBeenCalledWith({file: new File([], 'test-file', {type: 'text/plain'}), filename: 'test-file'})
     })
 })

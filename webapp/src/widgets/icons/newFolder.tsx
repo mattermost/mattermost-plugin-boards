@@ -6,7 +6,7 @@ import React from 'react'
 
 import CompassIcon from './compassIcon'
 
-export default function CreateNewFolder(): JSX.Element {
+export default function CreateNewFolder(): React.JSX.Element {
     return (
         <CompassIcon
             icon='folder-plus-outline'

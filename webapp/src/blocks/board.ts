@@ -111,6 +111,21 @@ function normalizeCardPrefix(prefix: string): string {
     return prefix.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, maxCardPrefixLength)
 }
 
+// A malformed record must not break the rendering of the board or card using it.
+function safePropertyString(value: unknown): string {
+    return typeof value === 'string' ? value : ''
+}
+
+function safePropertyValue(value: unknown): string | string[] {
+    if (typeof value === 'string') {
+        return value
+    }
+    if (Array.isArray(value) && value.every((item) => typeof item === 'string')) {
+        return value
+    }
+    return ''
+}
+
 function createBoard(board?: Board): Board {
     const now = Date.now()
     let cardProperties: IPropertyTemplate[] = []
@@ -346,4 +361,6 @@ export {
     createPatchesFromBoardsAndBlocks,
     createCardPropertiesPatches,
     normalizeCardPrefix,
+    safePropertyString,
+    safePropertyValue,
 }

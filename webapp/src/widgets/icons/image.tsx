@@ -6,7 +6,7 @@ import React from 'react'
 
 import './image.scss'
 
-export default function ImageIcon(): JSX.Element {
+export default function ImageIcon(): React.JSX.Element {
     return (
         <svg
             xmlns='http://www.w3.org/2000/svg'

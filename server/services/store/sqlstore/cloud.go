@@ -26,6 +26,7 @@ func (s *SQLStore) activeCardsQuery(builder sq.StatementBuilderType, selectStr s
 		Join(s.tablePrefix + "boards bd on b.board_id=bd.id").
 		Where(sq.Eq{
 			"b.type":         model.TypeCard,
+			"b.delete_at":    0,
 			"bd.is_template": false,
 		})
 	if !includeDeleted {
@@ -117,14 +118,10 @@ func (s *SQLStore) updateCardLimitTimestamp(db sq.BaseRunner, cardLimit int) (in
 	}
 	query = query.Values(store.CardLimitTimestampSystemKey, value)
 
-	if s.dbType == model.MysqlDBType {
-		query = query.Suffix("ON DUPLICATE KEY UPDATE value = ?", value)
-	} else {
-		query = query.Suffix(
-			`ON CONFLICT (id)
-			 DO UPDATE SET value = EXCLUDED.value`,
-		)
-	}
+	query = query.Suffix(
+		`ON CONFLICT (id)
+		 DO UPDATE SET value = EXCLUDED.value`,
+	)
 
 	result, err := query.Exec()
 	if err != nil {

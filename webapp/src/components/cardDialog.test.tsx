@@ -24,9 +24,9 @@ jest.mock('../octoClient')
 jest.mock('../utils')
 jest.mock('draft-js/lib/generateRandomKey', () => () => '123')
 
-const mockedUtils = mocked(Utils, true)
-const mockedMutator = mocked(mutator, true)
-const mockedOctoClient = mocked(octoClient, true)
+const mockedUtils = mocked(Utils)
+const mockedMutator = mocked(mutator)
+const mockedOctoClient = mocked(octoClient)
 mockedUtils.createGuid.mockReturnValue('test-id')
 mockedUtils.isFocalboardPlugin.mockReturnValue(true)
 
@@ -175,7 +175,7 @@ describe('components/cardDialog', () => {
         })
         const buttonElement = screen.getByRole('button', {name: 'Close dialog'})
         userEvent.click(buttonElement)
-        expect(closeFn).toBeCalledTimes(1)
+        expect(closeFn).toHaveBeenCalledTimes(1)
     })
     test('return cardDialog menu content', async () => {
         let container
@@ -232,7 +232,7 @@ describe('components/cardDialog', () => {
         userEvent.click(confirmButton!)
 
         // should be called once on confirming delete
-        expect(mockedMutator.deleteBlock).toBeCalledTimes(1)
+        expect(mockedMutator.deleteBlock).toHaveBeenCalledTimes(1)
     })
 
     test('return cardDialog menu content and cancel delete confirmation do nothing', async () => {
@@ -294,7 +294,7 @@ describe('components/cardDialog', () => {
         userEvent.click(buttonMenu)
         const buttonTemplate = screen.getByRole('button', {name: 'New template from card'})
         userEvent.click(buttonTemplate)
-        expect(mockedMutator.duplicateCard).toBeCalledTimes(1)
+        expect(mockedMutator.duplicateCard).toHaveBeenCalledTimes(1)
     })
 
     test('return cardDialog menu content and do a copy Link', async () => {
@@ -318,7 +318,7 @@ describe('components/cardDialog', () => {
         userEvent.click(buttonMenu)
         const buttonCopy = screen.getByRole('button', {name: 'Copy link'})
         userEvent.click(buttonCopy)
-        expect(mockedUtils.copyTextToClipboard).toBeCalledTimes(1)
+        expect(mockedUtils.copyTextToClipboard).toHaveBeenCalledTimes(1)
     })
 
     test('already following card', async () => {

@@ -75,8 +75,8 @@ describe('components/boardSelectorItem', () => {
 
         const buttonElement = screen.getByRole('button')
         await userEvent.click(buttonElement)
-        expect(linkBoard).toBeCalledWith(board)
-        expect(unlinkBoard).not.toBeCalled()
+        expect(linkBoard).toHaveBeenCalledWith(board)
+        expect(unlinkBoard).not.toHaveBeenCalled()
     })
 
     it('call handler on unlink', async () => {
@@ -96,8 +96,8 @@ describe('components/boardSelectorItem', () => {
 
         const buttonElement = screen.getByRole('button')
         await userEvent.click(buttonElement)
-        expect(unlinkBoard).toBeCalledWith(board)
-        expect(linkBoard).not.toBeCalled()
+        expect(unlinkBoard).toHaveBeenCalledWith(board)
+        expect(linkBoard).not.toHaveBeenCalled()
     })
 })
 

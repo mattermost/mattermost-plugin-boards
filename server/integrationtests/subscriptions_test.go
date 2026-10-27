@@ -10,6 +10,7 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/client"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/utils"
+	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,8 +23,9 @@ func createTestSubscriptions(client *client.Client, num int) ([]*model.Subscript
 		return nil, "", fmt.Errorf("cannot get current user: %w", resp.Error)
 	}
 
+	teamID := mmModel.NewId()
 	board := &model.Board{
-		TeamID:   "0",
+		TeamID:   teamID,
 		Type:     model.BoardTypeOpen,
 		CreateAt: 1,
 		UpdateAt: 1,
@@ -65,8 +67,12 @@ func createTestSubscriptions(client *client.Client, num int) ([]*model.Subscript
 }
 
 func TestCreateSubscription(t *testing.T) {
-	th := SetupTestHelper(t).InitBasic()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
+
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
+	th.Client2 = clients.Viewer
 
 	t.Run("Create valid subscription", func(t *testing.T) {
 		subs, userID, err := createTestSubscriptions(th.Client, 5)
@@ -101,8 +107,12 @@ func TestCreateSubscription(t *testing.T) {
 }
 
 func TestGetSubscriptions(t *testing.T) {
-	th := SetupTestHelper(t).InitBasic()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
+
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
+	th.Client2 = clients.Viewer
 
 	t.Run("Get subscriptions for user", func(t *testing.T) {
 		mySubs, user1ID, err := createTestSubscriptions(th.Client, 5)
@@ -124,8 +134,11 @@ func TestGetSubscriptions(t *testing.T) {
 }
 
 func TestDeleteSubscription(t *testing.T) {
-	th := SetupTestHelper(t).InitBasic()
+	th := SetupTestHelperPluginMode(t)
 	defer th.TearDown()
+
+	clients := setupClients(th)
+	th.Client = clients.TeamMember
 
 	t.Run("Delete valid subscription", func(t *testing.T) {
 		subs, userID, err := createTestSubscriptions(th.Client, 3)

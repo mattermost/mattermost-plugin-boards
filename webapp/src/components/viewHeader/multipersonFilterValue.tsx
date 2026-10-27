@@ -24,7 +24,7 @@ type Props = {
     filter: FilterClause
 }
 
-const MultiPersonFilterValue = (props: Props): JSX.Element => {
+const MultiPersonFilterValue = (props: Props): React.JSX.Element => {
     const {filter, view} = props
     const intl = useIntl()
     const emptyDisplayValue = intl.formatMessage({id: 'ConfirmPerson.search', defaultMessage: 'Search...'})

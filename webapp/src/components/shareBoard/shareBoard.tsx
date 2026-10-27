@@ -100,7 +100,7 @@ function isLastAdmin(members: BoardMember[]) {
     return true
 }
 
-export default function ShareBoardDialog(props: Props): JSX.Element {
+export default function ShareBoardDialog(props: Props): React.JSX.Element {
     const [wasCopiedPublic, setWasCopiedPublic] = useState(false)
     const [wasCopiedInternal, setWasCopiedInternal] = useState(false)
     const [showLinkChannelConfirmation, setShowLinkChannelConfirmation] = useState<Channel|null>(null)

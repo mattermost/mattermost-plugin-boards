@@ -6,7 +6,7 @@ import React from 'react'
 
 import CompassIcon from './compassIcon'
 
-export default function Update(): JSX.Element {
+export default function Update(): React.JSX.Element {
     return (
         <CompassIcon
             icon='update'

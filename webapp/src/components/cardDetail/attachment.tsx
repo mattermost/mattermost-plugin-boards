@@ -20,7 +20,7 @@ type Props = {
     addAttachment: () => void
 }
 
-const AttachmentList = (props: Props): JSX.Element => {
+const AttachmentList = (props: Props): React.JSX.Element => {
     const {attachments, onDelete, addAttachment} = props
     const intl = useIntl()
 

@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`/components/confirmAddUserForNotifications should match snapshot 1`] = `
 <div>
@@ -78,23 +78,25 @@ exports[`/components/confirmAddUserForNotifications should match snapshot 1`] = 
                   aria-live="polite"
                   aria-relevant="additions text"
                   class="css-1f43avz-a11yText-A11yText"
+                  role="log"
                 />
                 <div
-                  class=" css-fik0sr-control"
+                  class="css-fik0sr-control"
                 >
                   <div
-                    class=" css-1fdsijx-ValueContainer"
+                    class="css-hlgwow"
                   >
                     <div
-                      class=" css-1sga6wl-singleValue"
+                      class="css-1sga6wl-singleValue"
                     >
                       Editor
                     </div>
                     <div
-                      class=" css-108tt89-Input"
+                      class="css-9zrqer"
                       data-value=""
                     >
                       <input
+                        aria-activedescendant=""
                         aria-autocomplete="list"
                         aria-expanded="false"
                         aria-haspopup="true"
@@ -105,7 +107,7 @@ exports[`/components/confirmAddUserForNotifications should match snapshot 1`] = 
                         id="react-select-2-input"
                         role="combobox"
                         spellcheck="false"
-                        style="opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
+                        style="color: inherit; background: 0px; opacity: 1; width: 100%; grid-area: 1 / 2; min-width: 2px; border: 0px; margin: 0px; outline: 0; padding: 0px;"
                         tabindex="0"
                         type="text"
                         value=""
@@ -113,14 +115,14 @@ exports[`/components/confirmAddUserForNotifications should match snapshot 1`] = 
                     </div>
                   </div>
                   <div
-                    class=" css-1hb7zxy-IndicatorsContainer"
+                    class="css-1wy0on6"
                   >
                     <span
-                      class=" css-1u9des2-indicatorSeparator"
+                      class="css-1u9des2-indicatorSeparator"
                     />
                     <div
                       aria-hidden="true"
-                      class=" css-1xc3v61-indicatorContainer"
+                      class="css-1xc3v61-indicatorContainer"
                     >
                       <svg
                         aria-hidden="true"

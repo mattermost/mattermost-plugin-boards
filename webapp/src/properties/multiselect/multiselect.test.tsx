@@ -16,7 +16,7 @@ import MultiSelectProperty from './property'
 import MultiSelect from './multiselect'
 
 jest.mock('../../mutator')
-const mockedMutator = mocked(mutator, true)
+const mockedMutator = mocked(mutator)
 
 function buildMultiSelectPropertyTemplate(options: IPropertyOption[] = []): IPropertyTemplate {
     return {

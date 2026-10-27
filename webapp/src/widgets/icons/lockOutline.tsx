@@ -6,7 +6,7 @@ import React from 'react'
 
 import CompassIcon from './compassIcon'
 
-export default function LockOutline(): JSX.Element {
+export default function LockOutline(): React.JSX.Element {
     return (
         <CompassIcon
             icon='lock-outline'

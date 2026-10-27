@@ -8,7 +8,7 @@ import CompassIcon from './compassIcon'
 
 import './dropdown.scss'
 
-export default function DropdownIcon(): JSX.Element {
+export default function DropdownIcon(): React.JSX.Element {
     return (
         <CompassIcon
             icon='chevron-down'

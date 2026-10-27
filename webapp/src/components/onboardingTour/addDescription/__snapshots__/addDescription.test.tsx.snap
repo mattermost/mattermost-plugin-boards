@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`components/onboardingTour/addComments/AddDescriptionTourStep after hover 1`] = `
 <div
@@ -108,7 +108,6 @@ exports[`components/onboardingTour/addComments/AddDescriptionTourStep after hove
                 <span>
                   Done
                 </span>
-                
               </button>
             </div>
           </div>

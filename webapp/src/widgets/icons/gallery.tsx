@@ -6,7 +6,7 @@ import React from 'react'
 
 import './gallery.scss'
 
-export default function GalleryIcon(): JSX.Element {
+export default function GalleryIcon(): React.JSX.Element {
     return (
         <svg
             width='24'

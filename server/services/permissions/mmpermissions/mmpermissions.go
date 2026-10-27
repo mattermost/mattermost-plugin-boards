@@ -52,6 +52,28 @@ func (s *Service) HasPermissionToChannel(userID, channelID string, permission *m
 	return s.api.HasPermissionToChannel(userID, channelID, permission)
 }
 
+// isGuest reports whether the given user must be treated as a System Guest
+// for the purpose of board admin checks. It fails closed: if the user
+// record cannot be resolved (transient DB error, missing row, etc.) the
+// caller drops any stale SchemeAdmin so that a real demotion can't be
+// bypassed by a lookup hiccup. Legitimate Team / System Admins are still
+// elevated downstream via the existing PermissionManageTeam path, so they
+// retain access to the operations they're actually entitled to.
+func (s *Service) isGuest(userID string) bool {
+	if userID == "" || userID == model.SystemUserID {
+		return false
+	}
+	user, err := s.store.GetUserByID(userID)
+	if err != nil || user == nil {
+		s.logger.Error("error getting user to evaluate guest status; treating as guest",
+			mlog.String("userID", userID),
+			mlog.Err(err),
+		)
+		return true
+	}
+	return user.IsGuest
+}
+
 func (s *Service) HasPermissionToBoard(userID, boardID string, permission *mmModel.Permission) bool {
 	if userID == "" || boardID == "" || permission == nil {
 		return false
@@ -111,6 +133,12 @@ func (s *Service) HasPermissionToBoard(userID, boardID string, permission *mmMod
 		member.SchemeCommenter = true
 	case "viewer":
 		member.SchemeViewer = true
+	}
+
+	// Guests must never hold admin rights on a board, regardless of any
+	// stale SchemeAdmin flag persisted from before they were demoted.
+	if member.SchemeAdmin && s.isGuest(userID) {
+		member.SchemeAdmin = false
 	}
 
 	// Admins become member of boards, but get minimal role

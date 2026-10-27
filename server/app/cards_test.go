@@ -40,8 +40,9 @@ func TestCreateCard(t *testing.T) {
 	t.Run("success scenario", func(t *testing.T) {
 		th.Store.EXPECT().IncrementBoardCardCount(board.ID).Return(int64(7), nil)
 		th.Store.EXPECT().GetBoard(board.ID).Return(board, nil).Times(2)
+		th.Store.EXPECT().GetBlock(gomock.Any()).Return(nil, model.NewErrNotFound("block not found"))
 		th.Store.EXPECT().InsertBlock(gomock.AssignableToTypeOf(reflect.TypeOf(block)), userID).Return(nil)
-		th.Store.EXPECT().GetMembersForBoard(board.ID).Return([]*model.BoardMember{}, nil)
+		th.Store.EXPECT().GetMembersForBoard(gomock.Any()).Return([]*model.BoardMember{}, nil).AnyTimes()
 
 		newCard, err := th.App.CreateCard(card, board.ID, userID, false)
 
@@ -57,6 +58,7 @@ func TestCreateCard(t *testing.T) {
 	t.Run("error scenario", func(t *testing.T) {
 		th.Store.EXPECT().IncrementBoardCardCount(board.ID).Return(int64(8), nil)
 		th.Store.EXPECT().GetBoard(board.ID).Return(board, nil).Times(2)
+		th.Store.EXPECT().GetBlock(gomock.Any()).Return(nil, model.NewErrNotFound("block not found"))
 		th.Store.EXPECT().InsertBlock(gomock.AssignableToTypeOf(reflect.TypeOf(block)), userID).Return(blockError{"error"})
 
 		newCard, err := th.App.CreateCard(card, board.ID, userID, false)

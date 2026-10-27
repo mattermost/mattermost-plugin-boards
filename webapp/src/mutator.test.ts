@@ -3,6 +3,8 @@
 
 
 import mutator from './mutator'
+import octoClient from './octoClient'
+import undoManager from './undomanager'
 import {TestBlockFactory} from './test/testBlockFactory'
 import 'isomorphic-fetch'
 import {FetchMock} from './test/fetchMock'
@@ -28,12 +30,12 @@ describe('Mutator', () => {
         await mutator.changePropertyValue(board.id, card, 'property_1', 'hello')
 
         // No API call should be made as property value DIDN'T CHANGE
-        expect(FetchMock.fn).toBeCalledTimes(0)
+        expect(FetchMock.fn).toHaveBeenCalledTimes(0)
 
         await mutator.changePropertyValue(board.id, card, 'property_1', 'hello world')
 
         // 1 API call should be made as property value DID CHANGE
-        expect(FetchMock.fn).toBeCalledTimes(1)
+        expect(FetchMock.fn).toHaveBeenCalledTimes(1)
     })
 
     test('duplicateCard', async () => {
@@ -51,5 +53,46 @@ describe('Mutator', () => {
         expect(duplicatedCard.fields.icon).toBe(card.fields.icon)
         expect(duplicatedCard.fields.contentOrder).toHaveLength(card.fields.contentOrder.length)
         expect(duplicatedCard.boardId).toBe(board.id)
+    })
+
+    describe('deleteBoard', () => {
+        afterEach(() => {
+            jest.restoreAllMocks()
+        })
+
+        test('runs the afterUndo callback only after the board has been undeleted', async () => {
+            const board = TestBlockFactory.createBoard()
+            const callOrder: string[] = []
+
+            jest.spyOn(octoClient, 'deleteBoard').mockImplementation(async () => {
+                callOrder.push('deleteBoard')
+                return {} as Response
+            })
+            const undeleteBoard = jest.spyOn(octoClient, 'undeleteBoard').mockImplementation(async () => {
+                callOrder.push('undeleteBoard')
+                return {} as Response
+            })
+
+            const afterRedo = jest.fn(async () => {
+                callOrder.push('afterRedo')
+            })
+            const afterUndo = jest.fn(async () => {
+                callOrder.push('afterUndo')
+            })
+
+            await mutator.deleteBoard(board, 'delete board', afterRedo, afterUndo)
+            expect(callOrder).toEqual(['deleteBoard', 'afterRedo'])
+
+            await undoManager.undo()
+
+            // The board must be restored on the server before the afterUndo
+            // callback runs. The callback navigates to (and recategorizes) the
+            // board, so running it first lands the user on a "Board not found"
+            // error page for a board that no longer exists.
+            expect(callOrder).toEqual(['deleteBoard', 'afterRedo', 'undeleteBoard', 'afterUndo'])
+            expect(undeleteBoard).toHaveBeenCalledWith(board.id)
+            expect(afterUndo).toHaveBeenCalledTimes(1)
+            expect(afterUndo).toHaveBeenCalledWith(board)
+        })
     })
 })

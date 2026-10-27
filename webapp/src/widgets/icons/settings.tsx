@@ -8,7 +8,7 @@ import CompassIcon from './compassIcon'
 
 import './settings.scss'
 
-export default function SettingsIcon(): JSX.Element {
+export default function SettingsIcon(): React.JSX.Element {
     return (
         <CompassIcon
             icon='settings-outline'

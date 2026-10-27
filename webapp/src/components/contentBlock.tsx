@@ -36,7 +36,7 @@ type Props = {
     cords: {x: number, y?: number, z?: number}
 }
 
-const ContentBlock = (props: Props): JSX.Element => {
+const ContentBlock = (props: Props): React.JSX.Element => {
     const {card, block, readonly, cords} = props
     const intl = useIntl()
     const [, , gripRef, itemRef] = useSortableWithGrip('content', {block, cords}, true, () => {})

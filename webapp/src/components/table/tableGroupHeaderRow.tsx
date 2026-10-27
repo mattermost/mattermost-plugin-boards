@@ -35,7 +35,7 @@ type Props = {
     onDrop: (srcOption: IPropertyOption, dstOption?: IPropertyOption) => void
 }
 
-const TableGroupHeaderRow = (props: Props): JSX.Element => {
+const TableGroupHeaderRow = (props: Props): React.JSX.Element => {
     const {board, activeView, group, groupByProperty} = props
     const [groupTitle, setGroupTitle] = useState(group.option.value)
 

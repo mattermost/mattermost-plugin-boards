@@ -34,14 +34,14 @@ function useSortableBase<T>(itemType: string, item: T, enabled: boolean, handler
     return [isDragging, isOver, drag, drop, preview]
 }
 
-export function useSortable<T>(itemType: string, item: T, enabled: boolean, handler: (src: T, st: T) => void): [boolean, boolean, React.RefObject<HTMLDivElement>] {
+export function useSortable<T>(itemType: string, item: T, enabled: boolean, handler: (src: T, st: T) => void): [boolean, boolean, React.RefObject<HTMLDivElement | null>] {
     const ref = useRef<HTMLDivElement>(null)
     const [isDragging, isOver, drag, drop] = useSortableBase(itemType, item, enabled, handler)
     drop(drag(ref))
     return [isDragging, isOver, ref]
 }
 
-export function useSortableWithGrip(itemType: string, item: ISortableWithGripItem, enabled: boolean, handler: (src: IContentBlockWithCords, st: IContentBlockWithCords) => void): [boolean, boolean, React.RefObject<HTMLDivElement>, React.RefObject<HTMLDivElement>] {
+export function useSortableWithGrip(itemType: string, item: ISortableWithGripItem, enabled: boolean, handler: (src: IContentBlockWithCords, st: IContentBlockWithCords) => void): [boolean, boolean, React.RefObject<HTMLDivElement | null>, React.RefObject<HTMLDivElement | null>] {
     const ref = useRef<HTMLDivElement>(null)
     const previewRef = useRef<HTMLDivElement>(null)
     const [isDragging, isOver, drag, drop, preview] = useSortableBase(itemType, item as IContentBlockWithCords, enabled, handler)

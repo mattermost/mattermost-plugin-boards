@@ -20,7 +20,7 @@ import {createFilterGroup} from '../../blocks/filterGroup'
 import DateFilter from './dateFilter'
 
 jest.mock('../../mutator')
-const mockedMutator = mocked(mutator, true)
+const mockedMutator = mocked(mutator)
 
 // create Dates for specific days for this year.
 const June15 = new Date(Date.UTC(new Date().getFullYear(), 5, 15, 12))

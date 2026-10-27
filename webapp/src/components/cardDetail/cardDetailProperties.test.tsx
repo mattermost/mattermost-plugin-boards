@@ -21,7 +21,7 @@ import {PropertyType} from '../../properties/types'
 import CardDetailProperties from './cardDetailProperties'
 
 jest.mock('../../mutator')
-const mockedMutator = mocked(mutator, true)
+const mockedMutator = mocked(mutator)
 
 describe('components/cardDetail/CardDetailProperties', () => {
     const board = TestBlockFactory.createBoard()
@@ -190,7 +190,7 @@ describe('components/cardDetail/CardDetailProperties', () => {
         const propertyTemplate = board.cardProperties[0]
 
         // should be called once on confirming renaming the property
-        expect(mockedMutator.changePropertyTypeAndName).toBeCalledTimes(1)
+        expect(mockedMutator.changePropertyTypeAndName).toHaveBeenCalledTimes(1)
         expect(mockedMutator.changePropertyTypeAndName).toHaveBeenCalledWith(board, cards, propertyTemplate, 'select', 'Owner - Renamed')
     })
 
@@ -229,8 +229,8 @@ describe('components/cardDetail/CardDetailProperties', () => {
         userEvent.click(confirmButton!)
 
         // should be called once on confirming delete
-        expect(mockedMutator.deleteProperty).toBeCalledTimes(1)
-        expect(mockedMutator.deleteProperty).toBeCalledWith(board, views, cards, propertyTemplate.id)
+        expect(mockedMutator.deleteProperty).toHaveBeenCalledTimes(1)
+        expect(mockedMutator.deleteProperty).toHaveBeenCalledWith(board, views, cards, propertyTemplate.id)
     })
 
     it('cancel on delete dialog should do nothing', () => {

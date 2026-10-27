@@ -91,6 +91,10 @@ func (p *Plugin) MessageWillBeUpdated(ctx *plugin.Context, newPost, oldPost *mm_
 	return p.boardsApp.MessageWillBeUpdated(ctx, newPost, oldPost)
 }
 
+func (p *Plugin) UserHasLoggedIn(ctx *plugin.Context, user *mm_model.User) {
+	p.boardsApp.UserHasLoggedIn(ctx, user)
+}
+
 func (p *Plugin) RunDataRetention(nowTime, batchSize int64) (int64, error) {
 	return p.boardsApp.RunDataRetention(nowTime, batchSize)
 }

@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`components/sidebar/SidebarSettingsMenu imports menu open should match snapshot 1`] = `
 <div>
@@ -881,6 +881,31 @@ exports[`components/sidebar/SidebarSettingsMenu languages menu open should match
                             class="menu-name"
                           >
                             Svenska
+                          </div>
+                        </div>
+                        <div
+                          class="noicon"
+                        />
+                      </div>
+                      <div
+                        aria-label="한국어"
+                        class="MenuOption TextOption menu-option"
+                        role="button"
+                      >
+                        <div
+                          class="d-flex"
+                        >
+                          <div
+                            class="noicon"
+                          />
+                        </div>
+                        <div
+                          class="menu-option__content"
+                        >
+                          <div
+                            class="menu-name"
+                          >
+                            한국어
                           </div>
                         </div>
                         <div

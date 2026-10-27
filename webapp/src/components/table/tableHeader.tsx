@@ -33,7 +33,7 @@ type Props = {
     onAutoSizeColumn: (columnID: string, headerWidth: number) => void
 }
 
-const TableHeader = (props: Props): JSX.Element => {
+const TableHeader = (props: Props): React.JSX.Element => {
     const [isDragging, isOver, columnRef] = useSortable('column', props.template, !props.readonly, props.onDrop)
 
     const columnResize = useColumnResize()

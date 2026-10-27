@@ -41,61 +41,46 @@ func SetupTestHelper(t *testing.T) *TestHelper {
 
 func (th *TestHelper) checkBoardPermissions(roleName string, member *model.BoardMember, teamID string,
 	hasPermissionTo, hasNotPermissionTo []*mmModel.Permission) {
+	setupExpectations := func() {
+		th.store.EXPECT().
+			GetBoard(member.BoardID).
+			Return(&model.Board{ID: member.BoardID, TeamID: teamID}, nil).
+			Times(1)
+
+		th.api.EXPECT().
+			HasPermissionToTeam(member.UserID, teamID, model.PermissionViewTeam).
+			Return(true).
+			Times(1)
+
+		th.store.EXPECT().
+			GetMemberForBoard(member.BoardID, member.UserID).
+			Return(member, nil).
+			Times(1)
+
+		if member.SchemeAdmin {
+			th.store.EXPECT().
+				GetUserByID(member.UserID).
+				Return(&model.User{ID: member.UserID, IsGuest: false}, nil).
+				Times(1)
+		} else {
+			th.api.EXPECT().
+				HasPermissionToTeam(member.UserID, teamID, model.PermissionManageTeam).
+				Return(roleName == "elevated-admin").
+				Times(1)
+		}
+	}
+
 	for _, p := range hasPermissionTo {
 		th.t.Run(roleName+" "+p.Id, func(t *testing.T) {
-			th.store.EXPECT().
-				GetBoard(member.BoardID).
-				Return(&model.Board{ID: member.BoardID, TeamID: teamID}, nil).
-				Times(1)
-
-			th.api.EXPECT().
-				HasPermissionToTeam(member.UserID, teamID, model.PermissionViewTeam).
-				Return(true).
-				Times(1)
-
-			th.store.EXPECT().
-				GetMemberForBoard(member.BoardID, member.UserID).
-				Return(member, nil).
-				Times(1)
-
-			if !member.SchemeAdmin {
-				th.api.EXPECT().
-					HasPermissionToTeam(member.UserID, teamID, model.PermissionManageTeam).
-					Return(roleName == "elevated-admin").
-					Times(1)
-			}
-
-			hasPermission := th.permissions.HasPermissionToBoard(member.UserID, member.BoardID, p)
-			assert.True(t, hasPermission)
+			setupExpectations()
+			assert.True(t, th.permissions.HasPermissionToBoard(member.UserID, member.BoardID, p))
 		})
 	}
 
 	for _, p := range hasNotPermissionTo {
 		th.t.Run(roleName+" "+p.Id, func(t *testing.T) {
-			th.store.EXPECT().
-				GetBoard(member.BoardID).
-				Return(&model.Board{ID: member.BoardID, TeamID: teamID}, nil).
-				Times(1)
-
-			th.api.EXPECT().
-				HasPermissionToTeam(member.UserID, teamID, model.PermissionViewTeam).
-				Return(true).
-				Times(1)
-
-			th.store.EXPECT().
-				GetMemberForBoard(member.BoardID, member.UserID).
-				Return(member, nil).
-				Times(1)
-
-			if !member.SchemeAdmin {
-				th.api.EXPECT().
-					HasPermissionToTeam(member.UserID, teamID, model.PermissionManageTeam).
-					Return(roleName == "elevated-admin").
-					Times(1)
-			}
-
-			hasPermission := th.permissions.HasPermissionToBoard(member.UserID, member.BoardID, p)
-			assert.False(t, hasPermission)
+			setupExpectations()
+			assert.False(t, th.permissions.HasPermissionToBoard(member.UserID, member.BoardID, p))
 		})
 	}
 }

@@ -25,7 +25,7 @@ type Props = {
     readonly: boolean
 }
 
-function KanbanCalculation(props: Props): JSX.Element {
+function KanbanCalculation(props: Props): React.JSX.Element {
     const intl = useIntl()
 
     return (

@@ -55,7 +55,25 @@ func (a *API) handleGetMembersForBoard(w http.ResponseWriter, r *http.Request) {
 	boardID := mux.Vars(r)["boardID"]
 	userID := getUserID(r)
 
-	if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard) {
+	board, err := a.app.GetBoard(boardID)
+	if err != nil {
+		// Return 403 instead of 404 to avoid leaking whether the board exists.
+		if model.IsErrNotFound(err) {
+			a.errorResponse(w, r, model.NewErrPermission("access denied to board members"))
+			return
+		}
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	if board.IsTemplate {
+		// For template boards, only explicitly-added members (not synthetic channel/team members) can list board members.
+		member, memberErr := a.app.GetMemberForBoard(boardID, userID)
+		if memberErr != nil || member == nil || member.Synthetic {
+			a.errorResponse(w, r, model.NewErrPermission("access denied to board members"))
+			return
+		}
+	} else if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to board members"))
 		return
 	}
@@ -130,7 +148,8 @@ func (a *API) handleAddMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardRoles) &&
+	canManageRoles := a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardRoles)
+	if !canManageRoles &&
 		!(board.Type == model.BoardTypeOpen && a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardProperties)) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to modify board members"))
 		return
@@ -159,12 +178,20 @@ func (a *API) handleAddMember(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newBoardMember := &model.BoardMember{
-		UserID:          reqBoardMember.UserID,
-		BoardID:         boardID,
-		SchemeEditor:    reqBoardMember.SchemeEditor,
-		SchemeAdmin:     reqBoardMember.SchemeAdmin,
-		SchemeViewer:    reqBoardMember.SchemeViewer,
-		SchemeCommenter: reqBoardMember.SchemeCommenter,
+		UserID:  reqBoardMember.UserID,
+		BoardID: boardID,
+	}
+
+	if canManageRoles {
+		newBoardMember.SchemeEditor = reqBoardMember.SchemeEditor
+		newBoardMember.SchemeAdmin = reqBoardMember.SchemeAdmin
+		newBoardMember.SchemeViewer = reqBoardMember.SchemeViewer
+		newBoardMember.SchemeCommenter = reqBoardMember.SchemeCommenter
+	} else {
+		newBoardMember.SchemeAdmin = board.MinimumRole == model.BoardRoleAdmin
+		newBoardMember.SchemeEditor = board.MinimumRole == model.BoardRoleNone || board.MinimumRole == model.BoardRoleEditor
+		newBoardMember.SchemeCommenter = board.MinimumRole == model.BoardRoleCommenter
+		newBoardMember.SchemeViewer = board.MinimumRole == model.BoardRoleViewer
 	}
 
 	auditRec := a.makeAuditRecord(r, "addMember", audit.Fail)
@@ -234,11 +261,6 @@ func (a *API) handleJoinBoard(w http.ResponseWriter, r *http.Request) {
 	allowAdmin := query.Has("allow_admin")
 
 	userID := getUserID(r)
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrBadRequest("missing user ID"))
-		return
-	}
-
 	boardID := mux.Vars(r)["boardID"]
 	board, err := a.app.GetBoard(boardID)
 	if err != nil {
@@ -336,11 +358,6 @@ func (a *API) handleLeaveBoard(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/definitions/ErrorResponse"
 
 	userID := getUserID(r)
-	if userID == "" {
-		a.errorResponse(w, r, model.NewErrBadRequest("invalid session"))
-		return
-	}
-
 	boardID := mux.Vars(r)["boardID"]
 
 	if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard) {

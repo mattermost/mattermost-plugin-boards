@@ -46,11 +46,11 @@ describe('components/blocksEditor/blocks/h2', () => {
             />,
         )
 
-        expect(onChange).not.toBeCalled()
+        expect(onChange).not.toHaveBeenCalled()
 
         const input = screen.getByTestId('h2')
         fireEvent.change(input, {target: {value: 'test-value-'}})
-        expect(onChange).toBeCalled()
+        expect(onChange).toHaveBeenCalled()
     })
 
     test('should not emit onCancel event when value is not empty and hit backspace', async () => {
@@ -65,10 +65,10 @@ describe('components/blocksEditor/blocks/h2', () => {
             />,
         )
 
-        expect(onCancel).not.toBeCalled()
+        expect(onCancel).not.toHaveBeenCalled()
         const input = screen.getByTestId('h2')
         fireEvent.keyDown(input, {key: 'Backspace'})
-        expect(onCancel).not.toBeCalled()
+        expect(onCancel).not.toHaveBeenCalled()
     })
 
     test('should emit onCancel event when value is empty and hit backspace', async () => {
@@ -83,11 +83,11 @@ describe('components/blocksEditor/blocks/h2', () => {
             />,
         )
 
-        expect(onCancel).not.toBeCalled()
+        expect(onCancel).not.toHaveBeenCalled()
 
         const input = screen.getByTestId('h2')
         fireEvent.keyDown(input, {key: 'Backspace'})
-        expect(onCancel).toBeCalled()
+        expect(onCancel).toHaveBeenCalled()
     })
 
     test('should emit onSave event hit enter', async () => {
@@ -102,9 +102,9 @@ describe('components/blocksEditor/blocks/h2', () => {
             />,
         )
 
-        expect(onSave).not.toBeCalled()
+        expect(onSave).not.toHaveBeenCalled()
         const input = screen.getByTestId('h2')
         fireEvent.keyDown(input, {key: 'Enter'})
-        expect(onSave).toBeCalled()
+        expect(onSave).toHaveBeenCalled()
     })
 })

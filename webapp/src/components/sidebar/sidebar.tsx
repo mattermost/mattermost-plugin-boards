@@ -3,7 +3,7 @@
 
 import React, {useCallback, useEffect, useState} from 'react'
 import {FormattedMessage} from 'react-intl'
-import {DragDropContext, Droppable, DropResult} from 'react-beautiful-dnd'
+import {DragDropContext, Droppable, DropResult} from '@hello-pangea/dnd'
 
 import {getActiveThemeName, loadTheme} from '../../theme'
 import IconButton from '../../widgets/buttons/iconButton'
@@ -20,6 +20,7 @@ import './sidebar.scss'
 import {
     BoardCategoryWebsocketData,
     Category,
+    CategoryBoardMetadata,
     CategoryBoards,
     fetchSidebarCategories,
     getSidebarCategories,
@@ -132,6 +133,17 @@ const Sidebar = (props: Props) => {
             return
         }
 
+        // Guard against acting on stale, cross-team state during a team switch.
+        // Sidebar categories are fetched per-team and boards are team-scoped. A
+        // fast team switch can leave the previous team's categories (or an
+        // in-flight fetch for them) in the store while the new team is already
+        // current. A later websocket update can unshift a current-team category
+        // ahead of those stale entries, so every category — not only the first —
+        // must belong to the team being viewed.
+        if (currentBoard.teamId !== team.id || sidebarCategories.some((category) => category.teamID !== team.id)) {
+            return
+        }
+
         // find the category the current board belongs to
         // const category = sidebarCategories.find((c) => c.boardIDs.indexOf(currentBoard.id) >= 0)
         const category = sidebarCategories.find((c) => c.boardMetadata.find((boardMetadata) => boardMetadata.boardID === currentBoard.id))
@@ -201,6 +213,33 @@ const Sidebar = (props: Props) => {
         await octoClient.reorderSidebarCategories(team.id, newCategoryOrder)
     }, [team, sidebarCategories])
 
+    const getVisibleBoardIDs = useCallback((category: CategoryBoards): string[] => {
+        const boardsByID = new Map(boards.map((board) => [board.id, board]))
+
+        return category.boardMetadata.
+            filter((boardMetadata) => {
+                if (boardMetadata.hidden) {
+                    return false
+                }
+                const board = boardsByID.get(boardMetadata.boardID)
+                return Boolean(board) && !board!.isTemplate
+            }).
+            map((boardMetadata) => boardMetadata.boardID)
+    }, [boards])
+
+    const getMetadataInsertIndex = (boardsMetadata: CategoryBoardMetadata[], visibleBoardIDs: string[], visibleIndex: number): number => {
+        if (visibleBoardIDs.length === 0) {
+            return boardsMetadata.length
+        }
+
+        if (visibleIndex >= visibleBoardIDs.length) {
+            const lastVisibleID = visibleBoardIDs[visibleBoardIDs.length - 1]
+            return boardsMetadata.findIndex((boardMetadata) => boardMetadata.boardID === lastVisibleID) + 1
+        }
+
+        return boardsMetadata.findIndex((boardMetadata) => boardMetadata.boardID === visibleBoardIDs[visibleIndex])
+    }
+
     const handleCategoryBoardDND = useCallback(async (result: DropResult) => {
         const {source, destination, draggableId} = result
 
@@ -221,8 +260,16 @@ const Sidebar = (props: Props) => {
 
         if (fromCategoryID === toCategoryID) {
             const categoryBoardMetadata = [...toSidebarCategory.boardMetadata]
-            categoryBoardMetadata.splice(source.index, 1)
-            categoryBoardMetadata.splice(destination.index, 0, toSidebarCategory.boardMetadata[source.index])
+            const sourceMetadataIndex = categoryBoardMetadata.findIndex((boardMetadata) => boardMetadata.boardID === boardID)
+            if (sourceMetadataIndex < 0) {
+                Utils.logError(`dragged board not found in category metadata. boardID: ${boardID}, categoryID: ${toCategoryID}`)
+                return
+            }
+
+            const [movedBoardMetadata] = categoryBoardMetadata.splice(sourceMetadataIndex, 1)
+            const remainingVisibleBoardIDs = getVisibleBoardIDs(toSidebarCategory).filter((id) => id !== boardID)
+            const insertIndex = getMetadataInsertIndex(categoryBoardMetadata, remainingVisibleBoardIDs, destination.index)
+            categoryBoardMetadata.splice(insertIndex, 0, movedBoardMetadata)
 
             dispatch(updateCategoryBoardsOrder({categoryID: toCategoryID, boardsMetadata: categoryBoardMetadata}))
 
@@ -241,9 +288,15 @@ const Sidebar = (props: Props) => {
                 return
             }
 
+            const fromCategoryBoardMetadata = fromSidebarCategory.boardMetadata.find((boardMetadata) => boardMetadata.boardID === boardID)
+            if (!fromCategoryBoardMetadata) {
+                Utils.logError(`dragged board not found in source category metadata. boardID: ${boardID}, categoryID: ${fromCategoryID}`)
+                return
+            }
+
             const categoryBoardMetadata = [...toSidebarCategory.boardMetadata]
-            const fromCategoryBoardMetadata = fromSidebarCategory.boardMetadata[source.index]
-            categoryBoardMetadata.splice(destination.index, 0, fromCategoryBoardMetadata)
+            const insertIndex = getMetadataInsertIndex(categoryBoardMetadata, getVisibleBoardIDs(toSidebarCategory), destination.index)
+            categoryBoardMetadata.splice(insertIndex, 0, fromCategoryBoardMetadata)
 
             await dispatch(updateCategoryBoardsOrder({categoryID: toCategoryID, boardsMetadata: categoryBoardMetadata}))
             dispatch(updateBoardCategories([{...fromCategoryBoardMetadata, categoryID: toCategoryID}]))
@@ -266,7 +319,7 @@ const Sidebar = (props: Props) => {
                 dispatch(updateCategoryBoardsOrder({categoryID: toCategoryID, boardsMetadata: previousToBoardsMetadata}))
             }
         }
-    }, [team, sidebarCategories])
+    }, [team, sidebarCategories, getVisibleBoardIDs])
 
     const onDragEnd = useCallback(async (result: DropResult) => {
         const {destination, source, type} = result
@@ -293,7 +346,7 @@ const Sidebar = (props: Props) => {
 
         setDraggedItemID('')
         setIsCategoryBeingDragged(false)
-    }, [team, sidebarCategories])
+    }, [team, sidebarCategories, handleCategoryDND, handleCategoryBoardDND])
 
     const [draggedItemID, setDraggedItemID] = useState<string>('')
     const [isCategoryBeingDragged, setIsCategoryBeingDragged] = useState<boolean>(false)

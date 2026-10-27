@@ -11,6 +11,28 @@ import (
 )
 
 func (a *App) CreateBoardsAndBlocks(bab *model.BoardsAndBlocks, userID string, addMember bool) (*model.BoardsAndBlocks, error) {
+	// Reject blocks that reference files not belonging to their board.
+	boardsByID := make(map[string]*model.Board, len(bab.Boards))
+	for _, board := range bab.Boards {
+		boardsByID[board.ID] = board
+	}
+	for _, block := range bab.Blocks {
+		block.NormalizeLegacyFileFields()
+		board, ok := boardsByID[block.BoardID]
+		if !ok {
+			continue
+		}
+		if err := a.validateFileRefsInFields(board.TeamID, block.BoardID, block.ID, block.Fields); err != nil {
+			return nil, err
+		}
+	}
+
+	for _, board := range bab.Boards {
+		if err := a.validateBoardChannelReadAccess(userID, board.ChannelID); err != nil {
+			return nil, err
+		}
+	}
+
 	var newBab *model.BoardsAndBlocks
 	var members []*model.BoardMember
 	var err error
@@ -59,6 +81,17 @@ func (a *App) CreateBoardsAndBlocks(bab *model.BoardsAndBlocks, userID string, a
 }
 
 func (a *App) PatchBoardsAndBlocks(pbab *model.PatchBoardsAndBlocks, userID string) (*model.BoardsAndBlocks, error) {
+	for _, patch := range pbab.BlockPatches {
+		if patch == nil {
+			continue
+		}
+
+		if err := model.ValidateBlockPatch(patch); err != nil {
+			return nil, err
+		}
+		patch.RemoveLegacyFileFields()
+	}
+
 	oldBlocks, err := a.store.GetBlocksByIDs(pbab.BlockIDs)
 	if err != nil {
 		return nil, err
@@ -67,6 +100,44 @@ func (a *App) PatchBoardsAndBlocks(pbab *model.PatchBoardsAndBlocks, userID stri
 	oldBlocksMap := map[string]*model.Block{}
 	for _, block := range oldBlocks {
 		oldBlocksMap[block.ID] = block
+	}
+
+	boardCache := make(map[string]*model.Board)
+	for i, patch := range pbab.BlockPatches {
+		if patch == nil || patch.UpdatedFields == nil {
+			continue
+		}
+		blockID := pbab.BlockIDs[i]
+		block, ok := oldBlocksMap[blockID]
+		if !ok {
+			continue
+		}
+		board, ok := boardCache[block.BoardID]
+		if !ok {
+			board, err = a.store.GetBoard(block.BoardID)
+			if err != nil {
+				return nil, err
+			}
+			boardCache[block.BoardID] = board
+		}
+		if err = a.validateFileRefsInFields(board.TeamID, block.BoardID, blockID, patch.UpdatedFields); err != nil {
+			return nil, err
+		}
+	}
+
+	for i, boardID := range pbab.BoardIDs {
+		patch := pbab.BoardPatches[i]
+		if patch == nil {
+			continue
+		}
+		var board *model.Board
+		board, err = a.store.GetBoard(boardID)
+		if err != nil {
+			return nil, err
+		}
+		if err = a.validateBoardChannelPatchAccess(userID, board, patch); err != nil {
+			return nil, err
+		}
 	}
 
 	bab, err := a.store.PatchBoardsAndBlocks(pbab, userID)

@@ -1,7 +1,7 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import React, {useEffect, useMemo, useState} from 'react'
+import React, {useEffect, useLayoutEffect, useMemo, useState} from 'react'
 import {
     Router,
     Redirect,
@@ -27,6 +27,7 @@ import {getFirstTeam, fetchTeams, Team} from './store/teams'
 import {getSidebarCategories, CategoryBoards} from './store/sidebar'
 import {getMySortedBoards} from './store/boards'
 import {UserSettings} from './userSettings'
+import {syncHistoryWithBrowserLocation} from './desktopHistory'
 import FBRoute from './route'
 
 declare let window: IAppWindow
@@ -97,7 +98,7 @@ function HomeToCurrentTeam(props: {path: string, exact: boolean}) {
                     const lastViewID = UserSettings.lastViewId[lastBoardID]
 
                     if (lastBoardID) {
-                        if (!validBoardIds.has(lastBoardID)) {
+                        if (validBoardIds.size > 0 && !validBoardIds.has(lastBoardID)) {
                             let fallbackBoardId: string | null = null
                             for (const category of categories) {
                                 const visible = category.boardMetadata.find((m) => !m.hidden && validBoardIds.has(m.boardID))
@@ -203,7 +204,7 @@ type Props = {
     history?: History<unknown>
 }
 
-const FocalboardRouter = (props: Props): JSX.Element => {
+const FocalboardRouter = (props: Props): React.JSX.Element => {
 
     let browserHistory: History<unknown>
     if (props.history) {
@@ -214,11 +215,18 @@ const FocalboardRouter = (props: Props): JSX.Element => {
         }, [])
     }
 
-    useEffect(() => {
-        if (window.frontendBaseURL) {
-            browserHistory.replace(window.location.pathname.replace(window.frontendBaseURL, ''))
-        }
+    // Adopt the current browser URL before the first render (not in a post-render
+    // useEffect, whose child effects run first and would mount a stale board).
+    // Render nothing until the sync has run so the wrong board is never mounted.
+    const [synced, setSynced] = useState(false)
+    useLayoutEffect(() => {
+        syncHistoryWithBrowserLocation(browserHistory)
+        setSynced(true)
     }, [])
+
+    if (!synced) {
+        return <></>
+    }
 
     return (
         <Router history={browserHistory}>

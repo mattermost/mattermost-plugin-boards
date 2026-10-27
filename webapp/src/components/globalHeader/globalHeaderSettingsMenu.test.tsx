@@ -23,8 +23,8 @@ import GlobalHeaderSettingsMenu from './globalHeaderSettingsMenu'
 
 jest.mock('../../telemetry/telemetryClient')
 jest.mock('../../octoClient')
-const mockedTelemetry = mocked(TelemetryClient, true)
-const mockedOctoClient = mocked(client, true)
+const mockedTelemetry = mocked(TelemetryClient)
+const mockedOctoClient = mocked(client)
 
 describe('components/sidebar/GlobalHeaderSettingsMenu', () => {
     const mockStore = configureStore([])
@@ -109,7 +109,7 @@ describe('components/sidebar/GlobalHeaderSettingsMenu', () => {
         expect(container).toMatchSnapshot()
 
         userEvent.click(container.querySelector('[aria-label="Asana"]') as Element)
-        expect(mockedTelemetry.trackEvent).toBeCalledWith(TelemetryCategory, TelemetryActions.ImportAsana)
+        expect(mockedTelemetry.trackEvent).toHaveBeenCalledWith(TelemetryCategory, TelemetryActions.ImportAsana)
     })
 
     test('Product Tour option restarts the tour', () => {
@@ -127,7 +127,7 @@ describe('components/sidebar/GlobalHeaderSettingsMenu', () => {
             userEvent.click(container.querySelector('.product-tour') as Element)
         })
 
-        expect(mockedOctoClient.patchUserConfig).toBeCalledWith('user-id', {
+        expect(mockedOctoClient.patchUserConfig).toHaveBeenCalledWith('user-id', {
             updatedFields: {
                 onboardingTourStarted: '1',
                 onboardingTourStep: '0',

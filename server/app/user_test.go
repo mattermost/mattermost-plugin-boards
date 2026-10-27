@@ -6,6 +6,7 @@ package app
 import (
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	mmModel "github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/assert"
@@ -84,5 +85,44 @@ func TestSearchUsers(t *testing.T) {
 		channels, err := th.App.SearchUserChannels(teamID, userID, "")
 		assert.NoError(t, err)
 		assert.Equal(t, 0, len(channels))
+	})
+}
+
+func TestRevokeBoardAdminForGuest(t *testing.T) {
+	th, tearDown := SetupTestHelper(t)
+	defer tearDown()
+
+	userID := "user-id-1"
+
+	t.Run("no-op for empty userID", func(t *testing.T) {
+		assert.NoError(t, th.App.RevokeBoardAdminForGuest(""))
+	})
+
+	t.Run("no-op when user is not a guest", func(t *testing.T) {
+		th.Store.EXPECT().GetUserByID(userID).Return(&model.User{ID: userID, IsGuest: false}, nil)
+
+		assert.NoError(t, th.App.RevokeBoardAdminForGuest(userID))
+	})
+
+	t.Run("clears SchemeAdmin on every membership for a guest", func(t *testing.T) {
+		members := []*model.BoardMember{
+			{BoardID: "board-1", UserID: userID, SchemeAdmin: true, SchemeEditor: true},
+			{BoardID: "board-2", UserID: userID, SchemeAdmin: false, SchemeEditor: true},
+			{BoardID: "board-3", UserID: userID, SchemeAdmin: true},
+		}
+
+		th.Store.EXPECT().GetUserByID(userID).Return(&model.User{ID: userID, IsGuest: true}, nil)
+		th.Store.EXPECT().GetMembersForUser(userID).Return(members, nil)
+
+		th.Store.EXPECT().
+			SaveMember(gomock.AssignableToTypeOf(&model.BoardMember{})).
+			DoAndReturn(func(bm *model.BoardMember) (*model.BoardMember, error) {
+				assert.False(t, bm.SchemeAdmin, "SchemeAdmin should be cleared for board %s", bm.BoardID)
+				assert.Equal(t, userID, bm.UserID)
+				return bm, nil
+			}).
+			Times(2)
+
+		assert.NoError(t, th.App.RevokeBoardAdminForGuest(userID))
 	})
 }

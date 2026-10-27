@@ -3,7 +3,7 @@
 
 
 import React from 'react'
-import {render, screen} from '@testing-library/react'
+import {fireEvent, render, screen} from '@testing-library/react'
 
 import {mocked} from 'jest-mock'
 
@@ -23,8 +23,8 @@ jest.mock('../../components/flashMessages')
 jest.mock('../../mutator')
 
 const mockedCopy = jest.spyOn(Utils, 'copyTextToClipboard').mockImplementation(() => true)
-const mockedSendFlashMessage = mocked(sendFlashMessage, true)
-const mockedMutator = mocked(mutator, true)
+const mockedSendFlashMessage = mocked(sendFlashMessage)
+const mockedMutator = mocked(mutator)
 
 describe('properties/link', () => {
     beforeEach(jest.clearAllMocks)
@@ -99,7 +99,7 @@ describe('properties/link', () => {
             ),
         )
 
-        screen.getByRole('button', {name: 'Edit'}).click()
+        fireEvent.click(screen.getByRole('button', {name: 'Edit'}))
         const newURL = 'https://github.com/mattermost'
         const input = screen.getByRole('textbox')
         userEvent.clear(input)
@@ -117,7 +117,7 @@ describe('properties/link', () => {
                 />,
             ),
         )
-        screen.getByRole('button', {name: 'Copy'}).click()
+        fireEvent.click(screen.getByRole('button', {name: 'Copy'}))
         expect(mockedCopy).toHaveBeenCalledWith(url)
         expect(mockedSendFlashMessage).toHaveBeenCalledWith({content: 'Copied!', severity: 'high'})
     })
