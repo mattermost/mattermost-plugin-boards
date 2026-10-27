@@ -39,9 +39,13 @@ function createCard(block?: Block | Card): Card {
             properties: {...(block?.fields.properties || {})},
             contentOrder,
             isTemplate: block?.fields.isTemplate || false,
-            cardNumber: block?.fields.cardNumber || 0,
         },
         cardNumber: block?.fields.cardNumber || 0,
+    }
+
+    // cardNumber is assigned by the server; only carry over an existing one
+    if (block?.fields.cardNumber) {
+        card.fields.cardNumber = block.fields.cardNumber
     }
     if (block && 'ticketCode' in block && block.ticketCode) {
         card.ticketCode = block.ticketCode

@@ -1324,12 +1324,35 @@ func testTicketCodes(t *testing.T, store store.Store) {
 		require.NoError(t, err)
 	})
 
-	t.Run("duplicating a board clears its prefix", func(t *testing.T) {
+	t.Run("duplicating a board clears its prefix but keeps card numbers", func(t *testing.T) {
 		board := insertBoard(t, testTeamID, "DUPE")
+		n, err := store.IncrementBoardCardCount(board.ID)
+		require.NoError(t, err)
+		insertCard(t, board.ID, n)
+
 		bab, _, err := store.DuplicateBoard(board.ID, userID, testTeamID, false)
 		require.NoError(t, err)
 		require.Len(t, bab.Boards, 1)
 		require.Empty(t, bab.Boards[0].CardPrefix)
+		require.EqualValues(t, n, bab.Boards[0].CardCount)
+		require.Len(t, bab.Blocks, 1)
+		require.EqualValues(t, n, bab.Blocks[0].Fields[model.BlockFieldCardNumber])
+	})
+
+	t.Run("duplicating a card assigns a new number, templates get none", func(t *testing.T) {
+		board := insertBoard(t, testTeamID, "")
+		n, err := store.IncrementBoardCardCount(board.ID)
+		require.NoError(t, err)
+		original := insertCard(t, board.ID, n)
+
+		blocks, err := store.DuplicateBlock(board.ID, original.ID, userID, false)
+		require.NoError(t, err)
+		require.EqualValues(t, n+1, blocks[0].Fields[model.BlockFieldCardNumber])
+
+		blocks, err = store.DuplicateBlock(board.ID, original.ID, userID, true)
+		require.NoError(t, err)
+		_, present := blocks[0].Fields[model.BlockFieldCardNumber]
+		require.False(t, present)
 	})
 
 	t.Run("lookup by ticket code", func(t *testing.T) {
@@ -1345,14 +1368,37 @@ func testTicketCodes(t *testing.T, store store.Store) {
 		require.True(t, model.IsErrNotFound(err), "expected not found, got %v", err)
 	})
 
-	t.Run("lookup fails when the prefix is ambiguous", func(t *testing.T) {
-		// InsertBoard does not enforce uniqueness, mirroring legacy/imported data
-		board1 := insertBoard(t, testTeamID, "AMBIG")
-		board2 := insertBoard(t, testTeamID, "AMBIG")
-		insertCard(t, board1.ID, 1)
-		insertCard(t, board2.ID, 1)
+	t.Run("a new board with a prefix already used in the team is created without it", func(t *testing.T) {
+		insertBoard(t, testTeamID, "FIRST")
+		second := insertBoard(t, testTeamID, "FIRST")
+		require.Empty(t, second.CardPrefix)
 
-		_, err := store.GetCardByTicketCode("AMBIG", 1, testTeamID)
-		require.True(t, model.IsErrBadRequest(err), "expected bad request, got %v", err)
+		stored, err := store.GetBoard(second.ID)
+		require.NoError(t, err)
+		require.Empty(t, stored.CardPrefix)
+	})
+
+	t.Run("the database rejects a duplicate prefix in a team", func(t *testing.T) {
+		insertBoard(t, testTeamID, "UNIQ")
+		other := insertBoard(t, testTeamID, "")
+
+		// the update path of InsertBoard has no early check, so this hits the constraint
+		other.CardPrefix = "UNIQ"
+		_, err := store.InsertBoard(other, userID)
+		require.Error(t, err)
+	})
+
+	t.Run("undelete drops a prefix taken while the board was deleted", func(t *testing.T) {
+		board := insertBoard(t, testTeamID, "REUSE")
+		time.Sleep(1 * time.Millisecond)
+		require.NoError(t, store.DeleteBoard(board.ID, userID))
+
+		insertBoard(t, testTeamID, "REUSE")
+
+		time.Sleep(1 * time.Millisecond)
+		require.NoError(t, store.UndeleteBoard(board.ID, userID))
+		restored, err := store.GetBoard(board.ID)
+		require.NoError(t, err)
+		require.Empty(t, restored.CardPrefix)
 	})
 }

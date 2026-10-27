@@ -79,6 +79,24 @@ exports[`components/centerPanel Clicking on the Hidden card count should open a 
             />
           </div>
           <div
+            class="card-prefix-row"
+          >
+            <span
+              class="card-prefix-label"
+            >
+              <i
+                class="CompassIcon icon-ticket-outline"
+              />
+              Ticket prefix
+            </span>
+            <input
+              class="Editable card-prefix-input"
+              placeholder="e.g. PROJ"
+              title=""
+              value=""
+            />
+          </div>
+          <div
             class="description"
           >
             <div
@@ -219,7 +237,7 @@ exports[`components/centerPanel Clicking on the Hidden card count should open a 
           />
           <input
             class="Editable "
-            placeholder="Search cards"
+            placeholder="Search cards or ticket codes"
           />
         </div>
         <div
@@ -792,6 +810,24 @@ exports[`components/centerPanel return centerPanel and click on card to show car
             />
           </div>
           <div
+            class="card-prefix-row"
+          >
+            <span
+              class="card-prefix-label"
+            >
+              <i
+                class="CompassIcon icon-ticket-outline"
+              />
+              Ticket prefix
+            </span>
+            <input
+              class="Editable card-prefix-input"
+              placeholder="e.g. PROJ"
+              title=""
+              value=""
+            />
+          </div>
+          <div
             class="description"
           >
             <div
@@ -932,7 +968,7 @@ exports[`components/centerPanel return centerPanel and click on card to show car
           />
           <input
             class="Editable "
-            placeholder="Search cards"
+            placeholder="Search cards or ticket codes"
           />
         </div>
         <div
@@ -1350,6 +1386,24 @@ exports[`components/centerPanel return centerPanel and click on new card to edit
             />
           </div>
           <div
+            class="card-prefix-row"
+          >
+            <span
+              class="card-prefix-label"
+            >
+              <i
+                class="CompassIcon icon-ticket-outline"
+              />
+              Ticket prefix
+            </span>
+            <input
+              class="Editable card-prefix-input"
+              placeholder="e.g. PROJ"
+              title=""
+              value=""
+            />
+          </div>
+          <div
             class="description"
           >
             <div
@@ -1490,7 +1544,7 @@ exports[`components/centerPanel return centerPanel and click on new card to edit
           />
           <input
             class="Editable "
-            placeholder="Search cards"
+            placeholder="Search cards or ticket codes"
           />
         </div>
         <div
@@ -2058,7 +2112,7 @@ exports[`components/centerPanel return centerPanel and press touch 1 with readon
           />
           <input
             class="Editable "
-            placeholder="Search cards"
+            placeholder="Search cards or ticket codes"
           />
         </div>
       </div>
@@ -2416,6 +2470,24 @@ exports[`components/centerPanel return centerPanel and press touch ctrl+d for on
             />
           </div>
           <div
+            class="card-prefix-row"
+          >
+            <span
+              class="card-prefix-label"
+            >
+              <i
+                class="CompassIcon icon-ticket-outline"
+              />
+              Ticket prefix
+            </span>
+            <input
+              class="Editable card-prefix-input"
+              placeholder="e.g. PROJ"
+              title=""
+              value=""
+            />
+          </div>
+          <div
             class="description"
           >
             <div
@@ -2556,7 +2628,7 @@ exports[`components/centerPanel return centerPanel and press touch ctrl+d for on
           />
           <input
             class="Editable "
-            placeholder="Search cards"
+            placeholder="Search cards or ticket codes"
           />
         </div>
         <div
@@ -3079,6 +3151,24 @@ exports[`components/centerPanel return centerPanel and press touch del for one c
             />
           </div>
           <div
+            class="card-prefix-row"
+          >
+            <span
+              class="card-prefix-label"
+            >
+              <i
+                class="CompassIcon icon-ticket-outline"
+              />
+              Ticket prefix
+            </span>
+            <input
+              class="Editable card-prefix-input"
+              placeholder="e.g. PROJ"
+              title=""
+              value=""
+            />
+          </div>
+          <div
             class="description"
           >
             <div
@@ -3219,7 +3309,7 @@ exports[`components/centerPanel return centerPanel and press touch del for one c
           />
           <input
             class="Editable "
-            placeholder="Search cards"
+            placeholder="Search cards or ticket codes"
           />
         </div>
         <div
@@ -3742,6 +3832,24 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
             />
           </div>
           <div
+            class="card-prefix-row"
+          >
+            <span
+              class="card-prefix-label"
+            >
+              <i
+                class="CompassIcon icon-ticket-outline"
+              />
+              Ticket prefix
+            </span>
+            <input
+              class="Editable card-prefix-input"
+              placeholder="e.g. PROJ"
+              title=""
+              value=""
+            />
+          </div>
+          <div
             class="description"
           >
             <div
@@ -3882,7 +3990,7 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
           />
           <input
             class="Editable "
-            placeholder="Search cards"
+            placeholder="Search cards or ticket codes"
           />
         </div>
         <div
@@ -4405,6 +4513,24 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
             />
           </div>
           <div
+            class="card-prefix-row"
+          >
+            <span
+              class="card-prefix-label"
+            >
+              <i
+                class="CompassIcon icon-ticket-outline"
+              />
+              Ticket prefix
+            </span>
+            <input
+              class="Editable card-prefix-input"
+              placeholder="e.g. PROJ"
+              title=""
+              value=""
+            />
+          </div>
+          <div
             class="description"
           >
             <div
@@ -4545,7 +4671,7 @@ exports[`components/centerPanel return centerPanel and press touch esc for one c
           />
           <input
             class="Editable "
-            placeholder="Search cards"
+            placeholder="Search cards or ticket codes"
           />
         </div>
         <div
@@ -5068,6 +5194,24 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
             />
           </div>
           <div
+            class="card-prefix-row"
+          >
+            <span
+              class="card-prefix-label"
+            >
+              <i
+                class="CompassIcon icon-ticket-outline"
+              />
+              Ticket prefix
+            </span>
+            <input
+              class="Editable card-prefix-input"
+              placeholder="e.g. PROJ"
+              title=""
+              value=""
+            />
+          </div>
+          <div
             class="description"
           >
             <div
@@ -5208,7 +5352,7 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
           />
           <input
             class="Editable "
-            placeholder="Search cards"
+            placeholder="Search cards or ticket codes"
           />
         </div>
         <div
@@ -5731,6 +5875,24 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
             />
           </div>
           <div
+            class="card-prefix-row"
+          >
+            <span
+              class="card-prefix-label"
+            >
+              <i
+                class="CompassIcon icon-ticket-outline"
+              />
+              Ticket prefix
+            </span>
+            <input
+              class="Editable card-prefix-input"
+              placeholder="e.g. PROJ"
+              title=""
+              value=""
+            />
+          </div>
+          <div
             class="description"
           >
             <div
@@ -5871,7 +6033,7 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
           />
           <input
             class="Editable "
-            placeholder="Search cards"
+            placeholder="Search cards or ticket codes"
           />
         </div>
         <div
@@ -6394,6 +6556,24 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
             />
           </div>
           <div
+            class="card-prefix-row"
+          >
+            <span
+              class="card-prefix-label"
+            >
+              <i
+                class="CompassIcon icon-ticket-outline"
+              />
+              Ticket prefix
+            </span>
+            <input
+              class="Editable card-prefix-input"
+              placeholder="e.g. PROJ"
+              title=""
+              value=""
+            />
+          </div>
+          <div
             class="description"
           >
             <div
@@ -6534,7 +6714,7 @@ exports[`components/centerPanel return centerPanel and press touch esc for two c
           />
           <input
             class="Editable "
-            placeholder="Search cards"
+            placeholder="Search cards or ticket codes"
           />
         </div>
         <div
@@ -7057,6 +7237,24 @@ exports[`components/centerPanel return centerPanel and select one card and click
             />
           </div>
           <div
+            class="card-prefix-row"
+          >
+            <span
+              class="card-prefix-label"
+            >
+              <i
+                class="CompassIcon icon-ticket-outline"
+              />
+              Ticket prefix
+            </span>
+            <input
+              class="Editable card-prefix-input"
+              placeholder="e.g. PROJ"
+              title=""
+              value=""
+            />
+          </div>
+          <div
             class="description"
           >
             <div
@@ -7197,7 +7395,7 @@ exports[`components/centerPanel return centerPanel and select one card and click
           />
           <input
             class="Editable "
-            placeholder="Search cards"
+            placeholder="Search cards or ticket codes"
           />
         </div>
         <div
@@ -7720,6 +7918,24 @@ exports[`components/centerPanel return centerPanel and select one card and click
             />
           </div>
           <div
+            class="card-prefix-row"
+          >
+            <span
+              class="card-prefix-label"
+            >
+              <i
+                class="CompassIcon icon-ticket-outline"
+              />
+              Ticket prefix
+            </span>
+            <input
+              class="Editable card-prefix-input"
+              placeholder="e.g. PROJ"
+              title=""
+              value=""
+            />
+          </div>
+          <div
             class="description"
           >
             <div
@@ -7860,7 +8076,7 @@ exports[`components/centerPanel return centerPanel and select one card and click
           />
           <input
             class="Editable "
-            placeholder="Search cards"
+            placeholder="Search cards or ticket codes"
           />
         </div>
         <div
@@ -8383,6 +8599,24 @@ exports[`components/centerPanel should match snapshot for Gallery 1`] = `
             />
           </div>
           <div
+            class="card-prefix-row"
+          >
+            <span
+              class="card-prefix-label"
+            >
+              <i
+                class="CompassIcon icon-ticket-outline"
+              />
+              Ticket prefix
+            </span>
+            <input
+              class="Editable card-prefix-input"
+              placeholder="e.g. PROJ"
+              title=""
+              value=""
+            />
+          </div>
+          <div
             class="description"
           >
             <div
@@ -8503,7 +8737,7 @@ exports[`components/centerPanel should match snapshot for Gallery 1`] = `
           />
           <input
             class="Editable "
-            placeholder="Search cards"
+            placeholder="Search cards or ticket codes"
           />
         </div>
         <div
@@ -8663,6 +8897,24 @@ exports[`components/centerPanel should match snapshot for Kanban 1`] = `
             />
           </div>
           <div
+            class="card-prefix-row"
+          >
+            <span
+              class="card-prefix-label"
+            >
+              <i
+                class="CompassIcon icon-ticket-outline"
+              />
+              Ticket prefix
+            </span>
+            <input
+              class="Editable card-prefix-input"
+              placeholder="e.g. PROJ"
+              title=""
+              value=""
+            />
+          </div>
+          <div
             class="description"
           >
             <div
@@ -8803,7 +9055,7 @@ exports[`components/centerPanel should match snapshot for Kanban 1`] = `
           />
           <input
             class="Editable "
-            placeholder="Search cards"
+            placeholder="Search cards or ticket codes"
           />
         </div>
         <div
@@ -9187,6 +9439,24 @@ exports[`components/centerPanel should match snapshot for Kanban, not shared 1`]
             />
           </div>
           <div
+            class="card-prefix-row"
+          >
+            <span
+              class="card-prefix-label"
+            >
+              <i
+                class="CompassIcon icon-ticket-outline"
+              />
+              Ticket prefix
+            </span>
+            <input
+              class="Editable card-prefix-input"
+              placeholder="e.g. PROJ"
+              title=""
+              value=""
+            />
+          </div>
+          <div
             class="description"
           >
             <div
@@ -9327,7 +9597,7 @@ exports[`components/centerPanel should match snapshot for Kanban, not shared 1`]
           />
           <input
             class="Editable "
-            placeholder="Search cards"
+            placeholder="Search cards or ticket codes"
           />
         </div>
         <div
@@ -9711,6 +9981,24 @@ exports[`components/centerPanel should match snapshot for Table 1`] = `
             />
           </div>
           <div
+            class="card-prefix-row"
+          >
+            <span
+              class="card-prefix-label"
+            >
+              <i
+                class="CompassIcon icon-ticket-outline"
+              />
+              Ticket prefix
+            </span>
+            <input
+              class="Editable card-prefix-input"
+              placeholder="e.g. PROJ"
+              title=""
+              value=""
+            />
+          </div>
+          <div
             class="description"
           >
             <div
@@ -9851,7 +10139,7 @@ exports[`components/centerPanel should match snapshot for Table 1`] = `
           />
           <input
             class="Editable "
-            placeholder="Search cards"
+            placeholder="Search cards or ticket codes"
           />
         </div>
         <div

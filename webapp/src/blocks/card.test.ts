@@ -27,4 +27,9 @@ describe('card tests', () => {
         expect(copy.fields.cardNumber).toBe(7)
         expect(copy.cardNumber).toBe(7)
     })
+
+    it('createCard should not set a card number on a new card', () => {
+        const card = createCard()
+        expect('cardNumber' in card.fields).toBe(false)
+    })
 })

@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	mmModel "github.com/mattermost/mattermost/server/public/model"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/lib/pq"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
@@ -309,6 +311,14 @@ func (s *SQLStore) insertBoard(db sq.BaseRunner, board *model.Board, userID stri
 		return nil, fmt.Errorf("insertBoard error occurred while fetching existing board %s: %w", board.ID, err)
 	}
 
+	// Creating or importing a board must not fail because its optional card
+	// prefix is already taken in the team, so drop it instead.
+	if existingBoard == nil {
+		if err := s.dropCardPrefixIfInUse(db, board); err != nil {
+			return nil, err
+		}
+	}
+
 	insertQuery := s.getQueryBuilder(db).Insert("").
 		Columns(boardFields("")...)
 
@@ -332,7 +342,7 @@ func (s *SQLStore) insertBoard(db sq.BaseRunner, board *model.Board, userID stri
 		"template_version": board.TemplateVersion,
 		"properties":       propertiesBytes,
 		"card_properties":  cardPropertiesBytes,
-		"card_prefix":      board.CardPrefix,
+		"card_prefix":      cardPrefixValue(board.CardPrefix),
 		"card_count":       board.CardCount,
 		"create_at":        board.CreateAt,
 		"update_at":        board.UpdateAt,
@@ -354,7 +364,7 @@ func (s *SQLStore) insertBoard(db sq.BaseRunner, board *model.Board, userID stri
 			Set("template_version", board.TemplateVersion).
 			Set("properties", propertiesBytes).
 			Set("card_properties", cardPropertiesBytes).
-			Set("card_prefix", board.CardPrefix).
+			Set("card_prefix", cardPrefixValue(board.CardPrefix)).
 			Set("update_at", board.UpdateAt).
 			Set("delete_at", board.DeleteAt)
 
@@ -398,11 +408,59 @@ func (s *SQLStore) patchBoard(db sq.BaseRunner, boardID string, boardPatch *mode
 			return nil, err
 		}
 		if inUse {
-			return nil, model.NewErrBadRequest(fmt.Sprintf("card prefix %s is already used by another board in this team", board.CardPrefix))
+			return nil, errCardPrefixInUse(board.CardPrefix)
 		}
 	}
 
-	return s.insertBoard(db, board, userID)
+	updatedBoard, err := s.insertBoard(db, board, userID)
+	if err != nil && boardPatch.CardPrefix != nil && isUniqueViolation(err) {
+		// another board took the prefix after the check above
+		return nil, errCardPrefixInUse(board.CardPrefix)
+	}
+	return updatedBoard, err
+}
+
+func errCardPrefixInUse(prefix string) error {
+	return model.NewErrBadRequest(fmt.Sprintf("card prefix %s is already used by another board in this team", prefix))
+}
+
+// cardPrefixValue stores a missing card prefix as NULL so that the
+// (team_id, card_prefix) unique constraint only applies to boards with one.
+func cardPrefixValue(prefix string) interface{} {
+	if prefix == "" {
+		return nil
+	}
+	return prefix
+}
+
+// dropCardPrefixIfInUse clears board.CardPrefix if another board in the team
+// already uses it.
+func (s *SQLStore) dropCardPrefixIfInUse(db sq.BaseRunner, board *model.Board) error {
+	if board.CardPrefix == "" {
+		return nil
+	}
+	inUse, err := s.isCardPrefixInUse(db, board.TeamID, board.CardPrefix, board.ID)
+	if err != nil {
+		return err
+	}
+	if inUse {
+		s.logger.Warn("dropping card prefix already used by another board in the team",
+			mlog.String("board_id", board.ID),
+			mlog.String("card_prefix", board.CardPrefix),
+		)
+		board.CardPrefix = ""
+	}
+	return nil
+}
+
+// isUniqueViolation reports whether err is a unique constraint violation.
+func isUniqueViolation(err error) bool {
+	var pqErr *pq.Error
+	if errors.As(err, &pqErr) {
+		return pqErr.Code == "23505"
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "Error 1062") || strings.Contains(msg, "UNIQUE constraint failed")
 }
 
 // isCardPrefixInUse reports whether a board other than excludeBoardID in the
@@ -461,7 +519,7 @@ func (s *SQLStore) deleteBoardAndChildren(db sq.BaseRunner, boardID, userID stri
 		"template_version": board.TemplateVersion,
 		"properties":       propertiesBytes,
 		"card_properties":  cardPropertiesBytes,
-		"card_prefix":      board.CardPrefix,
+		"card_prefix":      cardPrefixValue(board.CardPrefix),
 		"card_count":       board.CardCount,
 		"create_at":        board.CreateAt,
 		"update_at":        now,
@@ -887,6 +945,11 @@ func (s *SQLStore) undeleteBoard(db sq.BaseRunner, boardID string, modifiedBy st
 		return nil // undeleting not deleted board is not considered an error (for now)
 	}
 
+	// another board may have taken the prefix while this one was deleted
+	if err := s.dropCardPrefixIfInUse(db, board); err != nil {
+		return err
+	}
+
 	propertiesJSON, err := s.MarshalJSONB(board.Properties)
 	if err != nil {
 		return err
@@ -937,7 +1000,7 @@ func (s *SQLStore) undeleteBoard(db sq.BaseRunner, boardID string, modifiedBy st
 		board.TemplateVersion,
 		propertiesJSON,
 		cardPropertiesJSON,
-		board.CardPrefix,
+		cardPrefixValue(board.CardPrefix),
 		board.CardCount,
 		board.CreateAt,
 		now,
@@ -1288,6 +1351,13 @@ func (s *SQLStore) getCardByTicketCode(db sq.BaseRunner, boardPrefix string, car
 		Where(sq.Eq{"b.type": model.TypeCard}).
 		Where(sq.Eq{"b.delete_at": 0})
 
+	switch s.dbType {
+	case model.PostgresDBType:
+		query = query.Where(sq.Expr("b.fields->>'"+model.BlockFieldCardNumber+"' = ?", strconv.FormatInt(cardNumber, 10)))
+	case model.MysqlDBType, model.SqliteDBType:
+		query = query.Where(sq.Expr("JSON_EXTRACT(b.fields, '$."+model.BlockFieldCardNumber+"') = ?", cardNumber))
+	}
+
 	rows, err := query.Query()
 	if err != nil {
 		return nil, fmt.Errorf("getCardByTicketCode error: %w", err)
@@ -1302,7 +1372,7 @@ func (s *SQLStore) getCardByTicketCode(db sq.BaseRunner, boardPrefix string, car
 	// Find the blocks whose fields.cardNumber matches
 	var matches []*model.Block
 	for _, block := range blocks {
-		if cn, ok := block.Fields["cardNumber"]; ok {
+		if cn, ok := block.Fields[model.BlockFieldCardNumber]; ok {
 			var num int64
 			switch v := cn.(type) {
 			case float64:
@@ -1322,8 +1392,8 @@ func (s *SQLStore) getCardByTicketCode(db sq.BaseRunner, boardPrefix string, car
 	case 1:
 		return matches[0], nil
 	default:
-		// card_prefix uniqueness is enforced on patch, but boards created before
-		// that (or via import) may still share a prefix within a team.
+		// card_prefix is unique per team, so this only happens with
+		// inconsistent data.
 		return nil, model.NewErrBadRequest(fmt.Sprintf("ticket code %s-%d is ambiguous: multiple boards in this team use the prefix", boardPrefix, cardNumber))
 	}
 }

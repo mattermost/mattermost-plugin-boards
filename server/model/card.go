@@ -37,6 +37,15 @@ func ParseTicketCode(ticketCode string) (string, int64, error) {
 	return strings.ToUpper(prefix), number, nil
 }
 
+// FormatTicketCode builds a card's ticket code (e.g. "PROJ-42"), or returns ""
+// when the board has no prefix or the card has no number yet.
+func FormatTicketCode(cardPrefix string, cardNumber int64) string {
+	if cardPrefix == "" || cardNumber <= 0 {
+		return ""
+	}
+	return fmt.Sprintf("%s-%d", cardPrefix, cardNumber)
+}
+
 type ErrInvalidCard struct {
 	msg string
 }
@@ -239,7 +248,7 @@ func Card2Block(card *Card) *Block {
 	fields["icon"] = card.Icon
 	fields["isTemplate"] = card.IsTemplate
 	fields["properties"] = card.Properties
-	fields["cardNumber"] = card.CardNumber
+	fields[BlockFieldCardNumber] = card.CardNumber
 
 	return &Block{
 		ID:         card.ID,
@@ -312,7 +321,7 @@ func Block2Card(block *Block) (*Card, error) {
 		}
 	}
 
-	if cn, ok := block.Fields["cardNumber"]; ok {
+	if cn, ok := block.Fields[BlockFieldCardNumber]; ok {
 		switch v := cn.(type) {
 		case float64:
 			cardNumber = int64(v)

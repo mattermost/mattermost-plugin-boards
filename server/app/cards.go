@@ -22,19 +22,7 @@ func (a *App) CreateCard(card *model.Card, boardID string, userID string, disabl
 	card.UpdateAt = now
 	card.DeleteAt = 0
 
-	// Auto-assign ticket number: atomically increment the board's card counter
-	cardNumber, err := a.store.IncrementBoardCardCount(boardID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot assign ticket number: %w", err)
-	}
-	card.CardNumber = cardNumber
-
-	// Generate the ticket code if the board has a prefix
-	board, err := a.store.GetBoard(boardID)
-	if err == nil && board.CardPrefix != "" {
-		card.TicketCode = fmt.Sprintf("%s-%d", board.CardPrefix, cardNumber)
-	}
-
+	// InsertBlocksAndNotify assigns the card number
 	block := model.Card2Block(card)
 
 	newBlocks, err := a.InsertBlocksAndNotify([]*model.Block{block}, userID, disableNotify)
@@ -47,10 +35,7 @@ func (a *App) CreateCard(card *model.Card, boardID string, userID string, disabl
 		return nil, err
 	}
 
-	// Re-attach the ticket code (it's not stored in block fields, it's computed)
-	if board != nil && board.CardPrefix != "" {
-		newCard.TicketCode = fmt.Sprintf("%s-%d", board.CardPrefix, newCard.CardNumber)
-	}
+	a.populateTicketCode(newCard)
 
 	return newCard, nil
 }
@@ -77,8 +62,8 @@ func (a *App) GetCardsForBoard(boardID string, page int, perPage int) ([]*model.
 		if card, err := model.Block2Card(b); err != nil {
 			return nil, fmt.Errorf("Block2Card fail: %w", err)
 		} else {
-			if board != nil && board.CardPrefix != "" && card.CardNumber > 0 {
-				card.TicketCode = fmt.Sprintf("%s-%d", board.CardPrefix, card.CardNumber)
+			if board != nil {
+				card.TicketCode = model.FormatTicketCode(board.CardPrefix, card.CardNumber)
 			}
 			cards = append(cards, card)
 		}
@@ -116,15 +101,21 @@ func (a *App) GetCardByID(cardID string) (*model.Card, error) {
 		return nil, err
 	}
 
-	// Populate ticket code from board prefix
-	if card.CardNumber > 0 {
-		board, boardErr := a.store.GetBoard(card.BoardID)
-		if boardErr == nil && board.CardPrefix != "" {
-			card.TicketCode = fmt.Sprintf("%s-%d", board.CardPrefix, card.CardNumber)
-		}
-	}
+	a.populateTicketCode(card)
 
 	return card, nil
+}
+
+// populateTicketCode sets card.TicketCode from its board's card prefix, if any.
+func (a *App) populateTicketCode(card *model.Card) {
+	if card.CardNumber <= 0 {
+		return
+	}
+	board, err := a.store.GetBoard(card.BoardID)
+	if err != nil {
+		return
+	}
+	card.TicketCode = model.FormatTicketCode(board.CardPrefix, card.CardNumber)
 }
 
 func (a *App) GetCardByTicketCode(ticketCode string, teamID string) (*model.Card, error) {
@@ -143,6 +134,6 @@ func (a *App) GetCardByTicketCode(ticketCode string, teamID string) (*model.Card
 		return nil, err
 	}
 
-	card.TicketCode = ticketCode
+	card.TicketCode = model.FormatTicketCode(prefix, number)
 	return card, nil
 }
