@@ -283,6 +283,11 @@ func (a *API) handlePatchBoardsAndBlocks(w http.ResponseWriter, r *http.Request)
 			a.errorResponse(w, r, model.NewErrPermission("access denied to modifying cards"))
 			return
 		}
+
+		if err = a.authorizeCommentChange(userID, block.BoardID, block); err != nil {
+			a.errorResponse(w, r, err)
+			return
+		}
 	}
 
 	auditRec := a.makeAuditRecord(r, "patchBoardsAndBlocks", audit.Fail)

@@ -28,6 +28,18 @@ func (a *API) registerBlocksRoutes(r *mux.Router) {
 	r.HandleFunc("/boards/{boardID}/blocks/{blockID}/duplicate", a.sessionRequired(a.handleDuplicateBlock)).Methods("POST")
 }
 
+// authorizeCommentChange allows a TypeComment block to be changed only by
+// its CreatedBy user or a user with PermissionDeleteOthersComments on the board.
+func (a *API) authorizeCommentChange(userID, boardID string, block *model.Block) error {
+	if block.Type != model.TypeComment {
+		return nil
+	}
+	if block.CreatedBy != userID && !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionDeleteOthersComments) {
+		return model.NewErrPermission("access denied to modify others' comments")
+	}
+	return nil
+}
+
 func (a *API) handleGetBlocks(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation GET /boards/{boardID}/blocks getBlocks
 	//
@@ -393,11 +405,9 @@ func (a *API) handleDeleteBlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if block.Type == model.TypeComment {
-		if block.CreatedBy != userID && !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionDeleteOthersComments) {
-			a.errorResponse(w, r, model.NewErrPermission("access denied to delete other users' comments"))
-			return
-		}
+	if err = a.authorizeCommentChange(userID, boardID, block); err != nil {
+		a.errorResponse(w, r, err)
+		return
 	}
 
 	if block.BoardID != boardID {
@@ -481,6 +491,11 @@ func (a *API) handleUndeleteBlock(w http.ResponseWriter, r *http.Request) {
 
 	if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionManageBoardCards) {
 		a.errorResponse(w, r, model.NewErrPermission("access denied to modify board members"))
+		return
+	}
+
+	if err = a.authorizeCommentChange(userID, boardID, block); err != nil {
+		a.errorResponse(w, r, err)
 		return
 	}
 
@@ -572,11 +587,9 @@ func (a *API) handlePatchBlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if block.Type == model.TypeComment && block.CreatedBy != userID {
-		if !a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionDeleteOthersComments) {
-			a.errorResponse(w, r, model.NewErrPermission("access denied to modify others' comments"))
-			return
-		}
+	if err = a.authorizeCommentChange(userID, boardID, block); err != nil {
+		a.errorResponse(w, r, err)
+		return
 	}
 
 	requestBody, err := io.ReadAll(r.Body)
@@ -689,11 +702,9 @@ func (a *API) handlePatchBlocks(w http.ResponseWriter, r *http.Request) {
 			a.errorResponse(w, r, model.NewErrPermission("access denied to make board changes"))
 			return
 		}
-		if block.Type == model.TypeComment && block.CreatedBy != userID {
-			if !a.permissions.HasPermissionToBoard(userID, block.BoardID, model.PermissionDeleteOthersComments) {
-				a.errorResponse(w, r, model.NewErrPermission("access denied to modify others' comments"))
-				return
-			}
+		if err = a.authorizeCommentChange(userID, block.BoardID, block); err != nil {
+			a.errorResponse(w, r, err)
+			return
 		}
 		if teamID == "" {
 			board, bErr := a.app.GetBoard(block.BoardID)

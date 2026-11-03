@@ -4,6 +4,7 @@
 package integrationtests
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/client"
@@ -756,6 +757,134 @@ func TestPatchBoardsAndBlocks(t *testing.T) {
 		rBlock, err := th.Server.App().GetBlockByID(block.ID)
 		require.NoError(t, err)
 		require.Equal(t, map[string]interface{}{"property-id": "82%"}, rBlock.Fields["properties"])
+	})
+
+	t.Run("comment title updates follow author or admin membership", func(t *testing.T) {
+		th := SetupTestHelperPluginMode(t)
+		defer th.TearDown()
+
+		clients := setupClients(th)
+		th.Client = clients.Admin
+		teamID := mmModel.NewId()
+		board := th.CreateBoard(teamID, model.BoardTypeOpen)
+
+		_, err := th.Server.App().AddMemberToBoard(&model.BoardMember{
+			BoardID:      board.ID,
+			UserID:       userEditor,
+			SchemeEditor: true,
+		})
+		require.NoError(t, err)
+		_, err = th.Server.App().AddMemberToBoard(&model.BoardMember{
+			BoardID:      board.ID,
+			UserID:       userTeamMember,
+			SchemeEditor: true,
+		})
+		require.NoError(t, err)
+
+		cases := []struct {
+			name           string
+			requester      *client.Client
+			emptyCreatedBy bool
+			withCardPatch  bool
+			wantOK         bool
+		}{
+			{name: "another editor", requester: clients.TeamMember, wantOK: false},
+			{name: "comment author", requester: clients.Editor, wantOK: true},
+			{name: "board admin", requester: clients.Admin, wantOK: true},
+			{name: "another editor mixed with card", requester: clients.TeamMember, withCardPatch: true, wantOK: false},
+			{name: "comment author mixed with card", requester: clients.Editor, withCardPatch: true, wantOK: true},
+			{name: "empty created_by another editor", requester: clients.TeamMember, emptyCreatedBy: true, wantOK: false},
+			{name: "empty created_by board admin", requester: clients.Admin, emptyCreatedBy: true, wantOK: true},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				initialTitle := "original comment title"
+				newTitle := "updated comment title"
+				var commentID string
+				if tc.emptyCreatedBy {
+					comment := &model.Block{
+						ID:       utils.NewID(utils.IDTypeBlock),
+						BoardID:  board.ID,
+						CreateAt: 1,
+						UpdateAt: 1,
+						Type:     model.TypeComment,
+						Title:    initialTitle,
+					}
+					require.NoError(t, th.Server.App().InsertBlock(comment, ""))
+					require.Equal(t, "", comment.CreatedBy)
+					commentID = comment.ID
+				} else {
+					newBlocks, resp := clients.Editor.InsertBlocks(board.ID, []*model.Block{{
+						ID:       utils.NewID(utils.IDTypeBlock),
+						BoardID:  board.ID,
+						CreateAt: 1,
+						UpdateAt: 1,
+						Type:     model.TypeComment,
+						Title:    initialTitle,
+					}}, false)
+					th.CheckOK(resp)
+					require.Len(t, newBlocks, 1)
+					require.Equal(t, userEditor, newBlocks[0].CreatedBy)
+					commentID = newBlocks[0].ID
+				}
+
+				pbab := &model.PatchBoardsAndBlocks{
+					BoardIDs:     []string{board.ID},
+					BoardPatches: []*model.BoardPatch{{}},
+					BlockIDs:     []string{commentID},
+					BlockPatches: []*model.BlockPatch{{Title: &newTitle}},
+				}
+
+				var cardID string
+				cardTitle := "original card title"
+				newCardTitle := "updated card title"
+				if tc.withCardPatch {
+					cards, cardResp := clients.Editor.InsertBlocks(board.ID, []*model.Block{{
+						ID:       utils.NewID(utils.IDTypeBlock),
+						BoardID:  board.ID,
+						CreateAt: 1,
+						UpdateAt: 1,
+						Type:     model.TypeCard,
+						Title:    cardTitle,
+					}}, false)
+					th.CheckOK(cardResp)
+					require.Len(t, cards, 1)
+					cardID = cards[0].ID
+					pbab.BlockIDs = []string{cardID, commentID}
+					pbab.BlockPatches = []*model.BlockPatch{{Title: &newCardTitle}, {Title: &newTitle}}
+				}
+
+				bab, patchResp := tc.requester.PatchBoardsAndBlocks(pbab)
+				if tc.wantOK {
+					require.Equal(t, http.StatusOK, patchResp.StatusCode)
+					require.NoError(t, patchResp.Error)
+					require.NotNil(t, bab)
+					block, getErr := th.Server.App().GetBlockByID(commentID)
+					require.NoError(t, getErr)
+					require.Equal(t, newTitle, block.Title)
+					if tc.withCardPatch {
+						card, cardErr := th.Server.App().GetBlockByID(cardID)
+						require.NoError(t, cardErr)
+						require.Equal(t, newCardTitle, card.Title)
+					}
+					return
+				}
+
+				// returns 403 and leaves titles unchanged when the requester is not the comment author and is not a board admin
+				require.Equal(t, http.StatusForbidden, patchResp.StatusCode)
+				require.Error(t, patchResp.Error)
+				require.Nil(t, bab)
+				block, getErr := th.Server.App().GetBlockByID(commentID)
+				require.NoError(t, getErr)
+				require.Equal(t, initialTitle, block.Title)
+				if tc.withCardPatch {
+					card, cardErr := th.Server.App().GetBlockByID(cardID)
+					require.NoError(t, cardErr)
+					require.Equal(t, cardTitle, card.Title)
+				}
+			})
+		}
 	})
 }
 
