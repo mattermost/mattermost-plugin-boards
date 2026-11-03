@@ -546,7 +546,7 @@ func (s *SQLStore) undeleteBlock(db sq.BaseRunner, blockID string, modifiedBy st
 		}
 	}
 
-	return s.undeleteBlockChildren(db, block.BoardID, block.ID, modifiedBy)
+	return s.undeleteBlockChildren(db, block.BoardID, block.ID, modifiedBy, block.DeleteAt)
 }
 
 func (s *SQLStore) getBlockCountsByType(db sq.BaseRunner) (map[string]int64, error) {
@@ -1038,7 +1038,7 @@ func (s *SQLStore) deleteBlockChildren(db sq.BaseRunner, boardID string, parentI
 	return nil
 }
 
-func (s *SQLStore) undeleteBlockChildren(db sq.BaseRunner, boardID string, parentID string, modifiedBy string) error {
+func (s *SQLStore) undeleteBlockChildren(db sq.BaseRunner, boardID string, parentID string, modifiedBy string, parentDeleteAt int64) error {
 	if boardID == "" {
 		return model.ErrBlockEmptyBoardID
 	}
@@ -1083,6 +1083,13 @@ func (s *SQLStore) undeleteBlockChildren(db sq.BaseRunner, boardID string, paren
 		From(s.tablePrefix+"blocks_history AS bh").
 		InnerJoin("("+subQuerySQL+") AS sub ON bh.id=sub.id AND bh.insert_at=sub.max_insert_at", joinArgs...).
 		Where(sq.NotEq{"bh.delete_at": 0})
+
+	// Comments whose latest history delete_at is older than the parent's
+	// (card or board) are left deleted.
+	selectQuery = selectQuery.Where(sq.Or{
+		sq.NotEq{"bh.type": model.TypeComment},
+		sq.GtOrEq{"bh.delete_at": parentDeleteAt},
+	})
 
 	columns := []string{
 		"board_id",
