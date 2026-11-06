@@ -1,4 +1,5 @@
 @import '../../styles/z-index';
+@import '../../styles/ticket-code';
 
 .TableRow {
     .open-button {
@@ -67,5 +68,12 @@
     .octo-propertyvalue--readonly {
         flex-wrap: nowrap;
         overflow: hidden !important;
+    }
+
+    .octo-ticket-code {
+        @include ticket-code-badge;
+
+        margin-right: 4px;
+        flex-shrink: 0;
     }
 }

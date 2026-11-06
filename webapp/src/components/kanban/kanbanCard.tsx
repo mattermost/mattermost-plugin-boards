@@ -6,7 +6,7 @@ import {useRouteMatch} from 'react-router-dom'
 import {useIntl} from 'react-intl'
 
 import {Board, IPropertyTemplate} from '../../blocks/board'
-import {Card} from '../../blocks/card'
+import {Card, formatTicketCode} from '../../blocks/card'
 import {useSortable} from '../../hooks/sortable'
 import mutator from '../../mutator'
 import TelemetryClient, {TelemetryActions, TelemetryCategory} from '../../telemetry/telemetryClient'
@@ -41,6 +41,7 @@ type Props = {
 const KanbanCard = (props: Props) => {
     const {card, board} = props
     const intl = useIntl()
+    const ticketCode = formatTicketCode(board.cardPrefix, card.fields.cardNumber)
     const [isDragging, isOver, cardRef] = useSortable('card', card, !props.readonly, props.onDrop)
     const visiblePropertyTemplates = props.visiblePropertyTemplates || []
     const match = useRouteMatch<{boardId: string, viewId: string, cardId?: string}>()
@@ -134,6 +135,11 @@ const KanbanCard = (props: Props) => {
                 </MenuWrapper>
                 }
 
+                {ticketCode ? (
+                    <div className='octo-ticket-code'>
+                        {ticketCode}
+                    </div>
+                ) : null}
                 <div className='octo-icontitle'>
                     { card.fields.icon ? <div className='octo-icon'>{emojiData?.native || card.fields.icon}</div> : undefined }
                     <div

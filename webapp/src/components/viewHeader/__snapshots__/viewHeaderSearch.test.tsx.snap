@@ -10,7 +10,7 @@ exports[`components/viewHeader/ViewHeaderSearch return search menu 1`] = `
     />
     <input
       class="Editable "
-      placeholder="Search cards"
+      placeholder="Search cards or ticket codes"
     />
   </div>
 </div>
@@ -26,7 +26,7 @@ exports[`components/viewHeader/ViewHeaderSearch search text after input 1`] = `
     />
     <input
       class="Editable "
-      placeholder="Search cards"
+      placeholder="Search cards or ticket codes"
       title="Hello"
       value="Hello"
     />

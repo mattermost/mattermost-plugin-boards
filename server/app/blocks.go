@@ -218,6 +218,16 @@ func (a *App) InsertBlockAndNotify(block *model.Block, modifiedByID string, disa
 		return err
 	}
 
+	if block.Type == model.TypeCard {
+		existingBlock, err := a.store.GetBlock(block.ID)
+		if err != nil && !model.IsErrNotFound(err) {
+			return err
+		}
+		if err := a.setCardNumber(block, existingBlock); err != nil {
+			return err
+		}
+	}
+
 	err := a.store.InsertBlock(block, modifiedByID)
 	if err == nil {
 		a.blockChangeNotifier.Enqueue(func() error {
@@ -271,6 +281,12 @@ func (a *App) InsertBlocksAndNotify(blocks []*model.Block, modifiedByID string, 
 		existingBlock, checkErr := a.store.GetBlock(block.ID)
 		if checkErr != nil && !model.IsErrNotFound(checkErr) {
 			return nil, checkErr
+		}
+
+		if block.Type == model.TypeCard {
+			if err := a.setCardNumber(block, existingBlock); err != nil {
+				return nil, err
+			}
 		}
 
 		if existingBlock == nil && (block.Type == "image" || block.Type == "attachment") {
@@ -331,6 +347,36 @@ func (a *App) InsertBlocksAndNotify(blocks []*model.Block, modifiedByID string, 
 	})
 
 	return blocks, nil
+}
+
+// setCardNumber sets the server-owned number of a card block about to be
+// inserted: existing cards keep their stored number, templates get none and
+// new cards get the board's next number, whatever the client sent.
+func (a *App) setCardNumber(block, existingBlock *model.Block) error {
+	if block.Fields == nil {
+		block.Fields = make(map[string]interface{})
+	}
+
+	if existingBlock != nil {
+		if cardNumber, ok := existingBlock.Fields[model.BlockFieldCardNumber]; ok {
+			block.Fields[model.BlockFieldCardNumber] = cardNumber
+		} else {
+			delete(block.Fields, model.BlockFieldCardNumber)
+		}
+		return nil
+	}
+
+	if isTemplate, _ := block.Fields["isTemplate"].(bool); isTemplate {
+		delete(block.Fields, model.BlockFieldCardNumber)
+		return nil
+	}
+
+	cardNumber, err := a.store.IncrementBoardCardCount(block.BoardID)
+	if err != nil {
+		return fmt.Errorf("cannot assign card number: %w", err)
+	}
+	block.Fields[model.BlockFieldCardNumber] = cardNumber
+	return nil
 }
 
 func (a *App) GetBlockByID(blockID string) (*model.Block, error) {
