@@ -3,6 +3,8 @@ import { test, expect, type Page } from '@playwright/test';
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { MattermostPage } from 'helpers/mm';
+import { Users } from 'helpers/users';
+import { createCardViaApi, openBoard, seedKanbanBoard, STATUS_PROPERTY_ID } from 'helpers/boards';
 
 const username = 'regularuser';
 const password = 'regularuser';
@@ -247,6 +249,117 @@ test.describe('Board View Features', () => {
         await expect(
             page.locator('.KanbanCard').filter({ hasText: 'PropDisplay Card' }).locator('.Label'),
         ).toContainText('In Progress', { timeout: 10000 });
+    });
+
+    test.describe('kanban columns and grouping', () => {
+        const columnHeaderValues = (page: Page) =>
+            page.locator('.KanbanColumnHeader').evaluateAll((els) =>
+                els.map((el) => (el.querySelector('input.Editable') as HTMLInputElement | null)?.value ?? ''));
+
+        async function columnHeader(page: Page, name: string) {
+            await expect.poll(async () => (await columnHeaderValues(page)).indexOf(name), { timeout: 15000 })
+                .toBeGreaterThanOrEqual(0);
+            const index = (await columnHeaderValues(page)).indexOf(name);
+            return page.locator('.KanbanColumnHeader').nth(index);
+        }
+
+        async function openKanbanBoard(
+            page: Page,
+            title: string,
+            extraProperties: Array<Record<string, unknown>> = [],
+        ) {
+            const board = await seedKanbanBoard(
+                mattermost,
+                Users.admin.username,
+                Users.admin.password,
+                title,
+                ['To Do', 'Doing', 'Done'],
+                extraProperties,
+            );
+            await openBoard(page, mattermost, Users.admin.username, Users.admin.password, board);
+            return board;
+        }
+
+        test('can change the group-by property', async ({ page }) => {
+            await openKanbanBoard(page, 'Group By Board', [{
+                id: 'prioprop',
+                name: 'Priority',
+                type: 'select',
+                options: [{ id: 'prioHigh', value: 'High', color: 'propColorDefault' }],
+            }]);
+            await columnHeader(page, 'Doing');
+
+            await page.locator('.ViewHeader').getByRole('button', { name: /Group by/ }).click();
+            await page.locator('.Menu.noselect').getByRole('button', { name: 'Priority' }).click();
+
+            await columnHeader(page, 'High');
+            expect(await columnHeaderValues(page)).not.toContain('Doing');
+        });
+
+        test('can hide a kanban column and show it again', async ({ page }) => {
+            await openKanbanBoard(page, 'Hide Column Board');
+
+            const header = await columnHeader(page, 'Doing');
+            await header.locator('.MenuWrapper button.IconButton').first().click();
+            await page.locator('.Menu.noselect').getByRole('button', { name: 'Hide' }).click();
+
+            await expect.poll(async () => columnHeaderValues(page), { timeout: 10000 }).not.toContain('Doing');
+
+            const hiddenItem = page.locator('.octo-board-hidden-item').filter({ hasText: 'Doing' });
+            await expect(hiddenItem).toBeVisible({ timeout: 10000 });
+            await hiddenItem.locator('.Label').click();
+            await page.locator('.Menu.noselect').getByRole('button', { name: 'Show' }).click();
+
+            await columnHeader(page, 'Doing');
+        });
+
+        test('can delete a kanban column option', async ({ page }) => {
+            await openKanbanBoard(page, 'Delete Column Board');
+
+            const header = await columnHeader(page, 'Done');
+            await header.locator('.MenuWrapper button.IconButton').first().click();
+            await page.locator('.Menu.noselect').getByRole('button', { name: 'Delete' }).click();
+
+            await expect.poll(async () => columnHeaderValues(page), { timeout: 10000 }).not.toContain('Done');
+            expect(await columnHeaderValues(page)).toContain('To Do');
+        });
+
+        test('can set a Count calculation on a kanban column', async ({ page }) => {
+            const board = await openKanbanBoard(page, 'Calculation Board');
+            await createCardViaApi(mattermost, board.boardId, 'Calc One', board.token, { [STATUS_PROPERTY_ID]: board.optionIds['To Do'] });
+            await createCardViaApi(mattermost, board.boardId, 'Calc Two', board.token, { [STATUS_PROPERTY_ID]: board.optionIds['To Do'] });
+            await page.reload({ waitUntil: 'domcontentloaded' });
+
+            const header = await columnHeader(page, 'To Do');
+            await header.locator('.KanbanCalculation button').click({ force: true });
+            await header.locator('.KanbanCalculation').getByText('Count', { exact: true }).first().click();
+
+            await expect(header.locator('.KanbanCalculation button')).toContainText('2', { timeout: 10000 });
+        });
+
+        test('can filter by a date property being set', async ({ page }) => {
+            const board = await openKanbanBoard(page, 'Date Filter Board', [
+                { id: 'dateprop', name: 'Due', type: 'date', options: [] },
+            ]);
+            await createCardViaApi(mattermost, board.boardId, 'Has Date', board.token, {
+                dateprop: JSON.stringify({ from: Date.now() }),
+            });
+            await createCardViaApi(mattermost, board.boardId, 'No Date', board.token);
+            await page.reload({ waitUntil: 'domcontentloaded' });
+            await expect(page.locator('.KanbanCard').filter({ hasText: 'No Date' })).toBeVisible({ timeout: 15000 });
+
+            await page.locator('.ViewHeader').getByRole('button', { name: 'Filter' }).click();
+            await page.getByRole('button', { name: '+ Add filter' }).click();
+
+            const entry = page.locator('.FilterEntry').last();
+            await entry.getByRole('button', { name: 'Status' }).click();
+            await page.locator('.Menu.noselect').getByRole('button', { name: 'Due' }).click();
+            await page.locator('.FilterEntry').last().locator('.MenuWrapper').nth(1).getByRole('button').click();
+            await page.locator('.Menu.noselect').getByRole('button', { name: 'is set' }).click();
+
+            await expect(page.locator('.KanbanCard').filter({ hasText: 'No Date' })).toHaveCount(0, { timeout: 10000 });
+            await expect(page.locator('.KanbanCard').filter({ hasText: 'Has Date' })).toBeVisible();
+        });
     });
 
     // Runs last: it adds Status options and an active filter on the shared board,

@@ -3,6 +3,8 @@ import { test, expect, type Page } from '@playwright/test';
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { MattermostPage } from 'helpers/mm';
+import { Users } from 'helpers/users';
+import { createCardViaApi, openBoard, openKanbanCardMenu, seedBoard } from 'helpers/boards';
 
 const username = 'regularuser';
 const password = 'regularuser';
@@ -120,5 +122,58 @@ test.describe('Card Management', () => {
 
         await dialog.locator('.dialog__close').click();
         await expect(page.locator('.KanbanCard').filter({ hasText: 'My Test Card' })).toBeVisible({ timeout: 10000 });
+    });
+
+    test.describe('seeded board actions', () => {
+        async function openSeededBoard(page: Page, boardTitle: string, cardTitle: string) {
+            const board = await seedBoard(mattermost, Users.admin.username, Users.admin.password, boardTitle);
+            const cardId = await createCardViaApi(mattermost, board.boardId, cardTitle, board.token);
+            await openBoard(page, mattermost, Users.admin.username, Users.admin.password, board);
+            await expect(page.locator('.KanbanCard').filter({ hasText: cardTitle })).toBeVisible({ timeout: 10000 });
+            return { board, cardId };
+        }
+
+        test('can delete a card from the card actions menu', async ({ page }) => {
+            await openSeededBoard(page, 'Delete Card Board', 'Card To Delete');
+
+            await openKanbanCardMenu(page, 'Card To Delete');
+            await page.locator('.Menu.noselect').getByRole('button', { name: 'Delete' }).click();
+            await page.locator('.confirmation-dialog-box').getByRole('button', { name: 'Delete' }).click();
+
+            await expect(page.locator('.KanbanCard').filter({ hasText: 'Card To Delete' })).toHaveCount(0, { timeout: 10000 });
+        });
+
+        test('can duplicate a card', async ({ page }) => {
+            await openSeededBoard(page, 'Duplicate Card Board', 'Card To Duplicate');
+
+            await openKanbanCardMenu(page, 'Card To Duplicate');
+            await page.locator('.Menu.noselect').getByRole('button', { name: 'Duplicate' }).click();
+
+            const dialog = page.locator('.Dialog.cardDialog');
+            await expect(dialog).toBeVisible({ timeout: 10000 });
+            await dialog.locator('.dialog__close').click();
+
+            await expect(page.locator('.KanbanCard').filter({ hasText: 'Card To Duplicate' })).toHaveCount(2, { timeout: 10000 });
+        });
+
+        test('can copy a card link and see the confirmation message', async ({ page }) => {
+            await openSeededBoard(page, 'Copy Link Board', 'Card To Link');
+
+            await openKanbanCardMenu(page, 'Card To Link');
+            await page.locator('.Menu.noselect').getByRole('button', { name: 'Copy link' }).click();
+
+            await expect(page.locator('.FlashMessages')).toContainText('Copied!', { timeout: 5000 });
+        });
+
+        test('deep link to a card URL opens the card dialog', async ({ page }) => {
+            const board = await seedBoard(mattermost, Users.admin.username, Users.admin.password, 'Deep Link Board');
+            const cardId = await createCardViaApi(mattermost, board.boardId, 'Deep Linked Card', board.token);
+
+            await openBoard(page, mattermost, Users.admin.username, Users.admin.password, board, cardId);
+
+            const dialog = page.locator('.Dialog.cardDialog');
+            await expect(dialog).toBeVisible({ timeout: 15000 });
+            await expect(dialog.locator('.CardDetail .Editable.title')).toHaveValue('Deep Linked Card');
+        });
     });
 });

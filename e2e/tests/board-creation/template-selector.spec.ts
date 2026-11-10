@@ -359,4 +359,82 @@ test.describe('Template Selector', () => {
             page.locator('.banner').filter({ hasText: "You're editing a board template." }),
         ).toBeVisible({ timeout: 10000 });
     });
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Card templates
+    // ─────────────────────────────────────────────────────────────────────────
+
+    test.describe('card templates', () => {
+        async function openBoardForCardTemplates(browser: Browser, boardTitle: string) {
+            const { token } = await setupAdmin();
+            const boardId = await createBoardViaApi(mattermost, boardTitle, token);
+            const { teamId, viewId } = await getBoardMeta(mattermost, boardId, token);
+            return loginAndOpenBoard(browser, adminUser, adminPass, teamId, boardId, viewId);
+        }
+
+        async function createCardTemplate(page: Page, templateTitle: string): Promise<void> {
+            await page.locator('.ViewHeader .ButtonWithMenu .button-dropdown').click();
+            await page.locator('.Menu.noselect').getByRole('button', { name: 'New template' }).click();
+
+            const dialog = page.locator('.Dialog.cardDialog');
+            await expect(dialog).toBeVisible({ timeout: 10000 });
+            const titleField = dialog.locator('.CardDetail .Editable.title:not([disabled])');
+            await titleField.click();
+            await titleField.fill(templateTitle);
+            await dialog.locator('.dialog__close').click();
+            await expect(dialog).not.toBeVisible({ timeout: 5000 });
+        }
+
+        async function openNewCardMenu(page: Page): Promise<void> {
+            await page.locator('.ViewHeader .ButtonWithMenu .button-dropdown').click();
+            await expect(page.locator('.Menu.noselect')).toBeVisible({ timeout: 5000 });
+        }
+
+        test('can create a card template from the New menu', async ({ browser }) => {
+            const { ctx, page } = await openBoardForCardTemplates(browser, 'Card Template Board');
+
+            await createCardTemplate(page, 'Bug Report Template');
+
+            await openNewCardMenu(page);
+            await expect(page.locator('.Menu.noselect')).toContainText('Bug Report Template');
+            await expect(page.locator('.KanbanCard').filter({ hasText: 'Bug Report Template' })).toHaveCount(0);
+
+            await ctx.close();
+        });
+
+        test('can create a card from a card template', async ({ browser }) => {
+            const { ctx, page } = await openBoardForCardTemplates(browser, 'Card From Template Board');
+            await createCardTemplate(page, 'Feature Template');
+            await expect(page.locator('.KanbanCard')).toHaveCount(0);
+
+            await openNewCardMenu(page);
+            await page.locator('.Menu.noselect').getByRole('button', { name: 'Feature Template' }).click();
+
+            const dialog = page.locator('.Dialog.cardDialog');
+            await expect(dialog).toBeVisible({ timeout: 10000 });
+            await dialog.locator('.dialog__close').click();
+            await expect(dialog).not.toBeVisible({ timeout: 5000 });
+
+            await expect(page.locator('.KanbanCard')).toHaveCount(1, { timeout: 10000 });
+
+            await ctx.close();
+        });
+
+        test('can set a card template as the board default', async ({ browser }) => {
+            const { ctx, page } = await openBoardForCardTemplates(browser, 'Default Template Board');
+            await createCardTemplate(page, 'Default Candidate');
+
+            await openNewCardMenu(page);
+            const item = page.locator('.Menu.noselect').locator('.MenuOption').filter({ hasText: 'Default Candidate' }).first();
+            await item.locator('button.IconButton').click();
+            await page.locator('.Menu.noselect').getByRole('button', { name: 'Set as default' }).click();
+
+            await openNewCardMenu(page);
+            await expect(
+                page.locator('.Menu.noselect .bold-menu-text').filter({ hasText: 'Default Candidate' }),
+            ).toBeVisible({ timeout: 10000 });
+
+            await ctx.close();
+        });
+    });
 });
