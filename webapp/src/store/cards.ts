@@ -317,7 +317,8 @@ function sortCards(cards: Card[], lastCommentByCard: {[key: string]: CommentBloc
                         }
                     }
 
-                    result = (aValue as string).localeCompare(bValue as string)
+                    // A value can outlive a property type change (e.g. an array left in a text property).
+                    result = String(aValue).localeCompare(String(bValue))
                 }
 
                 if (result === 0) {

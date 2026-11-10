@@ -1,10 +1,10 @@
 // Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import {useEffect} from 'react'
+import {useEffect, useRef} from 'react'
 import {generatePath, useHistory, useRouteMatch} from 'react-router-dom'
 
-import {getBoards, getCurrentBoardId} from '../../store/boards'
+import {getBoards, getCurrentBoardId, isLoadingBoard} from '../../store/boards'
 import {setCurrent as setCurrentView, getCurrentBoardViews} from '../../store/views'
 import {useAppSelector, useAppDispatch} from '../../store/hooks'
 import {UserSettings} from '../../userSettings'
@@ -20,6 +20,8 @@ const TeamToBoardAndViewRedirect = (): null => {
     const match = useRouteMatch<{boardId: string, viewId: string, cardId?: string, teamId?: string}>()
     const categories = useAppSelector(getSidebarCategories)
     const boards = useAppSelector(getBoards)
+    const isLoading = useAppSelector(isLoadingBoard)
+    const checkedViewBoardIdRef = useRef('')
     const teamId = match.params.teamId || UserSettings.lastTeamId || Constants.globalTeamId
 
     // Clear skip flag once the URL includes a boardId. The component stays mounted when
@@ -76,28 +78,28 @@ const TeamToBoardAndViewRedirect = (): null => {
             }
         }
 
+        if (!boardId || boardId !== match.params.boardId || boardViews.length === 0 || isLoading) {
+            return
+        }
+
+        const isBoardView = (id?: string) => Boolean(id) && boardViews.some((view) => view.id === id)
         let viewID = match.params.viewId
 
-        // when a view isn't open,
-        // but the data is available, try opening a view
-        if ((!viewID || viewID === '0') && boardId && boardId === match.params.boardId && boardViews && boardViews.length > 0) {
-            viewID = UserSettings.lastViewId[boardID]
-            if (viewID) {
-                UserSettings.setLastViewId(boardID, viewID)
-                dispatch(setCurrentView(viewID))
-            } else if (boardViews.length > 0) {
-                // if most recent view is unavailable, pick the first view
-                viewID = boardViews[0].id
-                UserSettings.setLastViewId(boardID, viewID)
-                dispatch(setCurrentView(viewID))
-            }
+        // A view from the URL or local storage can point to a deleted view, which renders an empty board.
+        // Check only once per board: a newly created view reaches the URL before it reaches the store.
+        const isStaleView = checkedViewBoardIdRef.current !== boardID && viewID !== '0' && !isBoardView(viewID)
+        checkedViewBoardIdRef.current = boardID
 
-            if (viewID) {
-                const newPath = generatePath(Utils.getBoardPagePath(match.path), {...match.params, viewId: viewID})
-                history.replace(newPath)
-            }
+        if (!viewID || viewID === '0' || isStaleView) {
+            const lastViewID = UserSettings.lastViewId[boardID]
+            viewID = isBoardView(lastViewID) ? lastViewID : boardViews[0].id
+            UserSettings.setLastViewId(boardID, viewID)
+            dispatch(setCurrentView(viewID))
+
+            const newPath = generatePath(Utils.getBoardPagePath(match.path), {...match.params, viewId: viewID})
+            history.replace({pathname: newPath, search: history.location.search})
         }
-    }, [teamId, match.params.boardId, match.params.viewId, categories.length, boardViews.length, boardId])
+    }, [teamId, match.params.boardId, match.params.viewId, categories.length, boardViews.length, boardId, isLoading])
 
     return null
 }
