@@ -77,6 +77,20 @@ describe('pages/boardPage/teamToBoardAndViewRedirect', () => {
         expect(UserSettings.lastViewId[board.id]).toBe(lastView.id)
     })
 
+    test('opens the view selected after the board opened when navigating to the board without a view', () => {
+        const {history} = renderAt(`/team/team-id/${board.id}/${firstView.id}`)
+
+        act(() => {
+            UserSettings.setLastViewId(board.id, lastView.id)
+            history.push(`/team/team-id/${board.id}/${lastView.id}`)
+        })
+        act(() => {
+            history.push(`/team/team-id/${board.id}`)
+        })
+
+        expect(history.location.pathname).toBe(`/team/team-id/${board.id}/${lastView.id}`)
+    })
+
     test('falls back to the first view when the stored last view no longer exists', () => {
         UserSettings.setLastViewId(board.id, 'deleted-view')
 

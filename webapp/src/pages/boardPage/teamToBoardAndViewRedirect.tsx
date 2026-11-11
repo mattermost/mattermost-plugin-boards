@@ -98,7 +98,7 @@ const TeamToBoardAndViewRedirect = (): null => {
         checkedViewBoardIdRef.current = boardID
 
         if (!viewID || viewID === '0' || isStaleView) {
-            const lastViewID = lastViewIdOnOpenRef.current
+            const lastViewID = isStaleView ? lastViewIdOnOpenRef.current : UserSettings.lastViewId[boardID]
             viewID = isBoardView(lastViewID) ? lastViewID : boardViews[0].id
             UserSettings.setLastViewId(boardID, viewID)
             dispatch(setCurrentView(viewID))
