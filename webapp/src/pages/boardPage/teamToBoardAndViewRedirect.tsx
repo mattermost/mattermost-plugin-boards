@@ -22,7 +22,14 @@ const TeamToBoardAndViewRedirect = (): null => {
     const boards = useAppSelector(getBoards)
     const isLoading = useAppSelector(isLoadingBoard)
     const checkedViewBoardIdRef = useRef('')
+    const lastViewIdOnOpenRef = useRef<string | undefined>(undefined)
     const teamId = match.params.teamId || UserSettings.lastTeamId || Constants.globalTeamId
+
+    // BoardPage stores the URL's view as the last viewed one, even when that view was deleted.
+    // Child effects run first, so this reads the value from before the board was opened.
+    useEffect(() => {
+        lastViewIdOnOpenRef.current = match.params.boardId ? UserSettings.lastViewId[match.params.boardId] : undefined
+    }, [match.params.boardId])
 
     // Clear skip flag once the URL includes a boardId. The component stays mounted when
     // navigating from /team/:teamId to /team/:teamId/:boardId, so unmount cleanup would not run.
@@ -82,7 +89,7 @@ const TeamToBoardAndViewRedirect = (): null => {
             return
         }
 
-        const isBoardView = (id?: string) => Boolean(id) && boardViews.some((view) => view.id === id)
+        const isBoardView = (id?: string): id is string => Boolean(id) && boardViews.some((view) => view.id === id)
         let viewID = match.params.viewId
 
         // A view from the URL or local storage can point to a deleted view, which renders an empty board.
@@ -91,7 +98,7 @@ const TeamToBoardAndViewRedirect = (): null => {
         checkedViewBoardIdRef.current = boardID
 
         if (!viewID || viewID === '0' || isStaleView) {
-            const lastViewID = UserSettings.lastViewId[boardID]
+            const lastViewID = lastViewIdOnOpenRef.current
             viewID = isBoardView(lastViewID) ? lastViewID : boardViews[0].id
             UserSettings.setLastViewId(boardID, viewID)
             dispatch(setCurrentView(viewID))

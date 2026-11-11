@@ -30,7 +30,7 @@ describe('pages/boardPage/teamToBoardAndViewRedirect', () => {
         sidebar: {categoryAttributes: [], hiddenBoardIDs: []},
     }
 
-    const renderAt = (path: string, storeState: Record<string, unknown> = state) => {
+    const renderAt = (path: string, storeState: Record<string, unknown> | (() => Record<string, unknown>) = state) => {
         const history = createMemoryHistory({initialEntries: [path]})
         const store = configureStore([])(storeState)
         render(
@@ -57,6 +57,24 @@ describe('pages/boardPage/teamToBoardAndViewRedirect', () => {
         expect(history.location.pathname).toBe(`/team/team-id/${board.id}/${lastView.id}`)
         expect(history.location.search).toBe('?q=1')
         expect(store.getActions()).toContainEqual({type: 'views/setCurrent', payload: lastView.id})
+    })
+
+    test('uses the last viewed view from before BoardPage stored the deleted view from the URL', () => {
+        UserSettings.setLastViewId(board.id, lastView.id)
+        let loadingBoard = true
+        const {history, store} = renderAt(
+            `/team/team-id/${board.id}/deleted-view`,
+            () => ({...state, boards: {...state.boards, loadingBoard}}),
+        )
+
+        UserSettings.setLastViewId(board.id, 'deleted-view')
+        act(() => {
+            loadingBoard = false
+            store.dispatch({type: 'boards/loaded'})
+        })
+
+        expect(history.location.pathname).toBe(`/team/team-id/${board.id}/${lastView.id}`)
+        expect(UserSettings.lastViewId[board.id]).toBe(lastView.id)
     })
 
     test('falls back to the first view when the stored last view no longer exists', () => {
