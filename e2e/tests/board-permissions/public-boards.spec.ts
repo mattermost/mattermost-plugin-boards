@@ -91,7 +91,7 @@ test.describe('Board Permissions', () => {
         await expect(visitor.locator('.BoardComponent')).toBeVisible({ timeout: 30000 });
         await expect(visitor.locator('.KanbanCard').filter({ hasText: 'Published Card' })).toBeVisible({ timeout: 15000 });
         await expect(visitor.locator('.ViewHeader .ButtonWithMenu')).toHaveCount(0);
-        await expect(visitor.locator('.ViewTitle .Editable')).toBeDisabled();
+        await expect(visitor.locator('.ViewTitle .Editable')).toHaveJSProperty('readOnly', true);
 
         await visitorContext.close();
     });

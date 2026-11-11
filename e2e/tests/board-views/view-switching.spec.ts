@@ -130,9 +130,11 @@ test.describe('Board Views', () => {
             return board;
         }
 
-        async function runViewMenuAction(page: Page, menuItemId: string): Promise<void> {
+        const viewMenuItem = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
+
+        async function runViewMenuAction(page: Page, name: string): Promise<void> {
             await page.locator('.ViewHeader').getByRole('button', { name: 'View menu' }).click();
-            await page.locator(`#${menuItemId}`).click();
+            await viewMenuItem(page, name).click();
         }
 
         test('can add a second board view', async ({ page }) => {
@@ -158,7 +160,7 @@ test.describe('Board Views', () => {
         test('can duplicate a view', async ({ page }) => {
             await openSeededBoard(page, 'Duplicate View Board');
 
-            await runViewMenuAction(page, '__duplicateView');
+            await runViewMenuAction(page, 'Duplicate view');
 
             await expect(viewItems(page)).toHaveCount(2, { timeout: 10000 });
             await expect(viewItems(page).filter({ hasText: 'Board View copy' })).toBeVisible();
@@ -169,7 +171,7 @@ test.describe('Board Views', () => {
             await addView(page, 'Table');
             await expect(viewItems(page)).toHaveCount(2, { timeout: 10000 });
 
-            await runViewMenuAction(page, '__deleteView');
+            await runViewMenuAction(page, 'Delete view');
 
             await expect(viewItems(page)).toHaveCount(1, { timeout: 10000 });
             await expect(page.locator('.Kanban')).toBeVisible({ timeout: 10000 });
@@ -180,8 +182,8 @@ test.describe('Board Views', () => {
 
             await page.locator('.ViewHeader').getByRole('button', { name: 'View menu' }).click();
 
-            await expect(page.locator('#__duplicateView')).toBeVisible({ timeout: 5000 });
-            await expect(page.locator('#__deleteView')).toHaveCount(0);
+            await expect(viewMenuItem(page, 'Duplicate view')).toBeVisible({ timeout: 5000 });
+            await expect(viewMenuItem(page, 'Delete view')).toHaveCount(0);
         });
 
         test('calendar view renders a card on its due date', async ({ page }) => {

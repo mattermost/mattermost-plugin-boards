@@ -64,7 +64,7 @@ test.describe('Board Search and Switcher', () => {
 
         await dialog.locator('input.searchQuery').fill('zzz-no-such-board-zzz');
 
-        await expect(dialog.locator('.noResults')).toBeVisible({ timeout: 10000 });
+        await expect(dialog.locator('.noResults:not(.introScreen)')).toBeVisible({ timeout: 10000 });
         await expect(dialog.locator('.blockSearchResult')).toHaveCount(0);
     });
 
@@ -79,7 +79,7 @@ test.describe('Board Search and Switcher', () => {
 
         await dialog.locator('input.searchQuery').fill('Hidden Private');
 
-        await expect(dialog.locator('.noResults')).toBeVisible({ timeout: 10000 });
+        await expect(dialog.locator('.noResults:not(.introScreen)')).toBeVisible({ timeout: 10000 });
         await expect(dialog.locator('.blockSearchResult')).toHaveCount(0);
     });
 });

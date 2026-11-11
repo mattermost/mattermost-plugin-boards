@@ -3,7 +3,7 @@ import { test, expect, type Page } from '@playwright/test';
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { Users } from 'helpers/users';
-import { createCardViaApi, openBoard, seedBoard } from 'helpers/boards';
+import { createCardViaApi, openBoard, seedBoard, waitForBlockPatch } from 'helpers/boards';
 
 let mattermost: MattermostContainer;
 
@@ -29,23 +29,30 @@ test.describe('Card Content', () => {
         return { dialog, board, cardId };
     }
 
+    const contentBlocks = (page: Page) => page.locator('.Dialog.cardDialog .content-blocks .ContentBlock');
+
     async function addContent(page: Page, type: 'text' | 'checkbox' | 'divider') {
         const dialog = page.locator('.Dialog.cardDialog');
+        const countBefore = await contentBlocks(page).count();
         await dialog.locator('.CardDetailContentsMenu').getByRole('button', { name: 'Add content' }).click();
         await page.locator('.Menu.noselect').getByRole('button', { name: type }).click();
+        await expect(contentBlocks(page)).toHaveCount(countBefore + 1, { timeout: 10000 });
     }
 
     test('can add a text description and it persists after reload', async ({ page }) => {
         const { dialog } = await openCardDialog(page, 'Description Board', 'Description Card');
 
         await addContent(page, 'text');
-        const editor = dialog.locator('.MarkdownEditor .public-DraftEditor-content');
-        await editor.click();
+        const textBlock = contentBlocks(page).first();
+        await textBlock.locator('.octo-editor-preview').click();
+        await textBlock.locator('.MarkdownEditor .public-DraftEditor-content').click();
         await page.keyboard.type('Persisted description text');
+        const saved = waitForBlockPatch(page);
         await dialog.locator('.CardDetail .Editable.title:not([disabled])').click();
+        await saved;
 
         await page.reload({ waitUntil: 'domcontentloaded' });
-        await expect(page.locator('.Dialog.cardDialog .octo-editor-preview')).toContainText(
+        await expect(contentBlocks(page).first().locator('.octo-editor-preview')).toContainText(
             'Persisted description text',
             { timeout: 15000 },
         );
@@ -59,11 +66,15 @@ test.describe('Card Content', () => {
         await expect(checkboxElement).toBeVisible({ timeout: 10000 });
 
         await checkboxElement.locator('.Editable').fill('Buy milk');
+        const titleSaved = waitForBlockPatch(page);
         await checkboxElement.locator('.Editable').press('Escape');
+        await titleSaved;
 
         const checkbox = checkboxElement.locator('input[type="checkbox"]');
         await expect(checkbox).not.toBeChecked();
+        const toggleSaved = waitForBlockPatch(page);
         await checkbox.check();
+        await toggleSaved;
         await expect(checkbox).toBeChecked();
 
         await page.reload({ waitUntil: 'domcontentloaded' });
@@ -86,31 +97,40 @@ test.describe('Card Content', () => {
         await addContent(page, 'divider');
         await addContent(page, 'checkbox');
 
-        const blocks = dialog.locator('.content-blocks .ContentBlock');
-        await expect(blocks).toHaveCount(2, { timeout: 10000 });
+        const blocks = contentBlocks(page);
+        await expect(blocks).toHaveCount(2);
         await expect(blocks.first().locator('.DividerElement')).toBeVisible();
 
-        const firstBlock = blocks.first();
+        // Row reordering is handled by the drop zone above each row, not the block itself.
+        const aboveFirstRow = dialog.locator('.octo-content > div > .addToRow').first();
         const secondBlock = blocks.nth(1);
         await secondBlock.hover();
-        await secondBlock.locator('.dnd-handle').dragTo(firstBlock, { targetPosition: { x: 40, y: 2 } });
+        await secondBlock.locator('.dnd-handle').dragTo(aboveFirstRow);
 
         await expect(blocks.first().locator('.CheckboxElement')).toBeVisible({ timeout: 10000 });
     });
 
     test('can upload an attachment with the Attach button', async ({ page }) => {
-        const { dialog } = await openCardDialog(page, 'Attachment Board', 'Attachment Card');
+        const { dialog, board } = await openCardDialog(page, 'Attachment Board', 'Attachment Card');
 
         const chooserPromise = page.waitForEvent('filechooser');
         await dialog.getByRole('button', { name: 'Attach' }).click();
         const chooser = await chooserPromise;
+        const attachmentSaved = page.waitForResponse((response) =>
+            response.request().method() === 'POST' &&
+            new URL(response.url()).pathname.endsWith(`/boards/${board.boardId}/blocks`) &&
+            response.ok());
         await chooser.setFiles({
             name: 'e2e-attachment.txt',
             mimeType: 'text/plain',
             buffer: Buffer.from('hello from e2e'),
         });
+        await attachmentSaved;
+        await expect(dialog.locator('.Attachment .fileElement-file-uploading')).toHaveCount(0, { timeout: 20000 });
 
-        await expect(dialog.locator('.Attachment .FileElement')).toContainText('e2e-attachment', { timeout: 20000 });
-        await expect(dialog.locator('.Attachment .attachment-title')).toContainText('(1)');
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        const reloadedDialog = page.locator('.Dialog.cardDialog');
+        await expect(reloadedDialog.locator('.Attachment .FileElement')).toContainText('e2e-attachment', { timeout: 20000 });
+        await expect(reloadedDialog.locator('.Attachment .attachment-title')).toContainText('(1)');
     });
 });

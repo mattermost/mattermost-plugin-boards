@@ -96,7 +96,13 @@ test.describe('Channel Integration', () => {
 
     test('channel members get access to a board linked to their channel', async ({ page }) => {
         const { channel } = await createChannel('linked-access', 'Linked Access', [Users.regularUser.username]);
-        const board = await seedBoard(mattermost, username, password, 'Channel Access Board');
+        const board = await seedBoard(mattermost, username, password, 'Channel Access Board', 'P');
+        const userClient = await mattermost.getClient(Users.regularUser.username, Users.regularUser.password);
+        const beforeLink = await fetch(`${mattermost.url()}/plugins/focalboard/api/v2/boards/${board.boardId}`, {
+            headers: { Authorization: `Bearer ${userClient.getToken()}`, 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        expect(beforeLink.status).toBe(403);
+
         await linkBoardToChannelViaApi(mattermost, board.boardId, channel.id, board.token);
 
         await openBoard(page, mattermost, Users.regularUser.username, Users.regularUser.password, board);

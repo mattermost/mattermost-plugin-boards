@@ -212,6 +212,14 @@ export async function openSidebarBoardMenu(page: Page, boardTitle: string): Prom
     await expect(page.locator('.Menu.noselect')).toBeVisible({ timeout: 5000 });
 }
 
+/** Resolve once the webapp's PATCH for a block (any block when `blockId` is omitted) succeeds. */
+export function waitForBlockPatch(page: Page, blockId = ''): Promise<unknown> {
+    return page.waitForResponse((response) =>
+        response.request().method() === 'PATCH' &&
+        response.url().includes(`/blocks/${blockId}`) &&
+        response.ok());
+}
+
 /** Open the card actions menu on a kanban card. */
 export async function openKanbanCardMenu(page: Page, cardName: string): Promise<void> {
     const card = page.locator('.KanbanCard').filter({ hasText: cardName });

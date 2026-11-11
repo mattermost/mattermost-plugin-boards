@@ -46,12 +46,12 @@ test.describe('Export and Import', () => {
         expect(download.suggestedFilename()).toMatch(/\.boardarchive$/);
     });
 
-    test('can import a team archive and get a copy of its boards', async ({ page }) => {
+    test('can import a board archive and get a copy of the board', async ({ page }) => {
         const board = await seedBoard(mattermost, username, password, 'Importable Board');
         await createCardViaApi(mattermost, board.boardId, 'Imported Card', board.token);
 
         const exportResp = await fetch(
-            `${mattermost.url()}/plugins/focalboard/api/v2/teams/${board.teamId}/archive/export`,
+            `${mattermost.url()}/plugins/focalboard/api/v2/boards/${board.boardId}/archive/export`,
             { headers: { Authorization: `Bearer ${board.token}`, 'X-Requested-With': 'XMLHttpRequest' } },
         );
         expect(exportResp.ok).toBe(true);
@@ -67,7 +67,7 @@ test.describe('Export and Import', () => {
         await page.locator('.GlobalHeaderSettingsMenu .menu-entry').click();
         await page.locator('#import').dispatchEvent('click');
         const chooserPromise = page.waitForEvent('filechooser');
-        await page.locator('#import_archive').dispatchEvent('click');
+        await page.locator('#import').getByRole('button', { name: 'Import archive', exact: true }).dispatchEvent('click');
         const chooser = await chooserPromise;
         await chooser.setFiles({
             name: 'e2e.boardarchive',

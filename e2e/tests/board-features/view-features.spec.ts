@@ -324,17 +324,25 @@ test.describe('Board View Features', () => {
             expect(await columnHeaderValues(page)).toContain('To Do');
         });
 
-        test('can set a Count calculation on a kanban column', async ({ page }) => {
+        test('can change the calculation on a kanban column', async ({ page }) => {
             const board = await openKanbanBoard(page, 'Calculation Board');
             await createCardViaApi(mattermost, board.boardId, 'Calc One', board.token, { [STATUS_PROPERTY_ID]: board.optionIds['To Do'] });
             await createCardViaApi(mattermost, board.boardId, 'Calc Two', board.token, { [STATUS_PROPERTY_ID]: board.optionIds['To Do'] });
             await page.reload({ waitUntil: 'domcontentloaded' });
 
             const header = await columnHeader(page, 'To Do');
-            await header.locator('.KanbanCalculation button').click({ force: true });
-            await header.locator('.KanbanCalculation').getByText('Count', { exact: true }).first().click();
+            const calculationButton = header.locator('.KanbanCalculation button');
+            const calculationMenu = header.locator('.KanbanCalculation .CalculationOptions__menu');
+            await expect(calculationButton).toHaveText('2', { timeout: 10000 });
 
-            await expect(header.locator('.KanbanCalculation button')).toContainText('2', { timeout: 10000 });
+            await calculationButton.click({ force: true });
+            await calculationMenu.getByText('Count Empty', { exact: true }).hover();
+            await calculationMenu.locator('.dropdown-submenu .drops').filter({ hasText: 'Status' }).click();
+            await expect(calculationButton).toHaveText('0', { timeout: 10000 });
+
+            await calculationButton.click({ force: true });
+            await calculationMenu.getByText('Count', { exact: true }).click();
+            await expect(calculationButton).toHaveText('2', { timeout: 10000 });
         });
 
         test('can filter by a date property being set', async ({ page }) => {

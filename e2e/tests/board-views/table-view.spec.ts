@@ -3,7 +3,7 @@ import { test, expect, type Page } from '@playwright/test';
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { Users } from 'helpers/users';
-import { createCardViaApi, openBoard, seedKanbanBoard, STATUS_PROPERTY_ID } from 'helpers/boards';
+import { createCardViaApi, openBoard, seedKanbanBoard, STATUS_PROPERTY_ID, waitForBlockPatch } from 'helpers/boards';
 
 const NOTES_PROPERTY_ID = 'notesprop';
 
@@ -49,21 +49,21 @@ test.describe('Table View', () => {
         return board;
     }
 
-    async function openHeaderMenu(page: Page, columnName: string) {
+    async function runHeaderMenuAction(page: Page, columnName: string, action: string) {
         await headerCells(page).filter({ hasText: columnName }).locator('.Label').click();
-        await expect(page.locator('.Menu.noselect')).toBeVisible({ timeout: 5000 });
+        const menu = page.locator('.Menu.noselect');
+        await expect(menu).toBeVisible({ timeout: 5000 });
+        await menu.getByRole('button', { name: action, exact: true }).click();
     }
 
     test('can sort ascending and descending from the column header menu', async ({ page }) => {
         await openTableBoard(page, 'Table Sort Board', ['Charlie', 'Alpha', 'Bravo']);
         await expect.poll(() => rowTitles(page), { timeout: 15000 }).toHaveLength(3);
 
-        await openHeaderMenu(page, 'Name');
-        await page.locator('#sortAscending').click();
+        await runHeaderMenuAction(page, 'Name', 'Sort ascending');
         await expect.poll(() => rowTitles(page), { timeout: 10000 }).toEqual(['Alpha', 'Bravo', 'Charlie']);
 
-        await openHeaderMenu(page, 'Name');
-        await page.locator('#sortDescending').click();
+        await runHeaderMenuAction(page, 'Name', 'Sort descending');
         await expect.poll(() => rowTitles(page), { timeout: 10000 }).toEqual(['Charlie', 'Bravo', 'Alpha']);
     });
 
@@ -71,8 +71,7 @@ test.describe('Table View', () => {
         await openTableBoard(page, 'Table Insert Board');
         await expect(headerCells(page)).toHaveCount(3, { timeout: 10000 });
 
-        await openHeaderMenu(page, 'Notes');
-        await page.locator('#insertLeft').click();
+        await runHeaderMenuAction(page, 'Notes', 'Insert left');
 
         await expect(headerCells(page)).toHaveCount(4, { timeout: 10000 });
     });
@@ -80,8 +79,7 @@ test.describe('Table View', () => {
     test('can hide a column', async ({ page }) => {
         await openTableBoard(page, 'Table Hide Board');
 
-        await openHeaderMenu(page, 'Notes');
-        await page.locator('.Menu.noselect #hide').click();
+        await runHeaderMenuAction(page, 'Notes', 'Hide');
 
         await expect(headerCells(page).filter({ hasText: 'Notes' })).toHaveCount(0, { timeout: 10000 });
         await expect(headerCells(page)).toHaveCount(2);
@@ -90,8 +88,7 @@ test.describe('Table View', () => {
     test('can duplicate a column', async ({ page }) => {
         await openTableBoard(page, 'Table Duplicate Board');
 
-        await openHeaderMenu(page, 'Notes');
-        await page.locator('.Menu.noselect #duplicate').click();
+        await runHeaderMenuAction(page, 'Notes', 'Duplicate');
 
         await expect(headerCells(page).filter({ hasText: 'Notes' })).toHaveCount(2, { timeout: 10000 });
     });
@@ -99,8 +96,7 @@ test.describe('Table View', () => {
     test('can delete a column', async ({ page }) => {
         await openTableBoard(page, 'Table Delete Board');
 
-        await openHeaderMenu(page, 'Notes');
-        await page.locator('.Menu.noselect #delete').click();
+        await runHeaderMenuAction(page, 'Notes', 'Delete');
 
         await expect(headerCells(page).filter({ hasText: 'Notes' })).toHaveCount(0, { timeout: 10000 });
     });
@@ -112,10 +108,13 @@ test.describe('Table View', () => {
         await page.locator('.octo-table-footer .octo-table-cell').click();
         await expect(page.locator('.TableRow')).toHaveCount(1, { timeout: 10000 });
 
+        // Enter on the last row would also add a new card, so save on blur instead.
         const titleInput = page.locator('.TableRow .title-cell .Editable').first();
         await titleInput.click();
         await titleInput.fill('Inline Row Title');
-        await titleInput.press('Enter');
+        const saved = waitForBlockPatch(page);
+        await titleInput.blur();
+        await saved;
 
         await page.reload({ waitUntil: 'domcontentloaded' });
         await expect.poll(() => rowTitles(page), { timeout: 15000 }).toEqual(['Inline Row Title']);
