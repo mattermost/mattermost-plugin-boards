@@ -186,6 +186,15 @@ export async function openBoard(
         { waitUntil: 'domcontentloaded', timeout: 30000 },
     );
     await expect(page.locator('.BoardComponent')).toBeVisible({ timeout: 15000 });
+    await waitForLoadingScreenGone(page);
+}
+
+/**
+ * Mattermost's loading overlay fades out after every full page load and receives forced clicks and
+ * HTML5 drag events until it is removed.
+ */
+export async function waitForLoadingScreenGone(page: Page): Promise<void> {
+    await page.locator('#initialPageLoadingScreen').waitFor({ state: 'detached', timeout: 15000 });
 }
 
 /** Click "New" in the view header, name the card in the dialog, and close it. */

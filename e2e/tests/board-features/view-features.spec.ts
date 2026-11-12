@@ -4,7 +4,7 @@ import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { MattermostPage } from 'helpers/mm';
 import { Users } from 'helpers/users';
-import { createCardViaApi, openBoard, seedKanbanBoard, STATUS_PROPERTY_ID } from 'helpers/boards';
+import { createCardViaApi, openBoard, seedKanbanBoard, STATUS_PROPERTY_ID, waitForLoadingScreenGone } from 'helpers/boards';
 
 const username = 'regularuser';
 const password = 'regularuser';
@@ -329,6 +329,7 @@ test.describe('Board View Features', () => {
             await createCardViaApi(mattermost, board.boardId, 'Calc One', board.token, { [STATUS_PROPERTY_ID]: board.optionIds['To Do'] });
             await createCardViaApi(mattermost, board.boardId, 'Calc Two', board.token, { [STATUS_PROPERTY_ID]: board.optionIds['To Do'] });
             await page.reload({ waitUntil: 'domcontentloaded' });
+            await waitForLoadingScreenGone(page);
 
             const header = await columnHeader(page, 'To Do');
             const calculationButton = header.locator('.KanbanCalculation button');
