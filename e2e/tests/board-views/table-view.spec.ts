@@ -112,7 +112,7 @@ test.describe('Table View', () => {
         const titleInput = page.locator('.TableRow .title-cell .Editable').first();
         await titleInput.click();
         await titleInput.fill('Inline Row Title');
-        const saved = waitForBlockPatch(page);
+        const saved = waitForBlockPatch(page, (patch) => patch.title === 'Inline Row Title');
         await titleInput.blur();
         await saved;
 

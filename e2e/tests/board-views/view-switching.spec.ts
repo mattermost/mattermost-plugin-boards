@@ -4,7 +4,7 @@ import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { MattermostPage } from 'helpers/mm';
 import { Users } from 'helpers/users';
-import { createCardViaApi, openBoard, seedBoard, setCardPropertiesViaApi } from 'helpers/boards';
+import { createCardViaApi, openBoard, seedKanbanBoard } from 'helpers/boards';
 
 const username = 'regularuser';
 const password = 'regularuser';
@@ -121,11 +121,8 @@ test.describe('Board Views', () => {
     test.describe('view management on a seeded board', () => {
         const viewItems = (page: Page) => page.locator('.SidebarBoardItem.sidebar-view-item');
 
-        async function openSeededBoard(page: Page, title: string, cardProperties?: Array<Record<string, unknown>>) {
-            const board = await seedBoard(mattermost, Users.admin.username, Users.admin.password, title);
-            if (cardProperties) {
-                await setCardPropertiesViaApi(mattermost, board.boardId, cardProperties, board.token);
-            }
+        async function openSeededBoard(page: Page, title: string, extraProperties: Array<Record<string, unknown>> = []) {
+            const board = await seedKanbanBoard(mattermost, Users.admin.username, Users.admin.password, title, undefined, extraProperties);
             await openBoard(page, mattermost, Users.admin.username, Users.admin.password, board);
             return board;
         }
@@ -170,6 +167,7 @@ test.describe('Board Views', () => {
             await openSeededBoard(page, 'Delete View Board');
             await addView(page, 'Table');
             await expect(viewItems(page)).toHaveCount(2, { timeout: 10000 });
+            await expect(page.locator('.Table')).toBeVisible({ timeout: 10000 });
 
             await runViewMenuAction(page, 'Delete view');
 

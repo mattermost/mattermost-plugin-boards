@@ -1,7 +1,7 @@
 // Copyright (c) 2023-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 import MattermostContainer from './mmcontainer';
 import { MattermostPage } from './mm';
@@ -19,7 +19,10 @@ const apiHeaders = (token: string) => ({
     'X-Requested-With': 'XMLHttpRequest',
 });
 
-/** Create a board with a default view through the API and return everything needed to open it. */
+/**
+ * Create a board with a default kanban view through the API and return everything needed to open it.
+ * Kanban views render nothing without a group-by property, so this seeds the same Status property as seedKanbanBoard.
+ */
 export async function seedBoard(
     mattermost: MattermostContainer,
     username: string,
@@ -27,11 +30,7 @@ export async function seedBoard(
     title: string,
     type: 'O' | 'P' = 'O',
 ): Promise<SeededBoard> {
-    const client = await mattermost.getClient(username, password);
-    const token = (client as any).token as string;
-    const boardId = await createBoardViaApi(mattermost, title, token, type);
-    const { teamId, viewId } = await getBoardMeta(mattermost, boardId, token);
-    return { boardId, teamId, viewId, token };
+    return seedKanbanBoard(mattermost, username, password, title, undefined, [], {}, type);
 }
 
 export const STATUS_PROPERTY_ID = 'statusprop';
@@ -65,10 +64,11 @@ export async function seedKanbanBoard(
     options: string[] = ['To Do', 'Doing', 'Done'],
     extraProperties: Array<Record<string, unknown>> = [],
     viewFields: Record<string, unknown> = {},
+    type: 'O' | 'P' = 'O',
 ): Promise<SeededKanbanBoard> {
     const client = await mattermost.getClient(username, password);
     const token = (client as any).token as string;
-    const boardId = await createBoardViaApi(mattermost, title, token);
+    const boardId = await createBoardViaApi(mattermost, title, token, type);
 
     const optionIds: Record<string, string> = {};
     const statusOptions = options.map((value, i) => {
@@ -212,12 +212,30 @@ export async function openSidebarBoardMenu(page: Page, boardTitle: string): Prom
     await expect(page.locator('.Menu.noselect')).toBeVisible({ timeout: 5000 });
 }
 
-/** Resolve once the webapp's PATCH for a block (any block when `blockId` is omitted) succeeds. */
-export function waitForBlockPatch(page: Page, blockId = ''): Promise<unknown> {
-    return page.waitForResponse((response) =>
-        response.request().method() === 'PATCH' &&
-        response.url().includes(`/blocks/${blockId}`) &&
-        response.ok());
+export type BlockPatchBody = { title?: string; updatedFields?: Record<string, unknown> };
+
+/** Resolve once a successful block PATCH whose payload satisfies `matches` comes back. */
+export function waitForBlockPatch(page: Page, matches: (patch: BlockPatchBody) => boolean): Promise<unknown> {
+    return page.waitForResponse((response) => {
+        const request = response.request();
+        return request.method() === 'PATCH' &&
+            /\/blocks\/[^/]+$/.test(new URL(response.url()).pathname) &&
+            response.ok() &&
+            matches((request.postDataJSON() ?? {}) as BlockPatchBody);
+    });
+}
+
+/** Drag with stepped mouse moves so react-dnd's HTML5 backend registers the drag. */
+export async function dragAndDrop(page: Page, source: Locator, target: Locator): Promise<void> {
+    const sourceBox = await source.boundingBox();
+    const targetBox = await target.boundingBox();
+    if (!sourceBox || !targetBox) throw new Error('Drag source or target is not visible');
+
+    await page.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(sourceBox.x + sourceBox.width / 2 + 10, sourceBox.y + sourceBox.height / 2 + 10, { steps: 5 });
+    await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, { steps: 15 });
+    await page.mouse.up();
 }
 
 /** Open the card actions menu on a kanban card. */

@@ -1,9 +1,9 @@
-import { test, expect, type Locator, type Page } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { Users } from 'helpers/users';
-import { createCardViaApi, openBoard, seedBoard, seedKanbanBoard, STATUS_PROPERTY_ID } from 'helpers/boards';
+import { createCardViaApi, dragAndDrop, openBoard, seedBoard, seedKanbanBoard, STATUS_PROPERTY_ID } from 'helpers/boards';
 
 let mattermost: MattermostContainer;
 
@@ -15,19 +15,6 @@ test.beforeAll(async () => {
 test.afterAll(async () => {
     await mattermost?.stop();
 });
-
-/** HTML5 drag-and-drop needs intermediate mouse moves for react-dnd to register hover targets. */
-async function dragAndDrop(page: Page, source: Locator, target: Locator): Promise<void> {
-    const sourceBox = await source.boundingBox();
-    const targetBox = await target.boundingBox();
-    if (!sourceBox || !targetBox) throw new Error('Drag source or target is not visible');
-
-    await page.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(sourceBox.x + sourceBox.width / 2 + 10, sourceBox.y + sourceBox.height / 2 + 10, { steps: 5 });
-    await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, { steps: 15 });
-    await page.mouse.up();
-}
 
 test.describe('Drag and Drop', () => {
     test.describe.configure({ timeout: 300000 });

@@ -65,9 +65,9 @@ test.describe('Export and Import', () => {
         await openBoard(page, mattermost, username, password, board);
 
         await page.locator('.GlobalHeaderSettingsMenu .menu-entry').click();
-        await page.locator('#import').dispatchEvent('click');
+        await page.locator('#import').hover();
         const chooserPromise = page.waitForEvent('filechooser');
-        await page.locator('#import').getByRole('button', { name: 'Import archive', exact: true }).dispatchEvent('click');
+        await page.locator('#import').getByRole('button', { name: 'Import archive', exact: true }).click();
         const chooser = await chooserPromise;
         await chooser.setFiles({
             name: 'e2e.boardarchive',

@@ -173,7 +173,7 @@ test.describe('Card Management', () => {
 
             const dialog = page.locator('.Dialog.cardDialog');
             await expect(dialog).toBeVisible({ timeout: 15000 });
-            await expect(dialog.locator('.CardDetail .Editable.title')).toHaveValue('Deep Linked Card');
+            await expect(dialog.locator('.CardDetail .Editable.title:not([disabled])')).toHaveValue('Deep Linked Card');
         });
     });
 });

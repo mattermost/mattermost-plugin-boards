@@ -3,7 +3,7 @@ import { test, expect, type Page } from '@playwright/test';
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { Users } from 'helpers/users';
-import { createCardViaApi, openBoard, seedBoard, waitForBlockPatch } from 'helpers/boards';
+import { createCardViaApi, dragAndDrop, openBoard, seedBoard, waitForBlockPatch } from 'helpers/boards';
 
 let mattermost: MattermostContainer;
 
@@ -47,7 +47,7 @@ test.describe('Card Content', () => {
         await textBlock.locator('.octo-editor-preview').click();
         await textBlock.locator('.MarkdownEditor .public-DraftEditor-content').click();
         await page.keyboard.type('Persisted description text');
-        const saved = waitForBlockPatch(page);
+        const saved = waitForBlockPatch(page, (patch) => patch.title === 'Persisted description text');
         await dialog.locator('.CardDetail .Editable.title:not([disabled])').click();
         await saved;
 
@@ -66,14 +66,15 @@ test.describe('Card Content', () => {
         await expect(checkboxElement).toBeVisible({ timeout: 10000 });
 
         await checkboxElement.locator('.Editable').fill('Buy milk');
-        const titleSaved = waitForBlockPatch(page);
+        const titleSaved = waitForBlockPatch(page, (patch) => patch.title === 'Buy milk');
         await checkboxElement.locator('.Editable').press('Escape');
         await titleSaved;
 
         const checkbox = checkboxElement.locator('input[type="checkbox"]');
         await expect(checkbox).not.toBeChecked();
-        const toggleSaved = waitForBlockPatch(page);
-        await checkbox.check();
+        const toggleSaved = waitForBlockPatch(page, (patch) => patch.updatedFields?.value === true);
+        // The change handler calls preventDefault and re-renders as checked, which check() reads as a no-op.
+        await checkbox.click();
         await toggleSaved;
         await expect(checkbox).toBeChecked();
 
@@ -105,7 +106,7 @@ test.describe('Card Content', () => {
         const aboveFirstRow = dialog.locator('.octo-content > div > .addToRow').first();
         const secondBlock = blocks.nth(1);
         await secondBlock.hover();
-        await secondBlock.locator('.dnd-handle').dragTo(aboveFirstRow);
+        await dragAndDrop(page, secondBlock.locator('.dnd-handle'), aboveFirstRow);
 
         await expect(blocks.first().locator('.CheckboxElement')).toBeVisible({ timeout: 10000 });
     });

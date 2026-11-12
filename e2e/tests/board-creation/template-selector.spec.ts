@@ -6,7 +6,7 @@ import { test, expect, type Browser, type Page } from '@playwright/test';
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { MattermostPage } from 'helpers/mm';
-import { getTeamId, createBoardViaApi, getBoardMeta, seedWelcomePageViewed } from 'helpers/boards';
+import { getTeamId, createBoardViaApi, getBoardMeta, seedBoard, seedWelcomePageViewed } from 'helpers/boards';
 
 const adminUser = 'admin';
 const adminPass = 'admin';
@@ -366,9 +366,8 @@ test.describe('Template Selector', () => {
 
     test.describe('card templates', () => {
         async function openBoardForCardTemplates(browser: Browser, boardTitle: string) {
-            const { token } = await setupAdmin();
-            const boardId = await createBoardViaApi(mattermost, boardTitle, token);
-            const { teamId, viewId } = await getBoardMeta(mattermost, boardId, token);
+            await setupAdmin();
+            const { teamId, boardId, viewId } = await seedBoard(mattermost, adminUser, adminPass, boardTitle);
             return loginAndOpenBoard(browser, adminUser, adminPass, teamId, boardId, viewId);
         }
 

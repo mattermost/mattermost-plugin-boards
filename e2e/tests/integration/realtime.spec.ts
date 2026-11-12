@@ -25,14 +25,15 @@ test.afterAll(async () => {
 test.describe('Realtime Collaboration', () => {
     test.describe.configure({ timeout: 300000 });
 
-    async function openSharedBoard(browser: Browser, title: string): Promise<{
+    async function openSharedBoard(browser: Browser, title: string, cardTitles: string[] = []): Promise<{
         pageA: Page;
         pageB: Page;
-        boardId: string;
-        token: string;
         close: () => Promise<void>;
     }> {
         const board = await seedBoard(mattermost, Users.admin.username, Users.admin.password, title);
+        for (const cardTitle of cardTitles) {
+            await createCardViaApi(mattermost, board.boardId, cardTitle, board.token);
+        }
         const memberClient = await mattermost.getClient(Users.regularUser.username, Users.regularUser.password);
         const member = await memberClient.getMe();
         await addBoardMember(mattermost, board.boardId, member.id, 'editor', board.token);
@@ -48,8 +49,6 @@ test.describe('Realtime Collaboration', () => {
         return {
             pageA,
             pageB,
-            boardId: board.boardId,
-            token: board.token,
             close: async () => {
                 await ctxA.close();
                 await ctxB.close();
@@ -83,8 +82,7 @@ test.describe('Realtime Collaboration', () => {
     });
 
     test('a card title edit syncs to another user', async ({ browser }) => {
-        const { pageA, pageB, boardId, token, close } = await openSharedBoard(browser, 'Realtime Edit Board');
-        await createCardViaApi(mattermost, boardId, 'Before Edit', token);
+        const { pageA, pageB, close } = await openSharedBoard(browser, 'Realtime Edit Board', ['Before Edit']);
         await expect(pageB.locator('.KanbanCard').filter({ hasText: 'Before Edit' })).toBeVisible({ timeout: 15000 });
         await expect(pageA.locator('.KanbanCard').filter({ hasText: 'Before Edit' })).toBeVisible({ timeout: 15000 });
 
@@ -102,19 +100,23 @@ test.describe('Realtime Collaboration', () => {
         await close();
     });
 
-    test('following a card changes the Follow button to Following', async ({ browser }) => {
-        const { pageA, boardId, token, close } = await openSharedBoard(browser, 'Follow Card Board');
-        await createCardViaApi(mattermost, boardId, 'Followable Card', token);
+    test('a card can be unfollowed and followed again from its dialog', async ({ browser }) => {
+        const { pageA, close } = await openSharedBoard(browser, 'Follow Card Board', ['Followable Card']);
 
-        await pageA.locator('.KanbanCard').filter({ hasText: 'Followable Card' }).click();
+        const card = pageA.locator('.KanbanCard').filter({ hasText: 'Followable Card' });
+        await expect(card).toBeVisible({ timeout: 15000 });
+        await card.click();
         const dialog = pageA.locator('.Dialog.cardDialog');
         await expect(dialog).toBeVisible({ timeout: 15000 });
 
-        await dialog.locator('.cardFollowBtn.follow').click();
+        // The card creator is subscribed automatically.
         await expect(dialog.locator('.cardFollowBtn.unfollow')).toContainText('Following', { timeout: 10000 });
 
         await dialog.locator('.cardFollowBtn.unfollow').click();
         await expect(dialog.locator('.cardFollowBtn.follow')).toBeVisible({ timeout: 10000 });
+
+        await dialog.locator('.cardFollowBtn.follow').click();
+        await expect(dialog.locator('.cardFollowBtn.unfollow')).toContainText('Following', { timeout: 10000 });
 
         await close();
     });

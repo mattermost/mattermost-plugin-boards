@@ -360,10 +360,11 @@ test.describe('Board View Features', () => {
             await page.getByRole('button', { name: '+ Add filter' }).click();
 
             const entry = page.locator('.FilterEntry').last();
-            await entry.getByRole('button', { name: 'Status' }).click();
-            await page.locator('.Menu.noselect').getByRole('button', { name: 'Due' }).click();
-            await page.locator('.FilterEntry').last().locator('.MenuWrapper').nth(1).getByRole('button').click();
-            await page.locator('.Menu.noselect').getByRole('button', { name: 'is set' }).click();
+            await entry.getByRole('button', { name: 'Status', exact: true }).click();
+            await page.locator('.Menu.noselect').getByRole('button', { name: 'Due', exact: true }).click();
+            await expect(entry.getByRole('button', { name: 'Due', exact: true })).toBeVisible({ timeout: 10000 });
+            await entry.getByRole('button', { name: 'is', exact: true }).click();
+            await page.locator('.Menu.noselect').getByRole('button', { name: 'is set', exact: true }).click();
 
             await expect(page.locator('.KanbanCard').filter({ hasText: 'No Date' })).toHaveCount(0, { timeout: 10000 });
             await expect(page.locator('.KanbanCard').filter({ hasText: 'Has Date' })).toBeVisible();

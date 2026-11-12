@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
@@ -20,6 +20,20 @@ test.describe('Board Search and Switcher', () => {
     test.describe.configure({ timeout: 300000 });
 
     const { username, password } = Users.admin;
+
+    /** Type a query and return the board titles from a successful search response. */
+    async function search(page: Page, dialog: Locator, query: string): Promise<string[]> {
+        const responsePromise = page.waitForResponse((response) => {
+            const url = new URL(response.url());
+            return url.pathname.endsWith('/boards/search') && url.searchParams.get('q') === query;
+        });
+        await dialog.locator('input.searchQuery').fill(query);
+        const response = await responsePromise;
+        expect(response.status()).toBe(200);
+        const boards = await response.json();
+        expect(Array.isArray(boards)).toBe(true);
+        return (boards as Array<{ title: string }>).map((b) => b.title);
+    }
 
     test('the Find Boards dialog finds a board by title and navigates to it', async ({ page }) => {
         const anchor = await seedBoard(mattermost, username, password, 'Switcher Anchor Board');
@@ -62,8 +76,7 @@ test.describe('Board Search and Switcher', () => {
         const dialog = page.locator('.BoardSwitcherDialog');
         await expect(dialog).toBeVisible({ timeout: 10000 });
 
-        await dialog.locator('input.searchQuery').fill('zzz-no-such-board-zzz');
-
+        expect(await search(page, dialog, 'zzz-no-such-board-zzz')).toEqual([]);
         await expect(dialog.locator('.noResults:not(.introScreen)')).toBeVisible({ timeout: 10000 });
         await expect(dialog.locator('.blockSearchResult')).toHaveCount(0);
     });
@@ -77,8 +90,7 @@ test.describe('Board Search and Switcher', () => {
         const dialog = page.locator('.BoardSwitcherDialog');
         await expect(dialog).toBeVisible({ timeout: 10000 });
 
-        await dialog.locator('input.searchQuery').fill('Hidden Private');
-
+        expect(await search(page, dialog, 'Hidden Private')).not.toContain('Hidden Private Board');
         await expect(dialog.locator('.noResults:not(.introScreen)')).toBeVisible({ timeout: 10000 });
         await expect(dialog.locator('.blockSearchResult')).toHaveCount(0);
     });
