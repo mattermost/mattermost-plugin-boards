@@ -21,7 +21,7 @@ const TeamToBoardAndViewRedirect = (): null => {
     const categories = useAppSelector(getSidebarCategories)
     const boards = useAppSelector(getBoards)
     const isLoading = useAppSelector(isLoadingBoard)
-    const checkedViewBoardIdRef = useRef('')
+    const seenViewsRef = useRef({boardId: '', viewIds: new Set<string>()})
     const lastViewIdOnOpenRef = useRef<string | undefined>(undefined)
     const teamId = match.params.teamId || UserSettings.lastTeamId || Constants.globalTeamId
 
@@ -92,13 +92,20 @@ const TeamToBoardAndViewRedirect = (): null => {
         const isBoardView = (id?: string): id is string => Boolean(id) && boardViews.some((view) => view.id === id)
         let viewID = match.params.viewId
 
+        const isFirstCheck = seenViewsRef.current.boardId !== boardID
+        if (isFirstCheck) {
+            seenViewsRef.current = {boardId: boardID, viewIds: new Set()}
+        }
+        const seenViewIds = seenViewsRef.current.viewIds
+
         // A view from the URL or local storage can point to a deleted view, which renders an empty board.
-        // Check only once per board: a newly created view reaches the URL before it reaches the store.
-        const isStaleView = checkedViewBoardIdRef.current !== boardID && viewID !== '0' && !isBoardView(viewID)
-        checkedViewBoardIdRef.current = boardID
+        // After the board opens, only views seen before are treated as deleted: a newly created view
+        // reaches the URL before it reaches the store.
+        const isStaleView = viewID !== '0' && !isBoardView(viewID) && (isFirstCheck || seenViewIds.has(viewID))
+        boardViews.forEach((view) => seenViewIds.add(view.id))
 
         if (!viewID || viewID === '0' || isStaleView) {
-            const lastViewID = isStaleView ? lastViewIdOnOpenRef.current : UserSettings.lastViewId[boardID]
+            const lastViewID = isStaleView && isFirstCheck ? lastViewIdOnOpenRef.current : UserSettings.lastViewId[boardID]
             viewID = isBoardView(lastViewID) ? lastViewID : boardViews[0].id
             UserSettings.setLastViewId(boardID, viewID)
             dispatch(setCurrentView(viewID))

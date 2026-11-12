@@ -111,6 +111,29 @@ describe('pages/boardPage/teamToBoardAndViewRedirect', () => {
         expect(history.location.pathname).toBe(`/team/team-id/${board.id}/new-view`)
     })
 
+    test('going back to a view deleted after the board opened returns to the last viewed view', () => {
+        let views: Record<string, unknown> = {[firstView.id]: firstView, [lastView.id]: lastView}
+        const {history, store} = renderAt(
+            `/team/team-id/${board.id}/${lastView.id}`,
+            () => ({...state, views: {current: lastView.id, views}}),
+        )
+
+        act(() => {
+            views = {[firstView.id]: firstView}
+            store.dispatch({type: 'views/updateViews'})
+        })
+        act(() => {
+            UserSettings.setLastViewId(board.id, firstView.id)
+            history.push(`/team/team-id/${board.id}/${firstView.id}`)
+        })
+        act(() => {
+            history.goBack()
+        })
+
+        expect(history.location.pathname).toBe(`/team/team-id/${board.id}/${firstView.id}`)
+        expect(store.getActions()).toContainEqual({type: 'views/setCurrent', payload: firstView.id})
+    })
+
     test('waits for the board to finish loading before checking the view', () => {
         const {history} = renderAt(
             `/team/team-id/${board.id}/deleted-view`,
