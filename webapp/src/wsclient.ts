@@ -372,14 +372,19 @@ class WSClient {
                 }
             }
 
-            // onConnect is not idempotent, so make sure the initial connection is
-            // only ever set up once regardless of which path detects it.
-            let connectHandled = false
+            // The first connection can be detected twice: by the direct call
+            // below and by the first connect listener. Run onConnect once per
+            // socket, not once per page load. The webapp fires first connect
+            // again for every new socket created by WebSocketClient.close()
+            // + initialize(), which happens when switching between Channels
+            // and Boards, and the subscriptions must be sent on that socket.
+            let handledConn: WebSocket | null = null
             const onFirstConnect = () => {
-                if (connectHandled) {
+                const conn = this.client?.conn ?? null
+                if (conn !== null && conn === handledConn) {
                     return
                 }
-                connectHandled = true
+                handledConn = conn
                 onConnect()
             }
 
