@@ -3,7 +3,15 @@ import { test, expect, type Page } from '@playwright/test';
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { Users } from 'helpers/users';
-import { createCardViaApi, dragAndDrop, openBoard, seedBoard, seedKanbanBoard, STATUS_PROPERTY_ID } from 'helpers/boards';
+import {
+    createCardViaApi,
+    dragAndDrop,
+    openBoard,
+    seedBoard,
+    seedKanbanBoard,
+    STATUS_PROPERTY_ID,
+    waitForBlockPatch,
+} from 'helpers/boards';
 
 let mattermost: MattermostContainer;
 
@@ -48,10 +56,12 @@ test.describe('Drag and Drop', () => {
 
         const card = page.locator('.KanbanCard').filter({ hasText: 'Drag Me' });
         const targetColumn = page.locator('.octo-board-body .octo-board-column').nth(toIdx);
+        const statusSaved = waitForBlockPatch(page, (patch) => Boolean(patch.updatedFields?.properties));
         await dragAndDrop(page, card, targetColumn);
 
         await expect.poll(() => cardTitles(page, toIdx), { timeout: 10000 }).toEqual(['Drag Me']);
         expect(await cardTitles(page, fromIdx)).toEqual([]);
+        await statusSaved;
 
         await page.reload({ waitUntil: 'domcontentloaded' });
         const reloadedToIdx = await columnIndex(page, 'Doing');
@@ -70,9 +80,11 @@ test.describe('Drag and Drop', () => {
         const before = await cardTitles(page, idx);
 
         const column = page.locator('.octo-board-body .octo-board-column').nth(idx);
+        const orderSaved = waitForBlockPatch(page, (patch) => Boolean(patch.updatedFields?.cardOrder));
         await dragAndDrop(page, column.locator('.KanbanCard').last(), column.locator('.KanbanCard').first());
 
         await expect.poll(() => cardTitles(page, idx), { timeout: 10000 }).toEqual([...before].reverse());
+        await orderSaved;
 
         await page.reload({ waitUntil: 'domcontentloaded' });
         const reloadedIdx = await columnIndex(page, 'To Do');
@@ -90,6 +102,8 @@ test.describe('Drag and Drop', () => {
         const before = await titles();
         const movedTitle = before[before.length - 1];
 
+        const reorderSaved = page.waitForResponse((resp) =>
+            resp.request().method() === 'PUT' && /\/categories\/[^/]+\/boards\/reorder$/.test(resp.url()));
         const lastItem = items.last();
         await lastItem.focus();
         await page.keyboard.press('Space');
@@ -98,6 +112,7 @@ test.describe('Drag and Drop', () => {
 
         await expect.poll(async () => (await titles()).indexOf(movedTitle), { timeout: 10000 })
             .toBe(before.length - 2);
+        expect((await reorderSaved).ok()).toBe(true);
 
         await page.reload({ waitUntil: 'domcontentloaded' });
         await expect.poll(async () => (await titles()).length, { timeout: 15000 }).toBe(before.length);
