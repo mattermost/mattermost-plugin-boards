@@ -3,6 +3,8 @@ import { test, expect, type Page } from '@playwright/test';
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { MattermostPage } from 'helpers/mm';
+import { Users } from 'helpers/users';
+import { createCardViaApi, getBlocksViaApi, openBoard, seedKanbanBoard, type SeededBoard } from 'helpers/boards';
 
 const username = 'regularuser';
 const password = 'regularuser';
@@ -67,7 +69,7 @@ test.describe('Board Views', () => {
      * movement) so the hover/HoveringContext mechanism never fires, which would
      * otherwise open-then-immediately-close the sub-menu on a real click().
      */
-    async function addView(page: Page, viewType: 'Board' | 'Table' | 'Gallery'): Promise<void> {
+    async function addView(page: Page, viewType: 'Board' | 'Table' | 'Gallery' | 'Calendar'): Promise<void> {
         // Open the view-menu dropdown
         await page.locator('.ViewHeader').getByRole('button', { name: 'View menu' }).click();
 
@@ -114,5 +116,105 @@ test.describe('Board Views', () => {
         await addView(page, 'Table');
         await expect(page.locator('.Table')).toBeVisible({ timeout: 10000 });
         await expect(page.locator('.octo-table-footer')).toBeVisible({ timeout: 10000 });
+    });
+
+    test.describe('view management on a seeded board', () => {
+        const viewItems = (page: Page) => page.locator('.SidebarBoardItem.sidebar-view-item');
+
+        async function openSeededBoard(page: Page, title: string, extraProperties: Array<Record<string, unknown>> = []) {
+            const board = await seedKanbanBoard(mattermost, Users.admin.username, Users.admin.password, title, undefined, extraProperties);
+            await openBoard(page, mattermost, Users.admin.username, Users.admin.password, board);
+            return board;
+        }
+
+        const viewMenuItem = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
+
+        async function runViewMenuAction(page: Page, name: string): Promise<void> {
+            await page.locator('.ViewHeader').getByRole('button', { name: 'View menu' }).click();
+            await viewMenuItem(page, name).click();
+        }
+
+        async function savedViews(board: SeededBoard) {
+            return (await getBlocksViaApi(mattermost, board.boardId, board.token))
+                .filter((b) => b.type === 'view')
+                .map((b) => ({ title: b.title, viewType: b.fields.viewType }));
+        }
+
+        test('can add a second board view', async ({ page }) => {
+            const board = await openSeededBoard(page, 'Add View Board');
+            await expect(viewItems(page)).toHaveCount(1, { timeout: 10000 });
+
+            await addView(page, 'Board');
+
+            await expect(viewItems(page)).toHaveCount(2, { timeout: 10000 });
+            await expect.poll(async () => (await savedViews(board)).length, { timeout: 10000 }).toBe(2);
+        });
+
+        test('can rename a view', async ({ page }) => {
+            const board = await openSeededBoard(page, 'Rename View Board');
+
+            const viewTitle = page.locator('.ViewHeader .viewSelector .Editable');
+            await viewTitle.click();
+            await viewTitle.fill('Renamed View');
+            await viewTitle.press('Enter');
+
+            await expect(viewItems(page).filter({ hasText: 'Renamed View' })).toBeVisible({ timeout: 10000 });
+            await expect.poll(async () => (await savedViews(board)).map((v) => v.title), { timeout: 10000 })
+                .toEqual(['Renamed View']);
+        });
+
+        test('can duplicate a view', async ({ page }) => {
+            const board = await openSeededBoard(page, 'Duplicate View Board');
+
+            await runViewMenuAction(page, 'Duplicate view');
+
+            await expect(viewItems(page)).toHaveCount(2, { timeout: 10000 });
+            await expect(viewItems(page).filter({ hasText: 'Board View copy' })).toBeVisible();
+            await expect.poll(async () => (await savedViews(board)).map((v) => v.title).sort(), { timeout: 10000 })
+                .toEqual(['Board View', 'Board View copy']);
+        });
+
+        test('can delete a view when more than one exists', async ({ page }) => {
+            const board = await openSeededBoard(page, 'Delete View Board');
+            await addView(page, 'Table');
+            await expect(viewItems(page)).toHaveCount(2, { timeout: 10000 });
+            await expect(page.locator('.Table')).toBeVisible({ timeout: 10000 });
+
+            await runViewMenuAction(page, 'Delete view');
+
+            await expect(viewItems(page)).toHaveCount(1, { timeout: 10000 });
+            await expect(page.locator('.Kanban')).toBeVisible({ timeout: 10000 });
+            await expect.poll(() => savedViews(board), { timeout: 10000 })
+                .toEqual([{ title: 'Board View', viewType: 'board' }]);
+        });
+
+        test('delete view is not offered when only one view exists', async ({ page }) => {
+            await openSeededBoard(page, 'Single View Board');
+
+            await page.locator('.ViewHeader').getByRole('button', { name: 'View menu' }).click();
+
+            await expect(viewMenuItem(page, 'Duplicate view')).toBeVisible({ timeout: 5000 });
+            await expect(viewMenuItem(page, 'Delete view')).toHaveCount(0);
+        });
+
+        test('calendar view renders a card on its due date', async ({ page }) => {
+            const board = await openSeededBoard(page, 'Calendar Board', [
+                { id: 'dateprop', name: 'Due', type: 'date', options: [] },
+            ]);
+            // Stay within the current month so the date is in the initially rendered grid, but never on the
+            // creation date, which the calendar would fall back to if it ignored Due.
+            const today = new Date();
+            const dueDay = today.getDate() <= 20 ? today.getDate() + 5 : today.getDate() - 5;
+            const dueDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(dueDay).padStart(2, '0')}`;
+            await createCardViaApi(mattermost, board.boardId, 'Calendar Card', board.token, {
+                dateprop: JSON.stringify({ from: Date.UTC(today.getFullYear(), today.getMonth(), dueDay, 12) }),
+            });
+
+            await addView(page, 'Calendar');
+
+            await expect(page.locator('.CalendarContainer')).toBeVisible({ timeout: 10000 });
+            await expect(page.locator(`.CalendarContainer [data-date="${dueDate}"] .fc-event-title`).filter({ hasText: 'Calendar Card' }))
+                .toBeVisible({ timeout: 15000 });
+        });
     });
 });

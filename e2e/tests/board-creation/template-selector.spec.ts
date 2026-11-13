@@ -6,7 +6,16 @@ import { test, expect, type Browser, type Page } from '@playwright/test';
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { MattermostPage } from 'helpers/mm';
-import { getTeamId, createBoardViaApi, getBoardMeta, seedWelcomePageViewed } from 'helpers/boards';
+import {
+    getTeamId,
+    createBoardViaApi,
+    getBlocksViaApi,
+    getBoardMeta,
+    seedKanbanBoard,
+    seedWelcomePageViewed,
+    STATUS_PROPERTY_ID,
+    type SeededKanbanBoard,
+} from 'helpers/boards';
 
 const adminUser = 'admin';
 const adminPass = 'admin';
@@ -358,5 +367,114 @@ test.describe('Template Selector', () => {
         await expect(
             page.locator('.banner').filter({ hasText: "You're editing a board template." }),
         ).toBeVisible({ timeout: 10000 });
+    });
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Card templates
+    // ─────────────────────────────────────────────────────────────────────────
+
+    test.describe('card templates', () => {
+        /** Seeds a card template whose Status is "Doing", so cards created from it are distinguishable. */
+        async function openBoardForCardTemplates(browser: Browser, boardTitle: string, templateTitle?: string) {
+            await setupAdmin();
+            const board = await seedKanbanBoard(mattermost, adminUser, adminPass, boardTitle);
+            if (templateTitle) {
+                const resp = await fetch(`${mattermost.url()}/plugins/focalboard/api/v2/boards/${board.boardId}/cards`, {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${board.token}`,
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({
+                        title: templateTitle,
+                        isTemplate: true,
+                        properties: { [STATUS_PROPERTY_ID]: board.optionIds['Doing'] },
+                    }),
+                });
+                expect(resp.ok).toBe(true);
+            }
+            const opened = await loginAndOpenBoard(browser, adminUser, adminPass, board.teamId, board.boardId, board.viewId);
+            return { ...opened, board };
+        }
+
+        async function savedCards(board: SeededKanbanBoard) {
+            return (await getBlocksViaApi(mattermost, board.boardId, board.token))
+                .filter((b) => b.type === 'card' && !b.fields.isTemplate)
+                .map((b) => b.fields.properties[STATUS_PROPERTY_ID]);
+        }
+
+        async function createCardTemplate(page: Page, templateTitle: string): Promise<void> {
+            await page.locator('.ViewHeader .ButtonWithMenu .button-dropdown').click();
+            await page.locator('.Menu.noselect').getByRole('button', { name: 'New template' }).click();
+
+            const dialog = page.locator('.Dialog.cardDialog');
+            await expect(dialog).toBeVisible({ timeout: 10000 });
+            const titleField = dialog.locator('.CardDetail .Editable.title:not([disabled])');
+            await titleField.click();
+            await titleField.fill(templateTitle);
+            await dialog.locator('.dialog__close').click();
+            await expect(dialog).not.toBeVisible({ timeout: 5000 });
+        }
+
+        async function openNewCardMenu(page: Page): Promise<void> {
+            await page.locator('.ViewHeader .ButtonWithMenu .button-dropdown').click();
+            await expect(page.locator('.Menu.noselect')).toBeVisible({ timeout: 5000 });
+        }
+
+        test('can create a card template from the New menu', async ({ browser }) => {
+            const { ctx, page } = await openBoardForCardTemplates(browser, 'Card Template Board');
+
+            await createCardTemplate(page, 'Bug Report Template');
+
+            await openNewCardMenu(page);
+            await expect(page.locator('.Menu.noselect')).toContainText('Bug Report Template');
+            await expect(page.locator('.KanbanCard').filter({ hasText: 'Bug Report Template' })).toHaveCount(0);
+
+            await ctx.close();
+        });
+
+        test('can create a card from a card template', async ({ browser }) => {
+            const { ctx, page, board } = await openBoardForCardTemplates(browser, 'Card From Template Board', 'Feature Template');
+            await expect(page.locator('.KanbanCard')).toHaveCount(0);
+
+            await openNewCardMenu(page);
+            await page.locator('.Menu.noselect').getByRole('button', { name: 'Feature Template' }).click();
+
+            const dialog = page.locator('.Dialog.cardDialog');
+            await expect(dialog).toBeVisible({ timeout: 10000 });
+            await dialog.locator('.dialog__close').click();
+            await expect(dialog).not.toBeVisible({ timeout: 5000 });
+
+            await expect(page.locator('.KanbanCard')).toHaveCount(1, { timeout: 10000 });
+            await expect.poll(() => savedCards(board), { timeout: 10000 }).toEqual([board.optionIds['Doing']]);
+
+            await ctx.close();
+        });
+
+        test('can set a card template as the board default', async ({ browser }) => {
+            const { ctx, page, board } = await openBoardForCardTemplates(browser, 'Default Template Board', 'Default Candidate');
+
+            await openNewCardMenu(page);
+            const item = page.locator('.Menu.noselect').locator('.MenuOption').filter({ hasText: 'Default Candidate' }).first();
+            await item.locator('button.IconButton').click();
+            await page.locator('.Menu.noselect').getByRole('button', { name: 'Set as default' }).click();
+
+            await openNewCardMenu(page);
+            await expect(
+                page.locator('.Menu.noselect .bold-menu-text').filter({ hasText: 'Default Candidate' }),
+            ).toBeVisible({ timeout: 10000 });
+            await page.keyboard.press('Escape');
+
+            await page.locator('.ViewHeader .ButtonWithMenu .button-text').click();
+            const dialog = page.locator('.Dialog.cardDialog');
+            await expect(dialog).toBeVisible({ timeout: 10000 });
+            await dialog.locator('.dialog__close').click();
+            await expect(dialog).not.toBeVisible({ timeout: 5000 });
+
+            await expect.poll(() => savedCards(board), { timeout: 10000 }).toEqual([board.optionIds['Doing']]);
+
+            await ctx.close();
+        });
     });
 });
