@@ -4,7 +4,7 @@ import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { MattermostPage } from 'helpers/mm';
 import { Users } from 'helpers/users';
-import { createCardViaApi, openBoard, openKanbanCardMenu, seedBoard } from 'helpers/boards';
+import { createCardViaApi, getBlocksViaApi, openBoard, openKanbanCardMenu, seedBoard } from 'helpers/boards';
 
 const username = 'regularuser';
 const password = 'regularuser';
@@ -134,17 +134,19 @@ test.describe('Card Management', () => {
         }
 
         test('can delete a card from the card actions menu', async ({ page }) => {
-            await openSeededBoard(page, 'Delete Card Board', 'Card To Delete');
+            const { board, cardId } = await openSeededBoard(page, 'Delete Card Board', 'Card To Delete');
 
             await openKanbanCardMenu(page, 'Card To Delete');
             await page.locator('.Menu.noselect').getByRole('button', { name: 'Delete' }).click();
             await page.locator('.confirmation-dialog-box').getByRole('button', { name: 'Delete' }).click();
 
             await expect(page.locator('.KanbanCard').filter({ hasText: 'Card To Delete' })).toHaveCount(0, { timeout: 10000 });
+            await expect.poll(async () => (await getBlocksViaApi(mattermost, board.boardId, board.token))
+                .some((b) => b.id === cardId), { timeout: 10000 }).toBe(false);
         });
 
         test('can duplicate a card', async ({ page }) => {
-            await openSeededBoard(page, 'Duplicate Card Board', 'Card To Duplicate');
+            const { board } = await openSeededBoard(page, 'Duplicate Card Board', 'Card To Duplicate');
 
             await openKanbanCardMenu(page, 'Card To Duplicate');
             await page.locator('.Menu.noselect').getByRole('button', { name: 'Duplicate' }).click();
@@ -154,6 +156,8 @@ test.describe('Card Management', () => {
             await dialog.locator('.dialog__close').click();
 
             await expect(page.locator('.KanbanCard').filter({ hasText: 'Card To Duplicate' })).toHaveCount(2, { timeout: 10000 });
+            await expect.poll(async () => (await getBlocksViaApi(mattermost, board.boardId, board.token))
+                .filter((b) => b.type === 'card' && b.title.startsWith('Card To Duplicate')).length, { timeout: 10000 }).toBe(2);
         });
 
         test('can copy a card link and see the confirmation message', async ({ page }) => {

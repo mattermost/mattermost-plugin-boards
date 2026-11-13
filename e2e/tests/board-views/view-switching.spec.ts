@@ -4,7 +4,7 @@ import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { MattermostPage } from 'helpers/mm';
 import { Users } from 'helpers/users';
-import { createCardViaApi, openBoard, seedKanbanBoard } from 'helpers/boards';
+import { createCardViaApi, getBlocksViaApi, openBoard, seedKanbanBoard, type SeededBoard } from 'helpers/boards';
 
 const username = 'regularuser';
 const password = 'regularuser';
@@ -134,17 +134,24 @@ test.describe('Board Views', () => {
             await viewMenuItem(page, name).click();
         }
 
+        async function savedViews(board: SeededBoard) {
+            return (await getBlocksViaApi(mattermost, board.boardId, board.token))
+                .filter((b) => b.type === 'view')
+                .map((b) => ({ title: b.title, viewType: b.fields.viewType }));
+        }
+
         test('can add a second board view', async ({ page }) => {
-            await openSeededBoard(page, 'Add View Board');
+            const board = await openSeededBoard(page, 'Add View Board');
             await expect(viewItems(page)).toHaveCount(1, { timeout: 10000 });
 
             await addView(page, 'Board');
 
             await expect(viewItems(page)).toHaveCount(2, { timeout: 10000 });
+            await expect.poll(async () => (await savedViews(board)).length, { timeout: 10000 }).toBe(2);
         });
 
         test('can rename a view', async ({ page }) => {
-            await openSeededBoard(page, 'Rename View Board');
+            const board = await openSeededBoard(page, 'Rename View Board');
 
             const viewTitle = page.locator('.ViewHeader .viewSelector .Editable');
             await viewTitle.click();
@@ -152,19 +159,23 @@ test.describe('Board Views', () => {
             await viewTitle.press('Enter');
 
             await expect(viewItems(page).filter({ hasText: 'Renamed View' })).toBeVisible({ timeout: 10000 });
+            await expect.poll(async () => (await savedViews(board)).map((v) => v.title), { timeout: 10000 })
+                .toEqual(['Renamed View']);
         });
 
         test('can duplicate a view', async ({ page }) => {
-            await openSeededBoard(page, 'Duplicate View Board');
+            const board = await openSeededBoard(page, 'Duplicate View Board');
 
             await runViewMenuAction(page, 'Duplicate view');
 
             await expect(viewItems(page)).toHaveCount(2, { timeout: 10000 });
             await expect(viewItems(page).filter({ hasText: 'Board View copy' })).toBeVisible();
+            await expect.poll(async () => (await savedViews(board)).map((v) => v.title).sort(), { timeout: 10000 })
+                .toEqual(['Board View', 'Board View copy']);
         });
 
         test('can delete a view when more than one exists', async ({ page }) => {
-            await openSeededBoard(page, 'Delete View Board');
+            const board = await openSeededBoard(page, 'Delete View Board');
             await addView(page, 'Table');
             await expect(viewItems(page)).toHaveCount(2, { timeout: 10000 });
             await expect(page.locator('.Table')).toBeVisible({ timeout: 10000 });
@@ -173,6 +184,8 @@ test.describe('Board Views', () => {
 
             await expect(viewItems(page)).toHaveCount(1, { timeout: 10000 });
             await expect(page.locator('.Kanban')).toBeVisible({ timeout: 10000 });
+            await expect.poll(() => savedViews(board), { timeout: 10000 })
+                .toEqual([{ title: 'Board View', viewType: 'board' }]);
         });
 
         test('delete view is not offered when only one view exists', async ({ page }) => {
@@ -188,14 +201,19 @@ test.describe('Board Views', () => {
             const board = await openSeededBoard(page, 'Calendar Board', [
                 { id: 'dateprop', name: 'Due', type: 'date', options: [] },
             ]);
+            // Stay within the current month so the date is in the initially rendered grid, but never on the
+            // creation date, which the calendar would fall back to if it ignored Due.
+            const today = new Date();
+            const dueDay = today.getDate() <= 20 ? today.getDate() + 5 : today.getDate() - 5;
+            const dueDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(dueDay).padStart(2, '0')}`;
             await createCardViaApi(mattermost, board.boardId, 'Calendar Card', board.token, {
-                dateprop: JSON.stringify({ from: Date.now() }),
+                dateprop: JSON.stringify({ from: Date.UTC(today.getFullYear(), today.getMonth(), dueDay, 12) }),
             });
 
             await addView(page, 'Calendar');
 
             await expect(page.locator('.CalendarContainer')).toBeVisible({ timeout: 10000 });
-            await expect(page.locator('.CalendarContainer .fc-event-title').filter({ hasText: 'Calendar Card' }))
+            await expect(page.locator(`.CalendarContainer [data-date="${dueDate}"] .fc-event-title`).filter({ hasText: 'Calendar Card' }))
                 .toBeVisible({ timeout: 15000 });
         });
     });

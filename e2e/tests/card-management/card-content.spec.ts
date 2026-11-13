@@ -3,7 +3,15 @@ import { test, expect, type Page } from '@playwright/test';
 import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { Users } from 'helpers/users';
-import { createCardViaApi, dragAndDrop, openBoard, seedBoard, waitForBlockPatch } from 'helpers/boards';
+import {
+    createCardViaApi,
+    dragAndDrop,
+    getBlocksViaApi,
+    openBoard,
+    seedBoard,
+    waitForBlockPatch,
+    type SeededBoard,
+} from 'helpers/boards';
 
 let mattermost: MattermostContainer;
 
@@ -84,16 +92,25 @@ test.describe('Card Content', () => {
         ).toBeChecked({ timeout: 15000 });
     });
 
+    /** The block types listed in the card's saved contentOrder, in order. */
+    async function savedContentTypes(board: SeededBoard, cardId: string): Promise<string[]> {
+        const blocks = await getBlocksViaApi(mattermost, board.boardId, board.token);
+        const card = blocks.find((b) => b.id === cardId)!;
+        const contentOrder = (card.fields.contentOrder ?? []) as Array<string | string[]>;
+        return contentOrder.flat().map((id) => blocks.find((b) => b.id === id)?.type ?? 'missing');
+    }
+
     test('can add a divider block', async ({ page }) => {
-        const { dialog } = await openCardDialog(page, 'Divider Board', 'Divider Card');
+        const { dialog, board, cardId } = await openCardDialog(page, 'Divider Board', 'Divider Card');
 
         await addContent(page, 'divider');
 
         await expect(dialog.locator('.DividerElement')).toHaveCount(1, { timeout: 10000 });
+        await expect.poll(() => savedContentTypes(board, cardId), { timeout: 10000 }).toEqual(['divider']);
     });
 
     test('can reorder content blocks by dragging', async ({ page }) => {
-        const { dialog } = await openCardDialog(page, 'Reorder Board', 'Reorder Card');
+        const { dialog, board, cardId } = await openCardDialog(page, 'Reorder Board', 'Reorder Card');
 
         await addContent(page, 'divider');
         await addContent(page, 'checkbox');
@@ -101,6 +118,7 @@ test.describe('Card Content', () => {
         const blocks = contentBlocks(page);
         await expect(blocks).toHaveCount(2);
         await expect(blocks.first().locator('.DividerElement')).toBeVisible();
+        await expect.poll(() => savedContentTypes(board, cardId), { timeout: 10000 }).toEqual(['divider', 'checkbox']);
 
         // Row reordering is handled by the drop zone above each row, not the block itself.
         const aboveFirstRow = dialog.locator('.octo-content > div > .addToRow').first();
@@ -109,6 +127,7 @@ test.describe('Card Content', () => {
         await dragAndDrop(page, secondBlock.locator('.dnd-handle'), aboveFirstRow);
 
         await expect(blocks.first().locator('.CheckboxElement')).toBeVisible({ timeout: 10000 });
+        await expect.poll(() => savedContentTypes(board, cardId), { timeout: 10000 }).toEqual(['checkbox', 'divider']);
     });
 
     test('can upload an attachment with the Attach button', async ({ page }) => {

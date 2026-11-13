@@ -73,6 +73,10 @@ test.describe('Drag and Drop', () => {
         await dragAndDrop(page, column.locator('.KanbanCard').last(), column.locator('.KanbanCard').first());
 
         await expect.poll(() => cardTitles(page, idx), { timeout: 10000 }).toEqual([...before].reverse());
+
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        const reloadedIdx = await columnIndex(page, 'To Do');
+        await expect.poll(() => cardTitles(page, reloadedIdx), { timeout: 15000 }).toEqual([...before].reverse());
     });
 
     test('boards can be reordered in the sidebar with the keyboard', async ({ page }) => {
@@ -92,6 +96,11 @@ test.describe('Drag and Drop', () => {
         await page.keyboard.press('ArrowUp');
         await page.keyboard.press('Space');
 
+        await expect.poll(async () => (await titles()).indexOf(movedTitle), { timeout: 10000 })
+            .toBe(before.length - 2);
+
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await expect.poll(async () => (await titles()).length, { timeout: 15000 }).toBe(before.length);
         await expect.poll(async () => (await titles()).indexOf(movedTitle), { timeout: 10000 })
             .toBe(before.length - 2);
     });

@@ -4,7 +4,15 @@ import RunContainer from 'helpers/plugincontainer';
 import MattermostContainer from 'helpers/mmcontainer';
 import { MattermostPage } from 'helpers/mm';
 import { Users } from 'helpers/users';
-import { createCardViaApi, openBoard, seedKanbanBoard, STATUS_PROPERTY_ID, waitForLoadingScreenGone } from 'helpers/boards';
+import {
+    createCardViaApi,
+    getBlocksViaApi,
+    getBoardViaApi,
+    openBoard,
+    seedKanbanBoard,
+    STATUS_PROPERTY_ID,
+    waitForLoadingScreenGone,
+} from 'helpers/boards';
 
 const username = 'regularuser';
 const password = 'regularuser';
@@ -297,13 +305,17 @@ test.describe('Board View Features', () => {
         });
 
         test('can hide a kanban column and show it again', async ({ page }) => {
-            await openKanbanBoard(page, 'Hide Column Board');
+            const board = await openKanbanBoard(page, 'Hide Column Board');
+            const doingId = board.optionIds['Doing'];
+            const savedHiddenOptionIds = async () => (await getBlocksViaApi(mattermost, board.boardId, board.token))
+                .find((b) => b.id === board.viewId)!.fields.hiddenOptionIds;
 
             const header = await columnHeader(page, 'Doing');
             await header.locator('.MenuWrapper button.IconButton').first().click();
             await page.locator('.Menu.noselect').getByRole('button', { name: 'Hide' }).click();
 
             await expect.poll(async () => columnHeaderValues(page), { timeout: 10000 }).not.toContain('Doing');
+            await expect.poll(savedHiddenOptionIds, { timeout: 10000 }).toContain(doingId);
 
             const hiddenItem = page.locator('.octo-board-hidden-item').filter({ hasText: 'Doing' });
             await expect(hiddenItem).toBeVisible({ timeout: 10000 });
@@ -311,10 +323,11 @@ test.describe('Board View Features', () => {
             await page.locator('.Menu.noselect').getByRole('button', { name: 'Show' }).click();
 
             await columnHeader(page, 'Doing');
+            await expect.poll(savedHiddenOptionIds, { timeout: 10000 }).not.toContain(doingId);
         });
 
         test('can delete a kanban column option', async ({ page }) => {
-            await openKanbanBoard(page, 'Delete Column Board');
+            const board = await openKanbanBoard(page, 'Delete Column Board');
 
             const header = await columnHeader(page, 'Done');
             await header.locator('.MenuWrapper button.IconButton').first().click();
@@ -322,6 +335,9 @@ test.describe('Board View Features', () => {
 
             await expect.poll(async () => columnHeaderValues(page), { timeout: 10000 }).not.toContain('Done');
             expect(await columnHeaderValues(page)).toContain('To Do');
+            await expect.poll(async () => (await getBoardViaApi(mattermost, board.boardId, board.token)).cardProperties
+                .find((p) => p.id === STATUS_PROPERTY_ID)!.options.map((o) => o.value), { timeout: 10000 })
+                .toEqual(['To Do', 'Doing']);
         });
 
         test('can change the calculation on a kanban column', async ({ page }) => {

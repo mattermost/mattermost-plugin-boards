@@ -83,6 +83,7 @@ test.describe('Board Search and Switcher', () => {
 
     test('a private board is not found by a non-member', async ({ page }) => {
         await seedBoard(mattermost, username, password, 'Hidden Private Board', 'P');
+        await seedBoard(mattermost, username, password, 'Hidden Open Board');
         const visible = await seedBoard(mattermost, Users.regularUser.username, Users.regularUser.password, 'Visible Own Board');
         await openBoard(page, mattermost, Users.regularUser.username, Users.regularUser.password, visible);
 
@@ -90,8 +91,10 @@ test.describe('Board Search and Switcher', () => {
         const dialog = page.locator('.BoardSwitcherDialog');
         await expect(dialog).toBeVisible({ timeout: 10000 });
 
-        expect(await search(page, dialog, 'Hidden Private')).not.toContain('Hidden Private Board');
-        await expect(dialog.locator('.noResults:not(.introScreen)')).toBeVisible({ timeout: 10000 });
-        await expect(dialog.locator('.blockSearchResult')).toHaveCount(0);
+        const titles = await search(page, dialog, 'Hidden');
+        expect(titles).toContain('Hidden Open Board');
+        expect(titles).not.toContain('Hidden Private Board');
+        await expect(dialog.locator('.blockSearchResult').filter({ hasText: 'Hidden Open Board' })).toBeVisible({ timeout: 10000 });
+        await expect(dialog.locator('.blockSearchResult').filter({ hasText: 'Hidden Private Board' })).toHaveCount(0);
     });
 });

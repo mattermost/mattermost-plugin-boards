@@ -6,6 +6,7 @@ import { MattermostPage } from 'helpers/mm';
 import { Users } from 'helpers/users';
 import {
     createCardViaApi,
+    getBoardViaApi,
     getTeamId,
     linkBoardToChannelViaApi,
     listTeamBoardsViaApi,
@@ -129,5 +130,7 @@ test.describe('Channel Integration', () => {
         await page.locator('.confirmation-dialog-box').getByRole('button', { name: 'Unlink channel' }).click();
 
         await expect(dialog.locator('.channel-item')).toHaveCount(0, { timeout: 10000 });
+        await expect.poll(async () => (await getBoardViaApi(mattermost, board.boardId, board.token)).channelId,
+            { timeout: 10000 }).toBe('');
     });
 });

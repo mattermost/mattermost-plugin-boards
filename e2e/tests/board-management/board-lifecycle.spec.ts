@@ -5,6 +5,7 @@ import MattermostContainer from 'helpers/mmcontainer';
 import { Users } from 'helpers/users';
 import {
     deleteBoardViaApi,
+    listTeamBoardsViaApi,
     openBoard,
     openSidebarBoardMenu,
     seedBoard,
@@ -42,6 +43,8 @@ test.describe('Board Lifecycle', () => {
         await dialog.getByRole('button', { name: 'Delete' }).click();
 
         await expect(sidebarItems(page).filter({ hasText: 'Board To Delete' })).toHaveCount(0, { timeout: 10000 });
+        await expect.poll(async () => (await listTeamBoardsViaApi(mattermost, board.teamId, board.token))
+            .some((b) => b.id === board.boardId), { timeout: 10000 }).toBe(false);
     });
 
     test('cancelling the delete dialog keeps the board', async ({ page }) => {

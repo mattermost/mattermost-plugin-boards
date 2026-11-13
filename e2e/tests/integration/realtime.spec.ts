@@ -9,6 +9,7 @@ import {
     createNamedCardViaUi,
     openBoard,
     seedBoard,
+    type SeededBoard,
 } from 'helpers/boards';
 
 let mattermost: MattermostContainer;
@@ -28,11 +29,14 @@ test.describe('Realtime Collaboration', () => {
     async function openSharedBoard(browser: Browser, title: string, cardTitles: string[] = []): Promise<{
         pageA: Page;
         pageB: Page;
+        board: SeededBoard;
+        cardIds: string[];
         close: () => Promise<void>;
     }> {
         const board = await seedBoard(mattermost, Users.admin.username, Users.admin.password, title);
+        const cardIds: string[] = [];
         for (const cardTitle of cardTitles) {
-            await createCardViaApi(mattermost, board.boardId, cardTitle, board.token);
+            cardIds.push(await createCardViaApi(mattermost, board.boardId, cardTitle, board.token));
         }
         const memberClient = await mattermost.getClient(Users.regularUser.username, Users.regularUser.password);
         const member = await memberClient.getMe();
@@ -49,6 +53,8 @@ test.describe('Realtime Collaboration', () => {
         return {
             pageA,
             pageB,
+            board,
+            cardIds,
             close: async () => {
                 await ctxA.close();
                 await ctxB.close();
@@ -101,7 +107,15 @@ test.describe('Realtime Collaboration', () => {
     });
 
     test('a card can be unfollowed and followed again from its dialog', async ({ browser }) => {
-        const { pageA, close } = await openSharedBoard(browser, 'Follow Card Board', ['Followable Card']);
+        const { pageA, board, cardIds: [cardId], close } = await openSharedBoard(browser, 'Follow Card Board', ['Followable Card']);
+        const admin = await (await mattermost.getAdminClient()).getMe();
+        const isSubscribed = async () => {
+            const resp = await fetch(`${mattermost.url()}/plugins/focalboard/api/v2/subscriptions/${admin.id}`, {
+                headers: { Authorization: `Bearer ${board.token}`, 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            expect(resp.status).toBe(200);
+            return ((await resp.json()) as Array<{ blockId: string }>).some((s) => s.blockId === cardId);
+        };
 
         const card = pageA.locator('.KanbanCard').filter({ hasText: 'Followable Card' });
         await expect(card).toBeVisible({ timeout: 15000 });
@@ -114,9 +128,11 @@ test.describe('Realtime Collaboration', () => {
 
         await dialog.locator('.cardFollowBtn.unfollow').click();
         await expect(dialog.locator('.cardFollowBtn.follow')).toBeVisible({ timeout: 10000 });
+        await expect.poll(isSubscribed, { timeout: 10000 }).toBe(false);
 
         await dialog.locator('.cardFollowBtn.follow').click();
         await expect(dialog.locator('.cardFollowBtn.unfollow')).toContainText('Following', { timeout: 10000 });
+        await expect.poll(isSubscribed, { timeout: 10000 }).toBe(true);
 
         await close();
     });

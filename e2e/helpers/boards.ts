@@ -136,6 +136,47 @@ export async function listTeamBoardsViaApi(
     return (await resp.json()) as Array<{ id: string; title: string; channelId: string }>;
 }
 
+export type ApiBlock = {
+    id: string;
+    parentId: string;
+    type: string;
+    title: string;
+    fields: Record<string, any>;
+};
+
+/** List a board's blocks (cards, views and content) through the API. */
+export async function getBlocksViaApi(
+    mattermost: MattermostContainer,
+    boardId: string,
+    token: string,
+): Promise<ApiBlock[]> {
+    const resp = await fetch(`${mattermost.url()}/plugins/focalboard/api/v2/boards/${boardId}/blocks?all=true`, {
+        headers: apiHeaders(token),
+    });
+    if (!resp.ok) throw new Error(`Failed to list blocks: ${resp.status}`);
+    return (await resp.json()) as ApiBlock[];
+}
+
+export type ApiBoard = {
+    id: string;
+    title: string;
+    channelId: string;
+    cardProperties: Array<{ id: string; name: string; type: string; options: Array<{ id: string; value: string }> }>;
+};
+
+/** Fetch a board through the API. */
+export async function getBoardViaApi(
+    mattermost: MattermostContainer,
+    boardId: string,
+    token: string,
+): Promise<ApiBoard> {
+    const resp = await fetch(`${mattermost.url()}/plugins/focalboard/api/v2/boards/${boardId}`, {
+        headers: apiHeaders(token),
+    });
+    if (!resp.ok) throw new Error(`Failed to get board: ${resp.status}`);
+    return (await resp.json()) as ApiBoard;
+}
+
 /** Soft-delete a board through the API. */
 export async function deleteBoardViaApi(
     mattermost: MattermostContainer,
