@@ -1,0 +1,15 @@
+// Compact badge for a card's ticket code (e.g. PROJ-42), shared by the
+// board and table views.
+@mixin ticket-code-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: monospace;
+    color: rgba(var(--center-channel-color-rgb), 0.56);
+    background: rgba(var(--center-channel-color-rgb), 0.08);
+    border-radius: 3px;
+    padding: 1px 6px;
+    white-space: nowrap;
+    overflow-wrap: normal;
+    user-select: all;
+}

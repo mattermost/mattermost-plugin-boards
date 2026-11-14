@@ -3,7 +3,7 @@
 
 import {TestBlockFactory} from '../test/testBlockFactory'
 
-import {createPatchesFromBoards, createBoard, IPropertyTemplate, createPatchesFromBoardsAndBlocks, safePropertyString, safePropertyValue} from './board'
+import {createPatchesFromBoards, createBoard, IPropertyTemplate, createPatchesFromBoardsAndBlocks, normalizeCardPrefix, safePropertyString, safePropertyValue} from './board'
 import {createBlock} from './block'
 
 describe('board tests', () => {
@@ -133,5 +133,19 @@ describe('board tests', () => {
             expect(safePropertyValue(['opt-1', {}])).toBe('')
             expect(safePropertyValue(undefined)).toBe('')
         })
+    })
+})
+
+describe('normalizeCardPrefix', () => {
+    it('should uppercase and keep only letters and digits', () => {
+        expect(normalizeCardPrefix('proj-1 x')).toBe('PROJ1X')
+    })
+
+    it('should truncate to 10 characters', () => {
+        expect(normalizeCardPrefix('abcdefghijkl')).toBe('ABCDEFGHIJ')
+    })
+
+    it('should allow clearing the prefix', () => {
+        expect(normalizeCardPrefix('')).toBe('')
     })
 })

@@ -898,3 +898,28 @@ func TestBlockPatch_RemoveLegacyFileFields(t *testing.T) {
 		require.NotPanics(t, patch.RemoveLegacyFileFields)
 	})
 }
+
+func TestBlockPatch_CardNumberIsReadOnly(t *testing.T) {
+	block := &Block{
+		Fields: map[string]interface{}{
+			BlockFieldCardNumber: int64(5),
+			"icon":               "old",
+		},
+	}
+
+	(&BlockPatch{UpdatedFields: map[string]interface{}{
+		BlockFieldCardNumber: int64(1),
+		"icon":               "new",
+	}}).Patch(block)
+	require.EqualValues(t, 5, block.Fields[BlockFieldCardNumber])
+	require.Equal(t, "new", block.Fields["icon"])
+
+	(&BlockPatch{DeletedFields: []string{BlockFieldCardNumber}}).Patch(block)
+	require.EqualValues(t, 5, block.Fields[BlockFieldCardNumber])
+}
+
+func TestFormatTicketCode(t *testing.T) {
+	require.Equal(t, "PROJ-42", FormatTicketCode("PROJ", 42))
+	require.Equal(t, "", FormatTicketCode("", 42))
+	require.Equal(t, "", FormatTicketCode("PROJ", 0))
+}
