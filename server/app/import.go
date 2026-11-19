@@ -161,7 +161,19 @@ func (a *App) importArchive(r io.Reader, opt model.ImportArchiveOptions) error {
 				continue
 			}
 			fileReader := newLimitedReader(zr, maxEntry)
-			newFileName, err := a.SaveFile(fileReader, opt.TeamID, board.ID, filename, board.IsTemplate)
+			bufferedReader := bufio.NewReader(fileReader)
+			if _, peekErr := bufferedReader.Peek(1); errors.Is(peekErr, io.EOF) {
+				// Some storage backends (e.g. Azure Blob) cannot store empty
+				// files, and an empty image or attachment has no content to
+				// show, so skip it rather than failing the whole import.
+				// Blocks that reference it are imported without the file.
+				a.logger.Warn("skipping empty file in archive",
+					mlog.String("boardID", board.ID),
+					mlog.String("filename", filename),
+				)
+				continue
+			}
+			newFileName, err := a.SaveFile(bufferedReader, opt.TeamID, board.ID, filename, board.IsTemplate)
 			if err != nil {
 				return fmt.Errorf("cannot import file %s for board %s: %w", filename, dir, err)
 			}
