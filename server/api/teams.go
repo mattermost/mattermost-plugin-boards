@@ -111,6 +111,11 @@ func (a *API) handleGetTeam(w http.ResponseWriter, r *http.Request) {
 		a.errorResponse(w, r, err)
 		return
 	}
+	if team == nil {
+		// app.GetTeam returns nil, nil when the team does not exist.
+		a.errorResponse(w, r, model.NewErrNotFound("team ID="+teamID))
+		return
+	}
 
 	auditRec := a.makeAuditRecord(r, "getTeam", audit.Fail)
 	defer a.audit.LogRecord(audit.LevelRead, auditRec)
