@@ -63,6 +63,8 @@ windowAny.baseURL = process.env.TARGET_IS_PRODUCT ? '/plugins/boards' : '/plugin
 windowAny.frontendBaseURL = '/boards'
 windowAny.isFocalboardPlugin = true
 
+const clientConfigTimeoutMs = 5000
+
 function getSubpath(siteURL: string): string {
     const url = new URL(siteURL)
 
@@ -254,20 +256,21 @@ export default class Plugin {
             }
         })
 
+        let configFromWebsocket = false
         wsClient.addOnConfigChange((_: WSClient, config: ClientConfig) => {
+            configFromWebsocket = true
             store.dispatch(setClientConfig(config))
         })
 
-        let legacyMode = false
-        try {
-            const clientConfig = await octoClient.getClientConfig()
-            if (clientConfig) {
+        const clientConfigRequest = octoClient.getClientConfig().then((clientConfig) => {
+            if (clientConfig && !configFromWebsocket) {
                 store.dispatch(setClientConfig(clientConfig))
-                legacyMode = Boolean(clientConfig.legacyMode)
             }
-        } catch (e) {
+        }).catch((e) => {
             Utils.logError(`Boards plugin: failed to fetch client config: ${e}`)
-        }
+        })
+        await Promise.race([clientConfigRequest, new Promise((resolve) => setTimeout(resolve, clientConfigTimeoutMs))])
+        const legacyMode = getLegacyMode(store.getState())
         const productName = getProductName(intl, legacyMode)
 
         if (this.registry.registerProduct) {
