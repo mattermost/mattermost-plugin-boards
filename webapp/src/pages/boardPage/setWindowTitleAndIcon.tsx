@@ -7,10 +7,12 @@ import {Utils} from '../../utils'
 import {getCurrentBoard} from '../../store/boards'
 import {getCurrentView} from '../../store/views'
 import {useAppSelector} from '../../store/hooks'
+import {useProductName} from '../../hooks/useProductName'
 
 const SetWindowTitleAndIcon = (): null => {
     const board = useAppSelector(getCurrentBoard)
     const activeView = useAppSelector(getCurrentView)
+    const productName = useProductName()
 
     useEffect(() => {
         Utils.setFavicon(board?.icon)
@@ -24,11 +26,11 @@ const SetWindowTitleAndIcon = (): null => {
             }
             document.title = title
         } else if (Utils.isFocalboardPlugin()) {
-            document.title = 'Boards - Mattermost'
+            document.title = `${productName} - Mattermost`
         } else {
             document.title = 'Focalboard'
         }
-    }, [board?.title, activeView?.title])
+    }, [board?.title, activeView?.title, productName])
 
     return null
 }

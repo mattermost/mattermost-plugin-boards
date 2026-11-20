@@ -17,6 +17,9 @@ import GlobalHeader from './components/globalHeader/globalHeader'
 import App from './app'
 import store from './store'
 import {setTeam} from './store/teams'
+import {setClientConfig, getLegacyMode} from './store/clientConfig'
+import {ClientConfig} from './config/clientConfig'
+import {getProductName} from './hooks/useProductName'
 import WithWebSockets from './components/withWebSockets'
 import {setChannel} from './store/channels'
 import {initialLoad} from './store/initialLoad'
@@ -37,6 +40,7 @@ import RHSChannelBoardsHeader from './components/rhsChannelBoardsHeader'
 import BoardSelector from './components/boardSelector'
 import wsClient, {
     MMWebSocketClient,
+    WSClient,
     ACTION_UPDATE_BLOCK,
     ACTION_UPDATE_CLIENT_CONFIG,
     ACTION_UPDATE_SUBSCRIPTION,
@@ -250,6 +254,22 @@ export default class Plugin {
             }
         })
 
+        wsClient.addOnConfigChange((_: WSClient, config: ClientConfig) => {
+            store.dispatch(setClientConfig(config))
+        })
+
+        let legacyMode = false
+        try {
+            const clientConfig = await octoClient.getClientConfig()
+            if (clientConfig) {
+                store.dispatch(setClientConfig(clientConfig))
+                legacyMode = Boolean(clientConfig.legacyMode)
+            }
+        } catch (e) {
+            Utils.logError(`Boards plugin: failed to fetch client config: ${e}`)
+        }
+        const productName = getProductName(intl, legacyMode)
+
         if (this.registry.registerProduct) {
             windowAny.frontendBaseURL = subpath + '/boards'
 
@@ -270,12 +290,12 @@ export default class Plugin {
             )
             this.rhsId = rhsId
 
-            this.channelHeaderButtonId = registry.registerChannelHeaderButtonAction(<FocalboardIcon />, () => mmStore.dispatch(toggleRHSPlugin), 'Boards', 'Boards')
+            this.channelHeaderButtonId = registry.registerChannelHeaderButtonAction(<FocalboardIcon />, () => mmStore.dispatch(toggleRHSPlugin), productName, productName)
 
             this.registry.registerProduct(
                 '/boards',
                 'product-boards',
-                'Boards',
+                productName,
                 '/boards',
                 MainApp,
                 HeaderComponent,
@@ -284,7 +304,7 @@ export default class Plugin {
             )
 
             if (this.registry.registerAppBarComponent) {
-                this.registry.registerAppBarComponent(Utils.buildURL(appBarIcon, true), () => mmStore.dispatch(toggleRHSPlugin), intl.formatMessage({id: 'AppBar.Tooltip', defaultMessage: 'Toggle Linked Boards'}))
+                this.registry.registerAppBarComponent(Utils.buildURL(appBarIcon, true), () => mmStore.dispatch(toggleRHSPlugin), legacyMode ? intl.formatMessage({id: 'AppBar.Tooltip.legacy', defaultMessage: 'Toggle Linked Legacy Boards'}) : intl.formatMessage({id: 'AppBar.Tooltip', defaultMessage: 'Toggle Linked Boards'}))
             }
 
             if (this.registry.registerActionAfterChannelCreation) {
@@ -321,9 +341,10 @@ export default class Plugin {
                 registry.registerSiteStatisticsHandler(async () => {
                     const siteStats = await octoClient.getSiteStatistics()
                     if (siteStats) {
+                        const boardsName = getLegacyMode(store.getState()) ? intl.formatMessage({id: 'SiteStats.total_boards.legacy', defaultMessage: 'Total Legacy Boards'}) : intl.formatMessage({id: 'SiteStats.total_boards', defaultMessage: 'Total Boards'})
                         return {
                             boards_count: {
-                                name: intl.formatMessage({id: 'SiteStats.total_boards', defaultMessage: 'Total Boards'}),
+                                name: boardsName,
                                 id: 'total_boards',
                                 icon: 'icon-product-boards',
                                 value: siteStats.board_count,

@@ -139,6 +139,18 @@ describe('component/BoardSwitcherDialog', () => {
         })
     }
 
+    test('titles the dialog Find Boards by default', () => {
+        const {container} = renderDialog()
+        expect(container.ownerDocument.body.textContent).toContain('Find Boards')
+        expect(container.ownerDocument.body.textContent).not.toContain('Find Legacy Boards')
+    })
+
+    test('titles the dialog Find Legacy Boards in legacy mode', () => {
+        const legacyStore = mockStateStore([], {...baseState, clientConfig: {value: {legacyMode: true}}})
+        const {container} = renderDialog(jest.fn(), legacyStore)
+        expect(container.ownerDocument.body.textContent).toContain('Find Legacy Boards')
+    })
+
     test('shows the intro screen before any query is typed', () => {
         renderDialog()
         expect(screen.getByPlaceholderText('Search for boards')).toBeInTheDocument()

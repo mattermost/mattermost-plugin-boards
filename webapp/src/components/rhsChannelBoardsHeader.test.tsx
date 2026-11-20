@@ -11,13 +11,16 @@ import {mockStateStore, wrapIntl} from '../testUtils'
 
 import RHSChannelBoardsHeader from './rhsChannelBoardsHeader'
 
-const renderHeader = (channel: {id: string; name: string; display_name: string; type: string}) => {
+const renderHeader = (channel: {id: string; name: string; display_name: string; type: string}, legacyMode?: boolean) => {
     const state = {
         language: {
             value: 'en',
         },
         channels: {
             current: channel,
+        },
+        clientConfig: {
+            value: {legacyMode},
         },
     }
     const store = mockStateStore([], state)
@@ -57,5 +60,15 @@ describe('components/rhsChannelBoardsHeader', () => {
         // readable even when the subtitle is visually truncated by the narrow
         // RHS panel. This title attribute is the component's part of the fix.
         expect(subtitle).toHaveAttribute('title', groupMembers)
+    })
+
+    it('shows Boards as the title by default', () => {
+        const {container} = renderHeader({id: 'channel-id', name: 'channel', display_name: 'Channel Name', type: 'O'}, false)
+        expect(container.querySelector('span')?.textContent).toBe('Boards')
+    })
+
+    it('shows Legacy Boards as the title in legacy mode', () => {
+        const {container} = renderHeader({id: 'channel-id', name: 'channel', display_name: 'Channel Name', type: 'O'}, true)
+        expect(container.querySelector('span')?.textContent).toBe('Legacy Boards')
     })
 })

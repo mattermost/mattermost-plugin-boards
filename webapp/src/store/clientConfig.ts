@@ -40,5 +40,5 @@ export function getClientConfig(state: RootState): ClientConfig {
 }
 
 export function getLegacyMode(state: RootState): boolean {
-    return Boolean(state.clientConfig.value.legacyMode)
+    return Boolean(state.clientConfig?.value?.legacyMode)
 }
