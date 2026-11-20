@@ -69,6 +69,7 @@ func NewBoardsApp(api model.ServicesAPI, manifest *mm_model.Manifest) (*BoardsAp
 	}
 	serverID := api.GetDiagnosticID()
 	cfg := createBoardsConfig(*mmconfig, baseURL, serverID)
+	model.SetBotLegacyMode(cfg.LegacyMode)
 	sqlDB, err := api.GetMasterDB()
 	if err != nil {
 		return nil, fmt.Errorf("cannot access database while initializing Boards: %w", err)

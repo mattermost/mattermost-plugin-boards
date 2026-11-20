@@ -80,7 +80,8 @@ func (b *BoardsApp) setConfiguration(configuration *configuration) {
 // syncBotDisplayName makes the Boards bot display name follow LegacyMode. It uses the plugin API,
 // so it must not be called while holding the configurationLock.
 func (b *BoardsApp) syncBotDisplayName(legacyMode bool) error {
-	botID, err := b.servicesAPI.EnsureBot(model.FocalboardBot)
+	model.SetBotLegacyMode(legacyMode)
+	botID, err := b.servicesAPI.EnsureBot(model.FocalboardBot())
 	if err != nil {
 		return fmt.Errorf("failed to ensure bot: %w", err)
 	}

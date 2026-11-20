@@ -7,6 +7,7 @@ package model
 
 import (
 	"database/sql"
+	"sync/atomic"
 
 	"github.com/gorilla/mux"
 
@@ -21,11 +22,22 @@ const (
 	botDescription       = "Created by Boards plugin."
 )
 
-var FocalboardBot = &mm_model.Bot{
-	Username:    botUsername,
-	DisplayName: botDisplayname,
-	Description: botDescription,
-	OwnerId:     SystemUserID,
+var botLegacyMode atomic.Bool
+
+// SetBotLegacyMode selects the display name used by FocalboardBot.
+func SetBotLegacyMode(legacyMode bool) {
+	botLegacyMode.Store(legacyMode)
+}
+
+// FocalboardBot returns the Boards bot template. EnsureBot patches an existing bot to match
+// the template, so every caller must use the display name for the current mode.
+func FocalboardBot() *mm_model.Bot {
+	return &mm_model.Bot{
+		Username:    botUsername,
+		DisplayName: BotDisplayName(botLegacyMode.Load()),
+		Description: botDescription,
+		OwnerId:     SystemUserID,
+	}
 }
 
 // BotDisplayName returns the display name of the Boards bot for the given mode.
