@@ -96,6 +96,18 @@ func TestSetConfiguration(t *testing.T) {
 		config := createBoardsConfig(*mmConfig, "", "")
 		assert.Equal(t, true, config.EnablePublicSharedBoards)
 	})
+
+	t.Run("test legacy mode", func(t *testing.T) {
+		mmConfig := baseConfig
+		mmConfig.PluginSettings.Plugins = make(map[string]map[string]interface{})
+		mmConfig.PluginSettings.Plugins[PluginName] = make(map[string]interface{})
+		config := createBoardsConfig(*mmConfig, "", "")
+		assert.Equal(t, false, config.LegacyMode)
+
+		mmConfig.PluginSettings.Plugins[PluginName][LegacyModeName] = true
+		config = createBoardsConfig(*mmConfig, "", "")
+		assert.Equal(t, true, config.LegacyMode)
+	})
 }
 
 func TestServeHTTP(t *testing.T) {

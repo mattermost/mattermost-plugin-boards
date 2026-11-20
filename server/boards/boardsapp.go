@@ -27,6 +27,7 @@ const (
 	boardsFeatureFlagName = "BoardsFeatureFlags"
 	PluginName            = "focalboard"
 	SharedBoardsName      = "enablepublicsharedboards"
+	LegacyModeName        = "legacymode"
 
 	notifyFreqCardSecondsKey  = "notify_freq_card_seconds"
 	notifyFreqBoardSecondsKey = "notify_freq_board_seconds"

@@ -64,6 +64,7 @@ func TestOnConfigurationChange(t *testing.T) {
 	basePlugins := make(map[string]map[string]interface{})
 	basePlugins[PluginName] = make(map[string]interface{})
 	basePlugins[PluginName][SharedBoardsName] = true
+	basePlugins[PluginName][LegacyModeName] = true
 
 	basePluginSettings := &serverModel.PluginSettings{
 		Directory: &stringRef,
@@ -113,6 +114,9 @@ func TestOnConfigurationChange(t *testing.T) {
 		// make sure both App and Server got updated
 		assert.True(t, b.server.Config().EnablePublicSharedBoards)
 		assert.True(t, b.server.App().GetClientConfig().EnablePublicSharedBoards)
+		assert.True(t, b.getConfiguration().LegacyMode)
+		assert.True(t, b.server.Config().LegacyMode)
+		assert.True(t, b.server.App().GetClientConfig().LegacyMode)
 	})
 }
 
