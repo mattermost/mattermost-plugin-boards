@@ -8,6 +8,7 @@ import {getMessages} from '../i18n'
 import {getLanguage} from '../store/language'
 import {getCurrentChannel} from '../store/channels'
 import {useAppSelector} from '../store/hooks'
+import {useLegacyMode} from '../hooks/useProductName'
 import {Utils} from '../utils'
 
 import appBarIcon from '../../static/app-bar-icon.png'
@@ -15,6 +16,7 @@ import appBarIcon from '../../static/app-bar-icon.png'
 const RHSChannelBoardsHeader = () => {
     const currentChannel = useAppSelector(getCurrentChannel)
     const language = useAppSelector<string>(getLanguage)
+    const legacyMode = useLegacyMode()
 
     if (!currentChannel) {
         return null
@@ -31,10 +33,17 @@ const RHSChannelBoardsHeader = () => {
                     src={Utils.buildURL(appBarIcon, true)}
                 />
                 <span>
-                    <FormattedMessage
-                        id='rhs-channel-boards-header.title'
-                        defaultMessage='Boards'
-                    />
+                    {legacyMode ? (
+                        <FormattedMessage
+                            id='rhs-channel-boards-header.title.legacy'
+                            defaultMessage='Legacy Boards'
+                        />
+                    ) : (
+                        <FormattedMessage
+                            id='rhs-channel-boards-header.title'
+                            defaultMessage='Boards'
+                        />
+                    )}
                 </span>
                 <span
                     title={currentChannel.display_name}

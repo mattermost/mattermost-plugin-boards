@@ -9,4 +9,5 @@ export type ClientConfig = {
     featureFlags: Record<string, string>
     teammateNameDisplay: string
     maxFileSize: number
+    legacyMode: boolean
 }

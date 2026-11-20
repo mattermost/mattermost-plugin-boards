@@ -63,6 +63,11 @@ func createBoardsConfig(mmconfig mm_model.Config, baseURL string, serverID strin
 		enablePublicSharedBoards = true
 	}
 
+	legacyMode := false
+	if mmconfig.PluginSettings.Plugins[PluginName][LegacyModeName] == true {
+		legacyMode = true
+	}
+
 	enableBoardsDeletion := false
 	if mmconfig.DataRetentionSettings.EnableBoardsDeletion != nil {
 		enableBoardsDeletion = true
@@ -111,6 +116,7 @@ func createBoardsConfig(mmconfig mm_model.Config, baseURL string, serverID strin
 		LocalModeSocketLocation:  "",
 		AuthMode:                 "mattermost",
 		EnablePublicSharedBoards: enablePublicSharedBoards,
+		LegacyMode:               legacyMode,
 		FeatureFlags:             featureFlags,
 		NotifyFreqCardSeconds:    getPluginSettingInt(mmconfig, notifyFreqCardSecondsKey, 120),
 		NotifyFreqBoardSeconds:   getPluginSettingInt(mmconfig, notifyFreqBoardSecondsKey, 86400),

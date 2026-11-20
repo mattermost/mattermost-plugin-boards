@@ -14,7 +14,7 @@ func (s *SQLStore) getBoardsBotID() (string, error) {
 	var boardsBotID string
 	if boardsBotID == "" {
 		var err error
-		boardsBotID, err = s.servicesAPI.EnsureBot(model.FocalboardBot)
+		boardsBotID, err = s.servicesAPI.EnsureBot(model.FocalboardBot())
 		if err != nil {
 			s.logger.Error("failed to ensure boards bot", mlog.Err(err))
 			return "", err

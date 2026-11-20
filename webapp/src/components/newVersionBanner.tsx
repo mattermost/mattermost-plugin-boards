@@ -5,11 +5,13 @@ import React, {useState, useEffect} from 'react'
 import {FormattedMessage} from 'react-intl'
 
 import wsClient from '../wsclient'
+import {useLegacyMode} from '../hooks/useProductName'
 
 import './newVersionBanner.scss'
 
 const NewVersionBanner = () => {
     const [appVersionChanged, setAppVersionChanged] = useState(false)
+    const legacyMode = useLegacyMode()
     useEffect(() => {
         wsClient.onAppVersionChangeHandler = setAppVersionChanged
     }, [])
@@ -30,10 +32,17 @@ const NewVersionBanner = () => {
                 rel='noreferrer'
                 onClick={newVersionReload}
             >
-                <FormattedMessage
-                    id='BoardPage.newVersion'
-                    defaultMessage='A new version of Boards is available, click here to reload.'
-                />
+                {legacyMode ? (
+                    <FormattedMessage
+                        id='BoardPage.newVersion.legacy'
+                        defaultMessage='A new version of Legacy Boards is available, click here to reload.'
+                    />
+                ) : (
+                    <FormattedMessage
+                        id='BoardPage.newVersion'
+                        defaultMessage='A new version of Boards is available, click here to reload.'
+                    />
+                )}
             </a>
         </div>
     )

@@ -7,6 +7,7 @@ package model
 
 import (
 	"database/sql"
+	"sync/atomic"
 
 	"github.com/gorilla/mux"
 
@@ -15,16 +16,36 @@ import (
 )
 
 const (
-	botUsername    = "boards"
-	botDisplayname = "Boards"
-	botDescription = "Created by Boards plugin."
+	botUsername          = "boards"
+	botDisplayname       = "Boards"
+	botDisplaynameLegacy = "Legacy Boards"
+	botDescription       = "Created by Boards plugin."
 )
 
-var FocalboardBot = &mm_model.Bot{
-	Username:    botUsername,
-	DisplayName: botDisplayname,
-	Description: botDescription,
-	OwnerId:     SystemUserID,
+var botLegacyMode atomic.Bool
+
+// SetBotLegacyMode selects the display name used by FocalboardBot.
+func SetBotLegacyMode(legacyMode bool) {
+	botLegacyMode.Store(legacyMode)
+}
+
+// FocalboardBot returns the Boards bot template. EnsureBot patches an existing bot to match
+// the template, so every caller must use the display name for the current mode.
+func FocalboardBot() *mm_model.Bot {
+	return &mm_model.Bot{
+		Username:    botUsername,
+		DisplayName: BotDisplayName(botLegacyMode.Load()),
+		Description: botDescription,
+		OwnerId:     SystemUserID,
+	}
+}
+
+// BotDisplayName returns the display name of the Boards bot for the given mode.
+func BotDisplayName(legacyMode bool) string {
+	if legacyMode {
+		return botDisplaynameLegacy
+	}
+	return botDisplayname
 }
 
 type ServicesAPI interface {
@@ -56,6 +77,8 @@ type ServicesAPI interface {
 
 	// Bot service
 	EnsureBot(bot *mm_model.Bot) (string, error)
+	GetBot(botUserID string, includeDeleted bool) (*mm_model.Bot, error)
+	PatchBot(botUserID string, patch *mm_model.BotPatch) (*mm_model.Bot, error)
 
 	// License service
 	GetLicense() *mm_model.License

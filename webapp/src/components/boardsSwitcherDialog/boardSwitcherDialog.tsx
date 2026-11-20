@@ -15,6 +15,7 @@ import LockOutline from '../../widgets/icons/lockOutline'
 import {useAppSelector} from '../../store/hooks'
 import {getAllTeams, getCurrentTeam, Team} from '../../store/teams'
 import {getMe} from '../../store/users'
+import {useLegacyMode} from '../../hooks/useProductName'
 import {Utils} from '../../utils'
 import {BoardTypeOpen, BoardTypePrivate} from '../../blocks/board'
 import {Constants} from '../../constants'
@@ -30,9 +31,10 @@ const BoardSwitcherDialog = (props: Props): React.JSX.Element => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [IDs, setIDs] = useState<any>({})
     const intl = useIntl()
+    const legacyMode = useLegacyMode()
     const team = useAppSelector(getCurrentTeam)
     const me = useAppSelector(getMe)
-    const title = intl.formatMessage({id: 'FindBoardsDialog.Title', defaultMessage: 'Find Boards'})
+    const title = legacyMode ? intl.formatMessage({id: 'FindBoardsDialog.Title.legacy', defaultMessage: 'Find Legacy Boards'}) : intl.formatMessage({id: 'FindBoardsDialog.Title', defaultMessage: 'Find Boards'})
     const subTitle = intl.formatMessage(
         {
             id: 'FindBoardsDialog.SubTitle',

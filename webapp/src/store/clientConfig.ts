@@ -19,7 +19,7 @@ export const fetchClientConfig = createAsyncThunk(
 
 const clientConfigSlice = createSlice({
     name: 'config',
-    initialState: {value: {telemetry: false, telemetryid: '', enablePublicSharedBoards: false, teammateNameDisplay: ShowUsername, featureFlags: {}, maxFileSize: 0}} as {value: ClientConfig},
+    initialState: {value: {telemetry: false, telemetryid: '', enablePublicSharedBoards: false, teammateNameDisplay: ShowUsername, featureFlags: {}, maxFileSize: 0, legacyMode: false}} as {value: ClientConfig},
     reducers: {
         setClientConfig: (state, action: PayloadAction<ClientConfig>) => {
             state.value = action.payload
@@ -27,7 +27,7 @@ const clientConfigSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder.addCase(fetchClientConfig.fulfilled, (state, action) => {
-            state.value = action.payload || {telemetry: false, telemetryid: '', enablePublicSharedBoards: false, teammateNameDisplay: ShowUsername, featureFlags: {}, maxFileSize: 0}
+            state.value = action.payload || {telemetry: false, telemetryid: '', enablePublicSharedBoards: false, teammateNameDisplay: ShowUsername, featureFlags: {}, maxFileSize: 0, legacyMode: false}
         })
     },
 })
@@ -37,4 +37,8 @@ export const {reducer} = clientConfigSlice
 
 export function getClientConfig(state: RootState): ClientConfig {
     return state.clientConfig.value
+}
+
+export function getLegacyMode(state: RootState): boolean {
+    return Boolean(state.clientConfig?.value?.legacyMode)
 }

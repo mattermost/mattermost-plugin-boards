@@ -96,6 +96,21 @@ func (mr *MockServicesAPIMockRecorder) EnsureBot(arg0 interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureBot", reflect.TypeOf((*MockServicesAPI)(nil).EnsureBot), arg0)
 }
 
+// GetBot mocks base method.
+func (m *MockServicesAPI) GetBot(arg0 string, arg1 bool) (*model.Bot, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBot", arg0, arg1)
+	ret0, _ := ret[0].(*model.Bot)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBot indicates an expected call of GetBot.
+func (mr *MockServicesAPIMockRecorder) GetBot(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBot", reflect.TypeOf((*MockServicesAPI)(nil).GetBot), arg0, arg1)
+}
+
 // GetChannelByID mocks base method.
 func (m *MockServicesAPI) GetChannelByID(arg0 string) (*model.Channel, error) {
 	m.ctrl.T.Helper()
@@ -402,6 +417,21 @@ func (m *MockServicesAPI) KVSetWithOptions(arg0 string, arg1 []byte, arg2 model.
 func (mr *MockServicesAPIMockRecorder) KVSetWithOptions(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KVSetWithOptions", reflect.TypeOf((*MockServicesAPI)(nil).KVSetWithOptions), arg0, arg1, arg2)
+}
+
+// PatchBot mocks base method.
+func (m *MockServicesAPI) PatchBot(arg0 string, arg1 *model.BotPatch) (*model.Bot, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PatchBot", arg0, arg1)
+	ret0, _ := ret[0].(*model.Bot)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PatchBot indicates an expected call of PatchBot.
+func (mr *MockServicesAPIMockRecorder) PatchBot(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchBot", reflect.TypeOf((*MockServicesAPI)(nil).PatchBot), arg0, arg1)
 }
 
 // PublishPluginClusterEvent mocks base method.

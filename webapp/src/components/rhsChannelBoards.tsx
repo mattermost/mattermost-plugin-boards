@@ -7,6 +7,7 @@ import {FormattedMessage, IntlProvider, useIntl} from 'react-intl'
 import {getLanguage} from '../store/language'
 
 import {useWebsockets} from '../hooks/websockets'
+import {useLegacyMode} from '../hooks/useProductName'
 
 import {Board, BoardMember} from '../blocks/board'
 import {getCurrentTeamId} from '../store/teams'
@@ -44,6 +45,7 @@ const RHSChannelBoards = () => {
     const me = useAppSelector<IUser|null>(getMe)
     const dispatch = useAppDispatch()
     const intl = useIntl()
+    const legacyMode = useLegacyMode()
     const [dataLoaded, setDataLoaded] = React.useState(false)
 
     useEffect(() => {
@@ -114,10 +116,17 @@ const RHSChannelBoards = () => {
                         />
                     </h2>
                     <div className='empty-paragraph'>
-                        <FormattedMessage
-                            id='rhs-boards.no-boards-linked-to-channel-description'
-                            defaultMessage='Boards is a project management tool that helps define, organize, track and manage work across teams, using a familiar kanban board view.'
-                        />
+                        {legacyMode ? (
+                            <FormattedMessage
+                                id='rhs-boards.no-boards-linked-to-channel-description.legacy'
+                                defaultMessage='Legacy Boards is a project management tool that helps define, organize, track and manage work across teams, using a familiar kanban board view.'
+                            />
+                        ) : (
+                            <FormattedMessage
+                                id='rhs-boards.no-boards-linked-to-channel-description'
+                                defaultMessage='Boards is a project management tool that helps define, organize, track and manage work across teams, using a familiar kanban board view.'
+                            />
+                        )}
                     </div>
                     <div className='boards-screenshots'><img src={Utils.buildURL(boardsScreenshots, true)}/></div>
                     {me?.permissions?.find((s: string) => s === 'create_post') &&

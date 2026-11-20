@@ -518,4 +518,60 @@ describe('components/sidebarCategory', () => {
             getSidebarCategoriesSpy.mockRestore()
         })
     })
+
+    describe('default category label', () => {
+        const defaultCategory = {
+            ...TestBlockFactory.createCategoryBoards(),
+            id: 'default_category_id',
+            name: 'Boards',
+            type: 'system' as const,
+            boardMetadata: [],
+        }
+
+        const renderCategory = (categoryBoards: typeof defaultCategory, legacyMode?: boolean) => {
+            const mockStore = configureStore([])
+            const store = mockStore({...state, clientConfig: {value: {legacyMode}}})
+
+            return render(wrapRBDNDDroppable(wrapIntl(
+                <ReduxProvider store={store}>
+                    <Router history={history}>
+                        <SidebarCategory
+                            hideSidebar={() => {}}
+                            categoryBoards={categoryBoards}
+                            boards={boards}
+                            allCategories={[categoryBoards]}
+                            index={0}
+                        />
+                    </Router>
+                </ReduxProvider>,
+            )))
+        }
+
+        test('shows Boards for the system category by default', () => {
+            const {container} = renderCategory(defaultCategory, false)
+            const title = container.querySelector('.category-title')
+            expect(title?.textContent).toBe('Boards')
+            expect(title?.getAttribute('title')).toBe('Boards')
+        })
+
+        test('shows Legacy Boards for the system category in legacy mode', () => {
+            const {container} = renderCategory(defaultCategory, true)
+            const title = container.querySelector('.category-title')
+            expect(title?.textContent).toBe('Legacy Boards')
+            expect(title?.getAttribute('title')).toBe('Legacy Boards')
+        })
+
+        test('shows Legacy Boards for the not yet stored default category in legacy mode', () => {
+            const {container} = renderCategory({...defaultCategory, id: '', type: undefined as unknown as 'system'}, true)
+            expect(container.querySelector('.category-title')?.textContent).toBe('Legacy Boards')
+        })
+
+        test('does not rename custom categories in legacy mode', () => {
+            const {container} = renderCategory({...defaultCategory, id: 'custom_id', name: 'Boards', type: 'custom' as unknown as 'system'}, true)
+            expect(container.querySelector('.category-title')?.textContent).toBe('Boards')
+
+            const other = renderCategory({...defaultCategory, id: 'custom_2', name: 'My stuff', type: 'custom' as unknown as 'system'}, true)
+            expect(other.container.querySelector('.category-title')?.textContent).toBe('My stuff')
+        })
+    })
 })

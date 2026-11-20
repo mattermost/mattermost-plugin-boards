@@ -151,6 +151,22 @@ func (a *pluginAPIAdapter) EnsureBot(bot *mm_model.Bot) (string, error) {
 	return a.api.EnsureBotUser(bot)
 }
 
+func (a *pluginAPIAdapter) GetBot(botUserID string, includeDeleted bool) (*mm_model.Bot, error) {
+	bot, appErr := a.api.GetBot(botUserID, includeDeleted)
+	if appErr != nil {
+		return nil, appErr
+	}
+	return bot, nil
+}
+
+func (a *pluginAPIAdapter) PatchBot(botUserID string, patch *mm_model.BotPatch) (*mm_model.Bot, error) {
+	bot, appErr := a.api.PatchBot(botUserID, patch)
+	if appErr != nil {
+		return nil, appErr
+	}
+	return bot, nil
+}
+
 //
 // License service.
 //
