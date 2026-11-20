@@ -171,6 +171,10 @@ func (b *BoardsApp) Start() error {
 
 	b.servicesAPI.RegisterRouter(b.server.GetRootRouter())
 
+	if err := b.syncBotDisplayName(b.server.Config().LegacyMode); err != nil {
+		b.logger.Warn("Unable to update the Boards bot display name", mlog.Err(err))
+	}
+
 	b.logger.Info("Boards product successfully started.")
 
 	return nil

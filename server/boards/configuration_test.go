@@ -4,6 +4,7 @@
 package boards
 
 import (
+	"errors"
 	"os"
 	"testing"
 
@@ -99,6 +100,14 @@ func TestOnConfigurationChange(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		api := mockservicesapi.NewMockServicesAPI(ctrl)
 		api.EXPECT().GetConfig().Return(baseConfig)
+		api.EXPECT().EnsureBot(model.FocalboardBot).Return("bot-id", nil)
+		api.EXPECT().GetBot("bot-id", false).Return(&serverModel.Bot{UserId: "bot-id", DisplayName: "Boards"}, nil)
+		api.EXPECT().PatchBot("bot-id", gomock.Any()).DoAndReturn(
+			func(_ string, patch *serverModel.BotPatch) (*serverModel.Bot, error) {
+				require.NotNil(t, patch.DisplayName)
+				assert.Equal(t, "Legacy Boards", *patch.DisplayName)
+				return &serverModel.Bot{UserId: "bot-id", DisplayName: *patch.DisplayName}, nil
+			})
 
 		b := &BoardsApp{
 			server:          th.Server,
@@ -117,6 +126,88 @@ func TestOnConfigurationChange(t *testing.T) {
 		assert.True(t, b.getConfiguration().LegacyMode)
 		assert.True(t, b.server.Config().LegacyMode)
 		assert.True(t, b.server.App().GetClientConfig().LegacyMode)
+	})
+
+	t.Run("Bot display name already up to date is not patched", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
+		ctrl := gomock.NewController(t)
+		api := mockservicesapi.NewMockServicesAPI(ctrl)
+		api.EXPECT().GetConfig().Return(baseConfig)
+		api.EXPECT().EnsureBot(model.FocalboardBot).Return("bot-id", nil)
+		api.EXPECT().GetBot("bot-id", false).Return(&serverModel.Bot{UserId: "bot-id", DisplayName: "Legacy Boards"}, nil)
+
+		b := &BoardsApp{
+			server:          th.Server,
+			wsPluginAdapter: &FakePluginAdapter{},
+			servicesAPI:     api,
+			logger:          mlog.CreateConsoleTestLogger(&testing.T{}),
+		}
+
+		assert.NoError(t, b.OnConfigurationChange())
+	})
+
+	t.Run("Bot patch failure does not fail the configuration change", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+
+		ctrl := gomock.NewController(t)
+		api := mockservicesapi.NewMockServicesAPI(ctrl)
+		api.EXPECT().GetConfig().Return(baseConfig)
+		api.EXPECT().EnsureBot(model.FocalboardBot).Return("bot-id", nil)
+		api.EXPECT().GetBot("bot-id", false).Return(&serverModel.Bot{UserId: "bot-id", DisplayName: "Boards"}, nil)
+		api.EXPECT().PatchBot("bot-id", gomock.Any()).Return(nil, errors.New("patch failed"))
+
+		b := &BoardsApp{
+			server:          th.Server,
+			wsPluginAdapter: &FakePluginAdapter{},
+			servicesAPI:     api,
+			logger:          mlog.CreateConsoleTestLogger(&testing.T{}),
+		}
+
+		assert.NoError(t, b.OnConfigurationChange())
+		assert.True(t, b.server.Config().LegacyMode)
+	})
+}
+
+func TestSyncBotDisplayName(t *testing.T) {
+	newApp := func(t *testing.T) (*BoardsApp, *mockservicesapi.MockServicesAPI) {
+		api := mockservicesapi.NewMockServicesAPI(gomock.NewController(t))
+		return &BoardsApp{servicesAPI: api}, api
+	}
+
+	t.Run("patches to Boards when legacy mode is off", func(t *testing.T) {
+		b, api := newApp(t)
+		api.EXPECT().EnsureBot(model.FocalboardBot).Return("bot-id", nil)
+		api.EXPECT().GetBot("bot-id", false).Return(&serverModel.Bot{DisplayName: "Legacy Boards"}, nil)
+		api.EXPECT().PatchBot("bot-id", gomock.Any()).DoAndReturn(
+			func(_ string, patch *serverModel.BotPatch) (*serverModel.Bot, error) {
+				require.NotNil(t, patch.DisplayName)
+				assert.Equal(t, "Boards", *patch.DisplayName)
+				return &serverModel.Bot{}, nil
+			})
+
+		assert.NoError(t, b.syncBotDisplayName(false))
+	})
+
+	t.Run("skips patch when name matches", func(t *testing.T) {
+		b, api := newApp(t)
+		api.EXPECT().EnsureBot(model.FocalboardBot).Return("bot-id", nil)
+		api.EXPECT().GetBot("bot-id", false).Return(&serverModel.Bot{DisplayName: "Boards"}, nil)
+
+		assert.NoError(t, b.syncBotDisplayName(false))
+	})
+
+	t.Run("returns errors from the services API", func(t *testing.T) {
+		b, api := newApp(t)
+		api.EXPECT().EnsureBot(model.FocalboardBot).Return("", errors.New("ensure failed"))
+		assert.Error(t, b.syncBotDisplayName(true))
+
+		b, api = newApp(t)
+		api.EXPECT().EnsureBot(model.FocalboardBot).Return("bot-id", nil)
+		api.EXPECT().GetBot("bot-id", false).Return(nil, errors.New("get failed"))
+		assert.Error(t, b.syncBotDisplayName(true))
 	})
 }
 

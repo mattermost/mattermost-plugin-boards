@@ -15,9 +15,10 @@ import (
 )
 
 const (
-	botUsername    = "boards"
-	botDisplayname = "Boards"
-	botDescription = "Created by Boards plugin."
+	botUsername          = "boards"
+	botDisplayname       = "Boards"
+	botDisplaynameLegacy = "Legacy Boards"
+	botDescription       = "Created by Boards plugin."
 )
 
 var FocalboardBot = &mm_model.Bot{
@@ -25,6 +26,14 @@ var FocalboardBot = &mm_model.Bot{
 	DisplayName: botDisplayname,
 	Description: botDescription,
 	OwnerId:     SystemUserID,
+}
+
+// BotDisplayName returns the display name of the Boards bot for the given mode.
+func BotDisplayName(legacyMode bool) string {
+	if legacyMode {
+		return botDisplaynameLegacy
+	}
+	return botDisplayname
 }
 
 type ServicesAPI interface {
@@ -56,6 +65,8 @@ type ServicesAPI interface {
 
 	// Bot service
 	EnsureBot(bot *mm_model.Bot) (string, error)
+	GetBot(botUserID string, includeDeleted bool) (*mm_model.Bot, error)
+	PatchBot(botUserID string, patch *mm_model.BotPatch) (*mm_model.Bot, error)
 
 	// License service
 	GetLicense() *mm_model.License
