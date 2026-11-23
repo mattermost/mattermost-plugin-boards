@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/auth"
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/config"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/metrics"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/notify"
@@ -43,6 +44,11 @@ type BlockChangeNotifier interface {
 	Shutdown(ctx context.Context) bool
 }
 
+// MigrationLookup tells whether a board was moved to Boards v2.
+type MigrationLookup interface {
+	Get(boardID, userID string) model.BoardMigration
+}
+
 type ReadCloseSeeker = filestore.ReadCloseSeeker
 
 type fileBackend interface {
@@ -65,6 +71,8 @@ type Services struct {
 	Permissions      permissions.PermissionsService
 	SkipTemplateInit bool
 	ServicesAPI      servicesAPI
+	// MigrationLookup is optional. When nil, boards are never reported as moved.
+	MigrationLookup MigrationLookup
 	// BlockChangeNotifier is optional. When nil, New falls back to the
 	// production asynchronous utils.CallbackQueue.
 	BlockChangeNotifier BlockChangeNotifier
@@ -83,6 +91,7 @@ type App struct {
 	permissions         permissions.PermissionsService
 	blockChangeNotifier BlockChangeNotifier
 	servicesAPI         servicesAPI
+	migrationLookup     MigrationLookup
 
 	cardLimitMux sync.RWMutex
 	cardLimit    int
@@ -115,6 +124,7 @@ func New(config *config.Configuration, wsAdapter ws.Adapter, services Services) 
 		permissions:         services.Permissions,
 		blockChangeNotifier: blockChangeNotifier,
 		servicesAPI:         services.ServicesAPI,
+		migrationLookup:     services.MigrationLookup,
 	}
 	app.initialize(services.SkipTemplateInit)
 	return app

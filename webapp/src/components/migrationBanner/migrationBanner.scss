@@ -1,0 +1,36 @@
+.MigrationBanner {
+    align-items: center;
+    background: rgba(var(--center-channel-color-rgb), 0.04);
+    border-bottom: 1px solid rgba(var(--center-channel-color-rgb), 0.08);
+    color: rgb(var(--center-channel-color-rgb));
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs, 8px) var(--spacing-l, 16px);
+    padding: var(--spacing-xs, 8px) var(--spacing-l, 16px);
+
+    &__text {
+        flex: 1 1 320px;
+        font-size: 14px;
+        line-height: 20px;
+        margin: 0;
+    }
+
+    &__actions {
+        align-items: center;
+        display: flex;
+        flex: 0 0 auto;
+        gap: var(--spacing-xs, 8px);
+    }
+
+    a.Button {
+        color: rgb(var(--button-color-rgb));
+        text-decoration: none;
+    }
+
+    a.Button:focus-visible,
+    .Button:focus-visible {
+        outline: 2px solid rgb(var(--button-bg-rgb));
+        outline-offset: 2px;
+    }
+}

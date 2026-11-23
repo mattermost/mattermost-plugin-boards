@@ -33,6 +33,12 @@
             "display_name": "Legacy Mode:",
             "default": false,
             "help_text": "When true, labels this plugin as Legacy Boards so it can run alongside Boards v2. Users must refresh their browser for the product switcher and channel header labels to update."
+        }, {
+            "key": "MovedBoardsReadOnly",
+            "type": "bool",
+            "display_name": "Make migrated boards read-only:",
+            "default": true,
+            "help_text": "Only applies in Legacy Mode. When true, boards that were migrated to the new version of Boards can be viewed but not changed here, so work doesn't continue in two places."
         }]
     }
 }

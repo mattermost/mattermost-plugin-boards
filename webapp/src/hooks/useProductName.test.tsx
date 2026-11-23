@@ -26,6 +26,7 @@ const makeStore = (legacyMode?: boolean) => {
                     featureFlags: {},
                     maxFileSize: 0,
                     legacyMode: legacyMode as boolean,
+                    movedBoardsReadOnly: false,
                 },
             },
         },

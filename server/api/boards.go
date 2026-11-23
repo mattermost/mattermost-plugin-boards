@@ -24,6 +24,7 @@ func (a *API) registerBoardsRoutes(r *mux.Router) {
 	r.HandleFunc("/boards/{boardID}/duplicate", a.sessionRequired(a.handleDuplicateBoard)).Methods("POST")
 	r.HandleFunc("/boards/{boardID}/undelete", a.sessionRequired(a.handleUndeleteBoard)).Methods("POST")
 	r.HandleFunc("/boards/{boardID}/metadata", a.sessionRequired(a.handleGetBoardMetadata)).Methods("GET")
+	r.HandleFunc("/boards/{boardID}/migration", a.sessionRequired(a.handleGetBoardMigration)).Methods("GET")
 }
 
 // authorizeBoardCreate enforces the per-type board creation policy: creating a
@@ -700,6 +701,78 @@ func (a *API) handleGetBoardMetadata(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// response
+	jsonBytesResponse(w, http.StatusOK, data)
+
+	auditRec.Success()
+}
+
+func (a *API) handleGetBoardMigration(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation GET /boards/{boardID}/migration getBoardMigration
+	//
+	// Returns whether a board was moved to Boards v2
+	//
+	// ---
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: boardID
+	//   in: path
+	//   description: Board ID
+	//   required: true
+	//   type: string
+	// security:
+	// - BearerAuth: []
+	// responses:
+	//   '200':
+	//     description: success
+	//     schema:
+	//       "$ref": "#/definitions/BoardMigration"
+	//   '403':
+	//     description: access denied
+	//   '404':
+	//     description: board not found
+	//   default:
+	//     description: internal error
+	//     schema:
+	//       "$ref": "#/definitions/ErrorResponse"
+
+	boardID := mux.Vars(r)["boardID"]
+	userID := getUserID(r)
+
+	board, err := a.app.GetBoard(boardID)
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
+	canView := false
+	if board.Type == model.BoardTypePrivate {
+		canView = a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard)
+	} else {
+		var isGuest bool
+		isGuest, err = a.userIsGuest(userID)
+		if err != nil {
+			a.errorResponse(w, r, err)
+			return
+		}
+		canView = a.permissions.HasPermissionToTeam(userID, board.TeamID, model.PermissionViewTeam) &&
+			(!isGuest || a.permissions.HasPermissionToBoard(userID, boardID, model.PermissionViewBoard))
+	}
+	if !canView {
+		a.errorResponse(w, r, model.NewErrPermission("access denied to board"))
+		return
+	}
+
+	auditRec := a.makeAuditRecord(r, "getBoardMigration", audit.Fail)
+	defer a.audit.LogRecord(audit.LevelRead, auditRec)
+	auditRec.AddMeta("boardID", boardID)
+
+	data, err := json.Marshal(a.app.GetBoardMigration(boardID, userID))
+	if err != nil {
+		a.errorResponse(w, r, err)
+		return
+	}
+
 	jsonBytesResponse(w, http.StatusOK, data)
 
 	auditRec.Success()

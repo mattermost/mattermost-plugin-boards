@@ -19,7 +19,7 @@ export const fetchClientConfig = createAsyncThunk(
 
 const clientConfigSlice = createSlice({
     name: 'config',
-    initialState: {value: {telemetry: false, telemetryid: '', enablePublicSharedBoards: false, teammateNameDisplay: ShowUsername, featureFlags: {}, maxFileSize: 0, legacyMode: false}} as {value: ClientConfig},
+    initialState: {value: {telemetry: false, telemetryid: '', enablePublicSharedBoards: false, teammateNameDisplay: ShowUsername, featureFlags: {}, maxFileSize: 0, legacyMode: false, movedBoardsReadOnly: true}} as {value: ClientConfig},
     reducers: {
         setClientConfig: (state, action: PayloadAction<ClientConfig>) => {
             state.value = action.payload
@@ -27,7 +27,7 @@ const clientConfigSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder.addCase(fetchClientConfig.fulfilled, (state, action) => {
-            state.value = action.payload || {telemetry: false, telemetryid: '', enablePublicSharedBoards: false, teammateNameDisplay: ShowUsername, featureFlags: {}, maxFileSize: 0, legacyMode: false}
+            state.value = action.payload || {telemetry: false, telemetryid: '', enablePublicSharedBoards: false, teammateNameDisplay: ShowUsername, featureFlags: {}, maxFileSize: 0, legacyMode: false, movedBoardsReadOnly: true}
         })
     },
 })
@@ -41,4 +41,9 @@ export function getClientConfig(state: RootState): ClientConfig {
 
 export function getLegacyMode(state: RootState): boolean {
     return Boolean(state.clientConfig?.value?.legacyMode)
+}
+
+// Moved boards are only read-only in Legacy Mode, and only when the setting is on.
+export function getMovedBoardsReadOnly(state: RootState): boolean {
+    return getLegacyMode(state) && Boolean(state.clientConfig?.value?.movedBoardsReadOnly)
 }

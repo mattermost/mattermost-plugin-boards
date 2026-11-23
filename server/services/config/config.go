@@ -56,6 +56,7 @@ type Configuration struct {
 	LocalModeSocketLocation  string            `json:"localModeSocketLocation" mapstructure:"localModeSocketLocation"`
 	EnablePublicSharedBoards bool              `json:"enablePublicSharedBoards" mapstructure:"enablePublicSharedBoards"`
 	LegacyMode               bool              `json:"legacyMode" mapstructure:"legacyMode"`
+	MovedBoardsReadOnly      bool              `json:"movedBoardsReadOnly" mapstructure:"movedBoardsReadOnly"`
 	FeatureFlags             map[string]string `json:"featureFlags" mapstructure:"featureFlags"`
 	EnableDataRetention      bool              `json:"enable_data_retention" mapstructure:"enable_data_retention"`
 	DataRetentionDays        int               `json:"data_retention_days" mapstructure:"data_retention_days"`
@@ -73,6 +74,12 @@ type Configuration struct {
 
 	NotifyFreqCardSeconds  int `json:"notify_freq_card_seconds" mapstructure:"notify_freq_card_seconds"`
 	NotifyFreqBoardSeconds int `json:"notify_freq_board_seconds" mapstructure:"notify_freq_board_seconds"`
+}
+
+// MovedBoardsReadOnlyActive reports whether boards moved to the new version of
+// Boards are read-only. It only applies in Legacy Mode.
+func (c *Configuration) MovedBoardsReadOnlyActive() bool {
+	return c.LegacyMode && c.MovedBoardsReadOnly
 }
 
 // ReadConfigFile read the configuration from the filesystem.
@@ -105,6 +112,7 @@ func ReadConfigFile(configFilePath string) (*Configuration, error) {
 	viper.SetDefault("LocalModeSocketLocation", "/var/tmp/focalboard_local.socket")
 	viper.SetDefault("EnablePublicSharedBoards", false)
 	viper.SetDefault("LegacyMode", false)
+	viper.SetDefault("MovedBoardsReadOnly", true)
 	viper.SetDefault("AuthMode", "native")
 	viper.SetDefault("NotifyFreqCardSeconds", 120)    // 2 minutes after last card edit
 	viper.SetDefault("NotifyFreqBoardSeconds", 86400) // 1 day after last card edit

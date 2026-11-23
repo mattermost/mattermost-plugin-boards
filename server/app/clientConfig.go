@@ -13,6 +13,7 @@ func (a *App) GetClientConfig() *model.ClientConfig {
 		TelemetryID:              a.config.TelemetryID,
 		EnablePublicSharedBoards: a.config.EnablePublicSharedBoards,
 		LegacyMode:               a.config.LegacyMode,
+		MovedBoardsReadOnly:      a.config.MovedBoardsReadOnly,
 		TeammateNameDisplay:      a.config.TeammateNameDisplay,
 		FeatureFlags:             a.config.FeatureFlags,
 		MaxFileSize:              a.config.MaxFileSize,

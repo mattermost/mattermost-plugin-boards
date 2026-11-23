@@ -6,6 +6,7 @@ package server
 import (
 	"fmt"
 
+	"github.com/mattermost/mattermost-plugin-boards/server/app"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/config"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/notify"
@@ -26,6 +27,7 @@ type Params struct {
 	NotifyBackends     []notify.Backend
 	PermissionsService permissions.PermissionsService
 	ServicesAPI        model.ServicesAPI
+	MigrationLookup    app.MigrationLookup
 	IsPlugin           bool
 }
 
