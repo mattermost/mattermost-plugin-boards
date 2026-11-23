@@ -410,6 +410,10 @@ func (t *testServicesAPI) PatchBot(botUserID string, patch *mmModel.BotPatch) (*
 	return nil, ErrNotImplemented
 }
 
+func (t *testServicesAPI) PluginHTTP(request *http.Request) *http.Response {
+	return nil
+}
+
 func (t *testServicesAPI) GetTeamMember(teamID string, userID string) (*mmModel.TeamMember, error) {
 	// Return NotFound error if user doesn't exist (matches Mattermost behavior)
 	if _, exists := t.users[userID]; !exists {

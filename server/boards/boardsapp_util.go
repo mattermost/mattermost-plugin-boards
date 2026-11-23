@@ -68,6 +68,11 @@ func createBoardsConfig(mmconfig mm_model.Config, baseURL string, serverID strin
 		legacyMode = true
 	}
 
+	movedBoardsReadOnly := false
+	if mmconfig.PluginSettings.Plugins[PluginName][MovedBoardsReadOnlyName] == true {
+		movedBoardsReadOnly = true
+	}
+
 	enableBoardsDeletion := false
 	if mmconfig.DataRetentionSettings.EnableBoardsDeletion != nil {
 		enableBoardsDeletion = true
@@ -117,6 +122,7 @@ func createBoardsConfig(mmconfig mm_model.Config, baseURL string, serverID strin
 		AuthMode:                 "mattermost",
 		EnablePublicSharedBoards: enablePublicSharedBoards,
 		LegacyMode:               legacyMode,
+		MovedBoardsReadOnly:      movedBoardsReadOnly,
 		FeatureFlags:             featureFlags,
 		NotifyFreqCardSeconds:    getPluginSettingInt(mmconfig, notifyFreqCardSecondsKey, 120),
 		NotifyFreqBoardSeconds:   getPluginSettingInt(mmconfig, notifyFreqBoardSecondsKey, 86400),

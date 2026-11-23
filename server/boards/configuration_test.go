@@ -73,6 +73,7 @@ func TestOnConfigurationChange(t *testing.T) {
 	basePlugins[PluginName] = make(map[string]interface{})
 	basePlugins[PluginName][SharedBoardsName] = true
 	basePlugins[PluginName][LegacyModeName] = true
+	basePlugins[PluginName][MovedBoardsReadOnlyName] = true
 
 	basePluginSettings := &serverModel.PluginSettings{
 		Directory: &stringRef,
@@ -133,6 +134,9 @@ func TestOnConfigurationChange(t *testing.T) {
 		assert.True(t, b.getConfiguration().LegacyMode)
 		assert.True(t, b.server.Config().LegacyMode)
 		assert.True(t, b.server.App().GetClientConfig().LegacyMode)
+		assert.True(t, b.getConfiguration().MovedBoardsReadOnly)
+		assert.True(t, b.server.Config().MovedBoardsReadOnly)
+		assert.True(t, b.server.App().GetClientConfig().MovedBoardsReadOnly)
 	})
 
 	t.Run("Bot display name already up to date is not patched", func(t *testing.T) {

@@ -7,6 +7,7 @@ package model
 
 import (
 	"database/sql"
+	"net/http"
 	"sync/atomic"
 
 	"github.com/gorilla/mux"
@@ -107,6 +108,9 @@ type ServicesAPI interface {
 
 	// Router service
 	RegisterRouter(sub *mux.Router)
+
+	// Plugin HTTP service. Routes a request to another plugin by the first path segment.
+	PluginHTTP(request *http.Request) *http.Response
 
 	// Preferences services
 	GetPreferencesForUser(userID string) (mm_model.Preferences, error)

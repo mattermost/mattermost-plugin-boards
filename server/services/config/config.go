@@ -56,6 +56,7 @@ type Configuration struct {
 	LocalModeSocketLocation  string            `json:"localModeSocketLocation" mapstructure:"localModeSocketLocation"`
 	EnablePublicSharedBoards bool              `json:"enablePublicSharedBoards" mapstructure:"enablePublicSharedBoards"`
 	LegacyMode               bool              `json:"legacyMode" mapstructure:"legacyMode"`
+	MovedBoardsReadOnly      bool              `json:"movedBoardsReadOnly" mapstructure:"movedBoardsReadOnly"`
 	FeatureFlags             map[string]string `json:"featureFlags" mapstructure:"featureFlags"`
 	EnableDataRetention      bool              `json:"enable_data_retention" mapstructure:"enable_data_retention"`
 	DataRetentionDays        int               `json:"data_retention_days" mapstructure:"data_retention_days"`
@@ -105,6 +106,7 @@ func ReadConfigFile(configFilePath string) (*Configuration, error) {
 	viper.SetDefault("LocalModeSocketLocation", "/var/tmp/focalboard_local.socket")
 	viper.SetDefault("EnablePublicSharedBoards", false)
 	viper.SetDefault("LegacyMode", false)
+	viper.SetDefault("MovedBoardsReadOnly", false)
 	viper.SetDefault("AuthMode", "native")
 	viper.SetDefault("NotifyFreqCardSeconds", 120)    // 2 minutes after last card edit
 	viper.SetDefault("NotifyFreqBoardSeconds", 86400) // 1 day after last card edit

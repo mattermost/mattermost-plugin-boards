@@ -17,18 +17,50 @@ type APIInterface interface {
 	HasPermissionToChannel(userID string, channelID string, permission *mmModel.Permission) bool
 }
 
+// MovedBoardChecker reports whether a board was moved to Boards v2.
+type MovedBoardChecker interface {
+	IsMoved(boardID string) bool
+}
+
 type Service struct {
 	store  permissions.Store
 	api    APIInterface
 	logger mlog.LoggerIFace
+
+	movedBoards         MovedBoardChecker
+	movedBoardsReadOnly func() bool
 }
 
-func New(store permissions.Store, api APIInterface, logger mlog.LoggerIFace) *Service {
-	return &Service{
+// Option configures optional behavior of the Service.
+type Option func(*Service)
+
+// WithMovedBoardsReadOnly denies every board permission except viewing for
+// boards that moved to Boards v2, while enabled returns true. The moved check
+// only runs when enabled returns true.
+func WithMovedBoardsReadOnly(enabled func() bool, moved MovedBoardChecker) Option {
+	return func(s *Service) {
+		s.movedBoardsReadOnly = enabled
+		s.movedBoards = moved
+	}
+}
+
+func New(store permissions.Store, api APIInterface, logger mlog.LoggerIFace, opts ...Option) *Service {
+	s := &Service{
 		store:  store,
 		api:    api,
 		logger: logger,
 	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
+}
+
+func (s *Service) isReadOnlyMovedBoard(boardID string) bool {
+	if s.movedBoardsReadOnly == nil || s.movedBoards == nil || !s.movedBoardsReadOnly() {
+		return false
+	}
+	return s.movedBoards.IsMoved(boardID)
 }
 
 func (s *Service) HasPermissionTo(userID string, permission *mmModel.Permission) bool {
@@ -135,6 +167,11 @@ func (s *Service) HasPermissionToBoard(userID, boardID string, permission *mmMod
 		member.SchemeViewer = true
 	}
 
+	// Applies to every role, including System and Team Admins.
+	if permission != model.PermissionViewBoard && s.isReadOnlyMovedBoard(boardID) {
+		return false
+	}
+
 	// Guests must never hold admin rights on a board, regardless of any
 	// stale SchemeAdmin flag persisted from before they were demoted.
 	if member.SchemeAdmin && s.isGuest(userID) {
@@ -148,6 +185,10 @@ func (s *Service) HasPermissionToBoard(userID, boardID string, permission *mmMod
 		return true
 	}
 
+	return memberHasPermission(member, permission)
+}
+
+func memberHasPermission(member *model.BoardMember, permission *mmModel.Permission) bool {
 	switch permission {
 	case model.PermissionManageBoardType, model.PermissionDeleteBoard, model.PermissionManageBoardRoles, model.PermissionShareBoard, model.PermissionDeleteOthersComments:
 		return member.SchemeAdmin

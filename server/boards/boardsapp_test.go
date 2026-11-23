@@ -108,6 +108,18 @@ func TestSetConfiguration(t *testing.T) {
 		config = createBoardsConfig(*mmConfig, "", "")
 		assert.Equal(t, true, config.LegacyMode)
 	})
+
+	t.Run("test moved boards read-only", func(t *testing.T) {
+		mmConfig := baseConfig
+		mmConfig.PluginSettings.Plugins = make(map[string]map[string]interface{})
+		mmConfig.PluginSettings.Plugins[PluginName] = make(map[string]interface{})
+		config := createBoardsConfig(*mmConfig, "", "")
+		assert.Equal(t, false, config.MovedBoardsReadOnly)
+
+		mmConfig.PluginSettings.Plugins[PluginName][MovedBoardsReadOnlyName] = true
+		config = createBoardsConfig(*mmConfig, "", "")
+		assert.Equal(t, true, config.MovedBoardsReadOnly)
+	})
 }
 
 func TestServeHTTP(t *testing.T) {

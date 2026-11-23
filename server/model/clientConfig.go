@@ -22,6 +22,10 @@ type ClientConfig struct {
 	// required: true
 	LegacyMode bool `json:"legacyMode"`
 
+	// Are boards that moved to Boards v2 read-only
+	// required: true
+	MovedBoardsReadOnly bool `json:"movedBoardsReadOnly"`
+
 	// Is public shared boards enabled
 	// required: true
 	TeammateNameDisplay string `json:"teammateNameDisplay"`

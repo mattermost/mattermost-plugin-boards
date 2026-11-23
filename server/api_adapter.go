@@ -5,6 +5,7 @@ package main
 
 import (
 	"database/sql"
+	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
@@ -165,6 +166,14 @@ func (a *pluginAPIAdapter) PatchBot(botUserID string, patch *mm_model.BotPatch) 
 		return nil, appErr
 	}
 	return bot, nil
+}
+
+//
+// Plugin HTTP service.
+//
+
+func (a *pluginAPIAdapter) PluginHTTP(request *http.Request) *http.Response {
+	return a.api.PluginHTTP(request)
 }
 
 //

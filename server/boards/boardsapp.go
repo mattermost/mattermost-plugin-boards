@@ -11,6 +11,7 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/auth"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 	"github.com/mattermost/mattermost-plugin-boards/server/server"
+	"github.com/mattermost/mattermost-plugin-boards/server/services/migration"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/notify"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/permissions/mmpermissions"
 	"github.com/mattermost/mattermost-plugin-boards/server/services/store"
@@ -24,10 +25,11 @@ import (
 )
 
 const (
-	boardsFeatureFlagName = "BoardsFeatureFlags"
-	PluginName            = "focalboard"
-	SharedBoardsName      = "enablepublicsharedboards"
-	LegacyModeName        = "legacymode"
+	boardsFeatureFlagName   = "BoardsFeatureFlags"
+	PluginName              = "focalboard"
+	SharedBoardsName        = "enablepublicsharedboards"
+	LegacyModeName          = "legacymode"
+	MovedBoardsReadOnlyName = "movedboardsreadonly"
 
 	notifyFreqCardSecondsKey  = "notify_freq_card_seconds"
 	notifyFreqBoardSecondsKey = "notify_freq_board_seconds"
@@ -94,7 +96,9 @@ func NewBoardsApp(api model.ServicesAPI, manifest *mm_model.Manifest) (*BoardsAp
 		return nil, fmt.Errorf("error initializing the DB: %w", err)
 	}
 
-	permissionsService := mmpermissions.New(db, api, logger)
+	migrationLookup := migration.NewLookup(api, logger)
+	permissionsService := mmpermissions.New(db, api, logger,
+		mmpermissions.WithMovedBoardsReadOnly(func() bool { return cfg.MovedBoardsReadOnly }, migrationLookup))
 
 	wsPluginAdapter := ws.NewPluginAdapter(api, auth.New(cfg, db, permissionsService), db, logger)
 
@@ -131,6 +135,7 @@ func NewBoardsApp(api model.ServicesAPI, manifest *mm_model.Manifest) (*BoardsAp
 		WSAdapter:          wsPluginAdapter,
 		NotifyBackends:     notifyBackends,
 		PermissionsService: permissionsService,
+		MigrationLookup:    migrationLookup,
 		IsPlugin:           true,
 	}
 

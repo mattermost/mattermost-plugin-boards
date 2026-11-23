@@ -27,6 +27,7 @@ import (
 type configuration struct {
 	EnablePublicSharedBoards bool
 	LegacyMode               bool
+	MovedBoardsReadOnly      bool
 }
 
 // Clone shallow copies the configuration. Your implementation may require a deep copy if
@@ -120,13 +121,20 @@ func (b *BoardsApp) OnConfigurationChange() error {
 		legacyMode = true
 	}
 
+	movedBoardsReadOnly := false
+	if mmconfig.PluginSettings.Plugins[PluginName][MovedBoardsReadOnlyName] == true {
+		movedBoardsReadOnly = true
+	}
+
 	configuration := &configuration{
 		EnablePublicSharedBoards: enableShareBoards,
 		LegacyMode:               legacyMode,
+		MovedBoardsReadOnly:      movedBoardsReadOnly,
 	}
 	b.setConfiguration(configuration)
 	b.server.Config().EnablePublicSharedBoards = enableShareBoards
 	b.server.Config().LegacyMode = legacyMode
+	b.server.Config().MovedBoardsReadOnly = movedBoardsReadOnly
 
 	// handle Data Retention settings
 	enableBoardsDeletion := false
