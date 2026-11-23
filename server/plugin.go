@@ -105,7 +105,7 @@ func (p *Plugin) GenerateSupportData(ctx *plugin.Context) ([]*mm_model.FileData,
 
 // ServeHTTP demonstrates a plugin that handles HTTP requests by greeting the world.
 func (p *Plugin) ServeHTTP(ctx *plugin.Context, w http.ResponseWriter, r *http.Request) {
-	p.boardsApp.ServeHTTP(ctx, w, r)
+	p.boardsApp.ServeHTTP(ctx, newHeaderSafeResponseWriter(w), r)
 }
 
 func defaultLoggingConfig() string {
