@@ -128,19 +128,9 @@ func (b *BoardsApp) OnConfigurationChange() error {
 	b.server.Config().EnablePublicSharedBoards = enableShareBoards
 	b.server.Config().LegacyMode = legacyMode
 
-	// handle Data Retention settings
-	enableBoardsDeletion := false
-	if mmconfig.DataRetentionSettings.EnableBoardsDeletion != nil {
-		enableBoardsDeletion = true
-	}
-	b.server.Config().EnableDataRetention = enableBoardsDeletion
-
-	// Removed from the server config in v12, so the pointer is nil there.
-	boardsRetentionDays := mm_model.DataRetentionSettingsDefaultBoardsRetentionDays
-	if mmconfig.DataRetentionSettings.BoardsRetentionDays != nil {
-		boardsRetentionDays = *mmconfig.DataRetentionSettings.BoardsRetentionDays
-	}
-	b.server.Config().DataRetentionDays = boardsRetentionDays
+	// handle Data Retention settings (see defaultBoardsRetentionDays)
+	b.server.Config().EnableDataRetention = false
+	b.server.Config().DataRetentionDays = defaultBoardsRetentionDays
 
 	b.server.Config().TeammateNameDisplay = *mmconfig.TeamSettings.TeammateNameDisplay
 	showEmailAddress := false

@@ -15,6 +15,11 @@ import (
 
 const defaultS3Timeout = 60 * 1000 // 60 seconds
 
+// Mattermost v12 removed DataRetentionSettings.EnableBoardsDeletion and
+// DataRetentionSettings.BoardsRetentionDays (MM-70018), so on every supported
+// server Boards deletion is off and the retention period is the old default.
+const defaultBoardsRetentionDays = 365
+
 func createBoardsConfig(mmconfig mm_model.Config, baseURL string, serverID string) *config.Configuration {
 	filesS3Config := config.AmazonS3Config{}
 	if mmconfig.FileSettings.AmazonS3AccessKeyId != nil {
@@ -68,17 +73,6 @@ func createBoardsConfig(mmconfig mm_model.Config, baseURL string, serverID strin
 		legacyMode = true
 	}
 
-	enableBoardsDeletion := false
-	if mmconfig.DataRetentionSettings.EnableBoardsDeletion != nil {
-		enableBoardsDeletion = true
-	}
-
-	// Removed from the server config in v12, so the pointer is nil there.
-	boardsRetentionDays := mm_model.DataRetentionSettingsDefaultBoardsRetentionDays
-	if mmconfig.DataRetentionSettings.BoardsRetentionDays != nil {
-		boardsRetentionDays = *mmconfig.DataRetentionSettings.BoardsRetentionDays
-	}
-
 	featureFlags := parseFeatureFlags(mmconfig.FeatureFlags.ToMap())
 
 	showEmailAddress := false
@@ -120,8 +114,8 @@ func createBoardsConfig(mmconfig mm_model.Config, baseURL string, serverID strin
 		FeatureFlags:             featureFlags,
 		NotifyFreqCardSeconds:    getPluginSettingInt(mmconfig, notifyFreqCardSecondsKey, 120),
 		NotifyFreqBoardSeconds:   getPluginSettingInt(mmconfig, notifyFreqBoardSecondsKey, 86400),
-		EnableDataRetention:      enableBoardsDeletion,
-		DataRetentionDays:        boardsRetentionDays,
+		EnableDataRetention:      false,
+		DataRetentionDays:        defaultBoardsRetentionDays,
 		TeammateNameDisplay:      *mmconfig.TeamSettings.TeammateNameDisplay,
 		ShowEmailAddress:         showEmailAddress,
 		ShowFullName:             showFullName,

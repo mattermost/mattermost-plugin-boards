@@ -78,10 +78,7 @@ func TestOnConfigurationChange(t *testing.T) {
 		Directory: &stringRef,
 		Plugins:   basePlugins,
 	}
-	intRef := 365
-	baseDataRetentionSettings := &serverModel.DataRetentionSettings{
-		BoardsRetentionDays: &intRef,
-	}
+	baseDataRetentionSettings := &serverModel.DataRetentionSettings{}
 	usernameRef := "username"
 	baseTeamSettings := &serverModel.TeamSettings{
 		TeammateNameDisplay: &usernameRef,
