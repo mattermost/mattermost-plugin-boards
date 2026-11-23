@@ -19,11 +19,13 @@ func TestGetClientConfig(t *testing.T) {
 		newConfiguration.Telemetry = true
 		newConfiguration.TelemetryID = "abcde"
 		newConfiguration.EnablePublicSharedBoards = true
+		newConfiguration.LegacyMode = true
 		newConfiguration.TeammateNameDisplay = "username"
 		th.App.SetConfig(&newConfiguration)
 
 		clientConfig := th.App.GetClientConfig()
 		require.True(t, clientConfig.EnablePublicSharedBoards)
+		require.True(t, clientConfig.LegacyMode)
 		require.True(t, clientConfig.Telemetry)
 		require.Equal(t, "abcde", clientConfig.TelemetryID)
 		require.Equal(t, "username", clientConfig.TeammateNameDisplay)

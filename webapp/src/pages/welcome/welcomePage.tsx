@@ -23,6 +23,7 @@ import octoClient from '../../octoClient'
 import {FINISHED, TOUR_ORDER} from '../../components/onboardingTour'
 import TelemetryClient, {TelemetryActions, TelemetryCategory} from '../../telemetry/telemetryClient'
 import {UserSettingKey} from '../../userSettings'
+import {useLegacyMode, useProductName} from '../../hooks/useProductName'
 
 const WelcomePage = () => {
     const history = useHistory()
@@ -31,6 +32,8 @@ const WelcomePage = () => {
     const myConfig = useAppSelector(getMyConfig)
     const currentTeam = useAppSelector<Team|null>(getCurrentTeam)
     const dispatch = useAppDispatch()
+    const legacyMode = useLegacyMode()
+    const productName = useProductName()
 
     const setWelcomePageViewed = async (userID: string): Promise<any> => {
         const patch: UserConfigPatch = {}
@@ -116,16 +119,30 @@ const WelcomePage = () => {
         <div className='WelcomePage'>
             <div className='wrapper'>
                 <h1 className='text-heading9'>
-                    <FormattedMessage
-                        id='WelcomePage.Heading'
-                        defaultMessage='Welcome To Boards'
-                    />
+                    {legacyMode ? (
+                        <FormattedMessage
+                            id='WelcomePage.Heading.legacy'
+                            defaultMessage='Welcome To Legacy Boards'
+                        />
+                    ) : (
+                        <FormattedMessage
+                            id='WelcomePage.Heading'
+                            defaultMessage='Welcome To Boards'
+                        />
+                    )}
                 </h1>
                 <div className='WelcomePage__subtitle'>
-                    <FormattedMessage
-                        id='WelcomePage.Description'
-                        defaultMessage='Boards is a project management tool that helps define, organize, track, and manage work across teams using a familiar Kanban board view.'
-                    />
+                    {legacyMode ? (
+                        <FormattedMessage
+                            id='WelcomePage.Description.legacy'
+                            defaultMessage='Legacy Boards is a project management tool that helps define, organize, track, and manage work across teams using a familiar Kanban board view.'
+                        />
+                    ) : (
+                        <FormattedMessage
+                            id='WelcomePage.Description'
+                            defaultMessage='Boards is a project management tool that helps define, organize, track, and manage work across teams using a familiar Kanban board view.'
+                        />
+                    )}
                 </div>
 
                 <div className='WelcomePage__content'>
@@ -133,14 +150,14 @@ const WelcomePage = () => {
                     <img
                         src={Utils.buildURL(BoardWelcomePNG, true)}
                         className='WelcomePage__image WelcomePage__image--large'
-                        alt='Boards Welcome Image'
+                        alt={`${productName} Welcome Image`}
                     />
 
                     {/* This image will be rendered on small screens below 2000px */}
                     <img
                         src={Utils.buildURL(BoardWelcomeSmallPNG, true)}
                         className='WelcomePage__image WelcomePage__image--small'
-                        alt='Boards Welcome Image'
+                        alt={`${productName} Welcome Image`}
                     />
 
                     <div className='WelcomePage__buttons'>

@@ -40,6 +40,7 @@ import telemetryClient, {TelemetryActions, TelemetryCategory} from '../../teleme
 
 import {getCurrentTeam} from '../../store/teams'
 import {getMySortedBoards} from '../../store/boards'
+import {getProductName, useLegacyMode} from '../../hooks/useProductName'
 
 import ConfirmationDialogBox, {ConfirmationDialogBoxProps} from '../confirmationDialogBox'
 
@@ -68,6 +69,7 @@ export const ClassForManageCategoriesTourStep = 'manageCategoriesTourStep'
 const SidebarCategory = (props: Props) => {
     const [collapsed, setCollapsed] = useState(props.categoryBoards.collapsed)
     const intl = useIntl()
+    const legacyMode = useLegacyMode()
     const history = useHistory()
     const dispatch = useAppDispatch()
 
@@ -143,6 +145,9 @@ const SidebarCategory = (props: Props) => {
         return !categoryBoardMetadata.hidden
     }
 
+    const isDefaultCategory = props.categoryBoards.name === 'Boards' && (props.categoryBoards.type === 'system' || props.categoryBoards.id === '')
+    const categoryDisplayName = isDefaultCategory ? getProductName(intl, legacyMode) : props.categoryBoards.name
+
     const sidebarBoardMetadata = props.categoryBoards.boardMetadata || []
     const visibleBlocks = props.categoryBoards.boardMetadata.filter((boardMetadata) => isBoardVisible(boardMetadata.boardID, boardMetadata))
 
@@ -163,13 +168,22 @@ const SidebarCategory = (props: Props) => {
             id: 'SidebarCategories.CategoryMenu.DeleteModal.Title',
             defaultMessage: 'Delete this category?',
         }),
-        subText: intl.formatMessage(
+        subText: legacyMode ? intl.formatMessage(
+            {
+                id: 'SidebarCategories.CategoryMenu.DeleteModal.Body.legacy',
+                defaultMessage: 'Boards in <b>{categoryName}</b> will move back to the Legacy Boards categories. You\'re not removed from any boards.',
+            },
+            {
+                categoryName: categoryDisplayName,
+                b: (...chunks) => <b>{chunks}</b>,
+            },
+        ) : intl.formatMessage(
             {
                 id: 'SidebarCategories.CategoryMenu.DeleteModal.Body',
                 defaultMessage: 'Boards in <b>{categoryName}</b> will move back to the Boards categories. You\'re not removed from any boards.',
             },
             {
-                categoryName: props.categoryBoards.name,
+                categoryName: categoryDisplayName,
                 b: (...chunks) => <b>{chunks}</b>,
             },
         ),
@@ -345,12 +359,12 @@ const SidebarCategory = (props: Props) => {
                                         >
                                             <div
                                                 className='octo-sidebar-title category-title'
-                                                title={props.categoryBoards.name}
+                                                title={categoryDisplayName}
                                                 onClick={toggleCollapse}
                                                 {...provided.dragHandleProps}
                                             >
                                                 {collapsed || snapshot.isDragging || props.forceCollapse ? <ChevronRight/> : <ChevronDown/>}
-                                                {props.categoryBoards.name}
+                                                {categoryDisplayName}
                                                 <div className='sidebarCategoriesTour'>
                                                     {props.index === 0 && shouldViewSidebarTour && <SidebarCategoriesTourStep/>}
                                                 </div>

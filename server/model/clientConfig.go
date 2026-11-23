@@ -18,6 +18,10 @@ type ClientConfig struct {
 	// required: true
 	EnablePublicSharedBoards bool `json:"enablePublicSharedBoards"`
 
+	// Is legacy mode enabled
+	// required: true
+	LegacyMode bool `json:"legacyMode"`
+
 	// Is public shared boards enabled
 	// required: true
 	TeammateNameDisplay string `json:"teammateNameDisplay"`

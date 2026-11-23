@@ -402,6 +402,14 @@ func (t *testServicesAPI) EnsureBot(bot *mmModel.Bot) (string, error) {
 	return "", ErrNotImplemented
 }
 
+func (t *testServicesAPI) GetBot(botUserID string, includeDeleted bool) (*mmModel.Bot, error) {
+	return nil, ErrNotImplemented
+}
+
+func (t *testServicesAPI) PatchBot(botUserID string, patch *mmModel.BotPatch) (*mmModel.Bot, error) {
+	return nil, ErrNotImplemented
+}
+
 func (t *testServicesAPI) GetTeamMember(teamID string, userID string) (*mmModel.TeamMember, error) {
 	// Return NotFound error if user doesn't exist (matches Mattermost behavior)
 	if _, exists := t.users[userID]; !exists {

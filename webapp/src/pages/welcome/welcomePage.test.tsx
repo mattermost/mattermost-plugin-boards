@@ -98,6 +98,58 @@ describe('pages/welcome', () => {
         expect(container).toMatchSnapshot()
     })
 
+    test('Welcome Page uses the Legacy Boards name in legacy mode', () => {
+        const legacyStore = mockStore({
+            teams: {
+                current: {id: 'team_id_1'},
+            },
+            users: {
+                me: {
+                    props: {},
+                },
+                myConfig: {
+                    onboardingTourStep: {value: '0'},
+                    tourCategory: {value: 'onboarding'},
+                },
+            },
+            clientConfig: {
+                value: {legacyMode: true},
+            },
+        })
+        const {container} = render(
+            <ReduxProvider store={legacyStore}>
+                {
+                    wrapIntl(
+                        <Router history={history}>
+                            <WelcomePage/>
+                        </Router>,
+                    )
+                }
+            </ReduxProvider>,
+        )
+
+        expect(container.querySelector('h1')?.textContent).toBe('Welcome To Legacy Boards')
+        expect(container.querySelector('.WelcomePage__subtitle')?.textContent).toMatch(/^Legacy Boards is a project management tool/)
+        expect(container.querySelector('img')?.getAttribute('alt')).toBe('Legacy Boards Welcome Image')
+    })
+
+    test('Welcome Page keeps the Boards name when legacy mode is off', () => {
+        const {container} = render(
+            <ReduxProvider store={store}>
+                {
+                    wrapIntl(
+                        <Router history={history}>
+                            <WelcomePage/>
+                        </Router>,
+                    )
+                }
+            </ReduxProvider>,
+        )
+
+        expect(container.querySelector('h1')?.textContent).toBe('Welcome To Boards')
+        expect(container.querySelector('.WelcomePage__subtitle')?.textContent).toMatch(/^Boards is a project management tool/)
+    })
+
     test('Welcome Page shows Explore Page with subpath', () => {
         w.baseURL = '/subpath'
         const component = (

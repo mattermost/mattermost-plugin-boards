@@ -27,6 +27,7 @@ const (
 	boardsFeatureFlagName = "BoardsFeatureFlags"
 	PluginName            = "focalboard"
 	SharedBoardsName      = "enablepublicsharedboards"
+	LegacyModeName        = "legacymode"
 
 	notifyFreqCardSecondsKey  = "notify_freq_card_seconds"
 	notifyFreqBoardSecondsKey = "notify_freq_board_seconds"
@@ -68,6 +69,7 @@ func NewBoardsApp(api model.ServicesAPI, manifest *mm_model.Manifest) (*BoardsAp
 	}
 	serverID := api.GetDiagnosticID()
 	cfg := createBoardsConfig(*mmconfig, baseURL, serverID)
+	model.SetBotLegacyMode(cfg.LegacyMode)
 	sqlDB, err := api.GetMasterDB()
 	if err != nil {
 		return nil, fmt.Errorf("cannot access database while initializing Boards: %w", err)
@@ -169,6 +171,10 @@ func (b *BoardsApp) Start() error {
 	}
 
 	b.servicesAPI.RegisterRouter(b.server.GetRootRouter())
+
+	if err := b.syncBotDisplayName(b.server.Config().LegacyMode); err != nil {
+		b.logger.Warn("Unable to update the Boards bot display name", mlog.Err(err))
+	}
 
 	b.logger.Info("Boards product successfully started.")
 

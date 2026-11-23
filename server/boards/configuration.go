@@ -4,9 +4,13 @@
 package boards
 
 import (
+	"fmt"
 	"reflect"
 
+	"github.com/mattermost/mattermost-plugin-boards/server/model"
+
 	mm_model "github.com/mattermost/mattermost/server/public/model"
+	"github.com/mattermost/mattermost/server/public/shared/mlog"
 )
 
 // configuration captures the plugin's external configuration as exposed in the Mattermost server
@@ -22,6 +26,7 @@ import (
 // copy appropriate for your types.
 type configuration struct {
 	EnablePublicSharedBoards bool
+	LegacyMode               bool
 }
 
 // Clone shallow copies the configuration. Your implementation may require a deep copy if
@@ -72,6 +77,31 @@ func (b *BoardsApp) setConfiguration(configuration *configuration) {
 	b.configuration = configuration
 }
 
+// syncBotDisplayName makes the Boards bot display name follow LegacyMode. It uses the plugin API,
+// so it must not be called while holding the configurationLock.
+func (b *BoardsApp) syncBotDisplayName(legacyMode bool) error {
+	model.SetBotLegacyMode(legacyMode)
+	botID, err := b.servicesAPI.EnsureBot(model.FocalboardBot())
+	if err != nil {
+		return fmt.Errorf("failed to ensure bot: %w", err)
+	}
+
+	bot, err := b.servicesAPI.GetBot(botID, false)
+	if err != nil {
+		return fmt.Errorf("failed to get bot: %w", err)
+	}
+
+	displayName := model.BotDisplayName(legacyMode)
+	if bot.DisplayName == displayName {
+		return nil
+	}
+
+	if _, err := b.servicesAPI.PatchBot(botID, &mm_model.BotPatch{DisplayName: &displayName}); err != nil {
+		return fmt.Errorf("failed to patch bot: %w", err)
+	}
+	return nil
+}
+
 // OnConfigurationChange is invoked when configuration changes may have been made.
 func (b *BoardsApp) OnConfigurationChange() error {
 	// Have we been setup by OnActivate?
@@ -85,11 +115,18 @@ func (b *BoardsApp) OnConfigurationChange() error {
 		enableShareBoards = true
 	}
 
+	legacyMode := false
+	if mmconfig.PluginSettings.Plugins[PluginName][LegacyModeName] == true {
+		legacyMode = true
+	}
+
 	configuration := &configuration{
 		EnablePublicSharedBoards: enableShareBoards,
+		LegacyMode:               legacyMode,
 	}
 	b.setConfiguration(configuration)
 	b.server.Config().EnablePublicSharedBoards = enableShareBoards
+	b.server.Config().LegacyMode = legacyMode
 
 	// handle Data Retention settings
 	enableBoardsDeletion := false
@@ -124,5 +161,9 @@ func (b *BoardsApp) OnConfigurationChange() error {
 
 	b.server.UpdateAppConfig()
 	b.wsPluginAdapter.BroadcastConfigChange(*b.server.App().GetClientConfig())
+
+	if err := b.syncBotDisplayName(legacyMode); err != nil {
+		b.logger.Warn("Unable to update the Boards bot display name", mlog.Err(err))
+	}
 	return nil
 }

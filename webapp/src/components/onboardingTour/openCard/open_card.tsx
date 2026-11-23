@@ -7,6 +7,7 @@ import {bottom} from '@popperjs/core'
 
 import {FormattedMessage} from 'react-intl'
 
+import {useLegacyMode} from '../../../hooks/useProductName'
 import {useMeasurePunchouts} from '../../tutorial_tour_tip/hooks'
 
 import {BaseTourSteps, TOUR_BASE} from '../index'
@@ -16,13 +17,19 @@ import {OnboardingCardClassName} from '../../kanban/kanbanCard'
 import TourTipRenderer from '../tourTipRenderer/tourTipRenderer'
 
 const OpenCardTourStep = (): React.JSX.Element | null => {
+    const legacyMode = useLegacyMode()
     const title = (
         <FormattedMessage
             id='OnboardingTour.OpenACard.Title'
             defaultMessage='Open a card'
         />
     )
-    const screen = (
+    const screen = legacyMode ? (
+        <FormattedMessage
+            id='OnboardingTour.OpenACard.Body.legacy'
+            defaultMessage='Open a card to explore the powerful ways that Legacy Boards can help you organize your work.'
+        />
+    ) : (
         <FormattedMessage
             id='OnboardingTour.OpenACard.Body'
             defaultMessage='Open a card to explore the powerful ways that Boards can help you organize your work.'

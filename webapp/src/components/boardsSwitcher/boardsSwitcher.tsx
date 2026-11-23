@@ -11,6 +11,7 @@ import Menu from '../../widgets/menu'
 import Search from '../../widgets/icons/search'
 import CreateCategory from '../createCategory/createCategory'
 import {useAppSelector} from '../../store/hooks'
+import {useLegacyMode} from '../../hooks/useProductName'
 
 import {
     getOnboardingTourCategory,
@@ -35,6 +36,7 @@ type Props = {
 
 const BoardsSwitcher = (props: Props): React.JSX.Element => {
     const intl = useIntl()
+    const legacyMode = useLegacyMode()
 
     const [showSwitcher, setShowSwitcher] = useState<boolean>(false)
     const onboardingTourCategory = useAppSelector(getOnboardingTourCategory)
@@ -95,7 +97,7 @@ const BoardsSwitcher = (props: Props): React.JSX.Element => {
                 <Search/>
                 <div>
                     <span>
-                        {intl.formatMessage({id: 'BoardsSwitcher.Title', defaultMessage: 'Find Boards'})}
+                        {legacyMode ? intl.formatMessage({id: 'BoardsSwitcher.Title.legacy', defaultMessage: 'Find Legacy Boards'}) : intl.formatMessage({id: 'BoardsSwitcher.Title', defaultMessage: 'Find Boards'})}
                     </span>
                 </div>
             </div>
