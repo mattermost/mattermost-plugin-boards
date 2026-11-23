@@ -24,6 +24,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	errPatchFailed  = errors.New("patch failed")
+	errEnsureFailed = errors.New("ensure failed")
+	errGetFailed    = errors.New("get failed")
+)
+
 type TestHelper struct {
 	Server *server.Server
 }
@@ -158,7 +164,7 @@ func TestOnConfigurationChange(t *testing.T) {
 		api.EXPECT().GetConfig().Return(baseConfig)
 		api.EXPECT().EnsureBot(botTemplate("Legacy Boards")).Return("bot-id", nil)
 		api.EXPECT().GetBot("bot-id", false).Return(&serverModel.Bot{UserId: "bot-id", DisplayName: "Boards"}, nil)
-		api.EXPECT().PatchBot("bot-id", gomock.Any()).Return(nil, errors.New("patch failed"))
+		api.EXPECT().PatchBot("bot-id", gomock.Any()).Return(nil, errPatchFailed)
 
 		b := &BoardsApp{
 			server:          th.Server,
@@ -219,13 +225,13 @@ func TestSyncBotDisplayName(t *testing.T) {
 
 	t.Run("returns errors from the services API", func(t *testing.T) {
 		b, api := newApp(t)
-		api.EXPECT().EnsureBot(botTemplate("Legacy Boards")).Return("", errors.New("ensure failed"))
-		assert.Error(t, b.syncBotDisplayName(true))
+		api.EXPECT().EnsureBot(botTemplate("Legacy Boards")).Return("", errEnsureFailed)
+		assert.ErrorIs(t, b.syncBotDisplayName(true), errEnsureFailed)
 
 		b, api = newApp(t)
 		api.EXPECT().EnsureBot(botTemplate("Legacy Boards")).Return("bot-id", nil)
-		api.EXPECT().GetBot("bot-id", false).Return(nil, errors.New("get failed"))
-		assert.Error(t, b.syncBotDisplayName(true))
+		api.EXPECT().GetBot("bot-id", false).Return(nil, errGetFailed)
+		assert.ErrorIs(t, b.syncBotDisplayName(true), errGetFailed)
 	})
 }
 
