@@ -1,0 +1,37 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`components/migrationBanner board that did not move offers to move the board when the user can migrate 1`] = `
+<div>
+  <section
+    aria-label="Board migration"
+    class="MigrationBanner"
+  >
+    <p
+      class="MigrationBanner__text"
+      role="status"
+    >
+      Boards now live in channels. Move this board to keep working on it with your team.
+    </p>
+    <div
+      class="MigrationBanner__actions"
+    >
+      <a
+        class="Button emphasis--primary size--small"
+        href="/plug/com.mattermost.boardsv2/migrate?board=board-1"
+      >
+        <span>
+          Move this board
+        </span>
+      </a>
+      <button
+        class="Button emphasis--tertiary size--small"
+        type="button"
+      >
+        <span>
+          Not now
+        </span>
+      </button>
+    </div>
+  </section>
+</div>
+`;

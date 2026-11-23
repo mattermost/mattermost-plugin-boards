@@ -10,4 +10,5 @@ export type ClientConfig = {
     teammateNameDisplay: string
     maxFileSize: number
     legacyMode: boolean
+    movedBoardsReadOnly: boolean
 }

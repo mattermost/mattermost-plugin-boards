@@ -5,6 +5,7 @@ import { Client4 } from "mattermost-redux/client"
 
 import {Block, BlockPatch, FileInfo} from './blocks/block'
 import {Board, BoardsAndBlocks, BoardsAndBlocksPatch, BoardPatch, BoardMember} from './blocks/board'
+import {BoardMigration} from './blocks/boardMigration'
 import {ISharing} from './blocks/sharing'
 import {OctoUtils} from './octoUtils'
 import {IUser, UserConfigPatch, UserPreference} from './user'
@@ -829,6 +830,18 @@ class OctoClient {
         }
 
         return this.getJson<Board>(response, {} as Board)
+    }
+
+    async getBoardMigration(boardID: string): Promise<BoardMigration | undefined> {
+        const path = `/api/v2/boards/${encodeURIComponent(boardID)}/migration`
+        const response = await fetch(this.getBaseURL() + path, {
+            method: 'GET',
+            headers: this.headers(),
+        })
+        if (response.status !== 200) {
+            return undefined
+        }
+        return this.getJson<BoardMigration | undefined>(response, undefined)
     }
 
     async probeBoard(boardID: string): Promise<number> {

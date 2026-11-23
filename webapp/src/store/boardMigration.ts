@@ -1,0 +1,56 @@
+// Copyright (c) 2020-present Mattermost, Inc. All Rights Reserved.
+// See LICENSE.txt for license information.
+
+import {createSlice, createAsyncThunk} from '@reduxjs/toolkit'
+
+import {BoardMigration} from '../blocks/boardMigration'
+import octoClient from '../octoClient'
+
+import {RootState} from './index'
+
+type BoardMigrationState = {
+    byBoardId: Record<string, BoardMigration>
+}
+
+export const fetchBoardMigration = createAsyncThunk(
+    'boardMigration/fetchBoardMigration',
+    async (boardId: string) => {
+        let migration: BoardMigration | undefined
+        try {
+            migration = await octoClient.getBoardMigration(boardId)
+        } catch {
+            migration = undefined
+        }
+        return {boardId, migration}
+    },
+)
+
+const boardMigrationSlice = createSlice({
+    name: 'boardMigration',
+    initialState: {byBoardId: {}} as BoardMigrationState,
+    reducers: {},
+    extraReducers: (builder) => {
+        builder.addCase(fetchBoardMigration.fulfilled, (state, action) => {
+            const {boardId, migration} = action.payload
+            if (migration) {
+                state.byBoardId[boardId] = migration
+            } else {
+                delete state.byBoardId[boardId]
+            }
+        })
+    },
+})
+
+export const {reducer} = boardMigrationSlice
+
+// Selectors tolerate a missing slice because many component tests build partial stores.
+export function getBoardMigration(boardId: string): (state: RootState) => BoardMigration | undefined {
+    return (state: RootState) => state.boardMigration?.byBoardId?.[boardId]
+}
+
+export function isBoardMovedReadOnly(boardId: string): (state: RootState) => boolean {
+    return (state: RootState) => {
+        const migration = state.boardMigration?.byBoardId?.[boardId]
+        return Boolean(migration?.moved && migration.read_only)
+    }
+}

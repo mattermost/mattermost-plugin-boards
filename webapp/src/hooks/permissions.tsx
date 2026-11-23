@@ -4,13 +4,21 @@
 
 import {useAppSelector} from '../store/hooks'
 import {getMyBoardMembership, getCurrentBoardId, getBoard} from '../store/boards'
+import {isBoardMovedReadOnly} from '../store/boardMigration'
 import {getCurrentTeam} from '../store/teams'
 import {Permission} from '../constants'
 import {MemberRole} from '../blocks/board'
 
 export const useHasPermissions = (teamId: string, boardId: string, permissions: Permission[]): boolean => {
+    const movedReadOnly = useAppSelector(isBoardMovedReadOnly(boardId))
+
     if (!boardId || !teamId) {
         return false
+    }
+
+    if (movedReadOnly) {
+        // The server denies every write on a moved board when it's read-only
+        permissions = permissions.filter((permission) => permission === Permission.ViewBoard)
     }
 
     const member = useAppSelector(getMyBoardMembership(boardId))

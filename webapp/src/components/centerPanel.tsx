@@ -70,6 +70,7 @@ type Props = {
     groupByProperty?: IPropertyTemplate
     dateDisplayProperty?: IPropertyTemplate
     readonly: boolean
+    movedReadOnly?: boolean
     shownCardId?: string
     showCard: (cardId?: string) => void
     hiddenCardsCount: number
@@ -364,7 +365,7 @@ const CenterPanel = (props: Props) => {
     }, [showHiddenCardCountNotification])
 
     const showShareButton = !props.readonly && me?.id !== 'single-user'
-    const showShareLoginButton = props.readonly && me?.id !== 'single-user'
+    const showShareLoginButton = props.readonly && !props.movedReadOnly && me?.id !== 'single-user'
 
     const {groupByProperty, activeView, board, views, cards} = props
 

@@ -19,6 +19,7 @@ import {
 import {useAppSelector, useAppDispatch} from '../store/hooks'
 
 import {getClientConfig, setClientConfig} from '../store/clientConfig'
+import {isBoardMovedReadOnly} from '../store/boardMigration'
 
 import wsClient, {WSClient} from '../wsclient'
 import {ClientConfig} from '../config/clientConfig'
@@ -33,6 +34,7 @@ import {getHiddenBoardIDs} from '../store/sidebar'
 import CenterPanel from './centerPanel'
 import BoardTemplateSelector from './boardTemplateSelector/boardTemplateSelector'
 import GuestNoBoards from './guestNoBoards'
+import MigrationBanner from './migrationBanner/migrationBanner'
 
 import Sidebar from './sidebar/sidebar'
 
@@ -59,6 +61,7 @@ function CenterContent(props: Props) {
     const dispatch = useAppDispatch()
     const me = useAppSelector<IUser|null>(getMe)
     const hiddenBoardIDs = useAppSelector(getHiddenBoardIDs)
+    const movedReadOnly = useAppSelector(isBoardMovedReadOnly(board?.id || ''))
 
     const isBoardHidden = () => {
         return hiddenBoardIDs.includes(board.id)
@@ -135,7 +138,8 @@ function CenterContent(props: Props) {
         return (
             <CenterPanel
                 clientConfig={clientConfig}
-                readonly={props.readonly}
+                readonly={props.readonly || movedReadOnly}
+                movedReadOnly={movedReadOnly}
                 board={board}
                 cards={cards}
                 shownCardId={match.params.cardId}
@@ -197,6 +201,11 @@ const Workspace = (props: Props) => {
                         defaultMessage="You're editing a board template."
                     />
                 </div>}
+                {!props.readonly && board &&
+                    <MigrationBanner
+                        boardId={board.id}
+                        isTemplate={Boolean(board.isTemplate)}
+                    />}
                 <CenterContent
                     readonly={props.readonly}
                 />
