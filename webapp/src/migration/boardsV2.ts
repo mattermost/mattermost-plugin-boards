@@ -14,7 +14,7 @@ export type BoardsV2Summary = {
     mode: 'admin' | 'self_serve'
     is_admin: boolean
     can_migrate: boolean
-    available: number | boolean
+    available: boolean
     not_moved_count: number
     count_capped: boolean
 }
@@ -39,7 +39,10 @@ export function fetchBoardsV2Summary(): Promise<BoardsV2Summary | null> {
                     return null
                 }
                 const summary = await response.json()
-                return summary && typeof summary === 'object' ? summary as BoardsV2Summary : null
+                if (!summary || typeof summary !== 'object' || typeof summary.can_migrate !== 'boolean' || typeof summary.available !== 'boolean') {
+                    return null
+                }
+                return summary as BoardsV2Summary
             } catch {
                 return null
             }

@@ -43,6 +43,15 @@ const MigrationBanner = (props: Props): React.JSX.Element | null => {
     }, [boardId, isTemplate])
 
     useEffect(() => {
+        if (!boardId || isTemplate) {
+            return undefined
+        }
+        const refresh = () => dispatch(fetchBoardMigration(boardId))
+        window.addEventListener('focus', refresh)
+        return () => window.removeEventListener('focus', refresh)
+    }, [boardId, isTemplate])
+
+    useEffect(() => {
         setDismissed(isMigrationBannerDismissed(boardId))
     }, [boardId])
 

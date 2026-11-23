@@ -12,16 +12,20 @@ type BoardMigrationState = {
     byBoardId: Record<string, BoardMigration>
 }
 
+// Responses can arrive out of order, so only the newest request per board may update the store.
+const latestRequestByBoard = new Map<string, string>()
+
 export const fetchBoardMigration = createAsyncThunk(
     'boardMigration/fetchBoardMigration',
-    async (boardId: string) => {
+    async (boardId: string, {requestId}) => {
+        latestRequestByBoard.set(boardId, requestId)
         let migration: BoardMigration | undefined
         try {
             migration = await octoClient.getBoardMigration(boardId)
         } catch {
             migration = undefined
         }
-        return {boardId, migration}
+        return {boardId, migration, stale: latestRequestByBoard.get(boardId) !== requestId}
     },
 )
 
@@ -31,7 +35,10 @@ const boardMigrationSlice = createSlice({
     reducers: {},
     extraReducers: (builder) => {
         builder.addCase(fetchBoardMigration.fulfilled, (state, action) => {
-            const {boardId, migration} = action.payload
+            const {boardId, migration, stale} = action.payload
+            if (stale) {
+                return
+            }
             if (migration) {
                 state.byBoardId[boardId] = migration
             } else {

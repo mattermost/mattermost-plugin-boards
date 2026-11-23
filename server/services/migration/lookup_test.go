@@ -152,6 +152,37 @@ func TestLookupCache(t *testing.T) {
 		assert.Equal(t, 2, api.callCount())
 	})
 
+	t.Run("keeps a board known to be moved when a later lookup fails", func(t *testing.T) {
+		fail := false
+		l, api, now := newTestLookup(t, func(*http.Request) *http.Response {
+			if fail {
+				return jsonResponse(http.StatusInternalServerError, "")
+			}
+			return jsonResponse(http.StatusOK, movedBody)
+		})
+
+		require.True(t, l.IsMoved("board-1"))
+
+		fail = true
+		*now = now.Add(cacheTTL + time.Second)
+		assert.True(t, l.IsMoved("board-1"))
+		assert.Equal(t, 2, api.callCount())
+
+		*now = now.Add(failureCacheTTL - time.Second)
+		assert.True(t, l.IsMoved("board-1"))
+		assert.Equal(t, 2, api.callCount())
+
+		*now = now.Add(2 * time.Second)
+		assert.True(t, l.IsMoved("board-1"))
+		assert.Equal(t, 3, api.callCount())
+	})
+
+	t.Run("reports not moved when a lookup fails for a board never seen as moved", func(t *testing.T) {
+		l, _, _ := newTestLookup(t, func(*http.Request) *http.Response { return jsonResponse(http.StatusInternalServerError, "") })
+
+		assert.False(t, l.IsMoved("board-1"))
+	})
+
 	t.Run("stays within the size bound", func(t *testing.T) {
 		l, _, _ := newTestLookup(t, func(*http.Request) *http.Response { return jsonResponse(http.StatusOK, `{"boards":{}}`) })
 

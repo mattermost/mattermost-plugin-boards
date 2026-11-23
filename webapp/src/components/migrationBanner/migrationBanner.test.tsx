@@ -36,7 +36,7 @@ const moved: BoardMigration = {
     read_only: false,
 }
 
-const summary = {mode: 'self_serve', is_admin: false, can_migrate: true, available: 3, not_moved_count: 3, count_capped: false}
+const summary = {mode: 'self_serve', is_admin: false, can_migrate: true, available: true, not_moved_count: 3, count_capped: false}
 
 const mockSummaryResponse = (status: number, body: unknown) => {
     global.fetch = jest.fn().mockResolvedValue({status, json: async () => body}) as unknown as typeof fetch
@@ -122,6 +122,21 @@ describe('components/migrationBanner', () => {
         })
     })
 
+    describe('refreshing', () => {
+        it('reloads the migration state when the window regains focus', async () => {
+            await renderBanner(notMoved)
+            expect(mockedOctoClient.getBoardMigration).toHaveBeenCalledTimes(1)
+
+            mockedOctoClient.getBoardMigration.mockResolvedValue(moved)
+            await act(async () => {
+                window.dispatchEvent(new Event('focus'))
+            })
+
+            expect(mockedOctoClient.getBoardMigration).toHaveBeenCalledTimes(2)
+            await waitFor(() => expect(screen.getByRole('link', {name: 'Open new board'})).toBeInTheDocument())
+        })
+    })
+
     describe('board that did not move', () => {
         it('offers to move the board when the user can migrate', async () => {
             const {container} = await renderBanner(notMoved)
@@ -143,7 +158,15 @@ describe('components/migrationBanner', () => {
         })
 
         it('shows nothing when no boards are available to move', async () => {
-            mockSummaryResponse(200, {...summary, available: 0})
+            mockSummaryResponse(200, {...summary, available: false})
+            await renderBanner(notMoved)
+
+            await waitFor(() => expect(global.fetch).toHaveBeenCalled())
+            expect(screen.queryByRole('region')).not.toBeInTheDocument()
+        })
+
+        it('shows nothing when the summary flags are not booleans', async () => {
+            mockSummaryResponse(200, {...summary, can_migrate: 'false', available: '0'})
             await renderBanner(notMoved)
 
             await waitFor(() => expect(global.fetch).toHaveBeenCalled())

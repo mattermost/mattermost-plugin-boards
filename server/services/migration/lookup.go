@@ -71,7 +71,7 @@ func NewLookup(api PluginHTTPAPI, logger mlog.LoggerIFace) *Lookup {
 // Get returns the migration state of a board. userID is passed to Boards v2 so
 // it can report whether that user can open the new channel; an empty userID
 // skips that check. When Boards v2 isn't installed or doesn't answer, the
-// board is reported as not moved.
+// board is reported as not moved unless an earlier lookup found it moved.
 func (l *Lookup) Get(boardID, userID string) model.BoardMigration {
 	key := boardID + "|" + userID
 
@@ -83,6 +83,11 @@ func (l *Lookup) Get(boardID, userID string) model.BoardMigration {
 	ttl := cacheTTL
 	if !ok {
 		ttl = failureCacheTTL
+		// Don't downgrade a board known to be moved because of a failed lookup,
+		// or it would become writable while Boards v2 is unavailable.
+		if last, found := l.lastKnown(key); found && last.Moved {
+			info = last
+		}
 	}
 	l.store(key, info, ttl)
 	return info
@@ -102,6 +107,14 @@ func (l *Lookup) cached(key string) (model.BoardMigration, bool) {
 		return model.BoardMigration{}, false
 	}
 	return entry.info, true
+}
+
+func (l *Lookup) lastKnown(key string) (model.BoardMigration, bool) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	entry, ok := l.cache[key]
+	return entry.info, ok
 }
 
 func (l *Lookup) store(key string, info model.BoardMigration, ttl time.Duration) {
