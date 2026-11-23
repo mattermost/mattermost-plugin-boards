@@ -7,6 +7,8 @@ import (
 	"log"
 
 	"github.com/spf13/viper"
+
+	"github.com/mattermost/mattermost/server/v8/platform/shared/filestore"
 )
 
 const (
@@ -14,20 +16,6 @@ const (
 	DefaultPort       = 8000
 	DBPingAttempts    = 5
 )
-
-type AmazonS3Config struct {
-	AccessKeyID     string
-	SecretAccessKey string
-	Bucket          string
-	PathPrefix      string
-	Region          string
-	Endpoint        string
-	SSL             bool
-	SignV2          bool
-	SSE             bool
-	Trace           bool
-	Timeout         int64
-}
 
 // Configuration is the app configuration stored in a json file.
 type Configuration struct {
@@ -41,7 +29,6 @@ type Configuration struct {
 	SecureCookie             bool              `json:"secureCookie" mapstructure:"secureCookie"`
 	WebPath                  string            `json:"webpath" mapstructure:"webpath"`
 	FilesDriver              string            `json:"filesdriver" mapstructure:"filesdriver"`
-	FilesS3Config            AmazonS3Config    `json:"filess3config" mapstructure:"filess3config"`
 	FilesPath                string            `json:"filespath" mapstructure:"filespath"`
 	MaxFileSize              int64             `json:"maxfilesize" mapstructure:"maxfilesize"`
 	Telemetry                bool              `json:"telemetry" mapstructure:"telemetry"`
@@ -73,6 +60,12 @@ type Configuration struct {
 
 	NotifyFreqCardSeconds  int `json:"notify_freq_card_seconds" mapstructure:"notify_freq_card_seconds"`
 	NotifyFreqBoardSeconds int `json:"notify_freq_board_seconds" mapstructure:"notify_freq_board_seconds"`
+
+	// FilesBackendSettings holds the full file backend settings derived from
+	// Mattermost's FileSettings (local, S3, Azure Blob, ...). When its
+	// DriverName is empty, FilesDriver and FilesPath are used instead.
+	// It is never serialized because it can contain storage credentials.
+	FilesBackendSettings filestore.FileBackendSettings `json:"-" mapstructure:"-"`
 }
 
 // ReadConfigFile read the configuration from the filesystem.

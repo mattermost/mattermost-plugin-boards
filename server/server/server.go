@@ -80,20 +80,13 @@ func New(params Params) (*Server, error) {
 		wsAdapter = ws.NewServer(authenticator, params.Logger, params.DBStore)
 	}
 
-	filesBackendSettings := filestore.FileBackendSettings{}
-	filesBackendSettings.DriverName = params.Cfg.FilesDriver
-	filesBackendSettings.Directory = params.Cfg.FilesPath
-	filesBackendSettings.AmazonS3AccessKeyId = params.Cfg.FilesS3Config.AccessKeyID
-	filesBackendSettings.AmazonS3SecretAccessKey = params.Cfg.FilesS3Config.SecretAccessKey
-	filesBackendSettings.AmazonS3Bucket = params.Cfg.FilesS3Config.Bucket
-	filesBackendSettings.AmazonS3PathPrefix = params.Cfg.FilesS3Config.PathPrefix
-	filesBackendSettings.AmazonS3Region = params.Cfg.FilesS3Config.Region
-	filesBackendSettings.AmazonS3Endpoint = params.Cfg.FilesS3Config.Endpoint
-	filesBackendSettings.AmazonS3SSL = params.Cfg.FilesS3Config.SSL
-	filesBackendSettings.AmazonS3SignV2 = params.Cfg.FilesS3Config.SignV2
-	filesBackendSettings.AmazonS3SSE = params.Cfg.FilesS3Config.SSE
-	filesBackendSettings.AmazonS3Trace = params.Cfg.FilesS3Config.Trace
-	filesBackendSettings.AmazonS3RequestTimeoutMilliseconds = params.Cfg.FilesS3Config.Timeout
+	filesBackendSettings := params.Cfg.FilesBackendSettings
+	if filesBackendSettings.DriverName == "" {
+		filesBackendSettings = filestore.FileBackendSettings{
+			DriverName: params.Cfg.FilesDriver,
+			Directory:  params.Cfg.FilesPath,
+		}
+	}
 
 	filesBackend, appErr := filestore.NewFileBackend(filesBackendSettings)
 	if appErr != nil {
