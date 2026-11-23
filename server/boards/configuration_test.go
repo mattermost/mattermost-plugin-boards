@@ -139,6 +139,52 @@ func TestOnConfigurationChange(t *testing.T) {
 		assert.True(t, b.server.App().GetClientConfig().MovedBoardsReadOnly)
 	})
 
+	movedBoardsReadOnlyConfig := func(value interface{}, set bool) *serverModel.Config {
+		plugins := map[string]map[string]interface{}{PluginName: {
+			SharedBoardsName: true,
+			LegacyModeName:   true,
+		}}
+		if set {
+			plugins[PluginName][MovedBoardsReadOnlyName] = value
+		}
+		cfg := *baseConfig
+		cfg.PluginSettings = serverModel.PluginSettings{Directory: &stringRef, Plugins: plugins}
+		return &cfg
+	}
+
+	for name, tc := range map[string]struct {
+		value interface{}
+		set   bool
+		want  bool
+	}{
+		"absent setting reads as on":          {set: false, want: true},
+		"explicit false stays off":            {value: false, set: true, want: false},
+		"explicit true stays on":              {value: true, set: true, want: true},
+		"setting of an unexpected type is on": {value: "nope", set: true, want: true},
+	} {
+		t.Run("MovedBoardsReadOnly: "+name, func(t *testing.T) {
+			th, tearDown := SetupTestHelper(t)
+			defer tearDown()
+
+			api := mockservicesapi.NewMockServicesAPI(gomock.NewController(t))
+			api.EXPECT().GetConfig().Return(movedBoardsReadOnlyConfig(tc.value, tc.set))
+			api.EXPECT().EnsureBot(botTemplate("Legacy Boards")).Return("bot-id", nil)
+			api.EXPECT().GetBot("bot-id", false).Return(&serverModel.Bot{UserId: "bot-id", DisplayName: "Legacy Boards"}, nil)
+
+			b := &BoardsApp{
+				server:          th.Server,
+				wsPluginAdapter: &FakePluginAdapter{},
+				servicesAPI:     api,
+				logger:          mlog.CreateConsoleTestLogger(&testing.T{}),
+			}
+
+			require.NoError(t, b.OnConfigurationChange())
+			assert.Equal(t, tc.want, b.getConfiguration().MovedBoardsReadOnly)
+			assert.Equal(t, tc.want, b.server.Config().MovedBoardsReadOnly)
+			assert.Equal(t, tc.want, b.server.App().GetClientConfig().MovedBoardsReadOnly)
+		})
+	}
+
 	t.Run("Bot display name already up to date is not patched", func(t *testing.T) {
 		th, tearDown := SetupTestHelper(t)
 		defer tearDown()

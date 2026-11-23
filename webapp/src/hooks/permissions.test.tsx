@@ -12,8 +12,13 @@ import {useHasPermissions} from './permissions'
 
 const board = {id: 'board-1', minimumRole: ''}
 
-const renderPermissions = (permissions: Permission[], migration?: {moved: boolean, read_only: boolean}) => {
+const renderPermissions = (
+    permissions: Permission[],
+    migration?: {moved: boolean, read_only: boolean},
+    {legacyMode = true, movedBoardsReadOnly = true} = {},
+) => {
     const store = mockStateStore([], {
+        clientConfig: {value: {legacyMode, movedBoardsReadOnly}},
         boards: {
             boards: {[board.id]: board},
             templates: {},
@@ -46,6 +51,18 @@ describe('hooks/permissions', () => {
         expect(renderPermissions([Permission.ViewBoard], {moved: true, read_only: true})).toBe(true)
         for (const permission of writePermissions) {
             expect(renderPermissions([permission], {moved: true, read_only: true})).toBe(false)
+        }
+    })
+
+    it('ignores a read-only moved board outside Legacy Mode', () => {
+        for (const permission of writePermissions) {
+            expect(renderPermissions([permission], {moved: true, read_only: true}, {legacyMode: false})).toBe(true)
+        }
+    })
+
+    it('ignores a read-only moved board when the setting is off', () => {
+        for (const permission of writePermissions) {
+            expect(renderPermissions([permission], {moved: true, read_only: true}, {movedBoardsReadOnly: false})).toBe(true)
         }
     })
 })

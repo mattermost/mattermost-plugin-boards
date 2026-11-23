@@ -64,7 +64,7 @@ func TestGetBoardMigration(t *testing.T) {
 		CanOpen:            true,
 	}
 
-	setup := func(t *testing.T, lookup *fakeMigrationLookup, perms fakeBoardPermissions, board *model.Board, readOnly bool) http.Handler {
+	setupWithConfig := func(t *testing.T, lookup *fakeMigrationLookup, perms fakeBoardPermissions, board *model.Board, cfg *config.Configuration) http.Handler {
 		ctrl := gomock.NewController(t)
 		store := mockstore.NewMockStore(ctrl)
 		store.EXPECT().GetBoard("board-1").Return(board, nil).AnyTimes()
@@ -75,7 +75,6 @@ func TestGetBoardMigration(t *testing.T) {
 			migrationLookup = lookup
 		}
 
-		cfg := &config.Configuration{MovedBoardsReadOnly: readOnly}
 		logger := mlog.CreateConsoleTestLogger(t)
 		authService := auth.New(cfg, store, nil)
 		application := app.New(cfg, ws.NewServer(authService, logger, store), app.Services{
@@ -96,6 +95,10 @@ func TestGetBoardMigration(t *testing.T) {
 		router := mux.NewRouter()
 		NewAPI(application, "", "", perms, logger, auditService).RegisterRoutes(router)
 		return router
+	}
+
+	setup := func(t *testing.T, lookup *fakeMigrationLookup, perms fakeBoardPermissions, board *model.Board, readOnly bool) http.Handler {
+		return setupWithConfig(t, lookup, perms, board, &config.Configuration{LegacyMode: true, MovedBoardsReadOnly: readOnly})
 	}
 
 	get := func(handler http.Handler, userID string) *httptest.ResponseRecorder {
@@ -156,6 +159,16 @@ func TestGetBoardMigration(t *testing.T) {
 
 		require.Equal(t, http.StatusOK, rec.Code)
 		require.JSONEq(t, `{"moved":false,"can_open":false,"read_only":false}`, rec.Body.String())
+	})
+
+	t.Run("reports not moved and skips the lookup outside Legacy Mode", func(t *testing.T) {
+		lookup := &fakeMigrationLookup{info: moved}
+		cfg := &config.Configuration{LegacyMode: false, MovedBoardsReadOnly: true}
+		rec := get(setupWithConfig(t, lookup, fakeBoardPermissions{canViewTeam: true}, openBoard, cfg), "user-1")
+
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.JSONEq(t, `{"moved":false,"can_open":false,"read_only":false}`, rec.Body.String())
+		require.Empty(t, lookup.userID)
 	})
 
 	t.Run("requires a session", func(t *testing.T) {

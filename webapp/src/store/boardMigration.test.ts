@@ -7,7 +7,7 @@ import {mocked} from 'jest-mock'
 import {BoardMigration} from '../blocks/boardMigration'
 import octoClient from '../octoClient'
 
-import {fetchBoardMigration, getBoardMigration, reducer} from './boardMigration'
+import {fetchBoardMigration, getBoardMigration, isBoardMovedReadOnly, reducer} from './boardMigration'
 
 import {RootState} from './index'
 
@@ -48,5 +48,28 @@ describe('store/boardMigration', () => {
         const state = store.getState() as unknown as RootState
         expect(getBoardMigration('board-1')(state)).toEqual(moved)
         expect(getBoardMigration('board-2')(state)).toEqual(notMoved)
+    })
+
+    describe('isBoardMovedReadOnly', () => {
+        const stateWith = (legacyMode: boolean, movedBoardsReadOnly: boolean, migration: BoardMigration) => ({
+            clientConfig: {value: {legacyMode, movedBoardsReadOnly}},
+            boardMigration: {byBoardId: {'board-1': migration}},
+        }) as unknown as RootState
+
+        test('is read-only for a read-only moved board in Legacy Mode with the setting on', () => {
+            expect(isBoardMovedReadOnly('board-1')(stateWith(true, true, moved))).toBe(true)
+        })
+
+        test('is not read-only outside Legacy Mode', () => {
+            expect(isBoardMovedReadOnly('board-1')(stateWith(false, true, moved))).toBe(false)
+        })
+
+        test('is not read-only when the setting is off', () => {
+            expect(isBoardMovedReadOnly('board-1')(stateWith(true, false, moved))).toBe(false)
+        })
+
+        test('is not read-only for a board that did not move', () => {
+            expect(isBoardMovedReadOnly('board-1')(stateWith(true, true, notMoved))).toBe(false)
+        })
     })
 })

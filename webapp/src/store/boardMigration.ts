@@ -6,6 +6,8 @@ import {createSlice, createAsyncThunk} from '@reduxjs/toolkit'
 import {BoardMigration} from '../blocks/boardMigration'
 import octoClient from '../octoClient'
 
+import {getMovedBoardsReadOnly} from './clientConfig'
+
 import {RootState} from './index'
 
 type BoardMigrationState = {
@@ -57,6 +59,9 @@ export function getBoardMigration(boardId: string): (state: RootState) => BoardM
 
 export function isBoardMovedReadOnly(boardId: string): (state: RootState) => boolean {
     return (state: RootState) => {
+        if (!getMovedBoardsReadOnly(state)) {
+            return false
+        }
         const migration = state.boardMigration?.byBoardId?.[boardId]
         return Boolean(migration?.moved && migration.read_only)
     }

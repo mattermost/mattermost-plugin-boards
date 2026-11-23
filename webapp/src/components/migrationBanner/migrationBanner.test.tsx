@@ -12,6 +12,7 @@ import {mocked} from 'jest-mock'
 import {BoardMigration} from '../../blocks/boardMigration'
 import octoClient from '../../octoClient'
 import {reducer as boardMigrationReducer} from '../../store/boardMigration'
+import {reducer as clientConfigReducer} from '../../store/clientConfig'
 import {resetBoardsV2SummaryForTests} from '../../migration/boardsV2'
 import {wrapIntl} from '../../testUtils'
 
@@ -42,9 +43,25 @@ const mockSummaryResponse = (status: number, body: unknown) => {
     global.fetch = jest.fn().mockResolvedValue({status, json: async () => body}) as unknown as typeof fetch
 }
 
-const renderBanner = async (migration: BoardMigration | undefined, isTemplate = false) => {
+const clientConfig = (legacyMode: boolean) => ({
+    value: {
+        telemetry: false,
+        telemetryid: '',
+        enablePublicSharedBoards: false,
+        teammateNameDisplay: 'username',
+        featureFlags: {},
+        maxFileSize: 0,
+        legacyMode,
+        movedBoardsReadOnly: true,
+    },
+})
+
+const renderBanner = async (migration: BoardMigration | undefined, isTemplate = false, legacyMode = true) => {
     mockedOctoClient.getBoardMigration.mockResolvedValue(migration)
-    const store = configureStore({reducer: {boardMigration: boardMigrationReducer}})
+    const store = configureStore({
+        reducer: {boardMigration: boardMigrationReducer, clientConfig: clientConfigReducer},
+        preloadedState: {clientConfig: clientConfig(legacyMode)},
+    })
     const result = render(wrapIntl(
         <ReduxProvider store={store}>
             <MigrationBanner
@@ -79,7 +96,7 @@ describe('components/migrationBanner', () => {
             await renderBanner(moved)
 
             const region = screen.getByRole('region', {name: 'Board migration'})
-            expect(region).toHaveTextContent(`This board moved to the new Boards on ${formattedDate}. Changes made here won't be copied over.`)
+            expect(region).toHaveTextContent(`This board was migrated to the new version of Boards on ${formattedDate}. Changes made here won't be copied over.`)
             expect(screen.getByRole('status')).toBeInTheDocument()
 
             const link = screen.getByRole('link', {name: 'Open new board'})
@@ -110,7 +127,7 @@ describe('components/migrationBanner', () => {
             await renderBanner({...moved, read_only: true})
 
             const region = screen.getByRole('region', {name: 'Board migration'})
-            expect(region).toHaveTextContent(`This board moved to the new Boards on ${formattedDate}. This board is read-only.`)
+            expect(region).toHaveTextContent(`This board was migrated to the new version of Boards on ${formattedDate}. This board is now read-only here.`)
             expect(region).not.toHaveTextContent("Changes made here won't be copied over.")
             expect(screen.getByRole('link', {name: 'Open new board'})).toBeInTheDocument()
         })
@@ -138,12 +155,12 @@ describe('components/migrationBanner', () => {
     })
 
     describe('board that did not move', () => {
-        it('offers to move the board when the user can migrate', async () => {
+        it('offers to migrate the board when the user can migrate', async () => {
             const {container} = await renderBanner(notMoved)
 
             await waitFor(() => expect(screen.getByRole('region', {name: 'Board migration'})).toBeInTheDocument())
-            expect(screen.getByRole('region')).toHaveTextContent('Boards now live in channels. Move this board to keep working on it with your team.')
-            expect(screen.getByRole('link', {name: 'Move this board'})).toHaveAttribute('href', '/plug/com.mattermost.boardsv2/migrate?board=board-1')
+            expect(screen.getByRole('region')).toHaveTextContent("There's a new version of Boards. Migrate this board to keep working on it with your team.")
+            expect(screen.getByRole('link', {name: 'Migrate this board'})).toHaveAttribute('href', '/plug/com.mattermost.boardsv2/migrate?board=board-1')
             expect(screen.getByRole('button', {name: 'Not now'})).toBeInTheDocument()
             expect(container).toMatchSnapshot()
             expect(global.fetch).toHaveBeenCalledTimes(1)
@@ -157,7 +174,7 @@ describe('components/migrationBanner', () => {
             expect(screen.queryByRole('region')).not.toBeInTheDocument()
         })
 
-        it('shows nothing when no boards are available to move', async () => {
+        it('shows nothing when no boards are available to migrate', async () => {
             mockSummaryResponse(200, {...summary, available: false})
             await renderBanner(notMoved)
 
@@ -226,6 +243,34 @@ describe('components/migrationBanner', () => {
 
             await waitFor(() => expect(screen.getByRole('region', {name: 'Board migration'})).toBeInTheDocument())
             dateNow.mockRestore()
+        })
+    })
+
+    describe('outside Legacy Mode', () => {
+        it('shows nothing and makes no requests for a board that did not move', async () => {
+            await renderBanner(notMoved, false, false)
+
+            expect(screen.queryByRole('region')).not.toBeInTheDocument()
+            expect(mockedOctoClient.getBoardMigration).not.toHaveBeenCalled()
+            expect(global.fetch).not.toHaveBeenCalled()
+        })
+
+        it('shows nothing and makes no requests for a moved board', async () => {
+            await renderBanner(moved, false, false)
+
+            expect(screen.queryByRole('region')).not.toBeInTheDocument()
+            expect(mockedOctoClient.getBoardMigration).not.toHaveBeenCalled()
+            expect(global.fetch).not.toHaveBeenCalled()
+        })
+
+        it('does not refresh the migration state when the window regains focus', async () => {
+            await renderBanner(notMoved, false, false)
+
+            await act(async () => {
+                window.dispatchEvent(new Event('focus'))
+            })
+
+            expect(mockedOctoClient.getBoardMigration).not.toHaveBeenCalled()
         })
     })
 

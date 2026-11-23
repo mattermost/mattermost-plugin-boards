@@ -7,11 +7,12 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 )
 
-// GetBoardMigration returns whether a board was moved to Boards v2 and, when
-// MovedBoardsReadOnly is on, whether that blocks changes to it. userID decides
-// whether the board's new channel is reported as openable.
+// GetBoardMigration returns whether a board was moved to the new version of
+// Boards and, when moved boards are read-only, whether that blocks changes to
+// it. userID decides whether the board's new channel is reported as openable.
+// Outside Legacy Mode no board is reported as moved and Boards v2 isn't called.
 func (a *App) GetBoardMigration(boardID, userID string) model.BoardMigration {
-	if a.migrationLookup == nil {
+	if !a.config.LegacyMode || a.migrationLookup == nil {
 		return model.BoardMigration{}
 	}
 

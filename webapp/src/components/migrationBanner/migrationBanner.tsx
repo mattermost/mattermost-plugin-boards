@@ -6,6 +6,7 @@ import {FormattedDate, FormattedMessage, useIntl} from 'react-intl'
 
 import {useAppDispatch, useAppSelector} from '../../store/hooks'
 import {fetchBoardMigration, getBoardMigration} from '../../store/boardMigration'
+import {useLegacyMode} from '../../hooks/useProductName'
 import {
     BoardsV2Summary,
     canMigrateFromSummary,
@@ -30,6 +31,7 @@ const MigrationBanner = (props: Props): React.JSX.Element | null => {
     const {boardId, isTemplate} = props
     const intl = useIntl()
     const dispatch = useAppDispatch()
+    const legacyMode = useLegacyMode()
     const migration = useAppSelector(getBoardMigration(boardId))
     const [summary, setSummary] = useState<BoardsV2Summary | null>(null)
     const [dismissed, setDismissed] = useState(() => isMigrationBannerDismissed(boardId))
@@ -37,26 +39,26 @@ const MigrationBanner = (props: Props): React.JSX.Element | null => {
     const notMoved = Boolean(migration && !migration.moved)
 
     useEffect(() => {
-        if (boardId && !isTemplate) {
+        if (legacyMode && boardId && !isTemplate) {
             dispatch(fetchBoardMigration(boardId))
         }
-    }, [boardId, isTemplate])
+    }, [legacyMode, boardId, isTemplate])
 
     useEffect(() => {
-        if (!boardId || isTemplate) {
+        if (!legacyMode || !boardId || isTemplate) {
             return undefined
         }
         const refresh = () => dispatch(fetchBoardMigration(boardId))
         window.addEventListener('focus', refresh)
         return () => window.removeEventListener('focus', refresh)
-    }, [boardId, isTemplate])
+    }, [legacyMode, boardId, isTemplate])
 
     useEffect(() => {
         setDismissed(isMigrationBannerDismissed(boardId))
     }, [boardId])
 
     useEffect(() => {
-        if (!notMoved || isTemplate) {
+        if (!legacyMode || !notMoved || isTemplate) {
             return undefined
         }
         let cancelled = false
@@ -68,14 +70,14 @@ const MigrationBanner = (props: Props): React.JSX.Element | null => {
         return () => {
             cancelled = true
         }
-    }, [notMoved, isTemplate])
+    }, [legacyMode, notMoved, isTemplate])
 
     const onDismiss = useCallback(() => {
         dismissMigrationBanner(boardId)
         setDismissed(true)
     }, [boardId])
 
-    if (!boardId || isTemplate || !migration) {
+    if (!legacyMode || !boardId || isTemplate || !migration) {
         return null
     }
 
@@ -104,14 +106,14 @@ const MigrationBanner = (props: Props): React.JSX.Element | null => {
                 >
                     {migration.read_only ? (
                         <FormattedMessage
-                            id='MigrationBanner.movedReadOnly'
-                            defaultMessage='This board moved to the new Boards on {date}. This board is read-only.'
+                            id='MigrationBanner.migratedReadOnly'
+                            defaultMessage='This board was migrated to the new version of Boards on {date}. This board is now read-only here.'
                             values={{date}}
                         />
                     ) : (
                         <FormattedMessage
-                            id='MigrationBanner.moved'
-                            defaultMessage="This board moved to the new Boards on {date}. Changes made here won't be copied over."
+                            id='MigrationBanner.migrated'
+                            defaultMessage="This board was migrated to the new version of Boards on {date}. Changes made here won't be copied over."
                             values={{date}}
                         />
                     )}
@@ -161,8 +163,8 @@ const MigrationBanner = (props: Props): React.JSX.Element | null => {
                 role='status'
             >
                 <FormattedMessage
-                    id='MigrationBanner.notMoved'
-                    defaultMessage='Boards now live in channels. Move this board to keep working on it with your team.'
+                    id='MigrationBanner.notMigrated'
+                    defaultMessage="There's a new version of Boards. Migrate this board to keep working on it with your team."
                 />
             </p>
             <div className='MigrationBanner__actions'>
@@ -173,8 +175,8 @@ const MigrationBanner = (props: Props): React.JSX.Element | null => {
                 >
                     <span>
                         <FormattedMessage
-                            id='MigrationBanner.moveBoard'
-                            defaultMessage='Move this board'
+                            id='MigrationBanner.migrateBoard'
+                            defaultMessage='Migrate this board'
                         />
                     </span>
                 </a>

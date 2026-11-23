@@ -31,6 +31,9 @@ const (
 	LegacyModeName          = "legacymode"
 	MovedBoardsReadOnlyName = "movedboardsreadonly"
 
+	// MovedBoardsReadOnlyDefault must match the default in plugin.json.
+	MovedBoardsReadOnlyDefault = true
+
 	notifyFreqCardSecondsKey  = "notify_freq_card_seconds"
 	notifyFreqBoardSecondsKey = "notify_freq_board_seconds"
 )
@@ -96,9 +99,10 @@ func NewBoardsApp(api model.ServicesAPI, manifest *mm_model.Manifest) (*BoardsAp
 		return nil, fmt.Errorf("error initializing the DB: %w", err)
 	}
 
-	migrationLookup := migration.NewLookup(api, logger)
+	migrationLookup := migration.NewLookup(api, logger,
+		migration.WithEnabled(func() bool { return cfg.LegacyMode }))
 	permissionsService := mmpermissions.New(db, api, logger,
-		mmpermissions.WithMovedBoardsReadOnly(func() bool { return cfg.MovedBoardsReadOnly }, migrationLookup))
+		mmpermissions.WithMovedBoardsReadOnly(cfg.MovedBoardsReadOnlyActive, migrationLookup))
 
 	wsPluginAdapter := ws.NewPluginAdapter(api, auth.New(cfg, db, permissionsService), db, logger)
 

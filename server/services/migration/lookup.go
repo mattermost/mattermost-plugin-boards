@@ -55,24 +55,45 @@ type Lookup struct {
 	logger mlog.LoggerIFace
 	now    func() time.Time
 
+	enabled func() bool
+
 	mu    sync.Mutex
 	cache map[string]cacheEntry
 }
 
-func NewLookup(api PluginHTTPAPI, logger mlog.LoggerIFace) *Lookup {
-	return &Lookup{
+// Option configures optional behavior of a Lookup.
+type Option func(*Lookup)
+
+// WithEnabled makes the lookup report every board as not moved, without calling
+// Boards v2, while enabled returns false.
+func WithEnabled(enabled func() bool) Option {
+	return func(l *Lookup) {
+		l.enabled = enabled
+	}
+}
+
+func NewLookup(api PluginHTTPAPI, logger mlog.LoggerIFace, opts ...Option) *Lookup {
+	l := &Lookup{
 		api:    api,
 		logger: logger,
 		now:    time.Now,
 		cache:  make(map[string]cacheEntry),
 	}
+	for _, opt := range opts {
+		opt(l)
+	}
+	return l
 }
 
-// Get returns the migration state of a board. userID is passed to Boards v2 so
-// it can report whether that user can open the new channel; an empty userID
-// skips that check. When Boards v2 isn't installed or doesn't answer, the
+// Get returns the migration state of a board, or the zero value when the
+// lookup is disabled. userID is passed to Boards v2 so it can report whether
+// that user can open the new channel; an empty userID skips that check. When Boards v2 isn't installed or doesn't answer, the
 // board is reported as not moved unless an earlier lookup found it moved.
 func (l *Lookup) Get(boardID, userID string) model.BoardMigration {
+	if l.enabled != nil && !l.enabled() {
+		return model.BoardMigration{}
+	}
+
 	key := boardID + "|" + userID
 
 	if info, ok := l.cached(key); ok {

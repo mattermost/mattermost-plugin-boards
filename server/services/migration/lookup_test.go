@@ -114,6 +114,33 @@ func TestLookupGet(t *testing.T) {
 	})
 }
 
+func TestLookupEnabled(t *testing.T) {
+	t.Run("does not call Boards v2 and reports not moved while disabled", func(t *testing.T) {
+		enabled := false
+		l, api, _ := newTestLookup(t, func(*http.Request) *http.Response { return jsonResponse(http.StatusOK, movedBody) })
+		WithEnabled(func() bool { return enabled })(l)
+
+		assert.Equal(t, model.BoardMigration{}, l.Get("board-1", "user-1"))
+		assert.False(t, l.IsMoved("board-1"))
+		assert.Zero(t, api.callCount())
+
+		enabled = true
+		assert.True(t, l.IsMoved("board-1"))
+		assert.Equal(t, 1, api.callCount())
+
+		enabled = false
+		assert.False(t, l.IsMoved("board-1"))
+		assert.Equal(t, 1, api.callCount())
+	})
+
+	t.Run("is enabled by default", func(t *testing.T) {
+		l, api, _ := newTestLookup(t, func(*http.Request) *http.Response { return jsonResponse(http.StatusOK, movedBody) })
+
+		assert.True(t, l.IsMoved("board-1"))
+		assert.Equal(t, 1, api.callCount())
+	})
+}
+
 func TestLookupCache(t *testing.T) {
 	t.Run("serves repeated lookups from the cache until it expires", func(t *testing.T) {
 		l, api, now := newTestLookup(t, func(*http.Request) *http.Response { return jsonResponse(http.StatusOK, movedBody) })

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
+	"github.com/mattermost/mattermost-plugin-boards/server/services/config"
 	mmpermissionsMocks "github.com/mattermost/mattermost-plugin-boards/server/services/permissions/mmpermissions/mocks"
 	permissionsMocks "github.com/mattermost/mattermost-plugin-boards/server/services/permissions/mocks"
 
@@ -39,7 +40,7 @@ func TestHasPermissionToBoardMovedBoardsReadOnly(t *testing.T) {
 		model.PermissionCommentBoardCards,
 	}
 
-	setup := func(t *testing.T, enabled bool, moved bool, teamAdmin bool) (*Service, *fakeMovedBoards) {
+	setupWithEnabled := func(t *testing.T, enabled func() bool, moved bool, teamAdmin bool) (*Service, *fakeMovedBoards) {
 		ctrl := gomock.NewController(t)
 		store := permissionsMocks.NewMockStore(ctrl)
 		api := mmpermissionsMocks.NewMockAPI(ctrl)
@@ -53,8 +54,12 @@ func TestHasPermissionToBoardMovedBoardsReadOnly(t *testing.T) {
 		api.EXPECT().HasPermissionToTeam(testUserID, testTeamID, model.PermissionManageTeam).Return(teamAdmin).AnyTimes()
 
 		svc := New(store, api, mlog.CreateConsoleTestLogger(t),
-			WithMovedBoardsReadOnly(func() bool { return enabled }, checker))
+			WithMovedBoardsReadOnly(enabled, checker))
 		return svc, checker
+	}
+
+	setup := func(t *testing.T, enabled bool, moved bool, teamAdmin bool) (*Service, *fakeMovedBoards) {
+		return setupWithEnabled(t, func() bool { return enabled }, moved, teamAdmin)
 	}
 
 	t.Run("denies every write on a moved board but still allows viewing", func(t *testing.T) {
@@ -90,6 +95,26 @@ func TestHasPermissionToBoardMovedBoardsReadOnly(t *testing.T) {
 			assert.Truef(t, svc.HasPermissionToBoard(testUserID, testBoardID, permission), "permission %s", permission.Id)
 		}
 		assert.Zero(t, checker.calls)
+	})
+
+	t.Run("follows the configuration: read-only only applies in Legacy Mode", func(t *testing.T) {
+		cfg := &config.Configuration{LegacyMode: false, MovedBoardsReadOnly: true}
+		svc, checker := setupWithEnabled(t, cfg.MovedBoardsReadOnlyActive, true, false)
+
+		for _, permission := range writePermissions {
+			assert.Truef(t, svc.HasPermissionToBoard(testUserID, testBoardID, permission), "permission %s", permission.Id)
+		}
+		assert.Zero(t, checker.calls)
+
+		cfg.LegacyMode = true
+		for _, permission := range writePermissions {
+			assert.Falsef(t, svc.HasPermissionToBoard(testUserID, testBoardID, permission), "permission %s", permission.Id)
+		}
+
+		cfg.MovedBoardsReadOnly = false
+		for _, permission := range writePermissions {
+			assert.Truef(t, svc.HasPermissionToBoard(testUserID, testBoardID, permission), "permission %s", permission.Id)
+		}
 	})
 
 	t.Run("does not look up moved status for view checks", func(t *testing.T) {

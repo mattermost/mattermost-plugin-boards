@@ -68,10 +68,7 @@ func createBoardsConfig(mmconfig mm_model.Config, baseURL string, serverID strin
 		legacyMode = true
 	}
 
-	movedBoardsReadOnly := false
-	if mmconfig.PluginSettings.Plugins[PluginName][MovedBoardsReadOnlyName] == true {
-		movedBoardsReadOnly = true
-	}
+	movedBoardsReadOnly := getPluginSettingBool(mmconfig, MovedBoardsReadOnlyName, MovedBoardsReadOnlyDefault)
 
 	enableBoardsDeletion := false
 	if mmconfig.DataRetentionSettings.EnableBoardsDeletion != nil {
@@ -172,4 +169,19 @@ func getPluginSettingInt(mmConfig mm_model.Config, key string, def int) int {
 		return def
 	}
 	return int(math.Round(valFloat))
+}
+
+// getPluginSettingBool returns def when the setting is absent or not a bool.
+// Mattermost doesn't always persist plugin.json defaults for existing
+// installs, so an absent key must read as the default rather than false.
+func getPluginSettingBool(mmConfig mm_model.Config, key string, def bool) bool {
+	val, ok := getPluginSetting(mmConfig, key)
+	if !ok {
+		return def
+	}
+	valBool, ok := val.(bool)
+	if !ok {
+		return def
+	}
+	return valBool
 }

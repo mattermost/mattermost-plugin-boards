@@ -25,6 +25,7 @@ func TestGetBoardMigration(t *testing.T) {
 	t.Run("reports not moved when Boards v2 lookup is unavailable", func(t *testing.T) {
 		th, tearDown := SetupTestHelper(t)
 		defer tearDown()
+		th.App.config.LegacyMode = true
 
 		require.Equal(t, model.BoardMigration{}, th.App.GetBoardMigration("board", "user"))
 	})
@@ -32,6 +33,7 @@ func TestGetBoardMigration(t *testing.T) {
 	t.Run("passes through a moved board and is not read-only by default", func(t *testing.T) {
 		th, tearDown := SetupTestHelper(t)
 		defer tearDown()
+		th.App.config.LegacyMode = true
 		th.App.migrationLookup = fakeMigrationLookup{info: moved}
 
 		require.Equal(t, moved, th.App.GetBoardMigration("board", "user"))
@@ -40,6 +42,7 @@ func TestGetBoardMigration(t *testing.T) {
 	t.Run("is read-only for a moved board when the setting is on", func(t *testing.T) {
 		th, tearDown := SetupTestHelper(t)
 		defer tearDown()
+		th.App.config.LegacyMode = true
 		th.App.migrationLookup = fakeMigrationLookup{info: moved}
 		th.App.config.MovedBoardsReadOnly = true
 
@@ -51,9 +54,32 @@ func TestGetBoardMigration(t *testing.T) {
 	t.Run("is not read-only for a board that did not move", func(t *testing.T) {
 		th, tearDown := SetupTestHelper(t)
 		defer tearDown()
+		th.App.config.LegacyMode = true
 		th.App.migrationLookup = fakeMigrationLookup{}
 		th.App.config.MovedBoardsReadOnly = true
 
 		require.Equal(t, model.BoardMigration{}, th.App.GetBoardMigration("board", "user"))
 	})
+
+	t.Run("reports not moved and skips the lookup outside Legacy Mode", func(t *testing.T) {
+		th, tearDown := SetupTestHelper(t)
+		defer tearDown()
+		lookup := &countingMigrationLookup{info: moved}
+		th.App.migrationLookup = lookup
+		th.App.config.LegacyMode = false
+		th.App.config.MovedBoardsReadOnly = true
+
+		require.Equal(t, model.BoardMigration{}, th.App.GetBoardMigration("board", "user"))
+		require.Zero(t, lookup.calls)
+	})
+}
+
+type countingMigrationLookup struct {
+	info  model.BoardMigration
+	calls int
+}
+
+func (f *countingMigrationLookup) Get(_, _ string) model.BoardMigration {
+	f.calls++
+	return f.info
 }

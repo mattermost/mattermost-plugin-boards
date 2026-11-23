@@ -114,11 +114,19 @@ func TestSetConfiguration(t *testing.T) {
 		mmConfig.PluginSettings.Plugins = make(map[string]map[string]interface{})
 		mmConfig.PluginSettings.Plugins[PluginName] = make(map[string]interface{})
 		config := createBoardsConfig(*mmConfig, "", "")
+		assert.Equal(t, true, config.MovedBoardsReadOnly, "an unset value reads as on")
+
+		mmConfig.PluginSettings.Plugins[PluginName][MovedBoardsReadOnlyName] = false
+		config = createBoardsConfig(*mmConfig, "", "")
 		assert.Equal(t, false, config.MovedBoardsReadOnly)
 
 		mmConfig.PluginSettings.Plugins[PluginName][MovedBoardsReadOnlyName] = true
 		config = createBoardsConfig(*mmConfig, "", "")
 		assert.Equal(t, true, config.MovedBoardsReadOnly)
+
+		mmConfig.PluginSettings.Plugins = make(map[string]map[string]interface{})
+		config = createBoardsConfig(*mmConfig, "", "")
+		assert.Equal(t, true, config.MovedBoardsReadOnly, "a missing plugin section reads as on")
 	})
 }
 

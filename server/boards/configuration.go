@@ -121,10 +121,7 @@ func (b *BoardsApp) OnConfigurationChange() error {
 		legacyMode = true
 	}
 
-	movedBoardsReadOnly := false
-	if mmconfig.PluginSettings.Plugins[PluginName][MovedBoardsReadOnlyName] == true {
-		movedBoardsReadOnly = true
-	}
+	movedBoardsReadOnly := getPluginSettingBool(*mmconfig, MovedBoardsReadOnlyName, MovedBoardsReadOnlyDefault)
 
 	configuration := &configuration{
 		EnablePublicSharedBoards: enableShareBoards,

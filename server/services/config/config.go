@@ -76,6 +76,12 @@ type Configuration struct {
 	NotifyFreqBoardSeconds int `json:"notify_freq_board_seconds" mapstructure:"notify_freq_board_seconds"`
 }
 
+// MovedBoardsReadOnlyActive reports whether boards moved to the new version of
+// Boards are read-only. It only applies in Legacy Mode.
+func (c *Configuration) MovedBoardsReadOnlyActive() bool {
+	return c.LegacyMode && c.MovedBoardsReadOnly
+}
+
 // ReadConfigFile read the configuration from the filesystem.
 func ReadConfigFile(configFilePath string) (*Configuration, error) {
 	if configFilePath == "" {
@@ -106,7 +112,7 @@ func ReadConfigFile(configFilePath string) (*Configuration, error) {
 	viper.SetDefault("LocalModeSocketLocation", "/var/tmp/focalboard_local.socket")
 	viper.SetDefault("EnablePublicSharedBoards", false)
 	viper.SetDefault("LegacyMode", false)
-	viper.SetDefault("MovedBoardsReadOnly", false)
+	viper.SetDefault("MovedBoardsReadOnly", true)
 	viper.SetDefault("AuthMode", "native")
 	viper.SetDefault("NotifyFreqCardSeconds", 120)    // 2 minutes after last card edit
 	viper.SetDefault("NotifyFreqBoardSeconds", 86400) // 1 day after last card edit
