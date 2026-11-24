@@ -37,10 +37,7 @@ func TestSetConfiguration(t *testing.T) {
 		MaxFileSize: model.NewPointer[int64](1024 * 1024),
 	}
 
-	days := 365
-	baseDataRetentionSettings := &model.DataRetentionSettings{
-		BoardsRetentionDays: &days,
-	}
+	baseDataRetentionSettings := &model.DataRetentionSettings{}
 	usernameRef := "username"
 	baseTeamSettings := &model.TeamSettings{
 		TeammateNameDisplay: &usernameRef,

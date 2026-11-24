@@ -18,7 +18,7 @@ var (
 
 // SubscriptionDeliverSlashAttachments notifies a user that changes were made to a block they are subscribed to.
 func (pd *PluginDelivery) SubscriptionDeliverSlackAttachments(teamID string, subscriberID string, subscriptionType model.SubscriberType,
-	attachments []*mm_model.SlackAttachment) error {
+	attachments []*mm_model.MessageAttachment) error {
 	// check subscriber is member of channel
 	_, err := pd.api.GetUserByID(subscriberID)
 	if err != nil {
@@ -39,7 +39,7 @@ func (pd *PluginDelivery) SubscriptionDeliverSlackAttachments(teamID string, sub
 		ChannelId: channelID,
 	}
 
-	mm_model.ParseSlackAttachment(post, attachments)
+	mm_model.ParseMessageAttachment(post, attachments)
 
 	_, err = pd.api.CreatePost(post)
 	return err

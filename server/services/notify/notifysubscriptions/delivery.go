@@ -13,5 +13,5 @@ import (
 // channels server via plugin API.
 type SubscriptionDelivery interface {
 	SubscriptionDeliverSlackAttachments(teamID string, subscriberID string, subscriberType model.SubscriberType,
-		attachments []*mm_model.SlackAttachment) error
+		attachments []*mm_model.MessageAttachment) error
 }

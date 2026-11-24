@@ -112,8 +112,8 @@ func execTemplate(w io.Writer, name string, opts DiffConvOpts, def string, data 
 }
 
 // Diffs2SlackAttachments converts a slice of `Diff` to slack attachments to be used in a post.
-func Diffs2SlackAttachments(diffs []*Diff, opts DiffConvOpts) ([]*mm_model.SlackAttachment, error) {
-	var attachments []*mm_model.SlackAttachment
+func Diffs2SlackAttachments(diffs []*Diff, opts DiffConvOpts) ([]*mm_model.MessageAttachment, error) {
+	var attachments []*mm_model.MessageAttachment
 	merr := merror.New()
 
 	for _, d := range diffs {
@@ -133,13 +133,13 @@ func Diffs2SlackAttachments(diffs []*Diff, opts DiffConvOpts) ([]*mm_model.Slack
 	return attachments, merr.ErrorOrNil()
 }
 
-func cardDiff2SlackAttachment(cardDiff *Diff, opts DiffConvOpts) (*mm_model.SlackAttachment, error) {
+func cardDiff2SlackAttachment(cardDiff *Diff, opts DiffConvOpts) (*mm_model.MessageAttachment, error) {
 	// sanity check
 	if cardDiff.NewBlock == nil && cardDiff.OldBlock == nil {
 		return nil, nil
 	}
 
-	attachment := &mm_model.SlackAttachment{}
+	attachment := &mm_model.MessageAttachment{}
 	buf := &bytes.Buffer{}
 
 	// card added
@@ -201,9 +201,9 @@ func cardDiff2SlackAttachment(cardDiff *Diff, opts DiffConvOpts) (*mm_model.Slac
 	return attachment, nil
 }
 
-func appendTitleChanges(fields []*mm_model.SlackAttachmentField, cardDiff *Diff) []*mm_model.SlackAttachmentField {
+func appendTitleChanges(fields []*mm_model.MessageAttachmentField, cardDiff *Diff) []*mm_model.MessageAttachmentField {
 	if cardDiff.NewBlock.Title != cardDiff.OldBlock.Title {
-		fields = append(fields, &mm_model.SlackAttachmentField{
+		fields = append(fields, &mm_model.MessageAttachmentField{
 			Short: false,
 			Title: "Title",
 			Value: fmt.Sprintf("%s  ~~`%s`~~", stripNewlines(cardDiff.NewBlock.Title), stripNewlines(cardDiff.OldBlock.Title)),
@@ -212,7 +212,7 @@ func appendTitleChanges(fields []*mm_model.SlackAttachmentField, cardDiff *Diff)
 	return fields
 }
 
-func appendPropertyChanges(fields []*mm_model.SlackAttachmentField, cardDiff *Diff) []*mm_model.SlackAttachmentField {
+func appendPropertyChanges(fields []*mm_model.MessageAttachmentField, cardDiff *Diff) []*mm_model.MessageAttachmentField {
 	if len(cardDiff.PropDiffs) == 0 {
 		return fields
 	}
@@ -229,7 +229,7 @@ func appendPropertyChanges(fields []*mm_model.SlackAttachmentField, cardDiff *Di
 			val = propDiff.NewValue
 		}
 
-		fields = append(fields, &mm_model.SlackAttachmentField{
+		fields = append(fields, &mm_model.MessageAttachmentField{
 			Short: false,
 			Title: propDiff.Name,
 			Value: val,
@@ -238,7 +238,7 @@ func appendPropertyChanges(fields []*mm_model.SlackAttachmentField, cardDiff *Di
 	return fields
 }
 
-func appendCommentChanges(fields []*mm_model.SlackAttachmentField, cardDiff *Diff) []*mm_model.SlackAttachmentField {
+func appendCommentChanges(fields []*mm_model.MessageAttachmentField, cardDiff *Diff) []*mm_model.MessageAttachmentField {
 	for _, child := range cardDiff.Diffs {
 		if child.BlockType == model.TypeComment {
 			var format string
@@ -256,7 +256,7 @@ func appendCommentChanges(fields []*mm_model.SlackAttachmentField, cardDiff *Dif
 			}
 
 			if format != "" {
-				fields = append(fields, &mm_model.SlackAttachmentField{
+				fields = append(fields, &mm_model.MessageAttachmentField{
 					Short: false,
 					Title: "Comment by " + makeAuthorsList(child.Authors, "unknown_user"), // todo:  localize this when server has i18n
 					Value: fmt.Sprintf(format, msg),
@@ -267,7 +267,7 @@ func appendCommentChanges(fields []*mm_model.SlackAttachmentField, cardDiff *Dif
 	return fields
 }
 
-func appendAttachmentChanges(fields []*mm_model.SlackAttachmentField, cardDiff *Diff) []*mm_model.SlackAttachmentField {
+func appendAttachmentChanges(fields []*mm_model.MessageAttachmentField, cardDiff *Diff) []*mm_model.MessageAttachmentField {
 	for _, child := range cardDiff.Diffs {
 		if child.BlockType == model.TypeAttachment {
 			var format string
@@ -281,7 +281,7 @@ func appendAttachmentChanges(fields []*mm_model.SlackAttachmentField, cardDiff *
 			}
 
 			if format != "" {
-				fields = append(fields, &mm_model.SlackAttachmentField{
+				fields = append(fields, &mm_model.MessageAttachmentField{
 					Short: false,
 					Title: "Changed by " + makeAuthorsList(child.Authors, "unknown_user"), // TODO:  localize this when server has i18n
 					Value: fmt.Sprintf(format, msg),
@@ -292,7 +292,7 @@ func appendAttachmentChanges(fields []*mm_model.SlackAttachmentField, cardDiff *
 	return fields
 }
 
-func appendContentChanges(fields []*mm_model.SlackAttachmentField, cardDiff *Diff, logger mlog.LoggerIFace) []*mm_model.SlackAttachmentField {
+func appendContentChanges(fields []*mm_model.MessageAttachmentField, cardDiff *Diff, logger mlog.LoggerIFace) []*mm_model.MessageAttachmentField {
 	for _, child := range cardDiff.Diffs {
 		var opAdd, opDelete bool
 		var opString string
@@ -356,7 +356,7 @@ func appendContentChanges(fields []*mm_model.SlackAttachmentField, cardDiff *Dif
 			continue
 		}
 
-		fields = append(fields, &mm_model.SlackAttachmentField{
+		fields = append(fields, &mm_model.MessageAttachmentField{
 			Short: false,
 			Title: "Description",
 			Value: markdown,

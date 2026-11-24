@@ -63,7 +63,7 @@ jobs:
       with:
         go-version-file: focalboard/go.mod
     - name: set up golangci-lint
-      run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.64.8
+      run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
     - name: Lint & test server
       run: cd focalboard; make server-ci
       
@@ -153,3 +153,12 @@ jobs:
           name: e2e-playwright-report
           path: focalboard/e2e/playwright-report/
           retention-days: 7
+
+      - name: Upload Mattermost server logs
+        if: always()
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        with:
+          name: e2e-server-logs
+          path: focalboard/e2e/logs/
+          retention-days: 7
+          if-no-files-found: ignore
