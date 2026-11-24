@@ -407,6 +407,13 @@ func (a *API) handleUploadFile(w http.ResponseWriter, r *http.Request) {
 	auditRec.AddMeta("teamID", board.TeamID)
 	auditRec.AddMeta("filename", handle.Filename)
 
+	// Some storage backends (e.g. Azure Blob) cannot store an empty file, so
+	// reject it here with a clear error instead of failing in the backend.
+	if handle.Size == 0 {
+		a.errorResponse(w, r, model.NewErrBadRequest("file is empty"))
+		return
+	}
+
 	fileID, err := a.app.SaveFile(file, board.TeamID, boardID, handle.Filename, board.IsTemplate)
 	if err != nil {
 		a.errorResponse(w, r, err)

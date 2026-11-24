@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	defaultTemplateVersion = 7 // bump this number to force default templates to be re-imported
+	defaultTemplateVersion = 8 // bump this number to force default templates to be re-imported
 )
 
 func (a *App) InitTemplates() error {
