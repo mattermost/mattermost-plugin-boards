@@ -11,6 +11,7 @@ import (
 	"github.com/mattermost/mattermost-plugin-boards/server/services/config"
 
 	mm_model "github.com/mattermost/mattermost/server/public/model"
+	"github.com/mattermost/mattermost/server/v8/platform/shared/filestore"
 )
 
 const defaultS3Timeout = 60 * 1000 // 60 seconds
@@ -21,42 +22,7 @@ const defaultS3Timeout = 60 * 1000 // 60 seconds
 const defaultBoardsRetentionDays = 365
 
 func createBoardsConfig(mmconfig mm_model.Config, baseURL string, serverID string) *config.Configuration {
-	filesS3Config := config.AmazonS3Config{}
-	if mmconfig.FileSettings.AmazonS3AccessKeyId != nil {
-		filesS3Config.AccessKeyID = *mmconfig.FileSettings.AmazonS3AccessKeyId
-	}
-	if mmconfig.FileSettings.AmazonS3SecretAccessKey != nil {
-		filesS3Config.SecretAccessKey = *mmconfig.FileSettings.AmazonS3SecretAccessKey
-	}
-	if mmconfig.FileSettings.AmazonS3Bucket != nil {
-		filesS3Config.Bucket = *mmconfig.FileSettings.AmazonS3Bucket
-	}
-	if mmconfig.FileSettings.AmazonS3PathPrefix != nil {
-		filesS3Config.PathPrefix = *mmconfig.FileSettings.AmazonS3PathPrefix
-	}
-	if mmconfig.FileSettings.AmazonS3Region != nil {
-		filesS3Config.Region = *mmconfig.FileSettings.AmazonS3Region
-	}
-	if mmconfig.FileSettings.AmazonS3Endpoint != nil {
-		filesS3Config.Endpoint = *mmconfig.FileSettings.AmazonS3Endpoint
-	}
-	if mmconfig.FileSettings.AmazonS3SSL != nil {
-		filesS3Config.SSL = *mmconfig.FileSettings.AmazonS3SSL
-	}
-	if mmconfig.FileSettings.AmazonS3SignV2 != nil {
-		filesS3Config.SignV2 = *mmconfig.FileSettings.AmazonS3SignV2
-	}
-	if mmconfig.FileSettings.AmazonS3SSE != nil {
-		filesS3Config.SSE = *mmconfig.FileSettings.AmazonS3SSE
-	}
-	if mmconfig.FileSettings.AmazonS3Trace != nil {
-		filesS3Config.Trace = *mmconfig.FileSettings.AmazonS3Trace
-	}
-	if mmconfig.FileSettings.AmazonS3RequestTimeoutMilliseconds != nil && *mmconfig.FileSettings.AmazonS3RequestTimeoutMilliseconds > 0 {
-		filesS3Config.Timeout = *mmconfig.FileSettings.AmazonS3RequestTimeoutMilliseconds
-	} else {
-		filesS3Config.Timeout = defaultS3Timeout
-	}
+	filesBackendSettings := createFilesBackendSettings(mmconfig)
 
 	enableTelemetry := false
 	if mmconfig.LogSettings.EnableDiagnostics != nil {
@@ -96,9 +62,9 @@ func createBoardsConfig(mmconfig mm_model.Config, baseURL string, serverID strin
 		UseSSL:                   false,
 		SecureCookie:             true,
 		WebPath:                  path.Join(*mmconfig.PluginSettings.Directory, "focalboard", "pack"),
-		FilesDriver:              *mmconfig.FileSettings.DriverName,
-		FilesPath:                *mmconfig.FileSettings.Directory,
-		FilesS3Config:            filesS3Config,
+		FilesDriver:              filesBackendSettings.DriverName,
+		FilesPath:                filesBackendSettings.Directory,
+		FilesBackendSettings:     filesBackendSettings,
 		MaxFileSize:              *mmconfig.FileSettings.MaxFileSize,
 		Telemetry:                enableTelemetry,
 		TelemetryID:              serverID,
@@ -160,4 +126,33 @@ func getPluginSettingInt(mmConfig mm_model.Config, key string, def int) int {
 		return def
 	}
 	return int(math.Round(valFloat))
+}
+
+// createFilesBackendSettings builds the file backend settings from
+// Mattermost's FileSettings using the same helper the Mattermost server uses,
+// so every driver Mattermost supports (local, amazons3, azureblob, ...) is
+// configured the same way here.
+func createFilesBackendSettings(mmconfig mm_model.Config) filestore.FileBackendSettings {
+	// Work on a copy so filling in defaults for unset fields never touches the
+	// caller's config. SetDefaults only replaces nil pointers.
+	fileSettings := mmconfig.FileSettings
+	fileSettings.SetDefaults(false)
+
+	skipVerify := mmconfig.ServiceSettings.EnableInsecureOutgoingConnections != nil &&
+		*mmconfig.ServiceSettings.EnableInsecureOutgoingConnections
+
+	allowedUntrustedInternalConnections := ""
+	if mmconfig.ServiceSettings.AllowedUntrustedInternalConnections != nil {
+		allowedUntrustedInternalConnections = *mmconfig.ServiceSettings.AllowedUntrustedInternalConnections
+	}
+
+	// Boards has always honored AmazonS3SSE as configured, so keep doing that
+	// rather than gating it on the compliance license.
+	settings := filestore.NewFileBackendSettingsFromConfig(&fileSettings, true, skipVerify, allowedUntrustedInternalConnections)
+
+	if settings.DriverName == mm_model.ImageDriverS3 && settings.AmazonS3RequestTimeoutMilliseconds <= 0 {
+		settings.AmazonS3RequestTimeoutMilliseconds = defaultS3Timeout
+	}
+
+	return settings
 }
