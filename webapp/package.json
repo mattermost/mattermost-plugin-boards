@@ -47,7 +47,7 @@
 		"draft-js": "^0.11.7",
 		"emoji-mart": "^3.0.1",
 		"fullcalendar": "6.1.21",
-		"immutable": "3.7.6",
+		"immutable": "3.8.4",
 		"lodash": "^4.18.1",
 		"marked": "^4.0.12",
 		"mattermost-redux": "10.8.0",
