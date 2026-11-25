@@ -113,6 +113,11 @@ class Constants {
             displayName: 'Pусский',
         },
         {
+            code: 'fa',
+            name: 'persian',
+            displayName: 'فارسی',
+        },
+        {
             code: 'zh-tw',
             name: 'traditional-chinese',
             displayName: '中文 (繁體)',
