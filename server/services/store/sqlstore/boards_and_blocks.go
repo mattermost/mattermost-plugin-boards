@@ -159,6 +159,9 @@ func (s *SQLStore) duplicateBoard(db sq.BaseRunner, boardID string, userID strin
 	board.IsTemplate = asTemplate
 	board.CreatedBy = userID
 	board.ChannelID = ""
+	// card prefixes must be unique per team; keep card_count so the copied
+	// cards' numbers aren't reissued if a new prefix is set later
+	board.CardPrefix = ""
 
 	if toTeam != "" {
 		board.TeamID = toTeam

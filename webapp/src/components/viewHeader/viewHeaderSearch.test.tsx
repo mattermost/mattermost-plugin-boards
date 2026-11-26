@@ -56,7 +56,7 @@ describe('components/viewHeader/ViewHeaderSearch', () => {
                 </ReduxProvider>,
             ),
         )
-        const elementSearchText = screen.getByPlaceholderText('Search cards')
+        const elementSearchText = screen.getByPlaceholderText('Search cards or ticket codes')
         userEvent.type(elementSearchText, 'Hello')
         expect(container).toMatchSnapshot()
     })

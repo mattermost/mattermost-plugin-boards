@@ -5,7 +5,7 @@ import React, {useCallback, useEffect, useRef, useState, Fragment, useMemo} from
 import {FormattedMessage, useIntl, IntlShape} from 'react-intl'
 
 import {BlockIcons} from '../../blockIcons'
-import {Card} from '../../blocks/card'
+import {Card, formatTicketCode} from '../../blocks/card'
 import {BoardView} from '../../blocks/boardView'
 import {Board} from '../../blocks/board'
 import {CommentBlock} from '../../blocks/commentBlock'
@@ -156,6 +156,8 @@ const CardDetail = (props: Props): React.JSX.Element|null => {
         return null
     }
 
+    const ticketCode = formatTicketCode(props.board.cardPrefix, card.fields.cardNumber)
+
     const blocks = useMemo(() => props.contents.flatMap((value: Block | Block[]): BlockData<any> => {
         const v: Block = Array.isArray(value) ? value[0] : value
 
@@ -220,6 +222,24 @@ const CardDetail = (props: Props): React.JSX.Element|null => {
                             />
                         </Button>
                     </div>}
+
+                {ticketCode ? (
+                    <div
+                        className='ticket-code'
+                        role='button'
+                        tabIndex={0}
+                        title={intl.formatMessage({id: 'CardDetail.ticket-code-copy', defaultMessage: 'Click to copy ticket code'})}
+                        onClick={() => Utils.copyTextToClipboard(ticketCode)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                Utils.copyTextToClipboard(ticketCode)
+                            }
+                        }}
+                    >
+                        {ticketCode}
+                    </div>
+                ) : null}
 
                 <EditableArea
                     ref={titleRef}

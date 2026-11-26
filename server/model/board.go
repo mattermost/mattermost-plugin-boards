@@ -6,6 +6,8 @@ package model
 import (
 	"encoding/json"
 	"io"
+	"regexp"
+	"strings"
 	"time"
 
 	mmModel "github.com/mattermost/mattermost/server/public/model"
@@ -32,7 +34,11 @@ const (
 	BoardSearchFieldNone         BoardSearchField = ""
 	BoardSearchFieldTitle        BoardSearchField = "title"
 	BoardSearchFieldPropertyName BoardSearchField = "property_name"
+	BoardSearchFieldCardPrefix   BoardSearchField = "card_prefix"
 )
+
+// cardPrefixRegex matches a valid ticket code prefix: 1-10 uppercase letters or digits.
+var cardPrefixRegex = regexp.MustCompile(`^[A-Z0-9]{1,10}$`)
 
 // Board groups a set of blocks and its layout
 // swagger:model
@@ -97,6 +103,14 @@ type Board struct {
 	// required: false
 	CardProperties []map[string]interface{} `json:"cardProperties"`
 
+	// The short prefix used for ticket codes (e.g. "PROJ", "BUG")
+	// required: false
+	CardPrefix string `json:"cardPrefix"`
+
+	// The auto-incrementing counter for card ticket numbers
+	// required: false
+	CardCount int64 `json:"cardCount"`
+
 	// The creation time in miliseconds since the current epoch
 	// required: true
 	CreateAt int64 `json:"createAt"`
@@ -155,6 +169,10 @@ type BoardPatch struct {
 	// Indicates if the board shows the description on the interface
 	// required: false
 	ChannelID *string `json:"channelId"`
+
+	// The short prefix used for ticket codes (e.g. "PROJ", "BUG")
+	// required: false
+	CardPrefix *string `json:"cardPrefix"`
 
 	// The board updated properties
 	// required: false
@@ -297,6 +315,10 @@ func (p *BoardPatch) Patch(board *Board) *Board {
 		board.ChannelID = *p.ChannelID
 	}
 
+	if p.CardPrefix != nil {
+		board.CardPrefix = NormalizeCardPrefix(*p.CardPrefix)
+	}
+
 	for key, property := range p.UpdatedProperties {
 		board.Properties[key] = property
 	}
@@ -364,6 +386,17 @@ func IsBoardMinimumRoleValid(r BoardRole) bool {
 	return r == BoardRoleNone || r == BoardRoleAdmin || r == BoardRoleEditor || r == BoardRoleCommenter || r == BoardRoleViewer
 }
 
+// NormalizeCardPrefix trims and uppercases a ticket code prefix.
+func NormalizeCardPrefix(prefix string) string {
+	return strings.ToUpper(strings.TrimSpace(prefix))
+}
+
+// IsCardPrefixValid reports whether prefix is empty (no ticket codes) or
+// consists of 1-10 uppercase letters or digits.
+func IsCardPrefixValid(prefix string) bool {
+	return prefix == "" || cardPrefixRegex.MatchString(prefix)
+}
+
 func (p *BoardPatch) IsValid() error {
 	if p.Type != nil && !IsBoardTypeValid(*p.Type) {
 		return InvalidBoardErr{"invalid-board-type"}
@@ -375,6 +408,10 @@ func (p *BoardPatch) IsValid() error {
 
 	if p.ChannelID != nil && *p.ChannelID != "" && !mmModel.IsValidId(*p.ChannelID) {
 		return InvalidBoardErr{"invalid-channel-id"}
+	}
+
+	if p.CardPrefix != nil && !IsCardPrefixValid(NormalizeCardPrefix(*p.CardPrefix)) {
+		return InvalidBoardErr{"invalid-card-prefix"}
 	}
 
 	return ValidateCardPropertyTemplates(p.UpdatedCardProperties)
@@ -427,6 +464,10 @@ func (b *Board) baseValidation() error {
 		return InvalidBoardErr{"invalid-board-minimum-role"}
 	}
 
+	if !IsCardPrefixValid(b.CardPrefix) {
+		return InvalidBoardErr{"invalid-card-prefix"}
+	}
+
 	return nil
 }
 
@@ -456,6 +497,8 @@ func BoardSearchFieldFromString(field string) (BoardSearchField, error) {
 		return BoardSearchFieldTitle, nil
 	case string(BoardSearchFieldPropertyName):
 		return BoardSearchFieldPropertyName, nil
+	case string(BoardSearchFieldCardPrefix):
+		return BoardSearchFieldCardPrefix, nil
 	}
 	return BoardSearchFieldNone, ErrInvalidBoardSearchField
 }

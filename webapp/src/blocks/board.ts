@@ -39,6 +39,8 @@ type Board = {
     templateVersion: number
     properties: Record<string, string | string[]>
     cardProperties: IPropertyTemplate[]
+    cardPrefix?: string
+    cardCount?: number
 
     createAt: number
     updateAt: number
@@ -52,6 +54,7 @@ type BoardPatch = {
     description?: string
     icon?: string
     showDescription?: boolean
+    cardPrefix?: string
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     updatedProperties?: Record<string, any>
     deletedProperties?: string[]
@@ -98,6 +101,14 @@ interface IPropertyTemplate {
     name: string
     type: PropertyTypeEnum
     options: IPropertyOption[]
+}
+
+const maxCardPrefixLength = 10
+
+// normalizeCardPrefix uppercases a ticket code prefix and drops anything the
+// server would reject: only A-Z and 0-9, at most 10 characters.
+function normalizeCardPrefix(prefix: string): string {
+    return prefix.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, maxCardPrefixLength)
 }
 
 // A malformed record must not break the rendering of the board or card using it.
@@ -157,6 +168,8 @@ function createBoard(board?: Board): Board {
         templateVersion: board?.templateVersion || 0,
         properties: board?.properties || {},
         cardProperties,
+        cardPrefix: board?.cardPrefix || '',
+        cardCount: board?.cardCount || 0,
         createAt: board?.createAt || now,
         updateAt: board?.updateAt || now,
         deleteAt: board?.deleteAt || 0,
@@ -347,6 +360,7 @@ export {
     createPatchesFromBoards,
     createPatchesFromBoardsAndBlocks,
     createCardPropertiesPatches,
+    normalizeCardPrefix,
     safePropertyString,
     safePropertyValue,
 }

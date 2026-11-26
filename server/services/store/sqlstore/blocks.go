@@ -914,6 +914,18 @@ func (s *SQLStore) duplicateBlock(db sq.BaseRunner, boardID string, blockID stri
 	}
 	allBlocks = append([]*model.Block{rootBlock}, allBlocks...)
 
+	if rootBlock != nil && rootBlock.Type == model.TypeCard {
+		if asTemplate {
+			delete(rootBlock.Fields, model.BlockFieldCardNumber)
+		} else {
+			cardNumber, err := s.incrementBoardCardCount(db, boardID)
+			if err != nil {
+				return nil, err
+			}
+			rootBlock.Fields[model.BlockFieldCardNumber] = cardNumber
+		}
+	}
+
 	allBlocks = model.GenerateBlockIDs(allBlocks, nil)
 	if err := s.insertBlocks(db, allBlocks, userID); err != nil {
 		return nil, err

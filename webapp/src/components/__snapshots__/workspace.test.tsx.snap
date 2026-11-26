@@ -338,6 +338,24 @@ exports[`src/components/workspace return workspace and showcard 1`] = `
                 />
               </div>
               <div
+                class="card-prefix-row"
+              >
+                <span
+                  class="card-prefix-label"
+                >
+                  <i
+                    class="CompassIcon icon-ticket-outline"
+                  />
+                  Ticket prefix
+                </span>
+                <input
+                  class="Editable card-prefix-input"
+                  placeholder="e.g. PROJ"
+                  title=""
+                  value=""
+                />
+              </div>
+              <div
                 class="description"
               >
                 <div
@@ -472,7 +490,7 @@ exports[`src/components/workspace return workspace and showcard 1`] = `
               />
               <input
                 class="Editable "
-                placeholder="Search cards"
+                placeholder="Search cards or ticket codes"
               />
             </div>
             <div
@@ -926,7 +944,7 @@ exports[`src/components/workspace return workspace readonly and showcard 1`] = `
               />
               <input
                 class="Editable "
-                placeholder="Search cards"
+                placeholder="Search cards or ticket codes"
               />
             </div>
           </div>
@@ -1458,6 +1476,24 @@ exports[`src/components/workspace should match snapshot 1`] = `
                 />
               </div>
               <div
+                class="card-prefix-row"
+              >
+                <span
+                  class="card-prefix-label"
+                >
+                  <i
+                    class="CompassIcon icon-ticket-outline"
+                  />
+                  Ticket prefix
+                </span>
+                <input
+                  class="Editable card-prefix-input"
+                  placeholder="e.g. PROJ"
+                  title=""
+                  value=""
+                />
+              </div>
+              <div
                 class="description"
               >
                 <div
@@ -1592,7 +1628,7 @@ exports[`src/components/workspace should match snapshot 1`] = `
               />
               <input
                 class="Editable "
-                placeholder="Search cards"
+                placeholder="Search cards or ticket codes"
               />
             </div>
             <div
@@ -2046,7 +2082,7 @@ exports[`src/components/workspace should match snapshot with readonly 1`] = `
               />
               <input
                 class="Editable "
-                placeholder="Search cards"
+                placeholder="Search cards or ticket codes"
               />
             </div>
           </div>

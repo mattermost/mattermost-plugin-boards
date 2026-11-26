@@ -52,13 +52,17 @@ class UndoManager {
         }
         this.isExecuting = true
 
-        if (action === 'redo') {
-            command.value = await command[action]()
-        } else {
-            await command[action](command.value)
+        // Reset the flag even if the command throws, so undo/redo keep working
+        // and the failed command can be retried.
+        try {
+            if (action === 'redo') {
+                command.value = await command[action]()
+            } else {
+                await command[action](command.value)
+            }
+        } finally {
+            this.isExecuting = false
         }
-
-        this.isExecuting = false
         return this
     }
 

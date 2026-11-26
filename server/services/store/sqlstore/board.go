@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	mmModel "github.com/mattermost/mattermost/server/public/model"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/lib/pq"
 	"github.com/mattermost/mattermost-plugin-boards/server/model"
 
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
@@ -43,6 +45,8 @@ func boardFields(tableAlias string) []string {
 		tableAlias + "template_version",
 		"COALESCE(" + tableAlias + "properties, '{}')",
 		"COALESCE(" + tableAlias + "card_properties, '[]')",
+		"COALESCE(" + tableAlias + "card_prefix, '')",
+		"COALESCE(" + tableAlias + "card_count, 0)",
 		tableAlias + "create_at",
 		tableAlias + "update_at",
 		tableAlias + "delete_at",
@@ -66,6 +70,8 @@ func boardHistoryFields() []string {
 		"template_version",
 		"COALESCE(properties, '{}')",
 		"COALESCE(card_properties, '[]')",
+		"COALESCE(card_prefix, '')",
+		"COALESCE(card_count, 0)",
 		"COALESCE(create_at, 0)",
 		"COALESCE(update_at, 0)",
 		"COALESCE(delete_at, 0)",
@@ -109,6 +115,8 @@ func (s *SQLStore) boardsFromRows(rows *sql.Rows) ([]*model.Board, error) {
 			&board.TemplateVersion,
 			&propertiesBytes,
 			&cardPropertiesBytes,
+			&board.CardPrefix,
+			&board.CardCount,
 			&board.CreateAt,
 			&board.UpdateAt,
 			&board.DeleteAt,
@@ -303,6 +311,14 @@ func (s *SQLStore) insertBoard(db sq.BaseRunner, board *model.Board, userID stri
 		return nil, fmt.Errorf("insertBoard error occurred while fetching existing board %s: %w", board.ID, err)
 	}
 
+	// Creating or importing a board must not fail because its optional card
+	// prefix is already taken in the team, so drop it instead.
+	if existingBoard == nil {
+		if err := s.dropCardPrefixIfInUse(db, board); err != nil {
+			return nil, err
+		}
+	}
+
 	insertQuery := s.getQueryBuilder(db).Insert("").
 		Columns(boardFields("")...)
 
@@ -326,6 +342,8 @@ func (s *SQLStore) insertBoard(db sq.BaseRunner, board *model.Board, userID stri
 		"template_version": board.TemplateVersion,
 		"properties":       propertiesBytes,
 		"card_properties":  cardPropertiesBytes,
+		"card_prefix":      cardPrefixValue(board.CardPrefix),
+		"card_count":       board.CardCount,
 		"create_at":        board.CreateAt,
 		"update_at":        board.UpdateAt,
 		"delete_at":        board.DeleteAt,
@@ -346,6 +364,7 @@ func (s *SQLStore) insertBoard(db sq.BaseRunner, board *model.Board, userID stri
 			Set("template_version", board.TemplateVersion).
 			Set("properties", propertiesBytes).
 			Set("card_properties", cardPropertiesBytes).
+			Set("card_prefix", cardPrefixValue(board.CardPrefix)).
 			Set("update_at", board.UpdateAt).
 			Set("delete_at", board.DeleteAt)
 
@@ -382,7 +401,85 @@ func (s *SQLStore) patchBoard(db sq.BaseRunner, boardID string, boardPatch *mode
 	}
 
 	board := boardPatch.Patch(existingBoard)
-	return s.insertBoard(db, board, userID)
+
+	if boardPatch.CardPrefix != nil && board.CardPrefix != "" {
+		inUse, err := s.isCardPrefixInUse(db, board.TeamID, board.CardPrefix, board.ID)
+		if err != nil {
+			return nil, err
+		}
+		if inUse {
+			return nil, errCardPrefixInUse(board.CardPrefix)
+		}
+	}
+
+	updatedBoard, err := s.insertBoard(db, board, userID)
+	if err != nil && boardPatch.CardPrefix != nil && isUniqueViolation(err) {
+		// another board took the prefix after the check above
+		return nil, errCardPrefixInUse(board.CardPrefix)
+	}
+	return updatedBoard, err
+}
+
+func errCardPrefixInUse(prefix string) error {
+	return model.NewErrBadRequest(fmt.Sprintf("card prefix %s is already used by another board in this team", prefix))
+}
+
+// cardPrefixValue stores a missing card prefix as NULL so that the
+// (team_id, card_prefix) unique constraint only applies to boards with one.
+func cardPrefixValue(prefix string) interface{} {
+	if prefix == "" {
+		return nil
+	}
+	return prefix
+}
+
+// dropCardPrefixIfInUse clears board.CardPrefix if another board in the team
+// already uses it.
+func (s *SQLStore) dropCardPrefixIfInUse(db sq.BaseRunner, board *model.Board) error {
+	if board.CardPrefix == "" {
+		return nil
+	}
+	inUse, err := s.isCardPrefixInUse(db, board.TeamID, board.CardPrefix, board.ID)
+	if err != nil {
+		return err
+	}
+	if inUse {
+		s.logger.Warn("dropping card prefix already used by another board in the team",
+			mlog.String("board_id", board.ID),
+			mlog.String("card_prefix", board.CardPrefix),
+		)
+		board.CardPrefix = ""
+	}
+	return nil
+}
+
+// isUniqueViolation reports whether err is a unique constraint violation.
+func isUniqueViolation(err error) bool {
+	var pqErr *pq.Error
+	if errors.As(err, &pqErr) {
+		return pqErr.Code == "23505"
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "Error 1062") || strings.Contains(msg, "UNIQUE constraint failed")
+}
+
+// isCardPrefixInUse reports whether a board other than excludeBoardID in the
+// given team already uses prefix for its ticket codes.
+func (s *SQLStore) isCardPrefixInUse(db sq.BaseRunner, teamID, prefix, excludeBoardID string) (bool, error) {
+	row := s.getQueryBuilder(db).
+		Select("COUNT(*)").
+		From(s.tablePrefix + "boards").
+		Where(sq.Eq{"team_id": teamID}).
+		Where(sq.Eq{"card_prefix": prefix}).
+		Where(sq.NotEq{"id": excludeBoardID}).
+		QueryRow()
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return false, fmt.Errorf("isCardPrefixInUse error for team %s: %w", teamID, err)
+	}
+
+	return count > 0, nil
 }
 
 func (s *SQLStore) deleteBoard(db sq.BaseRunner, boardID, userID string) error {
@@ -422,6 +519,8 @@ func (s *SQLStore) deleteBoardAndChildren(db sq.BaseRunner, boardID, userID stri
 		"template_version": board.TemplateVersion,
 		"properties":       propertiesBytes,
 		"card_properties":  cardPropertiesBytes,
+		"card_prefix":      cardPrefixValue(board.CardPrefix),
+		"card_count":       board.CardCount,
 		"create_at":        board.CreateAt,
 		"update_at":        now,
 		"delete_at":        now,
@@ -846,6 +945,11 @@ func (s *SQLStore) undeleteBoard(db sq.BaseRunner, boardID string, modifiedBy st
 		return nil // undeleting not deleted board is not considered an error (for now)
 	}
 
+	// another board may have taken the prefix while this one was deleted
+	if err := s.dropCardPrefixIfInUse(db, board); err != nil {
+		return err
+	}
+
 	propertiesJSON, err := s.MarshalJSONB(board.Properties)
 	if err != nil {
 		return err
@@ -873,6 +977,8 @@ func (s *SQLStore) undeleteBoard(db sq.BaseRunner, boardID string, modifiedBy st
 		"template_version",
 		"properties",
 		"card_properties",
+		"card_prefix",
+		"card_count",
 		"create_at",
 		"update_at",
 		"delete_at",
@@ -894,6 +1000,8 @@ func (s *SQLStore) undeleteBoard(db sq.BaseRunner, boardID string, modifiedBy st
 		board.TemplateVersion,
 		propertiesJSON,
 		cardPropertiesJSON,
+		cardPrefixValue(board.CardPrefix),
+		board.CardCount,
 		board.CreateAt,
 		now,
 		0,
@@ -1013,16 +1121,16 @@ func (s *SQLStore) searchBoardsForUserInTeam(db sq.BaseRunner, teamID, term, use
 		})
 
 	if term != "" {
-		// break search query into space separated words
-		// and search for all words.
-		// This should later be upgraded to industrial-strength
-		// word tokenizer, that uses much more than space
-		// to break words.
-
+		// Search both title and card_prefix (OR logic) so users can find
+		// boards by their ticket code prefix (e.g. searching "PROJ" finds
+		// the board with card_prefix=PROJ).
 		conditions := sq.And{}
-
 		for _, word := range strings.Split(strings.TrimSpace(term), " ") {
-			conditions = append(conditions, sq.Like{"lower(b.title)": "%" + strings.ToLower(word) + "%"})
+			lowerWord := "%" + strings.ToLower(word) + "%"
+			conditions = append(conditions, sq.Or{
+				sq.Like{"lower(b.title)": lowerWord},
+				sq.Like{"lower(b.card_prefix)": lowerWord},
+			})
 		}
 
 		openBoardsQ = openBoardsQ.Where(conditions)
@@ -1123,15 +1231,23 @@ func (s *SQLStore) searchBoardsForUser(db sq.BaseRunner, term string, searchFiel
 			boardMembersQ = boardMembersQ.Where(where, whereTerm)
 			teamMembersQ = teamMembersQ.Where(where, whereTerm)
 			channelMembersQ = channelMembersQ.Where(where, whereTerm)
+		} else if searchField == model.BoardSearchFieldCardPrefix {
+			conditions := sq.Like{"lower(b.card_prefix)": "%" + strings.ToLower(term) + "%"}
+			boardMembersQ = boardMembersQ.Where(conditions)
+			teamMembersQ = teamMembersQ.Where(conditions)
+			channelMembersQ = channelMembersQ.Where(conditions)
 		} else { // model.BoardSearchFieldTitle
 			// break search query into space separated words
 			// and search for all words.
-			// This should later be upgraded to industrial-strength
-			// word tokenizer, that uses much more than space
-			// to break words.
+			// Also match card_prefix so users can find boards
+			// by typing a ticket code prefix.
 			conditions := sq.And{}
 			for _, word := range strings.Split(strings.TrimSpace(term), " ") {
-				conditions = append(conditions, sq.Like{"lower(b.title)": "%" + strings.ToLower(word) + "%"})
+				lowerWord := "%" + strings.ToLower(word) + "%"
+				conditions = append(conditions, sq.Or{
+					sq.Like{"lower(b.title)": lowerWord},
+					sq.Like{"lower(b.card_prefix)": lowerWord},
+				})
 			}
 
 			boardMembersQ = boardMembersQ.Where(conditions)
@@ -1194,4 +1310,90 @@ func (s *SQLStore) searchBoardsForUser(db sq.BaseRunner, term string, searchFiel
 	defer s.CloseRows(rows)
 
 	return s.boardsFromRows(rows)
+}
+
+// incrementBoardCardCount must run inside a transaction (see the
+// @withTransaction annotation on the store interface): the UPDATE holds the
+// board row lock until commit, so the following SELECT reads this caller's
+// increment and concurrent callers can't observe the same value.
+func (s *SQLStore) incrementBoardCardCount(db sq.BaseRunner, boardID string) (int64, error) {
+	query := s.getQueryBuilder(db).
+		Update(s.tablePrefix+"boards").
+		Set("card_count", sq.Expr("COALESCE(card_count, 0) + 1")).
+		Where(sq.Eq{"id": boardID})
+
+	if _, err := query.Exec(); err != nil {
+		return 0, fmt.Errorf("incrementBoardCardCount error for board %s: %w", boardID, err)
+	}
+
+	// Read back the new count
+	row := s.getQueryBuilder(db).
+		Select("COALESCE(card_count, 0)").
+		From(s.tablePrefix + "boards").
+		Where(sq.Eq{"id": boardID}).
+		QueryRow()
+
+	var count int64
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("incrementBoardCardCount read error for board %s: %w", boardID, err)
+	}
+
+	return count, nil
+}
+
+func (s *SQLStore) getCardByTicketCode(db sq.BaseRunner, boardPrefix string, cardNumber int64, teamID string) (*model.Block, error) {
+	query := s.getQueryBuilder(db).
+		Select(s.blockFields("b")...).
+		From(s.tablePrefix + "blocks AS b").
+		Join(s.tablePrefix + "boards AS bo ON b.board_id = bo.id").
+		Where(sq.Eq{"bo.card_prefix": boardPrefix}).
+		Where(sq.Eq{"bo.team_id": teamID}).
+		Where(sq.Eq{"b.type": model.TypeCard}).
+		Where(sq.Eq{"b.delete_at": 0})
+
+	switch s.dbType {
+	case model.PostgresDBType:
+		query = query.Where(sq.Expr("b.fields->>'"+model.BlockFieldCardNumber+"' = ?", strconv.FormatInt(cardNumber, 10)))
+	case model.MysqlDBType, model.SqliteDBType:
+		query = query.Where(sq.Expr("JSON_EXTRACT(b.fields, '$."+model.BlockFieldCardNumber+"') = ?", cardNumber))
+	}
+
+	rows, err := query.Query()
+	if err != nil {
+		return nil, fmt.Errorf("getCardByTicketCode error: %w", err)
+	}
+	defer s.CloseRows(rows)
+
+	blocks, err := s.blocksFromRows(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	// Find the blocks whose fields.cardNumber matches
+	var matches []*model.Block
+	for _, block := range blocks {
+		if cn, ok := block.Fields[model.BlockFieldCardNumber]; ok {
+			var num int64
+			switch v := cn.(type) {
+			case float64:
+				num = int64(v)
+			case int64:
+				num = v
+			}
+			if num == cardNumber {
+				matches = append(matches, block)
+			}
+		}
+	}
+
+	switch len(matches) {
+	case 0:
+		return nil, model.NewErrNotFound("card with ticket code")
+	case 1:
+		return matches[0], nil
+	default:
+		// card_prefix is unique per team, so this only happens with
+		// inconsistent data.
+		return nil, model.NewErrBadRequest(fmt.Sprintf("ticket code %s-%d is ambiguous: multiple boards in this team use the prefix", boardPrefix, cardNumber))
+	}
 }

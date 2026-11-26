@@ -178,3 +178,36 @@ test('Grouped undo/redo', async () => {
     expect(undoManager.undoDescription).toBe(undefined)
     expect(undoManager.redoDescription).toBe(undefined)
 })
+
+test('Undo/redo keep working after a command throws', async () => {
+    let fail = true
+    const values: string[] = []
+
+    await undoManager.perform(
+        async () => {
+            values.push('a')
+        },
+        async () => {
+            if (fail) {
+                throw new Error('undo failed')
+            }
+            values.pop()
+        },
+        'test',
+    )
+
+    await expect(undoManager.undo()).rejects.toThrow('undo failed')
+
+    // the failed command stays in place and can be retried
+    expect(undoManager.canUndo).toBe(true)
+    expect(undoManager.undoDescription).toBe('test')
+    expect(values).toEqual(['a'])
+
+    fail = false
+    await undoManager.undo()
+    expect(undoManager.canUndo).toBe(false)
+    expect(undoManager.canRedo).toBe(true)
+    expect(values).toEqual([])
+
+    await undoManager.clear()
+})

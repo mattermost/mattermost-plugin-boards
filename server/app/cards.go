@@ -22,6 +22,7 @@ func (a *App) CreateCard(card *model.Card, boardID string, userID string, disabl
 	card.UpdateAt = now
 	card.DeleteAt = 0
 
+	// InsertBlocksAndNotify assigns the card number
 	block := model.Card2Block(card)
 
 	newBlocks, err := a.InsertBlocksAndNotify([]*model.Block{block}, userID, disableNotify)
@@ -33,6 +34,8 @@ func (a *App) CreateCard(card *model.Card, boardID string, userID string, disabl
 	if err != nil {
 		return nil, err
 	}
+
+	a.populateTicketCode(newCard)
 
 	return newCard, nil
 }
@@ -50,12 +53,18 @@ func (a *App) GetCardsForBoard(boardID string, page int, perPage int) ([]*model.
 		return nil, err
 	}
 
+	// Fetch board prefix for ticket code computation
+	board, _ := a.store.GetBoard(boardID)
+
 	cards := make([]*model.Card, 0, len(blocks))
 	for _, blk := range blocks {
 		b := blk
 		if card, err := model.Block2Card(b); err != nil {
 			return nil, fmt.Errorf("Block2Card fail: %w", err)
 		} else {
+			if board != nil {
+				card.TicketCode = model.FormatTicketCode(board.CardPrefix, card.CardNumber)
+			}
 			cards = append(cards, card)
 		}
 	}
@@ -78,6 +87,8 @@ func (a *App) PatchCard(cardPatch *model.CardPatch, cardID string, userID string
 		return nil, err
 	}
 
+	a.populateTicketCode(newCard)
+
 	return newCard, nil
 }
 
@@ -92,5 +103,39 @@ func (a *App) GetCardByID(cardID string) (*model.Card, error) {
 		return nil, err
 	}
 
+	a.populateTicketCode(card)
+
+	return card, nil
+}
+
+// populateTicketCode sets card.TicketCode from its board's card prefix, if any.
+func (a *App) populateTicketCode(card *model.Card) {
+	if card.CardNumber <= 0 {
+		return
+	}
+	board, err := a.store.GetBoard(card.BoardID)
+	if err != nil {
+		return
+	}
+	card.TicketCode = model.FormatTicketCode(board.CardPrefix, card.CardNumber)
+}
+
+func (a *App) GetCardByTicketCode(ticketCode string, teamID string) (*model.Card, error) {
+	prefix, number, err := model.ParseTicketCode(ticketCode)
+	if err != nil {
+		return nil, model.NewErrBadRequest(err.Error())
+	}
+
+	block, err := a.store.GetCardByTicketCode(prefix, number, teamID)
+	if err != nil {
+		return nil, err
+	}
+
+	card, err := model.Block2Card(block)
+	if err != nil {
+		return nil, err
+	}
+
+	card.TicketCode = model.FormatTicketCode(prefix, number)
 	return card, nil
 }
