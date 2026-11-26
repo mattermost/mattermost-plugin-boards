@@ -295,7 +295,10 @@ class Mutator {
                 }
             },
             async () => {
-                await octoClient.patchBoard(boardId, {cardPrefix: oldPrefix})
+                const response = await octoClient.patchBoard(boardId, {cardPrefix: oldPrefix})
+                if (!response.ok) {
+                    throw new Error(`changeBoardCardPrefix undo failed with status ${response.status}`)
+                }
             },
             description,
             this.undoGroupId,
