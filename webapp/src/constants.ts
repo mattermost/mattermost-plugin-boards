@@ -98,6 +98,11 @@ class Constants {
             displayName: '日本語',
         },
         {
+            code: 'fa',
+            name: 'farsi',
+            displayName: 'فارسی',
+        },
+        {
             code: 'fr',
             name: 'french',
             displayName: 'Français',
