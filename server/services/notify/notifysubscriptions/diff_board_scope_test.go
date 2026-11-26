@@ -35,7 +35,7 @@ func (s *historyStore) GetBlockHistory(blockID string, opts model.QueryBlockHist
 }
 
 func (s *historyStore) GetBlockHistoryNewestChildren(parentID string, opts model.QueryBlockHistoryChildOptions) ([]*model.Block, bool, error) {
-	var children []*model.Block
+	children := make([]*model.Block, 0, len(s.blocks))
 	for _, b := range s.blocks {
 		if b.ParentID != parentID {
 			continue
