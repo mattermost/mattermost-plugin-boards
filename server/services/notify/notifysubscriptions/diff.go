@@ -162,7 +162,7 @@ func (dg *diffGenerator) generateDiffsForCard(card *model.Block, schema model.Pr
 	// walk child blocks
 	var childDiffs []*Diff
 	for i := range blocks {
-		if blocks[i].ID == card.ID {
+		if blocks[i].ID == card.ID || blocks[i].BoardID != card.BoardID {
 			continue
 		}
 

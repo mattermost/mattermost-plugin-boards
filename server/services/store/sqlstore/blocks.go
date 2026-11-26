@@ -810,6 +810,9 @@ func (s *SQLStore) getBoardAndCard(db sq.BaseRunner, block *model.Block) (board 
 			return board, card, nil
 		}
 		iter = blocks[0]
+		if iter.BoardID != block.BoardID {
+			break
+		}
 	}
 	board, err = s.getBoard(db, block.BoardID)
 	if err != nil {
