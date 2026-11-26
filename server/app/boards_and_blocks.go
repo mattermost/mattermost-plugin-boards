@@ -27,6 +27,37 @@ func (a *App) CreateBoardsAndBlocks(bab *model.BoardsAndBlocks, userID string, a
 		}
 	}
 
+	// Imported and template blocks keep parent IDs that no longer resolve (e.g. the
+	// board ID from before GenerateBoardsAndBlocksIDs), so only parents found on a
+	// different board, live or deleted, are rejected here.
+	blocksByID := make(map[string]*model.Block, len(bab.Blocks))
+	for _, block := range bab.Blocks {
+		blocksByID[block.ID] = block
+	}
+	storedParents := make(map[string]*model.Block)
+	for _, block := range bab.Blocks {
+		parentID := block.ParentID
+		if parentID == "" || parentID == block.BoardID {
+			continue
+		}
+		if _, ok := boardsByID[parentID]; ok {
+			return nil, newInvalidBlockParentError(block.ID, parentID)
+		}
+		parent, ok := blocksByID[parentID]
+		if !ok {
+			if parent, ok = storedParents[parentID]; !ok {
+				var err error
+				if parent, err = a.getStoredOrDeletedBlock(parentID); err != nil {
+					return nil, err
+				}
+				storedParents[parentID] = parent
+			}
+		}
+		if parent != nil && parent.BoardID != block.BoardID {
+			return nil, newInvalidBlockParentError(block.ID, parentID)
+		}
+	}
+
 	for _, board := range bab.Boards {
 		if err := a.validateBoardChannelReadAccess(userID, board.ChannelID); err != nil {
 			return nil, err
@@ -80,6 +111,26 @@ func (a *App) CreateBoardsAndBlocks(bab *model.BoardsAndBlocks, userID string, a
 	return newBab, nil
 }
 
+// getStoredOrDeletedBlock returns the live block with the given ID, or its latest
+// history entry if it has been deleted, or nil if it never existed.
+func (a *App) getStoredOrDeletedBlock(blockID string) (*model.Block, error) {
+	block, err := a.store.GetBlock(blockID)
+	if err == nil {
+		return block, nil
+	}
+	if !model.IsErrNotFound(err) {
+		return nil, err
+	}
+	history, err := a.store.GetBlockHistory(blockID, model.QueryBlockHistoryOptions{Limit: 1, Descending: true})
+	if err != nil {
+		return nil, err
+	}
+	if len(history) == 0 {
+		return nil, nil
+	}
+	return history[0], nil
+}
+
 func (a *App) PatchBoardsAndBlocks(pbab *model.PatchBoardsAndBlocks, userID string) (*model.BoardsAndBlocks, error) {
 	for _, patch := range pbab.BlockPatches {
 		if patch == nil {
@@ -121,6 +172,19 @@ func (a *App) PatchBoardsAndBlocks(pbab *model.PatchBoardsAndBlocks, userID stri
 			boardCache[block.BoardID] = board
 		}
 		if err = a.validateFileRefsInFields(board.TeamID, block.BoardID, blockID, patch.UpdatedFields); err != nil {
+			return nil, err
+		}
+	}
+
+	for i, patch := range pbab.BlockPatches {
+		if patch == nil || patch.ParentID == nil {
+			continue
+		}
+		block, ok := oldBlocksMap[pbab.BlockIDs[i]]
+		if !ok {
+			continue
+		}
+		if err = a.validateBlockParent(block.BoardID, block.ID, *patch.ParentID, nil); err != nil {
 			return nil, err
 		}
 	}

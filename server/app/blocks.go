@@ -96,6 +96,12 @@ func (a *App) PatchBlockAndNotify(blockID string, blockPatch *model.BlockPatch, 
 		}
 	}
 
+	if blockPatch.ParentID != nil {
+		if err = a.validateBlockParent(oldBlock.BoardID, blockID, *blockPatch.ParentID, nil); err != nil {
+			return nil, err
+		}
+	}
+
 	err = a.store.PatchBlock(blockID, blockPatch, modifiedByID)
 	if err != nil {
 		return nil, err
@@ -169,6 +175,19 @@ func (a *App) PatchBlocksAndNotify(teamID string, blockPatches *model.BlockPatch
 		}
 	}
 
+	for i, patch := range blockPatches.BlockPatches {
+		if patch.ParentID == nil {
+			continue
+		}
+		block, ok := blockByID[blockPatches.BlockIDs[i]]
+		if !ok {
+			continue
+		}
+		if err := a.validateBlockParent(block.BoardID, block.ID, *patch.ParentID, nil); err != nil {
+			return err
+		}
+	}
+
 	if err := a.store.PatchBlocks(blockPatches, modifiedByID); err != nil {
 		return err
 	}
@@ -202,6 +221,35 @@ func (a *App) validateFileRefsInFields(teamID, boardID, blockID string, fields m
 	return nil
 }
 
+// validateBlockParent checks that parentID is empty, the block's own board, or a
+// block on the same board. Blocks in batch are being written together with the
+// block and take precedence over stored blocks with the same ID.
+func (a *App) validateBlockParent(boardID, blockID, parentID string, batch map[string]*model.Block) error {
+	if parentID == "" || parentID == boardID {
+		return nil
+	}
+
+	parent, ok := batch[parentID]
+	if !ok {
+		var err error
+		parent, err = a.store.GetBlock(parentID)
+		if err != nil && !model.IsErrNotFound(err) {
+			return err
+		}
+	}
+
+	if parent == nil || parent.BoardID != boardID {
+		return newInvalidBlockParentError(blockID, parentID)
+	}
+	return nil
+}
+
+// newInvalidBlockParentError must not differ between a missing parent and a
+// parent on another board, so the response does not reveal whether it exists.
+func newInvalidBlockParentError(blockID, parentID string) error {
+	return model.NewErrBadRequest(fmt.Sprintf("invalid parent %s for block %s", parentID, blockID))
+}
+
 func (a *App) InsertBlock(block *model.Block, modifiedByID string) error {
 	return a.InsertBlockAndNotify(block, modifiedByID, false)
 }
@@ -215,6 +263,10 @@ func (a *App) InsertBlockAndNotify(block *model.Block, modifiedByID string, disa
 	}
 
 	if err := a.validateFileRefsInFields(board.TeamID, block.BoardID, block.ID, block.Fields); err != nil {
+		return err
+	}
+
+	if err := a.validateBlockParent(block.BoardID, block.ID, block.ParentID, nil); err != nil {
 		return err
 	}
 
@@ -260,6 +312,16 @@ func (a *App) InsertBlocksAndNotify(blocks []*model.Block, modifiedByID string, 
 	for _, block := range blocks {
 		block.NormalizeLegacyFileFields()
 		if err := a.validateFileRefsInFields(board.TeamID, boardID, block.ID, block.Fields); err != nil {
+			return nil, err
+		}
+	}
+
+	batch := make(map[string]*model.Block, len(blocks))
+	for _, block := range blocks {
+		batch[block.ID] = block
+	}
+	for _, block := range blocks {
+		if err := a.validateBlockParent(boardID, block.ID, block.ParentID, batch); err != nil {
 			return nil, err
 		}
 	}
@@ -499,6 +561,9 @@ func (a *App) getBoardAndCard(block *model.Block) (board *model.Board, card *mod
 		}
 		if err != nil {
 			return board, card, err
+		}
+		if iter == nil || iter.BoardID != block.BoardID {
+			return board, card, nil
 		}
 	}
 	return board, card, nil

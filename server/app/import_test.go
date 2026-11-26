@@ -60,6 +60,8 @@ func TestApp_ImportArchive(t *testing.T) {
 		th.expectBoardImportPermissions("user", opts.TeamID, model.BoardTypePrivate)
 
 		th.Store.EXPECT().CreateBoardsAndBlocks(gomock.AssignableToTypeOf(&model.BoardsAndBlocks{}), "user").Return(babs, nil)
+		th.Store.EXPECT().GetBlock(gomock.Any()).Return(nil, model.NewErrNotFound("block")).AnyTimes()
+		th.Store.EXPECT().GetBlockHistory(gomock.Any(), gomock.Any()).Return([]*model.Block{}, nil).AnyTimes()
 		th.Store.EXPECT().GetMembersForBoard(board.ID).AnyTimes().Return([]*model.BoardMember{boardMember}, nil)
 		th.Store.EXPECT().GetBoard(board.ID).Return(board, nil)
 		th.Store.EXPECT().GetMemberForBoard(board.ID, "user").Return(boardMember, nil)
@@ -566,6 +568,8 @@ func TestImportArchiveImageFileSizeLimit(t *testing.T) {
 		th.API.EXPECT().HasPermissionToTeam("user", teamID, model.PermissionCreatePublicChannel).Return(true).AnyTimes()
 
 		th.Store.EXPECT().CreateBoardsAndBlocks(gomock.AssignableToTypeOf(&model.BoardsAndBlocks{}), "user").Return(babs, nil)
+		th.Store.EXPECT().GetBlock(gomock.Any()).Return(nil, model.NewErrNotFound("block")).AnyTimes()
+		th.Store.EXPECT().GetBlockHistory(gomock.Any(), gomock.Any()).Return([]*model.Block{}, nil).AnyTimes()
 		th.Store.EXPECT().GetMembersForBoard(board.ID).AnyTimes().Return([]*model.BoardMember{}, nil)
 		th.Store.EXPECT().GetBoard(board.ID).AnyTimes().Return(board, nil)
 		th.Store.EXPECT().GetMemberForBoard(board.ID, "user").AnyTimes().Return(&model.BoardMember{
@@ -652,6 +656,8 @@ func TestImportArchiveSkipsEmptyFiles(t *testing.T) {
 	th.API.EXPECT().HasPermissionToTeam("user", teamID, model.PermissionCreatePublicChannel).Return(true).AnyTimes()
 
 	th.Store.EXPECT().CreateBoardsAndBlocks(gomock.AssignableToTypeOf(&model.BoardsAndBlocks{}), "user").Return(babs, nil)
+	th.Store.EXPECT().GetBlock(gomock.Any()).Return(nil, model.NewErrNotFound("block")).AnyTimes()
+	th.Store.EXPECT().GetBlockHistory(gomock.Any(), gomock.Any()).Return([]*model.Block{}, nil).AnyTimes()
 	th.Store.EXPECT().GetMembersForBoard(board.ID).AnyTimes().Return([]*model.BoardMember{}, nil)
 	th.Store.EXPECT().GetBoard(board.ID).AnyTimes().Return(board, nil)
 	th.Store.EXPECT().GetMemberForBoard(board.ID, "user").AnyTimes().Return(&model.BoardMember{

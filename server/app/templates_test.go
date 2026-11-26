@@ -49,6 +49,8 @@ func TestApp_initializeTemplates(t *testing.T) {
 		th.Store.EXPECT().GetTemplateBoards(model.GlobalTeamID, "").Return([]*model.Board{}, nil)
 		th.Store.EXPECT().RemoveDefaultTemplates([]*model.Board{}).Return(nil)
 		th.Store.EXPECT().CreateBoardsAndBlocks(gomock.Any(), gomock.Any()).AnyTimes().Return(boardsAndBlocks, nil)
+		th.Store.EXPECT().GetBlock(gomock.Any()).Return(nil, model.NewErrNotFound("block")).AnyTimes()
+		th.Store.EXPECT().GetBlockHistory(gomock.Any(), gomock.Any()).Return([]*model.Block{}, nil).AnyTimes()
 		th.Store.EXPECT().GetMembersForBoard(board.ID).AnyTimes().Return([]*model.BoardMember{}, nil)
 		th.Store.EXPECT().GetBoard(board.ID).AnyTimes().Return(board, nil)
 		th.Store.EXPECT().GetMemberForBoard(gomock.Any(), gomock.Any()).AnyTimes().Return(boardMember, nil)
